@@ -1,0 +1,81 @@
+#pragma once
+
+#include <ATen/ATen.h>
+#include <ATen/Parallel.h>
+#include <torch/library.h>
+#include "../../../kernel/signal_processing/waveform/ramp_wave.h"
+
+namespace torchscience::cpu::signal_processing::waveform {
+
+inline at::Tensor ramp_wave(
+    int64_t n,
+    const at::Tensor& position,
+    const at::Tensor& slope,
+    c10::optional<at::ScalarType> dtype,
+    c10::optional<at::Layout> layout,
+    c10::optional<at::Device> device) {
+
+  TORCH_CHECK(n >= 0, "ramp_wave: n must be non-negative, got ", n);
+
+  // Early return for n == 0
+  if (n == 0) {
+    auto options = at::TensorOptions()
+        .dtype(dtype.value_or(at::kFloat))
+        .device(device.value_or(at::kCPU));
+    return at::empty({0}, options);
+  }
+
+  // Broadcast parameter shapes together
+  auto broadcast_shape = at::infer_size(position.sizes(), slope.sizes());
+
+  // Expand parameters to broadcast shape
+  auto pos_exp = position.expand(broadcast_shape).contiguous();
+  auto slope_exp = slope.expand(broadcast_shape).contiguous();
+
+  // Output shape: (*broadcast_shape, n)
+  std::vector<int64_t> out_shape(broadcast_shape.begin(), broadcast_shape.end());
+  out_shape.push_back(n);
+
+  auto out_dtype = dtype.value_or(slope_exp.scalar_type());
+  auto options = at::TensorOptions()
+      .dtype(out_dtype)
+      .device(device.value_or(at::kCPU));
+  auto output = at::zeros(out_shape, options);
+
+  // Flatten batch dimensions for iteration
+  int64_t batch_size = 1;
+  for (auto s : broadcast_shape) batch_size *= s;
+
+  // Position tensor should be int64 for indexing
+  auto pos_int = pos_exp.to(at::kLong);
+
+  AT_DISPATCH_FLOATING_TYPES(output.scalar_type(), "ramp_wave_cpu", [&] {
+    auto pos_data = pos_int.data_ptr<int64_t>();
+    auto slope_data = slope_exp.to(out_dtype).data_ptr<scalar_t>();
+    auto out_data = output.data_ptr<scalar_t>();
+
+    at::parallel_for(0, batch_size, 0, [&](int64_t begin, int64_t end) {
+      for (int64_t b = begin; b < end; ++b) {
+        int64_t pos = pos_data[b];
+        scalar_t slp = slope_data[b];
+
+        for (int64_t i = 0; i < n; ++i) {
+          out_data[b * n + i] = kernel::ramp_wave_kernel<scalar_t>(i, pos, slp);
+        }
+      }
+    });
+  });
+
+  // If batch_size is 1 and broadcast_shape is empty, squeeze the output
+  if (broadcast_shape.empty()) {
+    output = output.squeeze(0);
+  }
+
+  return output;
+}
+
+}  // namespace torchscience::cpu::signal_processing::waveform
+
+TORCH_LIBRARY_IMPL(torchscience, CPU, m) {
+  m.impl("ramp_wave", &torchscience::cpu::signal_processing::waveform::ramp_wave);
+}

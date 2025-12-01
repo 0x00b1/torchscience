@@ -1,0 +1,65 @@
+[build-system]
+build-backend = "scikit_build_core.build"
+requires = [
+    "numpy>=2.3.5",
+    "scikit-build-core>=0.11.6",
+    "torch>=2.9.1",
+]
+
+[dependency-groups]
+dev = [
+    "hypothesis>=6.148.7",
+    "mpmath>=1.3.0",
+    "pre-commit>=4.5.0",
+    "pytest>=9.0.2",
+    "sympy>=1.14.0",
+]
+docs = [
+    "Sphinx>=9.0.4",
+    "sphinx-autodoc-typehints>=3.2.0",
+    "sphinx-rtd-theme>=3.0.2",
+]
+
+[project]
+authors = [
+    { name = "Allen Goodman", email = "allen.goodman@icloud.com" }
+]
+dependencies = [
+    "manim>=0.19.1",
+    "numpy>=2.3.5",
+    "plotly>=6.5.0",
+    "tensordict>=0.7.2",
+    "torch>=2.9.1",
+]
+description = "PyTorch operators for mathematics, science, and engineering."
+name = "torchscience"
+readme = "README.md"
+requires-python = ">=3.13"
+version = "0.1.0"
+
+[project.optional-dependencies]
+test = [
+    "numpy>=1.26",
+    "pytest>=8.0",
+    "hypothesis>=6.100",
+    "sympy>=1.12",
+]
+
+[tool.scikit-build]
+build-dir = "build/{wheel_tag}"
+minimum-version = "build-system.requires"
+wheel.packages = ["src/torchscience"]
+
+[tool.ruff]
+line-length = 79
+
+[tool.ruff.lint]
+select = ["F401", "I"]
+fixable = ["F401", "I"]
+
+[tool.uv]
+cache-keys = [
+    { file = "CMakeLists.txt" },
+    { file = "pyproject.toml" },
+    { file = "src/**/*.{h,c,hpp,cpp}" }
+]

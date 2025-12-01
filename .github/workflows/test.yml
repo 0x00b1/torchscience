@@ -1,0 +1,42 @@
+name: Tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      - run: uv sync --group dev
+      - run: uv run pre-commit run --all-files
+
+  test-cpu:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ["3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      - run: uv sync --group dev
+      - run: uv run pytest tests/ -v --tb=short
+
+  test-cuda:
+    runs-on: torchscience-linux-cuda
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      - run: uv sync --group dev
+      - name: Run CUDA tests
+        run: |
+          uv run pytest tests/ -v --tb=short -k "cuda or gpu" || exit_code=$?
+          if [ "${exit_code:-0}" -eq 5 ]; then
+            echo "No CUDA tests found yet"
+            exit 0
+          fi
+          exit ${exit_code:-0}
