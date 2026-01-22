@@ -1,7 +1,10 @@
 import torch
 from torch import Tensor
 
-from ._legendre_polynomial_p import LegendrePolynomialP
+from ._legendre_polynomial_p import (
+    LegendrePolynomialP,
+    legendre_polynomial_p,
+)
 from ._legendre_polynomial_p_multiply import legendre_polynomial_p_multiply
 
 
@@ -36,21 +39,19 @@ def legendre_polynomial_p_from_roots(
 
     if n == 0:
         # Empty roots -> constant 1
-        return LegendrePolynomialP(
-            coeffs=torch.ones(1, dtype=roots.dtype, device=roots.device)
+        return legendre_polynomial_p(
+            torch.ones(1, dtype=roots.dtype, device=roots.device)
         )
 
     # Start with (x - r_0) = -r_0 * P_0 + P_1
-    result = LegendrePolynomialP(
-        coeffs=torch.tensor(
-            [-roots[0], 1.0], dtype=roots.dtype, device=roots.device
-        )
+    result = legendre_polynomial_p(
+        torch.tensor([-roots[0], 1.0], dtype=roots.dtype, device=roots.device)
     )
 
     # Multiply by each subsequent (x - r_k)
     for k in range(1, n):
-        factor = LegendrePolynomialP(
-            coeffs=torch.tensor(
+        factor = legendre_polynomial_p(
+            torch.tensor(
                 [-roots[k], 1.0], dtype=roots.dtype, device=roots.device
             )
         )

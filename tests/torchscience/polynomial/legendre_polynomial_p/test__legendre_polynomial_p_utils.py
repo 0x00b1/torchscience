@@ -45,25 +45,31 @@ class TestLegendrePolynomialPTrim:
         """Trim doesn't change non-zero trailing."""
         c = legendre_polynomial_p(torch.tensor([1.0, 2.0, 3.0]))
         t = legendre_polynomial_p_trim(c)
-        torch.testing.assert_close(t.coeffs, c.coeffs)
+        torch.testing.assert_close(
+            t.as_subclass(torch.Tensor), c.as_subclass(torch.Tensor)
+        )
 
     def test_trim_trailing_zeros(self):
         """Trim removes trailing zeros."""
         c = legendre_polynomial_p(torch.tensor([1.0, 2.0, 0.0, 0.0]))
         t = legendre_polynomial_p_trim(c)
-        torch.testing.assert_close(t.coeffs, torch.tensor([1.0, 2.0]))
+        torch.testing.assert_close(
+            t.as_subclass(torch.Tensor), torch.tensor([1.0, 2.0])
+        )
 
     def test_trim_near_zero(self):
         """Trim removes near-zero trailing coefficients."""
         c = legendre_polynomial_p(torch.tensor([1.0, 2.0, 1e-15, 1e-16]))
         t = legendre_polynomial_p_trim(c, tol=1e-10)
-        torch.testing.assert_close(t.coeffs, torch.tensor([1.0, 2.0]))
+        torch.testing.assert_close(
+            t.as_subclass(torch.Tensor), torch.tensor([1.0, 2.0])
+        )
 
     def test_trim_preserves_constant(self):
         """Trim preserves at least one coefficient."""
         c = legendre_polynomial_p(torch.tensor([0.0, 0.0, 0.0]))
         t = legendre_polynomial_p_trim(c)
-        assert t.coeffs.shape[-1] >= 1
+        assert t.as_subclass(torch.Tensor).shape[-1] >= 1
 
     def test_trim_vs_numpy(self):
         """Compare with numpy.polynomial.legendre.legtrim."""
@@ -74,7 +80,9 @@ class TestLegendrePolynomialPTrim:
 
         t_np = np_leg.legtrim(coeffs, tol=1e-10)
 
-        np.testing.assert_allclose(t.coeffs.numpy(), t_np, rtol=1e-6)
+        np.testing.assert_allclose(
+            t.as_subclass(torch.Tensor).numpy(), t_np, rtol=1e-6
+        )
 
 
 class TestLegendrePolynomialPEqual:
@@ -120,7 +128,7 @@ class TestLegendrePolynomialPMulx:
 
         # x * 1 = x = P_1
         expected = torch.tensor([0.0, 1.0])
-        torch.testing.assert_close(result.coeffs, expected)
+        torch.testing.assert_close(result.as_subclass(torch.Tensor), expected)
 
     def test_mulx_p1(self):
         """x * P_1 = (2*P_2 + P_0) / 3."""
@@ -129,7 +137,7 @@ class TestLegendrePolynomialPMulx:
 
         # x * P_1 = (P_0 + 2*P_2) / 3
         expected = torch.tensor([1.0 / 3.0, 0.0, 2.0 / 3.0])
-        torch.testing.assert_close(result.coeffs, expected)
+        torch.testing.assert_close(result.as_subclass(torch.Tensor), expected)
 
     def test_mulx_verify_evaluation(self):
         """Verify x * c(x) = result(x) for various x."""
@@ -156,14 +164,14 @@ class TestLegendrePolynomialPMulx:
         result_np = np_leg.legmulx(coeffs)
 
         np.testing.assert_allclose(
-            result.coeffs.numpy(), result_np, rtol=1e-10
+            result.as_subclass(torch.Tensor).numpy(), result_np, rtol=1e-10
         )
 
     def test_mulx_degree_increases(self):
         """Multiplying by x increases degree by 1."""
         c = legendre_polynomial_p(torch.tensor([1.0, 2.0, 3.0]))  # degree 2
         result = legendre_polynomial_p_mulx(c)
-        assert result.coeffs.shape[-1] == 4  # degree 3
+        assert result.as_subclass(torch.Tensor).shape[-1] == 4  # degree 3
 
 
 class TestLegendrePolynomialPMulxAutograd:
@@ -176,6 +184,8 @@ class TestLegendrePolynomialPMulxAutograd:
         )
 
         def fn(c):
-            return legendre_polynomial_p_mulx(legendre_polynomial_p(c)).coeffs
+            return legendre_polynomial_p_mulx(
+                legendre_polynomial_p(c)
+            ).as_subclass(torch.Tensor)
 
         assert torch.autograd.gradcheck(fn, (coeffs,), raise_exception=True)

@@ -65,7 +65,7 @@ def legendre_polynomial_p_evaluate(
                 stacklevel=2,
             )
 
-    coeffs = c.coeffs
+    coeffs = c.as_subclass(torch.Tensor)
     n = coeffs.shape[-1]
 
     # Handle trivial cases

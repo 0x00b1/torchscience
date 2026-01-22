@@ -1,6 +1,10 @@
+import torch
 from torch import Tensor
 
-from ._legendre_polynomial_p import LegendrePolynomialP
+from ._legendre_polynomial_p import (
+    LegendrePolynomialP,
+    legendre_polynomial_p,
+)
 
 
 def legendre_polynomial_p_scale(
@@ -25,7 +29,7 @@ def legendre_polynomial_p_scale(
     --------
     >>> a = legendre_polynomial_p(torch.tensor([1.0, 2.0, 3.0]))
     >>> b = legendre_polynomial_p_scale(a, torch.tensor(2.0))
-    >>> b.coeffs
-    tensor([2., 4., 6.])
+    >>> b
+    LegendrePolynomialP(tensor([2., 4., 6.]))
     """
-    return LegendrePolynomialP(coeffs=a.coeffs * scalar)
+    return legendre_polynomial_p(a.as_subclass(torch.Tensor) * scalar)

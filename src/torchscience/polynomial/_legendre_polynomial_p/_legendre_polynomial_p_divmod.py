@@ -3,7 +3,10 @@ from typing import Tuple
 import numpy as np
 import torch
 
-from ._legendre_polynomial_p import LegendrePolynomialP
+from ._legendre_polynomial_p import (
+    LegendrePolynomialP,
+    legendre_polynomial_p,
+)
 
 
 def legendre_polynomial_p_divmod(
@@ -37,8 +40,9 @@ def legendre_polynomial_p_divmod(
     >>> b = legendre_polynomial_p(torch.tensor([1.0, 1.0]))
     >>> q, r = legendre_polynomial_p_divmod(a, b)
     """
-    a_coeffs = a.coeffs
-    b_coeffs = b.coeffs
+    # Convert to plain tensors to avoid operator interception
+    a_coeffs = a.as_subclass(torch.Tensor)
+    b_coeffs = b.as_subclass(torch.Tensor)
 
     # Use NumPy's legdiv
     a_np = a_coeffs.detach().cpu().numpy()
@@ -54,6 +58,6 @@ def legendre_polynomial_p_divmod(
     )
 
     return (
-        LegendrePolynomialP(coeffs=q_coeffs),
-        LegendrePolynomialP(coeffs=r_coeffs),
+        legendre_polynomial_p(q_coeffs),
+        legendre_polynomial_p(r_coeffs),
     )

@@ -1,6 +1,9 @@
 import torch
 
-from ._legendre_polynomial_p import LegendrePolynomialP
+from ._legendre_polynomial_p import (
+    LegendrePolynomialP,
+    legendre_polynomial_p,
+)
 
 
 def legendre_polynomial_p_trim(
@@ -30,10 +33,10 @@ def legendre_polynomial_p_trim(
     --------
     >>> c = legendre_polynomial_p(torch.tensor([1.0, 2.0, 0.0, 0.0]))
     >>> t = legendre_polynomial_p_trim(c)
-    >>> t.coeffs
-    tensor([1., 2.])
+    >>> t
+    LegendrePolynomialP(tensor([1., 2.]))
     """
-    coeffs = p.coeffs
+    coeffs = p.as_subclass(torch.Tensor)
     n = coeffs.shape[-1]
 
     if n <= 1:
@@ -54,8 +57,8 @@ def legendre_polynomial_p_trim(
     mask = max_abs > tol
     if not mask.any():
         # All zeros, return single zero coefficient
-        return LegendrePolynomialP(
-            coeffs=torch.zeros(
+        return legendre_polynomial_p(
+            torch.zeros(
                 *coeffs.shape[:-1], 1, dtype=coeffs.dtype, device=coeffs.device
             )
         )
@@ -65,4 +68,4 @@ def legendre_polynomial_p_trim(
     last_nonzero = indices[mask].max().item()
 
     # Keep coefficients up to and including last_nonzero
-    return LegendrePolynomialP(coeffs=coeffs[..., : last_nonzero + 1])
+    return legendre_polynomial_p(coeffs[..., : last_nonzero + 1])

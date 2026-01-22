@@ -35,8 +35,8 @@ def legendre_polynomial_p_equal(
     >>> legendre_polynomial_p_equal(a, b)
     tensor(True)
     """
-    a_coeffs = a.coeffs
-    b_coeffs = b.coeffs
+    a_coeffs = a.as_subclass(torch.Tensor)
+    b_coeffs = b.as_subclass(torch.Tensor)
 
     # Pad to same length
     n_a = a_coeffs.shape[-1]

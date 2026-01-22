@@ -33,10 +33,10 @@ def legendre_polynomial_p_to_polynomial(
     --------
     >>> c = legendre_polynomial_p(torch.tensor([0.0, 0.0, 1.0]))  # P_2
     >>> p = legendre_polynomial_p_to_polynomial(c)
-    >>> p.coeffs  # P_2 = (3x^2 - 1)/2
-    tensor([-0.5,  0.0,  1.5])
+    >>> p  # P_2 = (3x^2 - 1)/2
+    Polynomial(tensor([-0.5,  0.0,  1.5]))
     """
-    coeffs = c.coeffs
+    coeffs = c.as_subclass(torch.Tensor)
     n = coeffs.shape[-1]
 
     # Build power representations of P_k for k = 0, ..., n-1
@@ -84,4 +84,4 @@ def legendre_polynomial_p_to_polynomial(
         P_k = P_power[k]
         result[: len(P_k)] = result[: len(P_k)] + c_k * P_k
 
-    return Polynomial(coeffs=result)
+    return Polynomial(result)

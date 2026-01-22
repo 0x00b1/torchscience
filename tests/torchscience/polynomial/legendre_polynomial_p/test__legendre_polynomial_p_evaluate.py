@@ -88,7 +88,7 @@ class TestLegendrePolynomialPEvaluate:
     def test_evaluate_batched(self):
         """Test batched coefficients"""
         coeffs = torch.tensor([[1.0, 0.0], [0.0, 1.0]])  # batch of [P_0, P_1]
-        p = LegendrePolynomialP(coeffs=coeffs)
+        p = LegendrePolynomialP(coeffs)
         x = torch.tensor([0.5])
 
         result = legendre_polynomial_p_evaluate(p, x)
@@ -111,8 +111,6 @@ class TestLegendrePolynomialPEvaluate:
         x = torch.linspace(-0.9, 0.9, 10, dtype=torch.float64)
 
         def func(c):
-            return legendre_polynomial_p_evaluate(
-                LegendrePolynomialP(coeffs=c), x
-            )
+            return legendre_polynomial_p_evaluate(LegendrePolynomialP(c), x)
 
         torch.autograd.gradcheck(func, coeffs, raise_exception=True)

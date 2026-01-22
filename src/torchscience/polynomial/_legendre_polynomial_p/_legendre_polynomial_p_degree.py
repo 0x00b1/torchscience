@@ -30,4 +30,4 @@ def legendre_polynomial_p_degree(p: LegendrePolynomialP) -> Tensor:
     >>> legendre_polynomial_p_degree(c)
     tensor(2)
     """
-    return torch.tensor(p.coeffs.shape[-1] - 1, device=p.coeffs.device)
+    return torch.tensor(p.shape[-1] - 1, device=p.device)

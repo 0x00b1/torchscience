@@ -206,7 +206,9 @@ class TestLegendrePolynomialPFromRoots:
         )
         c_np = np_leg.legfromroots(roots)
 
-        np.testing.assert_allclose(c_torch.coeffs.numpy(), c_np, rtol=1e-10)
+        np.testing.assert_allclose(
+            c_torch.as_subclass(torch.Tensor).numpy(), c_np, rtol=1e-10
+        )
 
     def test_from_roots_empty(self):
         """Empty roots gives constant 1."""
@@ -214,5 +216,6 @@ class TestLegendrePolynomialPFromRoots:
         c = legendre_polynomial_p_from_roots(roots)
 
         torch.testing.assert_close(
-            c.coeffs, torch.tensor([1.0], dtype=torch.float64)
+            c.as_subclass(torch.Tensor),
+            torch.tensor([1.0], dtype=torch.float64),
         )

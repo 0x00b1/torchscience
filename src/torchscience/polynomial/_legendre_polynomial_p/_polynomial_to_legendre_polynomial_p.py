@@ -2,7 +2,10 @@ import torch
 
 from torchscience.polynomial._polynomial import Polynomial
 
-from ._legendre_polynomial_p import LegendrePolynomialP
+from ._legendre_polynomial_p import (
+    LegendrePolynomialP,
+    legendre_polynomial_p,
+)
 from ._legendre_polynomial_p_add import legendre_polynomial_p_add
 from ._legendre_polynomial_p_mulx import legendre_polynomial_p_mulx
 
@@ -35,25 +38,25 @@ def polynomial_to_legendre_polynomial_p(
     --------
     >>> p = polynomial(torch.tensor([0.0, 0.0, 1.0]))  # x^2
     >>> c = polynomial_to_legendre_polynomial_p(p)
-    >>> c.coeffs  # x^2 = (2*P_2 + P_0)/3
-    tensor([0.3333, 0.0000, 0.6667])
+    >>> c  # x^2 = (2*P_2 + P_0)/3
+    LegendrePolynomialP(tensor([0.3333, 0.0000, 0.6667]))
     """
-    coeffs = p.coeffs
+    coeffs = p.as_subclass(torch.Tensor)
     n = coeffs.shape[-1]
 
     if n == 0:
-        return LegendrePolynomialP(
-            coeffs=torch.zeros(1, dtype=coeffs.dtype, device=coeffs.device)
+        return legendre_polynomial_p(
+            torch.zeros(1, dtype=coeffs.dtype, device=coeffs.device)
         )
 
     # Start with highest degree coefficient
-    result = LegendrePolynomialP(coeffs=coeffs[..., -1:].clone())
+    result = legendre_polynomial_p(coeffs[..., -1:].clone())
 
     # Horner's method: multiply by x, add next coefficient
     for i in range(n - 2, -1, -1):
         result = legendre_polynomial_p_mulx(result)
         result = legendre_polynomial_p_add(
-            result, LegendrePolynomialP(coeffs=coeffs[..., i : i + 1].clone())
+            result, legendre_polynomial_p(coeffs[..., i : i + 1].clone())
         )
 
     return result

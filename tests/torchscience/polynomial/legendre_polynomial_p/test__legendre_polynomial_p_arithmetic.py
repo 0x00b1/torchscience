@@ -21,21 +21,27 @@ class TestLegendrePolynomialPAdd:
         a = legendre_polynomial_p(torch.tensor([1.0, 2.0, 3.0]))
         b = legendre_polynomial_p(torch.tensor([4.0, 5.0, 6.0]))
         c = legendre_polynomial_p_add(a, b)
-        torch.testing.assert_close(c.coeffs, torch.tensor([5.0, 7.0, 9.0]))
+        torch.testing.assert_close(
+            c.as_subclass(torch.Tensor), torch.tensor([5.0, 7.0, 9.0])
+        )
 
     def test_add_different_degree(self):
         """Add series of different degrees (zero-pad shorter)."""
         a = legendre_polynomial_p(torch.tensor([1.0, 2.0]))
         b = legendre_polynomial_p(torch.tensor([3.0, 4.0, 5.0]))
         c = legendre_polynomial_p_add(a, b)
-        torch.testing.assert_close(c.coeffs, torch.tensor([4.0, 6.0, 5.0]))
+        torch.testing.assert_close(
+            c.as_subclass(torch.Tensor), torch.tensor([4.0, 6.0, 5.0])
+        )
 
     def test_add_operator(self):
         """Test + operator."""
         a = legendre_polynomial_p(torch.tensor([1.0, 2.0]))
         b = legendre_polynomial_p(torch.tensor([3.0, 4.0]))
         c = a + b
-        torch.testing.assert_close(c.coeffs, torch.tensor([4.0, 6.0]))
+        torch.testing.assert_close(
+            c.as_subclass(torch.Tensor), torch.tensor([4.0, 6.0])
+        )
 
     def test_add_vs_numpy(self):
         """Compare with numpy.polynomial.legendre.legadd."""
@@ -48,7 +54,9 @@ class TestLegendrePolynomialPAdd:
 
         c_np = np_leg.legadd(a_coeffs, b_coeffs)
 
-        np.testing.assert_allclose(c.coeffs.numpy(), c_np, rtol=1e-6)
+        np.testing.assert_allclose(
+            c.as_subclass(torch.Tensor).numpy(), c_np, rtol=1e-6
+        )
 
 
 class TestLegendrePolynomialPSubtract:
@@ -59,21 +67,27 @@ class TestLegendrePolynomialPSubtract:
         a = legendre_polynomial_p(torch.tensor([5.0, 7.0, 9.0]))
         b = legendre_polynomial_p(torch.tensor([1.0, 2.0, 3.0]))
         c = legendre_polynomial_p_subtract(a, b)
-        torch.testing.assert_close(c.coeffs, torch.tensor([4.0, 5.0, 6.0]))
+        torch.testing.assert_close(
+            c.as_subclass(torch.Tensor), torch.tensor([4.0, 5.0, 6.0])
+        )
 
     def test_subtract_different_degree(self):
         """Subtract series of different degrees."""
         a = legendre_polynomial_p(torch.tensor([1.0, 2.0, 3.0]))
         b = legendre_polynomial_p(torch.tensor([1.0, 2.0]))
         c = legendre_polynomial_p_subtract(a, b)
-        torch.testing.assert_close(c.coeffs, torch.tensor([0.0, 0.0, 3.0]))
+        torch.testing.assert_close(
+            c.as_subclass(torch.Tensor), torch.tensor([0.0, 0.0, 3.0])
+        )
 
     def test_subtract_operator(self):
         """Test - operator."""
         a = legendre_polynomial_p(torch.tensor([5.0, 6.0]))
         b = legendre_polynomial_p(torch.tensor([1.0, 2.0]))
         c = a - b
-        torch.testing.assert_close(c.coeffs, torch.tensor([4.0, 4.0]))
+        torch.testing.assert_close(
+            c.as_subclass(torch.Tensor), torch.tensor([4.0, 4.0])
+        )
 
     def test_subtract_vs_numpy(self):
         """Compare with numpy.polynomial.legendre.legsub."""
@@ -86,7 +100,9 @@ class TestLegendrePolynomialPSubtract:
 
         c_np = np_leg.legsub(a_coeffs, b_coeffs)
 
-        np.testing.assert_allclose(c.coeffs.numpy(), c_np, rtol=1e-6)
+        np.testing.assert_allclose(
+            c.as_subclass(torch.Tensor).numpy(), c_np, rtol=1e-6
+        )
 
 
 class TestLegendrePolynomialPNegate:
@@ -96,13 +112,17 @@ class TestLegendrePolynomialPNegate:
         """Negate series."""
         a = legendre_polynomial_p(torch.tensor([1.0, -2.0, 3.0]))
         b = legendre_polynomial_p_negate(a)
-        torch.testing.assert_close(b.coeffs, torch.tensor([-1.0, 2.0, -3.0]))
+        torch.testing.assert_close(
+            b.as_subclass(torch.Tensor), torch.tensor([-1.0, 2.0, -3.0])
+        )
 
     def test_negate_operator(self):
         """Test unary - operator."""
         a = legendre_polynomial_p(torch.tensor([1.0, -2.0]))
         b = -a
-        torch.testing.assert_close(b.coeffs, torch.tensor([-1.0, 2.0]))
+        torch.testing.assert_close(
+            b.as_subclass(torch.Tensor), torch.tensor([-1.0, 2.0])
+        )
 
 
 class TestLegendrePolynomialPScale:
@@ -112,19 +132,25 @@ class TestLegendrePolynomialPScale:
         """Scale by scalar tensor."""
         a = legendre_polynomial_p(torch.tensor([1.0, 2.0, 3.0]))
         b = legendre_polynomial_p_scale(a, torch.tensor(2.0))
-        torch.testing.assert_close(b.coeffs, torch.tensor([2.0, 4.0, 6.0]))
+        torch.testing.assert_close(
+            b.as_subclass(torch.Tensor), torch.tensor([2.0, 4.0, 6.0])
+        )
 
     def test_scale_operator(self):
         """Test * operator with scalar."""
         a = legendre_polynomial_p(torch.tensor([1.0, 2.0]))
         b = a * torch.tensor(3.0)
-        torch.testing.assert_close(b.coeffs, torch.tensor([3.0, 6.0]))
+        torch.testing.assert_close(
+            b.as_subclass(torch.Tensor), torch.tensor([3.0, 6.0])
+        )
 
     def test_scale_rmul_operator(self):
         """Test scalar * series."""
         a = legendre_polynomial_p(torch.tensor([1.0, 2.0]))
         b = torch.tensor(3.0) * a
-        torch.testing.assert_close(b.coeffs, torch.tensor([3.0, 6.0]))
+        torch.testing.assert_close(
+            b.as_subclass(torch.Tensor), torch.tensor([3.0, 6.0])
+        )
 
 
 class TestLegendrePolynomialPArithmeticAutograd:
@@ -142,7 +168,7 @@ class TestLegendrePolynomialPArithmeticAutograd:
         def fn(a, b):
             return legendre_polynomial_p_add(
                 legendre_polynomial_p(a), legendre_polynomial_p(b)
-            ).coeffs
+            ).as_subclass(torch.Tensor)
 
         assert torch.autograd.gradcheck(
             fn, (a_coeffs, b_coeffs), raise_exception=True
@@ -160,7 +186,7 @@ class TestLegendrePolynomialPArithmeticAutograd:
         def fn(a, b):
             return legendre_polynomial_p_subtract(
                 legendre_polynomial_p(a), legendre_polynomial_p(b)
-            ).coeffs
+            ).as_subclass(torch.Tensor)
 
         assert torch.autograd.gradcheck(
             fn, (a_coeffs, b_coeffs), raise_exception=True
@@ -176,7 +202,7 @@ class TestLegendrePolynomialPArithmeticAutograd:
         def fn(c, s):
             return legendre_polynomial_p_scale(
                 legendre_polynomial_p(c), s
-            ).coeffs
+            ).as_subclass(torch.Tensor)
 
         assert torch.autograd.gradcheck(
             fn, (coeffs, scalar), raise_exception=True
@@ -191,6 +217,6 @@ class TestLegendrePolynomialPArithmeticAutograd:
         def fn(c):
             return legendre_polynomial_p_negate(
                 legendre_polynomial_p(c)
-            ).coeffs
+            ).as_subclass(torch.Tensor)
 
         assert torch.autograd.gradcheck(fn, (coeffs,), raise_exception=True)

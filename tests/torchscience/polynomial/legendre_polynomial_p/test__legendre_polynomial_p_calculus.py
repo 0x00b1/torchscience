@@ -21,14 +21,19 @@ class TestLegendrePolynomialPDerivative:
         """Derivative of constant is zero."""
         p = legendre_polynomial_p(torch.tensor([5.0]))
         dp = legendre_polynomial_p_derivative(p)
-        torch.testing.assert_close(dp.coeffs, torch.tensor([0.0]))
+        torch.testing.assert_close(
+            dp.as_subclass(torch.Tensor), torch.tensor([0.0])
+        )
 
     def test_derivative_p1(self):
         """d/dx P_1(x) = d/dx(x) = 1 = P_0."""
         p = legendre_polynomial_p(torch.tensor([0.0, 1.0]))  # P_1
         dp = legendre_polynomial_p_derivative(p)
         torch.testing.assert_close(
-            dp.coeffs, torch.tensor([1.0]), atol=1e-6, rtol=1e-6
+            dp.as_subclass(torch.Tensor),
+            torch.tensor([1.0]),
+            atol=1e-6,
+            rtol=1e-6,
         )
 
     def test_derivative_p2(self):
@@ -37,7 +42,10 @@ class TestLegendrePolynomialPDerivative:
         p = legendre_polynomial_p(torch.tensor([0.0, 0.0, 1.0]))  # P_2
         dp = legendre_polynomial_p_derivative(p)
         torch.testing.assert_close(
-            dp.coeffs, torch.tensor([0.0, 3.0]), atol=1e-6, rtol=1e-6
+            dp.as_subclass(torch.Tensor),
+            torch.tensor([0.0, 3.0]),
+            atol=1e-6,
+            rtol=1e-6,
         )
 
     def test_derivative_vs_numpy(self):
@@ -49,7 +57,9 @@ class TestLegendrePolynomialPDerivative:
 
         dp_np = np_leg.legder(coeffs)
 
-        np.testing.assert_allclose(dp.coeffs.numpy(), dp_np, rtol=1e-6)
+        np.testing.assert_allclose(
+            dp.as_subclass(torch.Tensor).numpy(), dp_np, rtol=1e-6
+        )
 
     def test_derivative_order_2(self):
         """Second derivative matches numpy."""
@@ -60,13 +70,17 @@ class TestLegendrePolynomialPDerivative:
 
         dp2_np = np_leg.legder(coeffs, m=2)
 
-        np.testing.assert_allclose(dp2.coeffs.numpy(), dp2_np, rtol=1e-5)
+        np.testing.assert_allclose(
+            dp2.as_subclass(torch.Tensor).numpy(), dp2_np, rtol=1e-5
+        )
 
     def test_derivative_order_0(self):
         """Order 0 returns original."""
         p = legendre_polynomial_p(torch.tensor([1.0, 2.0, 3.0]))
         dp = legendre_polynomial_p_derivative(p, order=0)
-        torch.testing.assert_close(dp.coeffs, p.coeffs)
+        torch.testing.assert_close(
+            dp.as_subclass(torch.Tensor), p.as_subclass(torch.Tensor)
+        )
 
     def test_derivative_linear_combination(self):
         """Derivative of linear combination."""
@@ -79,7 +93,9 @@ class TestLegendrePolynomialPDerivative:
 
         dp_np = np_leg.legder(coeffs)
 
-        np.testing.assert_allclose(dp.coeffs.numpy(), dp_np, rtol=1e-6)
+        np.testing.assert_allclose(
+            dp.as_subclass(torch.Tensor).numpy(), dp_np, rtol=1e-6
+        )
 
     def test_derivative_high_order(self):
         """Derivative of high-degree polynomial."""
@@ -90,7 +106,9 @@ class TestLegendrePolynomialPDerivative:
 
         dp_np = np_leg.legder(coeffs)
 
-        np.testing.assert_allclose(dp.coeffs.numpy(), dp_np, rtol=1e-6)
+        np.testing.assert_allclose(
+            dp.as_subclass(torch.Tensor).numpy(), dp_np, rtol=1e-6
+        )
 
 
 class TestLegendrePolynomialPAntiderivative:
@@ -104,7 +122,9 @@ class TestLegendrePolynomialPAntiderivative:
         # Compare with numpy
         ip_np = np_leg.legint([1.0], k=[0.0])
 
-        np.testing.assert_allclose(ip.coeffs.numpy(), ip_np, rtol=1e-6)
+        np.testing.assert_allclose(
+            ip.as_subclass(torch.Tensor).numpy(), ip_np, rtol=1e-6
+        )
 
     def test_antiderivative_vs_numpy(self):
         """Compare with numpy.polynomial.legendre.legint."""
@@ -115,7 +135,9 @@ class TestLegendrePolynomialPAntiderivative:
 
         ip_np = np_leg.legint(coeffs, k=[0.0])
 
-        np.testing.assert_allclose(ip.coeffs.numpy(), ip_np, rtol=1e-5)
+        np.testing.assert_allclose(
+            ip.as_subclass(torch.Tensor).numpy(), ip_np, rtol=1e-5
+        )
 
     def test_antiderivative_with_constant(self):
         """Antiderivative with integration constant."""
@@ -126,7 +148,9 @@ class TestLegendrePolynomialPAntiderivative:
 
         ip_np = np_leg.legint(coeffs, k=[5.0])
 
-        np.testing.assert_allclose(ip.coeffs.numpy(), ip_np, rtol=1e-5)
+        np.testing.assert_allclose(
+            ip.as_subclass(torch.Tensor).numpy(), ip_np, rtol=1e-5
+        )
 
     def test_derivative_antiderivative_roundtrip(self):
         """derivative(antiderivative(p)) = p."""
@@ -134,7 +158,12 @@ class TestLegendrePolynomialPAntiderivative:
         p = legendre_polynomial_p(torch.tensor(coeffs))
         ip = legendre_polynomial_p_antiderivative(p)
         dip = legendre_polynomial_p_derivative(ip)
-        torch.testing.assert_close(dip.coeffs, p.coeffs, atol=1e-5, rtol=1e-5)
+        torch.testing.assert_close(
+            dip.as_subclass(torch.Tensor),
+            p.as_subclass(torch.Tensor),
+            atol=1e-5,
+            rtol=1e-5,
+        )
 
     def test_antiderivative_order_2(self):
         """Second antiderivative matches numpy."""
@@ -145,7 +174,9 @@ class TestLegendrePolynomialPAntiderivative:
 
         i2p_np = np_leg.legint(coeffs, m=2, k=[0.0, 0.0])
 
-        np.testing.assert_allclose(i2p.coeffs.numpy(), i2p_np, rtol=1e-5)
+        np.testing.assert_allclose(
+            i2p.as_subclass(torch.Tensor).numpy(), i2p_np, rtol=1e-5
+        )
 
     def test_antiderivative_p1(self):
         """Antiderivative of P_1 matches numpy."""
@@ -156,7 +187,9 @@ class TestLegendrePolynomialPAntiderivative:
 
         ip_np = np_leg.legint(coeffs, k=[0.0])
 
-        np.testing.assert_allclose(ip.coeffs.numpy(), ip_np, rtol=1e-6)
+        np.testing.assert_allclose(
+            ip.as_subclass(torch.Tensor).numpy(), ip_np, rtol=1e-6
+        )
 
 
 class TestLegendrePolynomialPIntegral:
@@ -249,7 +282,7 @@ class TestLegendrePolynomialPCalculusAutograd:
         def fn(c):
             return legendre_polynomial_p_derivative(
                 legendre_polynomial_p(c)
-            ).coeffs
+            ).as_subclass(torch.Tensor)
 
         assert torch.autograd.gradcheck(fn, (coeffs,), raise_exception=True)
 
@@ -262,7 +295,7 @@ class TestLegendrePolynomialPCalculusAutograd:
         def fn(c):
             return legendre_polynomial_p_antiderivative(
                 legendre_polynomial_p(c), constant=0.0
-            ).coeffs
+            ).as_subclass(torch.Tensor)
 
         assert torch.autograd.gradcheck(fn, (coeffs,), raise_exception=True)
 
@@ -303,9 +336,11 @@ class TestLegendrePolynomialPCalculusAutograd:
         )
 
         def fn(c):
-            return legendre_polynomial_p_derivative(
-                legendre_polynomial_p(c)
-            ).coeffs.sum()
+            return (
+                legendre_polynomial_p_derivative(legendre_polynomial_p(c))
+                .as_subclass(torch.Tensor)
+                .sum()
+            )
 
         assert torch.autograd.gradgradcheck(
             fn, (coeffs,), raise_exception=True

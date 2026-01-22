@@ -1,6 +1,9 @@
 import torch
 
-from ._legendre_polynomial_p import LegendrePolynomialP
+from ._legendre_polynomial_p import (
+    LegendrePolynomialP,
+    legendre_polynomial_p,
+)
 
 
 def legendre_polynomial_p_mulx(
@@ -35,10 +38,10 @@ def legendre_polynomial_p_mulx(
     --------
     >>> a = legendre_polynomial_p(torch.tensor([1.0]))  # P_0
     >>> b = legendre_polynomial_p_mulx(a)
-    >>> b.coeffs  # x * P_0 = P_1
-    tensor([0., 1.])
+    >>> b  # x * P_0 = P_1
+    LegendrePolynomialP(tensor([0., 1.]))
     """
-    coeffs = a.coeffs
+    coeffs = a.as_subclass(torch.Tensor)
     n = coeffs.shape[-1]
 
     # Result has one more coefficient
@@ -61,4 +64,4 @@ def legendre_polynomial_p_mulx(
         # Contribution to P_{k+1} coefficient
         result[..., k + 1] = result[..., k + 1] + ((k + 1) / denom) * c_k
 
-    return LegendrePolynomialP(coeffs=result)
+    return legendre_polynomial_p(result)

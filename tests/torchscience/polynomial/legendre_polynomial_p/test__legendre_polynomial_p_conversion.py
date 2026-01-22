@@ -21,26 +21,32 @@ class TestLegendrePolynomialPToPolynomial:
         """P_0 = 1."""
         c = legendre_polynomial_p(torch.tensor([1.0]))  # P_0
         p = legendre_polynomial_p_to_polynomial(c)
-        torch.testing.assert_close(p.coeffs, torch.tensor([1.0]))
+        torch.testing.assert_close(
+            p.as_subclass(torch.Tensor), torch.tensor([1.0])
+        )
 
     def test_p1_to_power(self):
         """P_1 = x."""
         c = legendre_polynomial_p(torch.tensor([0.0, 1.0]))  # P_1
         p = legendre_polynomial_p_to_polynomial(c)
-        torch.testing.assert_close(p.coeffs, torch.tensor([0.0, 1.0]))
+        torch.testing.assert_close(
+            p.as_subclass(torch.Tensor), torch.tensor([0.0, 1.0])
+        )
 
     def test_p2_to_power(self):
         """P_2 = (3x^2 - 1) / 2."""
         c = legendre_polynomial_p(torch.tensor([0.0, 0.0, 1.0]))  # P_2
         p = legendre_polynomial_p_to_polynomial(c)
-        torch.testing.assert_close(p.coeffs, torch.tensor([-0.5, 0.0, 1.5]))
+        torch.testing.assert_close(
+            p.as_subclass(torch.Tensor), torch.tensor([-0.5, 0.0, 1.5])
+        )
 
     def test_p3_to_power(self):
         """P_3 = (5x^3 - 3x) / 2."""
         c = legendre_polynomial_p(torch.tensor([0.0, 0.0, 0.0, 1.0]))  # P_3
         p = legendre_polynomial_p_to_polynomial(c)
         torch.testing.assert_close(
-            p.coeffs, torch.tensor([0.0, -1.5, 0.0, 2.5])
+            p.as_subclass(torch.Tensor), torch.tensor([0.0, -1.5, 0.0, 2.5])
         )
 
     def test_linear_combination(self):
@@ -48,7 +54,9 @@ class TestLegendrePolynomialPToPolynomial:
         # = 1 + 2x + 3*(3x^2 - 1)/2 = 1 + 2x + 4.5x^2 - 1.5 = -0.5 + 2x + 4.5x^2
         c = legendre_polynomial_p(torch.tensor([1.0, 2.0, 3.0]))
         p = legendre_polynomial_p_to_polynomial(c)
-        torch.testing.assert_close(p.coeffs, torch.tensor([-0.5, 2.0, 4.5]))
+        torch.testing.assert_close(
+            p.as_subclass(torch.Tensor), torch.tensor([-0.5, 2.0, 4.5])
+        )
 
     def test_evaluation_consistency(self):
         """Legendre and power give same values."""
@@ -71,7 +79,9 @@ class TestLegendrePolynomialPToPolynomial:
 
         p_np = np_leg.leg2poly(coeffs)
 
-        np.testing.assert_allclose(p.coeffs.numpy(), p_np, rtol=1e-10)
+        np.testing.assert_allclose(
+            p.as_subclass(torch.Tensor).numpy(), p_np, rtol=1e-10
+        )
 
 
 class TestPolynomialToLegendrePolynomialP:
@@ -81,13 +91,17 @@ class TestPolynomialToLegendrePolynomialP:
         """Constant 1 = P_0."""
         p = polynomial(torch.tensor([1.0]))
         c = polynomial_to_legendre_polynomial_p(p)
-        torch.testing.assert_close(c.coeffs, torch.tensor([1.0]))
+        torch.testing.assert_close(
+            c.as_subclass(torch.Tensor), torch.tensor([1.0])
+        )
 
     def test_x_to_leg(self):
         """x = P_1."""
         p = polynomial(torch.tensor([0.0, 1.0]))  # x
         c = polynomial_to_legendre_polynomial_p(p)
-        torch.testing.assert_close(c.coeffs, torch.tensor([0.0, 1.0]))
+        torch.testing.assert_close(
+            c.as_subclass(torch.Tensor), torch.tensor([0.0, 1.0])
+        )
 
     def test_x2_to_leg(self):
         """x^2 = (2*P_2 + P_0) / 3."""
@@ -95,7 +109,7 @@ class TestPolynomialToLegendrePolynomialP:
         c = polynomial_to_legendre_polynomial_p(p)
         # x^2 = (P_0 + 2*P_2) / 3 = 1/3 * P_0 + 2/3 * P_2
         torch.testing.assert_close(
-            c.coeffs,
+            c.as_subclass(torch.Tensor),
             torch.tensor([1.0 / 3.0, 0.0, 2.0 / 3.0]),
         )
 
@@ -105,7 +119,7 @@ class TestPolynomialToLegendrePolynomialP:
         c = polynomial_to_legendre_polynomial_p(p)
         # x^3 = (3*P_1 + 2*P_3) / 5
         torch.testing.assert_close(
-            c.coeffs,
+            c.as_subclass(torch.Tensor),
             torch.tensor([0.0, 3.0 / 5.0, 0.0, 2.0 / 5.0]),
         )
 
@@ -117,7 +131,10 @@ class TestPolynomialToLegendrePolynomialP:
         c_back = polynomial_to_legendre_polynomial_p(p)
 
         torch.testing.assert_close(
-            c_back.coeffs, coeffs_orig, atol=1e-10, rtol=1e-10
+            c_back.as_subclass(torch.Tensor),
+            coeffs_orig,
+            atol=1e-10,
+            rtol=1e-10,
         )
 
     def test_roundtrip_power_leg_power(self):
@@ -128,7 +145,10 @@ class TestPolynomialToLegendrePolynomialP:
         p_back = legendre_polynomial_p_to_polynomial(c)
 
         torch.testing.assert_close(
-            p_back.coeffs, coeffs_orig, atol=1e-10, rtol=1e-10
+            p_back.as_subclass(torch.Tensor),
+            coeffs_orig,
+            atol=1e-10,
+            rtol=1e-10,
         )
 
     def test_vs_numpy(self):
@@ -140,7 +160,9 @@ class TestPolynomialToLegendrePolynomialP:
 
         c_np = np_leg.poly2leg(coeffs)
 
-        np.testing.assert_allclose(c.coeffs.numpy(), c_np, rtol=1e-10)
+        np.testing.assert_allclose(
+            c.as_subclass(torch.Tensor).numpy(), c_np, rtol=1e-10
+        )
 
 
 class TestConversionAutograd:
@@ -155,7 +177,7 @@ class TestConversionAutograd:
         def fn(c):
             return legendre_polynomial_p_to_polynomial(
                 legendre_polynomial_p(c)
-            ).coeffs
+            ).as_subclass(torch.Tensor)
 
         assert torch.autograd.gradcheck(fn, (coeffs,), raise_exception=True)
 
@@ -166,7 +188,9 @@ class TestConversionAutograd:
         )
 
         def fn(c):
-            return polynomial_to_legendre_polynomial_p(polynomial(c)).coeffs
+            return polynomial_to_legendre_polynomial_p(
+                polynomial(c)
+            ).as_subclass(torch.Tensor)
 
         assert torch.autograd.gradcheck(fn, (coeffs,), raise_exception=True)
 
@@ -180,7 +204,7 @@ class TestConversionAutograd:
             leg = legendre_polynomial_p(c)
             poly = legendre_polynomial_p_to_polynomial(leg)
             back = polynomial_to_legendre_polynomial_p(poly)
-            return back.coeffs.sum()
+            return back.as_subclass(torch.Tensor).sum()
 
         assert torch.autograd.gradgradcheck(
             fn, (coeffs,), raise_exception=True

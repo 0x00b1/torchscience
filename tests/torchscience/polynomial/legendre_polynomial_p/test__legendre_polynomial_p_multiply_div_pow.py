@@ -25,7 +25,9 @@ class TestLegendrePolynomialPMultiply:
         a = legendre_polynomial_p(torch.tensor([2.0]))  # 2*P_0
         b = legendre_polynomial_p(torch.tensor([3.0]))  # 3*P_0
         c = legendre_polynomial_p_multiply(a, b)
-        torch.testing.assert_close(c.coeffs, torch.tensor([6.0]))
+        torch.testing.assert_close(
+            c.as_subclass(torch.Tensor), torch.tensor([6.0])
+        )
 
     def test_multiply_degree_1(self):
         """P_1 * P_1 = (1/3)*P_0 + (2/3)*P_2."""
@@ -34,7 +36,9 @@ class TestLegendrePolynomialPMultiply:
         c = legendre_polynomial_p_multiply(a, b)
         # P_1^2 = x^2 = (2*P_2 + P_0)/3
         expected = torch.tensor([1.0 / 3, 0.0, 2.0 / 3])
-        torch.testing.assert_close(c.coeffs, expected, atol=1e-6, rtol=1e-6)
+        torch.testing.assert_close(
+            c.as_subclass(torch.Tensor), expected, atol=1e-6, rtol=1e-6
+        )
 
     def test_multiply_vs_numpy(self):
         """Verify against NumPy's legmul."""
@@ -43,7 +47,10 @@ class TestLegendrePolynomialPMultiply:
         c = legendre_polynomial_p_multiply(a, b)
         expected = np.polynomial.legendre.legmul([1, 2, 3], [4, 5])
         torch.testing.assert_close(
-            c.coeffs, torch.tensor(expected).float(), atol=1e-5, rtol=1e-5
+            c.as_subclass(torch.Tensor),
+            torch.tensor(expected).float(),
+            atol=1e-5,
+            rtol=1e-5,
         )
 
     def test_multiply_operator(self):
@@ -53,7 +60,10 @@ class TestLegendrePolynomialPMultiply:
         c = a * b
         expected = np.polynomial.legendre.legmul([1, 2], [3, 4])
         torch.testing.assert_close(
-            c.coeffs, torch.tensor(expected).float(), atol=1e-5, rtol=1e-5
+            c.as_subclass(torch.Tensor),
+            torch.tensor(expected).float(),
+            atol=1e-5,
+            rtol=1e-5,
         )
 
     def test_multiply_commutativity(self):
@@ -62,7 +72,12 @@ class TestLegendrePolynomialPMultiply:
         b = legendre_polynomial_p(torch.tensor([4.0, 5.0]))
         c1 = legendre_polynomial_p_multiply(a, b)
         c2 = legendre_polynomial_p_multiply(b, a)
-        torch.testing.assert_close(c1.coeffs, c2.coeffs, atol=1e-6, rtol=1e-6)
+        torch.testing.assert_close(
+            c1.as_subclass(torch.Tensor),
+            c2.as_subclass(torch.Tensor),
+            atol=1e-6,
+            rtol=1e-6,
+        )
 
     def test_multiply_identity(self):
         """Multiplying by P_0 = 1 leaves series unchanged."""
@@ -70,7 +85,10 @@ class TestLegendrePolynomialPMultiply:
         one = legendre_polynomial_p(torch.tensor([1.0]))
         result = legendre_polynomial_p_multiply(a, one)
         torch.testing.assert_close(
-            result.coeffs, a.coeffs, atol=1e-6, rtol=1e-6
+            result.as_subclass(torch.Tensor),
+            a.as_subclass(torch.Tensor),
+            atol=1e-6,
+            rtol=1e-6,
         )
 
     def test_multiply_zero(self):
@@ -79,7 +97,10 @@ class TestLegendrePolynomialPMultiply:
         zero = legendre_polynomial_p(torch.tensor([0.0]))
         result = legendre_polynomial_p_multiply(a, zero)
         # Result should be all zeros
-        assert torch.allclose(result.coeffs, torch.zeros_like(result.coeffs))
+        assert torch.allclose(
+            result.as_subclass(torch.Tensor),
+            torch.zeros_like(result.as_subclass(torch.Tensor)),
+        )
 
 
 class TestLegendrePolynomialPDivmod:
@@ -106,9 +127,14 @@ class TestLegendrePolynomialPDivmod:
         a = legendre_polynomial_p_multiply(b, c)
         q, r = legendre_polynomial_p_divmod(a, b)
         # Quotient should be close to c
-        torch.testing.assert_close(q.coeffs, c.coeffs, atol=1e-5, rtol=1e-5)
+        torch.testing.assert_close(
+            q.as_subclass(torch.Tensor),
+            c.as_subclass(torch.Tensor),
+            atol=1e-5,
+            rtol=1e-5,
+        )
         # Remainder should be near zero
-        assert r.coeffs.abs().max() < 1e-10
+        assert r.as_subclass(torch.Tensor).abs().max() < 1e-10
 
     def test_divmod_vs_numpy(self):
         """Verify against NumPy's legdiv."""
@@ -119,10 +145,16 @@ class TestLegendrePolynomialPDivmod:
         q, r = legendre_polynomial_p_divmod(a, b)
         q_np, r_np = np.polynomial.legendre.legdiv(a_coeffs, b_coeffs)
         torch.testing.assert_close(
-            q.coeffs, torch.tensor(q_np).float(), atol=1e-5, rtol=1e-5
+            q.as_subclass(torch.Tensor),
+            torch.tensor(q_np).float(),
+            atol=1e-5,
+            rtol=1e-5,
         )
         torch.testing.assert_close(
-            r.coeffs, torch.tensor(r_np).float(), atol=1e-5, rtol=1e-5
+            r.as_subclass(torch.Tensor),
+            torch.tensor(r_np).float(),
+            atol=1e-5,
+            rtol=1e-5,
         )
 
     def test_div_operator(self):
@@ -131,7 +163,9 @@ class TestLegendrePolynomialPDivmod:
         b = legendre_polynomial_p(torch.tensor([1.0, 1.0]))
         q = a // b
         q_expected, _ = legendre_polynomial_p_divmod(a, b)
-        torch.testing.assert_close(q.coeffs, q_expected.coeffs)
+        torch.testing.assert_close(
+            q.as_subclass(torch.Tensor), q_expected.as_subclass(torch.Tensor)
+        )
 
     def test_mod_operator(self):
         """Test % operator returns remainder."""
@@ -139,7 +173,9 @@ class TestLegendrePolynomialPDivmod:
         b = legendre_polynomial_p(torch.tensor([1.0, 1.0]))
         r = a % b
         _, r_expected = legendre_polynomial_p_divmod(a, b)
-        torch.testing.assert_close(r.coeffs, r_expected.coeffs)
+        torch.testing.assert_close(
+            r.as_subclass(torch.Tensor), r_expected.as_subclass(torch.Tensor)
+        )
 
 
 class TestLegendrePolynomialPDiv:
@@ -151,7 +187,9 @@ class TestLegendrePolynomialPDiv:
         b = legendre_polynomial_p(torch.tensor([1.0, 1.0]))
         q = legendre_polynomial_p_div(a, b)
         q_expected, _ = legendre_polynomial_p_divmod(a, b)
-        torch.testing.assert_close(q.coeffs, q_expected.coeffs)
+        torch.testing.assert_close(
+            q.as_subclass(torch.Tensor), q_expected.as_subclass(torch.Tensor)
+        )
 
 
 class TestLegendrePolynomialPMod:
@@ -163,7 +201,9 @@ class TestLegendrePolynomialPMod:
         b = legendre_polynomial_p(torch.tensor([1.0, 1.0]))
         r = legendre_polynomial_p_mod(a, b)
         _, r_expected = legendre_polynomial_p_divmod(a, b)
-        torch.testing.assert_close(r.coeffs, r_expected.coeffs)
+        torch.testing.assert_close(
+            r.as_subclass(torch.Tensor), r_expected.as_subclass(torch.Tensor)
+        )
 
 
 class TestLegendrePolynomialPPow:
@@ -173,13 +213,17 @@ class TestLegendrePolynomialPPow:
         """p^0 = 1 (constant polynomial P_0)."""
         p = legendre_polynomial_p(torch.tensor([1.0, 2.0, 3.0]))
         result = legendre_polynomial_p_pow(p, 0)
-        torch.testing.assert_close(result.coeffs, torch.tensor([1.0]))
+        torch.testing.assert_close(
+            result.as_subclass(torch.Tensor), torch.tensor([1.0])
+        )
 
     def test_pow_1(self):
         """p^1 = p."""
         p = legendre_polynomial_p(torch.tensor([1.0, 2.0, 3.0]))
         result = legendre_polynomial_p_pow(p, 1)
-        torch.testing.assert_close(result.coeffs, p.coeffs)
+        torch.testing.assert_close(
+            result.as_subclass(torch.Tensor), p.as_subclass(torch.Tensor)
+        )
 
     def test_pow_2(self):
         """p^2 = p * p."""
@@ -187,7 +231,10 @@ class TestLegendrePolynomialPPow:
         result = legendre_polynomial_p_pow(p, 2)
         expected = legendre_polynomial_p_multiply(p, p)
         torch.testing.assert_close(
-            result.coeffs, expected.coeffs, atol=1e-5, rtol=1e-5
+            result.as_subclass(torch.Tensor),
+            expected.as_subclass(torch.Tensor),
+            atol=1e-5,
+            rtol=1e-5,
         )
 
     def test_pow_3(self):
@@ -197,7 +244,10 @@ class TestLegendrePolynomialPPow:
         p2 = legendre_polynomial_p_multiply(p, p)
         expected = legendre_polynomial_p_multiply(p2, p)
         torch.testing.assert_close(
-            result.coeffs, expected.coeffs, atol=1e-5, rtol=1e-5
+            result.as_subclass(torch.Tensor),
+            expected.as_subclass(torch.Tensor),
+            atol=1e-5,
+            rtol=1e-5,
         )
 
     def test_pow_4(self):
@@ -208,7 +258,10 @@ class TestLegendrePolynomialPPow:
         p2 = legendre_polynomial_p_multiply(p, p)
         expected = legendre_polynomial_p_multiply(p2, p2)
         torch.testing.assert_close(
-            result.coeffs, expected.coeffs, atol=1e-5, rtol=1e-5
+            result.as_subclass(torch.Tensor),
+            expected.as_subclass(torch.Tensor),
+            atol=1e-5,
+            rtol=1e-5,
         )
 
     def test_pow_operator(self):
@@ -217,7 +270,10 @@ class TestLegendrePolynomialPPow:
         result = p**2
         expected = legendre_polynomial_p_multiply(p, p)
         torch.testing.assert_close(
-            result.coeffs, expected.coeffs, atol=1e-5, rtol=1e-5
+            result.as_subclass(torch.Tensor),
+            expected.as_subclass(torch.Tensor),
+            atol=1e-5,
+            rtol=1e-5,
         )
 
     def test_pow_negative_raises(self):

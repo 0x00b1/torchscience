@@ -11,13 +11,13 @@ from torchscience.polynomial import (
 class TestLegendrePolynomialP:
     def test_create_from_coeffs(self):
         coeffs = torch.tensor([1.0, 2.0, 3.0])
-        p = LegendrePolynomialP(coeffs=coeffs)
-        torch.testing.assert_close(p.coeffs, coeffs)
+        p = LegendrePolynomialP(coeffs)
+        torch.testing.assert_close(p.as_subclass(torch.Tensor), coeffs)
 
     def test_constructor_function(self):
         coeffs = torch.tensor([1.0, 2.0, 3.0])
         p = legendre_polynomial_p(coeffs)
-        torch.testing.assert_close(p.coeffs, coeffs)
+        torch.testing.assert_close(p.as_subclass(torch.Tensor), coeffs)
 
     def test_domain_constant(self):
         assert LegendrePolynomialP.DOMAIN == (-1.0, 1.0)
@@ -28,5 +28,5 @@ class TestLegendrePolynomialP:
 
     def test_batched_coeffs(self):
         coeffs = torch.tensor([[1.0, 2.0], [3.0, 4.0]])  # batch of 2
-        p = LegendrePolynomialP(coeffs=coeffs)
-        assert p.coeffs.shape == (2, 2)
+        p = LegendrePolynomialP(coeffs)
+        assert p.shape == (2, 2)

@@ -1,6 +1,9 @@
 import torch
 
-from ._legendre_polynomial_p import LegendrePolynomialP
+from ._legendre_polynomial_p import (
+    LegendrePolynomialP,
+    legendre_polynomial_p,
+)
 from ._legendre_polynomial_p_evaluate import legendre_polynomial_p_evaluate
 
 
@@ -46,16 +49,16 @@ def legendre_polynomial_p_antiderivative(
     --------
     >>> a = legendre_polynomial_p(torch.tensor([1.0]))  # P_0 = 1
     >>> ia = legendre_polynomial_p_antiderivative(a)
-    >>> ia.coeffs  # integral(1) = x = P_1
-    tensor([0., 1.])
+    >>> ia  # integral(1) = x = P_1
+    LegendrePolynomialP(tensor([0., 1.]))
     """
     if order < 0:
         raise ValueError(f"Order must be non-negative, got {order}")
 
-    if order == 0:
-        return LegendrePolynomialP(coeffs=a.coeffs.clone())
+    coeffs = a.as_subclass(torch.Tensor)
 
-    coeffs = a.coeffs
+    if order == 0:
+        return legendre_polynomial_p(coeffs.clone())
 
     # Apply antiderivative 'order' times
     for i in range(order):
@@ -100,7 +103,7 @@ def legendre_polynomial_p_antiderivative(
         # Set constant of integration so F(0) = constant (for first integration)
         # or F(0) = 0 (for subsequent integrations)
         k_val = constant if i == 0 else 0.0
-        temp = LegendrePolynomialP(coeffs=i_coeffs)
+        temp = legendre_polynomial_p(i_coeffs)
         x_zero = torch.zeros((), dtype=coeffs.dtype, device=coeffs.device)
         val_at_zero = legendre_polynomial_p_evaluate(temp, x_zero)
         # P_0(x) = 1, so adding delta to i_coeffs[..., 0] shifts F(0) by delta
@@ -108,4 +111,4 @@ def legendre_polynomial_p_antiderivative(
 
         coeffs = i_coeffs
 
-    return LegendrePolynomialP(coeffs=coeffs)
+    return legendre_polynomial_p(coeffs)

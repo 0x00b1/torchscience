@@ -159,7 +159,9 @@ class TestLegendrePolynomialPFit:
 
         c = legendre_polynomial_p_fit(x, y, degree=2)
 
-        torch.testing.assert_close(c.coeffs, coeffs_true, atol=1e-5, rtol=1e-5)
+        torch.testing.assert_close(
+            c.as_subclass(torch.Tensor), coeffs_true, atol=1e-5, rtol=1e-5
+        )
 
     def test_fit_noisy_data(self):
         """Fit with noisy data."""
@@ -187,7 +189,10 @@ class TestLegendrePolynomialPFit:
         c_np = np_leg.legfit(x, y, deg)
 
         np.testing.assert_allclose(
-            c_torch.coeffs.numpy(), c_np, rtol=1e-5, atol=1e-5
+            c_torch.as_subclass(torch.Tensor).numpy(),
+            c_np,
+            rtol=1e-5,
+            atol=1e-5,
         )
 
     def test_fit_outside_domain_raises(self):
@@ -332,7 +337,9 @@ class TestLegendrePolynomialPFittingAutograd:
         )
 
         def fn(y_):
-            return legendre_polynomial_p_fit(x, y_, degree=2).coeffs
+            return legendre_polynomial_p_fit(x, y_, degree=2).as_subclass(
+                torch.Tensor
+            )
 
         assert torch.autograd.gradcheck(fn, (y,), raise_exception=True)
 
@@ -344,6 +351,10 @@ class TestLegendrePolynomialPFittingAutograd:
         )
 
         def fn(y_):
-            return legendre_polynomial_p_fit(x, y_, degree=2).coeffs.sum()
+            return (
+                legendre_polynomial_p_fit(x, y_, degree=2)
+                .as_subclass(torch.Tensor)
+                .sum()
+            )
 
         assert torch.autograd.gradgradcheck(fn, (y,), raise_exception=True)

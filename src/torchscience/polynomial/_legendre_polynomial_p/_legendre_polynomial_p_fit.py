@@ -3,7 +3,10 @@ from torch import Tensor
 
 from torchscience.polynomial._exceptions import DomainError
 
-from ._legendre_polynomial_p import LegendrePolynomialP
+from ._legendre_polynomial_p import (
+    LegendrePolynomialP,
+    legendre_polynomial_p,
+)
 from ._legendre_polynomial_p_vandermonde import (
     legendre_polynomial_p_vandermonde,
 )
@@ -61,4 +64,4 @@ def legendre_polynomial_p_fit(
     result = torch.linalg.lstsq(V, y.unsqueeze(-1))
     coeffs = result.solution.squeeze(-1)
 
-    return LegendrePolynomialP(coeffs=coeffs)
+    return legendre_polynomial_p(coeffs)

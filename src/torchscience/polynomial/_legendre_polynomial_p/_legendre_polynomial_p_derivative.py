@@ -1,6 +1,9 @@
 import torch
 
-from ._legendre_polynomial_p import LegendrePolynomialP
+from ._legendre_polynomial_p import (
+    LegendrePolynomialP,
+    legendre_polynomial_p,
+)
 
 
 def legendre_polynomial_p_derivative(
@@ -37,16 +40,18 @@ def legendre_polynomial_p_derivative(
     --------
     >>> a = legendre_polynomial_p(torch.tensor([0.0, 1.0]))  # P_1
     >>> da = legendre_polynomial_p_derivative(a)
-    >>> da.coeffs  # d/dx P_1 = 1 = P_0
-    tensor([1.])
+    >>> da  # d/dx P_1 = 1 = P_0
+    LegendrePolynomialP(tensor([1.]))
     """
     if order < 0:
         raise ValueError(f"Order must be non-negative, got {order}")
 
-    if order == 0:
-        return LegendrePolynomialP(coeffs=a.coeffs.clone())
+    coeffs = a.as_subclass(torch.Tensor)
 
-    coeffs = a.coeffs.clone()  # Will be modified during iteration
+    if order == 0:
+        return legendre_polynomial_p(coeffs.clone())
+
+    coeffs = coeffs.clone()  # Will be modified during iteration
     n = coeffs.shape[-1]
 
     # Apply derivative 'order' times
@@ -91,4 +96,4 @@ def legendre_polynomial_p_derivative(
         coeffs = der
         n = new_n
 
-    return LegendrePolynomialP(coeffs=coeffs)
+    return legendre_polynomial_p(coeffs)

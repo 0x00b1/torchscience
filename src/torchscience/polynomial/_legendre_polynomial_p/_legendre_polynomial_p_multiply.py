@@ -1,7 +1,10 @@
 import numpy as np
 import torch
 
-from ._legendre_polynomial_p import LegendrePolynomialP
+from ._legendre_polynomial_p import (
+    LegendrePolynomialP,
+    legendre_polynomial_p,
+)
 
 
 def legendre_polynomial_p_multiply(
@@ -39,11 +42,12 @@ def legendre_polynomial_p_multiply(
     >>> a = legendre_polynomial_p(torch.tensor([0.0, 1.0]))  # P_1
     >>> b = legendre_polynomial_p(torch.tensor([0.0, 1.0]))  # P_1
     >>> c = legendre_polynomial_p_multiply(a, b)
-    >>> c.coeffs  # P_1 * P_1 = (1/3)*P_0 + (2/3)*P_2
-    tensor([0.3333, 0.0000, 0.6667])
+    >>> c  # P_1 * P_1 = (1/3)*P_0 + (2/3)*P_2
+    LegendrePolynomialP(tensor([0.3333, 0.0000, 0.6667]))
     """
-    a_coeffs = a.coeffs
-    b_coeffs = b.coeffs
+    # Convert to plain tensors to avoid operator interception
+    a_coeffs = a.as_subclass(torch.Tensor)
+    b_coeffs = b.as_subclass(torch.Tensor)
 
     # Use NumPy's legmul which implements the linearization formula
     a_np = a_coeffs.detach().cpu().numpy()
@@ -55,4 +59,4 @@ def legendre_polynomial_p_multiply(
         dtype=a_coeffs.dtype, device=a_coeffs.device
     )
 
-    return LegendrePolynomialP(coeffs=result_coeffs)
+    return legendre_polynomial_p(result_coeffs)

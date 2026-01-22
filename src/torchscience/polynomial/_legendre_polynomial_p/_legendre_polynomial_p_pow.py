@@ -1,6 +1,9 @@
 import torch
 
-from ._legendre_polynomial_p import LegendrePolynomialP
+from ._legendre_polynomial_p import (
+    LegendrePolynomialP,
+    legendre_polynomial_p,
+)
 from ._legendre_polynomial_p_multiply import legendre_polynomial_p_multiply
 
 
@@ -38,18 +41,18 @@ def legendre_polynomial_p_pow(
     if n < 0:
         raise ValueError(f"Exponent must be non-negative, got {n}")
 
+    coeffs = a.as_subclass(torch.Tensor)
+
     if n == 0:
         # a^0 = P_0 = 1
-        ones_shape = list(a.coeffs.shape)
+        ones_shape = list(coeffs.shape)
         ones_shape[-1] = 1
-        return LegendrePolynomialP(
-            coeffs=torch.ones(
-                ones_shape, dtype=a.coeffs.dtype, device=a.coeffs.device
-            )
+        return legendre_polynomial_p(
+            torch.ones(ones_shape, dtype=coeffs.dtype, device=coeffs.device)
         )
 
     if n == 1:
-        return LegendrePolynomialP(coeffs=a.coeffs.clone())
+        return legendre_polynomial_p(coeffs.clone())
 
     # Binary exponentiation
     result = None
@@ -58,7 +61,9 @@ def legendre_polynomial_p_pow(
     while n > 0:
         if n % 2 == 1:
             if result is None:
-                result = LegendrePolynomialP(coeffs=base.coeffs.clone())
+                result = legendre_polynomial_p(
+                    base.as_subclass(torch.Tensor).clone()
+                )
             else:
                 result = legendre_polynomial_p_multiply(result, base)
         base = legendre_polynomial_p_multiply(base, base)
