@@ -89,3 +89,38 @@ class TestSymmetricGeneralizedEigenvalue:
             rtol=1e-10,
             atol=1e-10,
         )
+
+    def test_batched(self):
+        """Test batched input."""
+        batch_size = 3
+        n = 4
+
+        torch.manual_seed(123)
+
+        # Generate batch of problems
+        a_list = []
+        b_list = []
+        for _ in range(batch_size):
+            X = torch.randn(n, n, dtype=torch.float64)
+            a_list.append(X @ X.T + torch.eye(n, dtype=torch.float64))
+            Y = torch.randn(n, n, dtype=torch.float64)
+            b_list.append(Y @ Y.T + torch.eye(n, dtype=torch.float64))
+
+        a = torch.stack(a_list)
+        b = torch.stack(b_list)
+
+        result = symmetric_generalized_eigenvalue(a, b)
+
+        assert result.eigenvalues.shape == (batch_size, n)
+        assert result.eigenvectors.shape == (batch_size, n, n)
+        assert result.info.shape == (batch_size,)
+
+        # Verify each batch element matches unbatched
+        for i in range(batch_size):
+            single_result = symmetric_generalized_eigenvalue(a[i], b[i])
+            torch.testing.assert_close(
+                result.eigenvalues[i],
+                single_result.eigenvalues,
+                rtol=1e-10,
+                atol=1e-10,
+            )
