@@ -158,6 +158,9 @@ def solve_ivp(
         Gradient computation method:
         - None: Use standard PyTorch autograd (default)
         - 'adjoint': Use continuous adjoint method for O(1) memory
+        - 'lazy_adjoint': Alias for 'adjoint'. Emphasizes that gradient
+          computation is deferred until backward() is called, allowing
+          inspection of y_final before deciding whether to compute gradients.
         - 'checkpoint': Use checkpointed adjoint (requires checkpoints parameter)
         - 'binomial': Use binomial checkpointing (Revolve algorithm) for
           O(log n) memory with O(n log n) recomputation
@@ -255,11 +258,17 @@ def solve_ivp(
     solver = _METHOD_MAP[method_lower]
 
     # Validate sensitivity option
-    valid_sensitivities = {None, "adjoint", "checkpoint", "binomial"}
+    valid_sensitivities = {
+        None,
+        "adjoint",
+        "lazy_adjoint",
+        "checkpoint",
+        "binomial",
+    }
     if sensitivity not in valid_sensitivities:
         raise ValueError(
             f"Invalid sensitivity '{sensitivity}'. "
-            f"Valid options: None, 'adjoint', 'checkpoint', 'binomial'"
+            f"Valid options: None, 'adjoint', 'lazy_adjoint', 'checkpoint', 'binomial'"
         )
 
     # Validate checkpoint parameter
@@ -269,7 +278,12 @@ def solve_ivp(
         )
 
     # Apply sensitivity wrapper if specified
-    if sensitivity == "adjoint":
+    # Note: "lazy_adjoint" is an alias for "adjoint" - both defer gradient
+    # computation until backward() is called, which is the standard behavior
+    # of torch.autograd.Function. The "lazy" name emphasizes that the adjoint
+    # ODE is not solved until the user calls backward(), allowing inspection
+    # of y_final before deciding whether to compute gradients.
+    if sensitivity in ("adjoint", "lazy_adjoint"):
         solver = adjoint(
             solver,
             checkpoints=None,

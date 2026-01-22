@@ -170,6 +170,109 @@ class TestSecondOrderGradients:
         assert torch.allclose(hvp, expected, rtol=1e-3)
 
 
+class TestLazyAdjoint:
+    """Tests for lazy adjoint mode (defer computation until needed)."""
+
+    def test_lazy_adjoint_basic(self):
+        """lazy_adjoint should defer gradient computation."""
+        from torchscience.integration.initial_value_problem import solve_ivp
+
+        theta = torch.tensor([1.0], requires_grad=True, dtype=torch.float64)
+
+        def dynamics(t, y):
+            return -theta * y
+
+        y0 = torch.tensor([1.0], dtype=torch.float64)
+
+        # With lazy adjoint, forward solve happens but adjoint is deferred
+        y_final, _ = solve_ivp(
+            dynamics,
+            y0,
+            t_span=(0.0, 1.0),
+            sensitivity="lazy_adjoint",
+            params=[theta],
+        )
+
+        # y_final should be available
+        assert y_final is not None
+        assert y_final.requires_grad  # Should have grad_fn
+
+        # No gradient computed yet
+        assert theta.grad is None
+
+        # Only when we call backward does adjoint run
+        y_final.sum().backward()
+
+        assert theta.grad is not None
+        assert torch.isfinite(theta.grad)
+
+    def test_lazy_adjoint_conditional_backward(self):
+        """lazy_adjoint allows inspecting y_final before deciding to backprop."""
+        from torchscience.integration.initial_value_problem import solve_ivp
+
+        theta = torch.tensor([1.0], requires_grad=True, dtype=torch.float64)
+
+        def dynamics(t, y):
+            return -theta * y
+
+        y0 = torch.tensor([1.0], dtype=torch.float64)
+
+        y_final, _ = solve_ivp(
+            dynamics,
+            y0,
+            t_span=(0.0, 1.0),
+            sensitivity="lazy_adjoint",
+            params=[theta],
+        )
+
+        # Conditionally skip backward based on y_final value
+        if y_final.abs().max() > 0.1:
+            y_final.sum().backward()
+            assert theta.grad is not None
+        else:
+            # No backward - no gradient
+            assert theta.grad is None
+
+    def test_lazy_adjoint_matches_adjoint(self):
+        """lazy_adjoint should produce the same gradients as adjoint."""
+        from torchscience.integration.initial_value_problem import solve_ivp
+
+        theta1 = torch.tensor([1.5], requires_grad=True, dtype=torch.float64)
+        theta2 = torch.tensor([1.5], requires_grad=True, dtype=torch.float64)
+
+        def dynamics1(t, y):
+            return -theta1 * y
+
+        def dynamics2(t, y):
+            return -theta2 * y
+
+        y0 = torch.tensor([1.0], dtype=torch.float64)
+
+        # Solve with adjoint
+        y_final1, _ = solve_ivp(
+            dynamics1,
+            y0,
+            t_span=(0.0, 1.0),
+            sensitivity="adjoint",
+            params=[theta1],
+        )
+        y_final1.sum().backward()
+
+        # Solve with lazy_adjoint
+        y_final2, _ = solve_ivp(
+            dynamics2,
+            y0,
+            t_span=(0.0, 1.0),
+            sensitivity="lazy_adjoint",
+            params=[theta2],
+        )
+        y_final2.sum().backward()
+
+        # Both should give the same result
+        assert torch.allclose(y_final1, y_final2)
+        assert torch.allclose(theta1.grad, theta2.grad)
+
+
 class TestGradientClipping:
     """Tests for gradient clipping during adjoint integration."""
 
