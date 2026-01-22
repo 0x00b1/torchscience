@@ -2,12 +2,14 @@ from __future__ import annotations
 
 from typing import Tuple, Union
 
+import torch
 from torch import Tensor
+from torch.amp import custom_fwd
 
 from torchscience.differentiation._derivative import derivative
 
 
-def divergence(
+def _divergence_impl(
     vector_field: Tensor,
     dx: Union[float, Tuple[float, ...]] = 1.0,
     dim: Tuple[int, ...] | None = None,
@@ -109,3 +111,51 @@ def divergence(
             result = result + partial
 
     return result
+
+
+@custom_fwd(device_type="cpu", cast_inputs=torch.float32)
+def divergence(
+    vector_field: Tensor,
+    dx: Union[float, Tuple[float, ...]] = 1.0,
+    dim: Tuple[int, ...] | None = None,
+    accuracy: int = 2,
+    boundary: str = "replicate",
+) -> Tensor:
+    """Compute divergence of a vector field.
+
+    The divergence is the sum of partial derivatives of each component with respect
+    to its corresponding coordinate: div(V) = sum_i dV_i/dx_i.
+
+    Parameters
+    ----------
+    vector_field : Tensor
+        Input vector field with shape (..., ndim, *spatial_dims) where the
+        component dimension contains the vector components and spatial_dims
+        are the spatial dimensions.
+    dx : float or tuple of float, optional
+        Grid spacing. Scalar applies to all dimensions, or provide per-dimension.
+        Default is 1.0.
+    dim : tuple of int, optional
+        Spatial dimensions over which to compute divergence. Default uses all
+        dimensions after the component dimension.
+    accuracy : int, optional
+        Accuracy order of the finite difference approximation. Default is 2.
+    boundary : str, optional
+        Boundary handling: "replicate", "zeros", "reflect", "circular", "valid".
+        Default is "replicate".
+
+    Returns
+    -------
+    Tensor
+        Divergence field with shape (..., *spatial_dims).
+
+    Examples
+    --------
+    >>> # Divergence of (x, y) is 2
+    >>> x = torch.linspace(0, 1, 21)
+    >>> y = torch.linspace(0, 1, 21)
+    >>> X, Y = torch.meshgrid(x, y, indexing="ij")
+    >>> V = torch.stack([X, Y], dim=0)  # Shape: (2, 21, 21)
+    >>> div = divergence(V, dx=0.05)  # Shape: (21, 21)
+    """
+    return _divergence_impl(vector_field, dx, dim, accuracy, boundary)

@@ -4,11 +4,12 @@ from typing import Tuple, Union
 
 import torch
 from torch import Tensor
+from torch.amp import custom_fwd
 
 from torchscience.differentiation._derivative import derivative
 
 
-def laplacian(
+def _laplacian_impl(
     field: Tensor,
     dx: Union[float, Tuple[float, ...]] = 1.0,
     dim: Tuple[int, ...] | None = None,
@@ -83,3 +84,47 @@ def laplacian(
         result = result + second_deriv
 
     return result
+
+
+@custom_fwd(device_type="cpu", cast_inputs=torch.float32)
+def laplacian(
+    field: Tensor,
+    dx: Union[float, Tuple[float, ...]] = 1.0,
+    dim: Tuple[int, ...] | None = None,
+    accuracy: int = 2,
+    boundary: str = "replicate",
+) -> Tensor:
+    """Compute Laplacian of a scalar field.
+
+    The Laplacian is the sum of second partial derivatives: nabla^2 f = sum_i d^2f/dx_i^2.
+
+    Parameters
+    ----------
+    field : Tensor
+        Input scalar field with shape (..., *spatial_dims).
+    dx : float or tuple of float, optional
+        Grid spacing. Scalar applies to all dimensions, or provide per-dimension.
+        Default is 1.0.
+    dim : tuple of int, optional
+        Spatial dimensions over which to compute Laplacian. Default uses all dimensions.
+    accuracy : int, optional
+        Accuracy order of the finite difference approximation. Default is 2.
+    boundary : str, optional
+        Boundary handling: "replicate", "zeros", "reflect", "circular", "valid".
+        Default is "replicate".
+
+    Returns
+    -------
+    Tensor
+        Laplacian field with the same shape as the input.
+
+    Examples
+    --------
+    >>> # Laplacian of x^2 + y^2 is 4
+    >>> x = torch.linspace(0, 1, 21)
+    >>> y = torch.linspace(0, 1, 21)
+    >>> X, Y = torch.meshgrid(x, y, indexing="ij")
+    >>> f = X**2 + Y**2
+    >>> lap = laplacian(f, dx=0.05)  # Should be ~4
+    """
+    return _laplacian_impl(field, dx, dim, accuracy, boundary)

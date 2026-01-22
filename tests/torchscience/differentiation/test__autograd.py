@@ -113,3 +113,63 @@ class TestGradientAutocast:
 
         # Result should be fp32
         assert result.dtype == torch.float32
+
+
+class TestAllOperatorsAutocast:
+    """Autocast tests for all differentiation operators."""
+
+    def test_derivative_autocast(self):
+        from torchscience.differentiation import derivative
+
+        field = torch.randn(16, 16, dtype=torch.float16)
+        with torch.amp.autocast("cpu", dtype=torch.float16):
+            result = derivative(field, dim=-1, dx=0.1)
+        assert result.dtype == torch.float32
+
+    def test_laplacian_autocast(self):
+        from torchscience.differentiation import laplacian
+
+        field = torch.randn(16, 16, dtype=torch.float16)
+        with torch.amp.autocast("cpu", dtype=torch.float16):
+            result = laplacian(field, dx=0.1)
+        assert result.dtype == torch.float32
+
+    def test_hessian_autocast(self):
+        from torchscience.differentiation import hessian
+
+        field = torch.randn(16, 16, dtype=torch.float16)
+        with torch.amp.autocast("cpu", dtype=torch.float16):
+            result = hessian(field, dx=0.1)
+        assert result.dtype == torch.float32
+
+    def test_biharmonic_autocast(self):
+        from torchscience.differentiation import biharmonic
+
+        field = torch.randn(16, 16, dtype=torch.float16)
+        with torch.amp.autocast("cpu", dtype=torch.float16):
+            result = biharmonic(field, dx=0.1)
+        assert result.dtype == torch.float32
+
+    def test_divergence_autocast(self):
+        from torchscience.differentiation import divergence
+
+        field = torch.randn(2, 16, 16, dtype=torch.float16)
+        with torch.amp.autocast("cpu", dtype=torch.float16):
+            result = divergence(field, dx=0.1)
+        assert result.dtype == torch.float32
+
+    def test_curl_autocast(self):
+        from torchscience.differentiation import curl
+
+        field = torch.randn(3, 8, 8, 8, dtype=torch.float16)
+        with torch.amp.autocast("cpu", dtype=torch.float16):
+            result = curl(field, dx=0.1)
+        assert result.dtype == torch.float32
+
+    def test_jacobian_autocast(self):
+        from torchscience.differentiation import jacobian
+
+        field = torch.randn(3, 8, 8, 8, dtype=torch.float16)
+        with torch.amp.autocast("cpu", dtype=torch.float16):
+            result = jacobian(field, dx=0.1)
+        assert result.dtype == torch.float32
