@@ -154,3 +154,41 @@ class TestSymmetricGeneralizedEigenvalue:
         assert torch.autograd.gradcheck(
             func, (a_upper, b_upper), eps=1e-6, atol=1e-4, rtol=1e-4
         )
+
+    def test_singular_b(self):
+        """Test that singular B matrix returns info != 0."""
+        a = torch.eye(3, dtype=torch.float64)
+        b = torch.zeros(3, 3, dtype=torch.float64)  # Singular
+
+        result = symmetric_generalized_eigenvalue(a, b)
+
+        assert result.info.item() != 0
+
+    def test_identity_b(self):
+        """Test that B=I reduces to standard eigenvalue problem."""
+        torch.manual_seed(789)
+        n = 4
+
+        X = torch.randn(n, n, dtype=torch.float64)
+        a = X @ X.T
+        b = torch.eye(n, dtype=torch.float64)
+
+        result = symmetric_generalized_eigenvalue(a, b)
+        expected = torch.linalg.eigvalsh(a)
+
+        torch.testing.assert_close(
+            result.eigenvalues,
+            expected,
+            rtol=1e-10,
+            atol=1e-10,
+        )
+
+    def test_dtype_float32(self):
+        """Test float32 input."""
+        a = torch.tensor([[2.0, 1.0], [1.0, 3.0]], dtype=torch.float32)
+        b = torch.eye(2, dtype=torch.float32)
+
+        result = symmetric_generalized_eigenvalue(a, b)
+
+        assert result.eigenvalues.dtype == torch.float32
+        assert result.info.item() == 0
