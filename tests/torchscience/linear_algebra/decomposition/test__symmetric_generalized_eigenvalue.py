@@ -130,20 +130,27 @@ class TestSymmetricGeneralizedEigenvalue:
         torch.manual_seed(456)
         n = 3
 
-        # Generate well-conditioned matrices
+        # Generate well-conditioned matrices (upper triangular parts)
+        # We use upper triangular matrices as inputs and symmetrize inside
+        # the function to handle gradcheck's element-wise perturbations correctly.
         X = torch.randn(n, n, dtype=torch.float64)
-        a = X @ X.T + 2 * torch.eye(n, dtype=torch.float64)
-        a.requires_grad_(True)
+        a_upper = X @ X.T + 2 * torch.eye(n, dtype=torch.float64)
+        a_upper.requires_grad_(True)
 
         Y = torch.randn(n, n, dtype=torch.float64)
-        b = Y @ Y.T + 2 * torch.eye(n, dtype=torch.float64)
-        b.requires_grad_(True)
+        b_upper = Y @ Y.T + 2 * torch.eye(n, dtype=torch.float64)
+        b_upper.requires_grad_(True)
 
-        def func(a, b):
-            result = symmetric_generalized_eigenvalue(a, b)
+        def func(a_input, b_input):
+            # Symmetrize inside the function so gradcheck perturbations
+            # are properly reflected (perturbing one element affects both
+            # the upper and lower triangular parts)
+            a_sym = (a_input + a_input.T) / 2
+            b_sym = (b_input + b_input.T) / 2
+            result = symmetric_generalized_eigenvalue(a_sym, b_sym)
             # Sum eigenvalues for scalar output
             return result.eigenvalues.sum()
 
         assert torch.autograd.gradcheck(
-            func, (a, b), eps=1e-6, atol=1e-4, rtol=1e-4
+            func, (a_upper, b_upper), eps=1e-6, atol=1e-4, rtol=1e-4
         )
