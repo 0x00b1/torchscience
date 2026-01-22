@@ -27,3 +27,25 @@ class TestGradientAutograd:
             return g.sum()
 
         assert gradgradcheck(grad_fn, (field,), eps=1e-6, atol=1e-4, rtol=1e-3)
+
+
+class TestGradientVmap:
+    """Tests for gradient vmap support."""
+
+    def test_gradient_vmap_batch(self):
+        """Gradient works with torch.vmap over batch dimension."""
+        batch_fields = torch.randn(4, 16, 16)
+
+        # vmap over batch dimension
+        batched_gradient = torch.vmap(lambda f: gradient(f, dx=0.1), in_dims=0)
+
+        result = batched_gradient(batch_fields)
+
+        # Each field is 16x16, gradient adds 2 components
+        assert result.shape == (4, 2, 16, 16)
+
+        # Compare with manual loop
+        manual = torch.stack(
+            [gradient(batch_fields[i], dx=0.1) for i in range(4)]
+        )
+        torch.testing.assert_close(result, manual)
