@@ -3,7 +3,10 @@ from torch import Tensor
 
 from torchscience.polynomial._exceptions import DomainError
 
-from ._chebyshev_polynomial_u import ChebyshevPolynomialU
+from ._chebyshev_polynomial_u import (
+    ChebyshevPolynomialU,
+    chebyshev_polynomial_u,
+)
 from ._chebyshev_polynomial_u_vandermonde import (
     chebyshev_polynomial_u_vandermonde,
 )
@@ -61,4 +64,4 @@ def chebyshev_polynomial_u_fit(
     result = torch.linalg.lstsq(V, y.unsqueeze(-1))
     coeffs = result.solution.squeeze(-1)
 
-    return ChebyshevPolynomialU(coeffs=coeffs)
+    return chebyshev_polynomial_u(coeffs)

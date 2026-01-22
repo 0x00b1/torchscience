@@ -1,4 +1,9 @@
-from ._chebyshev_polynomial_u import ChebyshevPolynomialU
+import torch
+
+from ._chebyshev_polynomial_u import (
+    ChebyshevPolynomialU,
+    chebyshev_polynomial_u,
+)
 
 
 def chebyshev_polynomial_u_negate(
@@ -20,7 +25,7 @@ def chebyshev_polynomial_u_negate(
     --------
     >>> a = chebyshev_polynomial_u(torch.tensor([1.0, -2.0, 3.0]))
     >>> b = chebyshev_polynomial_u_negate(a)
-    >>> b.coeffs
-    tensor([-1.,  2., -3.])
+    >>> b
+    ChebyshevPolynomialU(tensor([-1.,  2., -3.]))
     """
-    return ChebyshevPolynomialU(coeffs=-a.coeffs)
+    return chebyshev_polynomial_u(-a.as_subclass(torch.Tensor))

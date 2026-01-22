@@ -1,7 +1,10 @@
 import torch
 from torch import Tensor
 
-from ._chebyshev_polynomial_u import ChebyshevPolynomialU
+from ._chebyshev_polynomial_u import (
+    ChebyshevPolynomialU,
+    chebyshev_polynomial_u,
+)
 from ._chebyshev_polynomial_u_multiply import chebyshev_polynomial_u_multiply
 
 
@@ -36,22 +39,20 @@ def chebyshev_polynomial_u_from_roots(
 
     if n == 0:
         # Empty roots -> constant 1
-        return ChebyshevPolynomialU(
-            coeffs=torch.ones(1, dtype=roots.dtype, device=roots.device)
+        return chebyshev_polynomial_u(
+            torch.ones(1, dtype=roots.dtype, device=roots.device)
         )
 
     # Start with (x - r_0) = -r_0 * U_0 + (1/2) * U_1
     # Since x = U_1/2 in U-basis
-    result = ChebyshevPolynomialU(
-        coeffs=torch.tensor(
-            [-roots[0], 0.5], dtype=roots.dtype, device=roots.device
-        )
+    result = chebyshev_polynomial_u(
+        torch.tensor([-roots[0], 0.5], dtype=roots.dtype, device=roots.device)
     )
 
     # Multiply by each subsequent (x - r_k)
     for k in range(1, n):
-        factor = ChebyshevPolynomialU(
-            coeffs=torch.tensor(
+        factor = chebyshev_polynomial_u(
+            torch.tensor(
                 [-roots[k], 0.5], dtype=roots.dtype, device=roots.device
             )
         )

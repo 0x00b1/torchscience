@@ -1,6 +1,9 @@
 import torch
 
-from ._chebyshev_polynomial_u import ChebyshevPolynomialU
+from ._chebyshev_polynomial_u import (
+    ChebyshevPolynomialU,
+    chebyshev_polynomial_u,
+)
 from ._chebyshev_polynomial_u_multiply import chebyshev_polynomial_u_multiply
 
 
@@ -39,16 +42,14 @@ def chebyshev_polynomial_u_pow(
 
     if n == 0:
         # a^0 = U_0 = 1
-        ones_shape = list(a.coeffs.shape)
+        ones_shape = list(a.shape)
         ones_shape[-1] = 1
-        return ChebyshevPolynomialU(
-            coeffs=torch.ones(
-                ones_shape, dtype=a.coeffs.dtype, device=a.coeffs.device
-            )
+        return chebyshev_polynomial_u(
+            torch.ones(ones_shape, dtype=a.dtype, device=a.device)
         )
 
     if n == 1:
-        return ChebyshevPolynomialU(coeffs=a.coeffs.clone())
+        return chebyshev_polynomial_u(a.clone())
 
     # Binary exponentiation
     result = None
@@ -57,7 +58,7 @@ def chebyshev_polynomial_u_pow(
     while n > 0:
         if n % 2 == 1:
             if result is None:
-                result = ChebyshevPolynomialU(coeffs=base.coeffs.clone())
+                result = chebyshev_polynomial_u(base.clone())
             else:
                 result = chebyshev_polynomial_u_multiply(result, base)
         base = chebyshev_polynomial_u_multiply(base, base)

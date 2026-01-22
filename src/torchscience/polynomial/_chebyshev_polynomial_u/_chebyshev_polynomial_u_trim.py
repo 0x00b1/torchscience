@@ -1,6 +1,9 @@
 import torch
 
-from ._chebyshev_polynomial_u import ChebyshevPolynomialU
+from ._chebyshev_polynomial_u import (
+    ChebyshevPolynomialU,
+    chebyshev_polynomial_u,
+)
 
 
 def chebyshev_polynomial_u_trim(
@@ -24,10 +27,10 @@ def chebyshev_polynomial_u_trim(
     Examples
     --------
     >>> c = chebyshev_polynomial_u(torch.tensor([1.0, 2.0, 0.0, 0.0]))
-    >>> chebyshev_polynomial_u_trim(c).coeffs
-    tensor([1., 2.])
+    >>> chebyshev_polynomial_u_trim(c)
+    ChebyshevPolynomialU(tensor([1., 2.]))
     """
-    coeffs = c.coeffs
+    coeffs = c.as_subclass(torch.Tensor)
     n = coeffs.shape[-1]
 
     # Find last coefficient larger than tolerance
@@ -40,4 +43,4 @@ def chebyshev_polynomial_u_trim(
     # Keep at least one coefficient
     last_nonzero = max(last_nonzero, 0)
 
-    return ChebyshevPolynomialU(coeffs=coeffs[..., : last_nonzero + 1].clone())
+    return chebyshev_polynomial_u(coeffs[..., : last_nonzero + 1].clone())

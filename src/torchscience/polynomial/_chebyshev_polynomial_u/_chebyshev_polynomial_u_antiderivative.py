@@ -1,6 +1,9 @@
 import torch
 
-from ._chebyshev_polynomial_u import ChebyshevPolynomialU
+from ._chebyshev_polynomial_u import (
+    ChebyshevPolynomialU,
+    chebyshev_polynomial_u,
+)
 from ._chebyshev_polynomial_u_evaluate import chebyshev_polynomial_u_evaluate
 
 
@@ -42,15 +45,15 @@ def chebyshev_polynomial_u_antiderivative(
     --------
     >>> a = chebyshev_polynomial_u(torch.tensor([1.0]))  # U_0 = 1
     >>> ia = chebyshev_polynomial_u_antiderivative(a)
-    >>> ia.coeffs  # integral(1) = x = U_1/2, so need 2*U_1
+    >>> ia  # integral(1) = x = U_1/2, so need 2*U_1
     """
     if order < 0:
         raise ValueError(f"Order must be non-negative, got {order}")
 
     if order == 0:
-        return ChebyshevPolynomialU(coeffs=a.coeffs.clone())
+        return chebyshev_polynomial_u(a.clone())
 
-    coeffs = a.coeffs
+    coeffs = a.as_subclass(torch.Tensor)
 
     # Apply antiderivative 'order' times
     for i in range(order):
@@ -92,11 +95,11 @@ def chebyshev_polynomial_u_antiderivative(
         # Set constant term so that antiderivative evaluates to constant at x=0
         # (only for first integration; subsequent integrations use 0)
         k_val = constant if i == 0 else 0.0
-        temp = ChebyshevPolynomialU(coeffs=i_coeffs)
+        temp = chebyshev_polynomial_u(i_coeffs)
         x_zero = torch.zeros((), dtype=coeffs.dtype, device=coeffs.device)
         val_at_zero = chebyshev_polynomial_u_evaluate(temp, x_zero)
         i_coeffs[..., 0] = i_coeffs[..., 0] + (k_val - val_at_zero)
 
         coeffs = i_coeffs
 
-    return ChebyshevPolynomialU(coeffs=coeffs)
+    return chebyshev_polynomial_u(coeffs)

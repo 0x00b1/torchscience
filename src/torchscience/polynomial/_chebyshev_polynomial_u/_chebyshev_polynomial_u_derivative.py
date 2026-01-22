@@ -1,6 +1,9 @@
 import torch
 
-from ._chebyshev_polynomial_u import ChebyshevPolynomialU
+from ._chebyshev_polynomial_u import (
+    ChebyshevPolynomialU,
+    chebyshev_polynomial_u,
+)
 
 
 def chebyshev_polynomial_u_derivative(
@@ -37,16 +40,16 @@ def chebyshev_polynomial_u_derivative(
     --------
     >>> a = chebyshev_polynomial_u(torch.tensor([0.0, 0.0, 1.0]))  # U_2
     >>> da = chebyshev_polynomial_u_derivative(a)
-    >>> da.coeffs  # d/dx U_2 = 4*U_1
-    tensor([0., 4.])
+    >>> da  # d/dx U_2 = 4*U_1
+    ChebyshevPolynomialU(tensor([0., 4.]))
     """
     if order < 0:
         raise ValueError(f"Order must be non-negative, got {order}")
 
     if order == 0:
-        return ChebyshevPolynomialU(coeffs=a.coeffs.clone())
+        return chebyshev_polynomial_u(a.clone())
 
-    coeffs = a.coeffs
+    coeffs = a.as_subclass(torch.Tensor)
     n = coeffs.shape[-1]
 
     # Apply derivative 'order' times
@@ -91,4 +94,4 @@ def chebyshev_polynomial_u_derivative(
         coeffs = d_coeffs
         n = coeffs.shape[-1]
 
-    return ChebyshevPolynomialU(coeffs=coeffs)
+    return chebyshev_polynomial_u(coeffs)

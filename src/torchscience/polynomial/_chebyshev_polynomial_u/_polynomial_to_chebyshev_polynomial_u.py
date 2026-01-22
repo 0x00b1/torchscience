@@ -2,7 +2,10 @@ import torch
 
 from torchscience.polynomial._polynomial import Polynomial
 
-from ._chebyshev_polynomial_u import ChebyshevPolynomialU
+from ._chebyshev_polynomial_u import (
+    ChebyshevPolynomialU,
+    chebyshev_polynomial_u,
+)
 from ._chebyshev_polynomial_u_add import chebyshev_polynomial_u_add
 from ._chebyshev_polynomial_u_mulx import chebyshev_polynomial_u_mulx
 
@@ -35,24 +38,24 @@ def polynomial_to_chebyshev_polynomial_u(
     --------
     >>> p = polynomial(torch.tensor([0.0, 0.0, 1.0]))  # x^2
     >>> c = polynomial_to_chebyshev_polynomial_u(p)
-    >>> c.coeffs  # x^2 = (U_0 + U_2)/4 since U_2 = 4x^2 - 1, so x^2 = (U_2 + 1)/4
+    >>> c  # x^2 = (U_0 + U_2)/4 since U_2 = 4x^2 - 1, so x^2 = (U_2 + 1)/4
     """
-    coeffs = p.coeffs
+    coeffs = p.as_subclass(torch.Tensor)
     n = coeffs.shape[-1]
 
     if n == 0:
-        return ChebyshevPolynomialU(
-            coeffs=torch.zeros(1, dtype=coeffs.dtype, device=coeffs.device)
+        return chebyshev_polynomial_u(
+            torch.zeros(1, dtype=coeffs.dtype, device=coeffs.device)
         )
 
     # Start with highest degree coefficient
-    result = ChebyshevPolynomialU(coeffs=coeffs[..., -1:].clone())
+    result = chebyshev_polynomial_u(coeffs[..., -1:].clone())
 
     # Horner's method: multiply by x, add next coefficient
     for i in range(n - 2, -1, -1):
         result = chebyshev_polynomial_u_mulx(result)
         result = chebyshev_polynomial_u_add(
-            result, ChebyshevPolynomialU(coeffs=coeffs[..., i : i + 1].clone())
+            result, chebyshev_polynomial_u(coeffs[..., i : i + 1].clone())
         )
 
     return result
