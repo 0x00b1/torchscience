@@ -314,3 +314,128 @@ class TestGradientClipping:
         # Should have warned about clipping
         clip_warnings = [x for x in w if "clipped" in str(x.message).lower()]
         # Note: May or may not warn depending on dynamics
+
+
+class TestPhase4Graduation:
+    """
+    Graduation tests for Phase 4 (Competitive Advantages).
+
+    Run: pytest tests/.../test__adjoint_phase4.py::TestPhase4Graduation -v
+    Pass condition: All tests pass.
+    """
+
+    def test_g4_1_sensitivity_gradient(self):
+        """G4.1: sensitivity mode='gradient' works."""
+        from torchscience.integration.initial_value_problem import (
+            solve_ivp_sensitivity,
+        )
+
+        theta = torch.tensor([1.0], dtype=torch.float64)
+
+        def dynamics(t, y):
+            return -theta * y
+
+        grad = solve_ivp_sensitivity(
+            dynamics,
+            torch.tensor([1.0], dtype=torch.float64),
+            (0.0, 1.0),
+            params=[theta],
+            loss_fn=lambda y: y.sum(),
+            mode="gradient",
+        )
+        assert torch.isfinite(grad).all()
+
+    def test_g4_2_sensitivity_jacobian(self):
+        """G4.2: sensitivity mode='jacobian' works."""
+        from torchscience.integration.initial_value_problem import (
+            solve_ivp_sensitivity,
+        )
+
+        theta = torch.tensor([1.0], dtype=torch.float64)
+
+        jacobian = solve_ivp_sensitivity(
+            lambda t, y: -theta * y,
+            torch.tensor([1.0, 2.0], dtype=torch.float64),
+            (0.0, 1.0),
+            params=[theta],
+            mode="jacobian",
+        )
+        assert jacobian.shape == (2, 1)
+
+    def test_g4_3_sensitivity_fisher(self):
+        """G4.3: sensitivity mode='fisher' works."""
+        from torchscience.integration.initial_value_problem import (
+            solve_ivp_sensitivity,
+        )
+
+        theta = torch.tensor([1.0, 0.5], dtype=torch.float64)
+
+        fisher = solve_ivp_sensitivity(
+            lambda t, y: -theta[0] * y + theta[1],
+            torch.tensor([1.0], dtype=torch.float64),
+            (0.0, 1.0),
+            params=[theta],
+            mode="fisher",
+        )
+        assert fisher.shape == (2, 2)
+        assert torch.allclose(fisher, fisher.T)  # Symmetric
+
+    def test_g4_4_hvp(self):
+        """G4.4: Hessian-vector product works."""
+        from torchscience.integration.initial_value_problem import (
+            solve_ivp_hvp,
+        )
+
+        theta = torch.tensor([1.0], dtype=torch.float64)
+        v = torch.tensor([1.0], dtype=torch.float64)
+
+        hvp = solve_ivp_hvp(
+            lambda t, y: -theta * y,
+            torch.tensor([1.0], dtype=torch.float64),
+            (0.0, 1.0),
+            params=[theta],
+            loss_fn=lambda y: y.sum(),
+            v=v,
+        )
+        assert torch.isfinite(hvp).all()
+
+    def test_g4_5_gradient_clipping(self):
+        """G4.5: Gradient clipping prevents explosion."""
+        from torchscience.integration.initial_value_problem import (
+            adjoint,
+            dormand_prince_5,
+        )
+
+        theta = torch.tensor([5.0], requires_grad=True, dtype=torch.float64)
+
+        solver = adjoint(
+            dormand_prince_5,
+            params=[theta],
+            adjoint_options={"gradient_clip": 1e6},
+        )
+        y, _ = solver(
+            lambda t, y: theta * y,
+            torch.tensor([1.0], dtype=torch.float64),
+            (0.0, 1.0),
+        )
+        y.sum().backward()
+
+        assert torch.isfinite(theta.grad)
+
+    def test_g4_6_lazy_adjoint(self):
+        """G4.6: Lazy adjoint defers computation."""
+        from torchscience.integration.initial_value_problem import solve_ivp
+
+        theta = torch.tensor([1.0], requires_grad=True, dtype=torch.float64)
+
+        y, _ = solve_ivp(
+            lambda t, y: -theta * y,
+            torch.tensor([1.0], dtype=torch.float64),
+            (0.0, 1.0),
+            sensitivity="lazy_adjoint",
+            params=[theta],
+        )
+
+        assert theta.grad is None  # Not computed yet
+        y.sum().backward()
+        assert theta.grad is not None  # Now computed
