@@ -66,6 +66,16 @@
 #include "cpu/graphics/color/hsv_to_srgb.h"
 #include "cpu/graphics/color/srgb_to_srgb_linear.h"
 #include "cpu/graphics/color/srgb_linear_to_srgb.h"
+
+// morphology
+#include "cpu/morphology/erosion.h"
+#include "cpu/morphology/dilation.h"
+#include "meta/morphology/erosion.h"
+#include "meta/morphology/dilation.h"
+#include "autograd/morphology/erosion.h"
+#include "autograd/morphology/dilation.h"
+#include "autocast/morphology/erosion.h"
+#include "autocast/morphology/dilation.h"
 #include "cpu/signal_processing/filter.h"
 #include "cpu/optimization/test_functions.h"
 #include "cpu/optimization/combinatorial.h"
@@ -1668,4 +1678,11 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("jacobi_polynomial_p_mulx(Tensor coeffs, Tensor alpha, Tensor beta) -> Tensor");
   module.def("jacobi_polynomial_p_mulx_backward(Tensor grad_output, Tensor coeffs, Tensor alpha, Tensor beta) -> (Tensor, Tensor, Tensor)");
   module.def("jacobi_polynomial_p_mulx_backward_backward(Tensor gg_coeffs, Tensor coeffs, Tensor alpha, Tensor beta) -> Tensor");
+
+  // morphology
+  module.def("erosion(Tensor input, Tensor structuring_element, int[]? origin, int padding_mode) -> Tensor");
+  module.def("erosion_backward(Tensor grad_output, Tensor input, Tensor structuring_element, int[]? origin, int padding_mode) -> Tensor");
+
+  module.def("dilation(Tensor input, Tensor structuring_element, int[]? origin, int padding_mode) -> Tensor");
+  module.def("dilation_backward(Tensor grad_output, Tensor input, Tensor structuring_element, int[]? origin, int padding_mode) -> Tensor");
 }
