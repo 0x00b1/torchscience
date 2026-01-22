@@ -17,6 +17,7 @@ from torchscience.differentiation._finite_difference_stencil import (
 from torchscience.differentiation._fornberg_weights import fornberg_weights
 from torchscience.differentiation._gradient import gradient
 from torchscience.differentiation._gradient_stencils import gradient_stencils
+from torchscience.differentiation._grid import RegularGrid
 from torchscience.differentiation._hessian import hessian
 from torchscience.differentiation._jacobian import jacobian
 from torchscience.differentiation._laplacian import laplacian
@@ -28,6 +29,7 @@ __all__ = [
     "BoundaryError",
     "DifferentiationError",
     "FiniteDifferenceStencil",
+    "RegularGrid",
     "StencilError",
     "apply_stencil",
     "biharmonic",
