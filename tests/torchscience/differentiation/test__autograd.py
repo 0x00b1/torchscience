@@ -88,3 +88,28 @@ class TestGradientCompile:
             field = torch.randn(16, 16)
             result = compiled_gradient(field)
             assert result.shape == (2, 16, 16)
+
+
+class TestGradientAutocast:
+    """Tests for gradient autocast support."""
+
+    def test_gradient_autocast_fp16(self):
+        """Gradient upcasts to fp32 under autocast."""
+        field = torch.randn(16, 16, dtype=torch.float16, device="cpu")
+
+        with torch.amp.autocast("cpu", dtype=torch.float16):
+            result = gradient(field, dx=0.1)
+
+        # Result should be fp32 (upcasted for numerical stability)
+        assert result.dtype == torch.float32
+        assert result.shape == (2, 16, 16)
+
+    def test_gradient_autocast_bf16(self):
+        """Gradient upcasts to fp32 under bfloat16 autocast."""
+        field = torch.randn(16, 16, dtype=torch.bfloat16, device="cpu")
+
+        with torch.amp.autocast("cpu", dtype=torch.bfloat16):
+            result = gradient(field, dx=0.1)
+
+        # Result should be fp32
+        assert result.dtype == torch.float32
