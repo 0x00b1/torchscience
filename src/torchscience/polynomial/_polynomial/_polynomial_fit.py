@@ -46,8 +46,8 @@ def polynomial_fit(
     >>> x = torch.tensor([0.0, 1.0, 2.0, 3.0])
     >>> y = torch.tensor([1.0, 3.0, 5.0, 7.0])  # y = 1 + 2x
     >>> p = polynomial_fit(x, y, degree=1)
-    >>> p.coeffs
-    tensor([1., 2.])
+    >>> p
+    Polynomial(tensor([1., 2.]))
     """
     n_points = x.shape[0]
 

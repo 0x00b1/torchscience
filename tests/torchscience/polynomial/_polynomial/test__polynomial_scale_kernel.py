@@ -13,7 +13,7 @@ class TestPolynomialScaleKernel:
         c = torch.tensor(2.0)
         result = p * c
         expected = torch.tensor([2.0, 4.0, 6.0])
-        torch.testing.assert_close(result.coeffs, expected)
+        torch.testing.assert_close(result, expected)
 
     def test_scale_by_zero(self):
         """Scale polynomial by zero."""
@@ -21,7 +21,7 @@ class TestPolynomialScaleKernel:
         c = torch.tensor(0.0)
         result = p * c
         expected = torch.tensor([0.0, 0.0, 0.0])
-        torch.testing.assert_close(result.coeffs, expected)
+        torch.testing.assert_close(result, expected)
 
     def test_scale_by_one(self):
         """Scale polynomial by one (identity)."""
@@ -29,7 +29,7 @@ class TestPolynomialScaleKernel:
         c = torch.tensor(1.0)
         result = p * c
         expected = torch.tensor([1.0, 2.0, 3.0])
-        torch.testing.assert_close(result.coeffs, expected)
+        torch.testing.assert_close(result, expected)
 
     def test_scale_negative(self):
         """Scale polynomial by negative scalar."""
@@ -37,7 +37,7 @@ class TestPolynomialScaleKernel:
         c = torch.tensor(-2.0)
         result = p * c
         expected = torch.tensor([-2.0, -4.0, -6.0])
-        torch.testing.assert_close(result.coeffs, expected)
+        torch.testing.assert_close(result, expected)
 
     def test_scale_batched(self):
         """Scale batched polynomials."""
@@ -45,7 +45,7 @@ class TestPolynomialScaleKernel:
         c = torch.tensor([2.0, 3.0])
         result = p * c
         expected = torch.tensor([[2.0, 4.0], [9.0, 12.0]])
-        torch.testing.assert_close(result.coeffs, expected)
+        torch.testing.assert_close(result, expected)
 
     def test_scale_broadcast_scalar(self):
         """Scale batched polynomials by single scalar."""
@@ -53,7 +53,7 @@ class TestPolynomialScaleKernel:
         c = torch.tensor(2.0)
         result = p * c
         expected = torch.tensor([[2.0, 4.0], [6.0, 8.0]])
-        torch.testing.assert_close(result.coeffs, expected)
+        torch.testing.assert_close(result, expected)
 
     def test_gradcheck(self):
         """Verify first-order gradients with cross-terms."""
@@ -116,7 +116,7 @@ class TestPolynomialScaleKernel:
         # (1+2j)*(2+1j) = 2+1j+4j+2j^2 = 2+5j-2 = 0+5j
         # (3+4j)*(2+1j) = 6+3j+8j+4j^2 = 6+11j-4 = 2+11j
         expected = torch.tensor([0.0 + 5.0j, 2.0 + 11.0j])
-        torch.testing.assert_close(result.coeffs, expected)
+        torch.testing.assert_close(result, expected)
 
     def test_gradient_cross_terms(self):
         """Explicitly verify that cross-term gradients are non-zero.

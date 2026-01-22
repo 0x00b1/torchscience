@@ -12,14 +12,14 @@ class TestPolynomialNegateKernel:
         p = polynomial(torch.tensor([1.0, 2.0, 3.0]))
         result = -p
         expected = torch.tensor([-1.0, -2.0, -3.0])
-        torch.testing.assert_close(result.coeffs, expected)
+        torch.testing.assert_close(result, expected)
 
     def test_negate_batched(self):
         """Negate batched polynomials."""
         p = polynomial(torch.tensor([[1.0, 2.0], [3.0, 4.0]]))
         result = -p
         expected = torch.tensor([[-1.0, -2.0], [-3.0, -4.0]])
-        torch.testing.assert_close(result.coeffs, expected)
+        torch.testing.assert_close(result, expected)
 
     def test_gradcheck(self):
         """Verify first-order gradients."""
@@ -51,24 +51,24 @@ class TestPolynomialNegateKernel:
         p = polynomial(torch.tensor([1.0 + 2.0j, 3.0 + 4.0j]))
         result = -p
         expected = torch.tensor([-1.0 - 2.0j, -3.0 - 4.0j])
-        torch.testing.assert_close(result.coeffs, expected)
+        torch.testing.assert_close(result, expected)
 
     def test_double_negate(self):
         """Verify double negation returns original polynomial."""
         p = polynomial(torch.tensor([1.0, -2.0, 3.0, -4.0]))
         result = -(-p)
-        torch.testing.assert_close(result.coeffs, p.coeffs)
+        torch.testing.assert_close(result, p)
 
     def test_negate_zeros(self):
         """Negate polynomial with all zero coefficients."""
         p = polynomial(torch.tensor([0.0, 0.0, 0.0]))
         result = -p
         expected = torch.tensor([0.0, 0.0, 0.0])
-        torch.testing.assert_close(result.coeffs, expected)
+        torch.testing.assert_close(result, expected)
 
     def test_negate_preserves_dtype(self):
         """Verify negate preserves input dtype."""
         for dtype in [torch.float32, torch.float64]:
             p = polynomial(torch.tensor([1.0, 2.0, 3.0], dtype=dtype))
             result = -p
-            assert result.coeffs.dtype == dtype
+            assert result.dtype == dtype

@@ -23,8 +23,10 @@ def polynomial_equal(
     Tensor
         Boolean tensor, shape matches broadcast of batch dims.
     """
-    p_coeffs = p.coeffs
-    q_coeffs = q.coeffs
+    # p and q ARE the coefficient tensors now
+    # Work with plain tensor views
+    p_coeffs = p.as_subclass(Tensor)
+    q_coeffs = q.as_subclass(Tensor)
 
     # Pad to same length
     n_p = p_coeffs.shape[-1]

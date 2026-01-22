@@ -23,8 +23,8 @@ def polynomial_div(p: Polynomial, q: Polynomial) -> Polynomial:
     --------
     >>> p = polynomial(torch.tensor([-1.0, 0.0, 0.0, 1.0]))  # x^3 - 1
     >>> q = polynomial(torch.tensor([-1.0, 1.0]))  # x - 1
-    >>> polynomial_div(p, q).coeffs
-    tensor([1., 1., 1.])
+    >>> polynomial_div(p, q)
+    Polynomial(tensor([1., 1., 1.]))
     """
     quotient, _ = polynomial_divmod(p, q)
     return quotient

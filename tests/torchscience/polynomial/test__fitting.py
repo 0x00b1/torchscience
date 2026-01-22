@@ -89,7 +89,7 @@ class TestPolynomialFit:
         p = polynomial_fit(x, y, degree=2)
 
         # Should be close to x^2
-        assert p.coeffs.shape[-1] == 3
+        assert p.shape[-1] == 3
         # Evaluate and check residuals are reasonable
         y_fit = polynomial_evaluate(p, x)
         residual = (y - y_fit).abs().mean()
@@ -109,7 +109,7 @@ class TestPolynomialFit:
         ].copy()  # Copy to avoid negative stride
 
         assert torch.allclose(
-            p.coeffs,
+            p,
             torch.tensor(np_coeffs_ascending, dtype=torch.float64),
             atol=1e-10,
         )
@@ -147,7 +147,7 @@ class TestFitAutograd:
 
         def fit_sum(y_val):
             p = polynomial_fit(x, y_val, degree=2)
-            return p.coeffs.sum()
+            return p.sum()
 
         assert torch.autograd.gradcheck(fit_sum, (y,), eps=1e-6)
 
@@ -160,7 +160,7 @@ class TestFitAutograd:
 
         def fit_sum(y_val):
             p = polynomial_fit(x, y_val, degree=2)
-            return p.coeffs.sum()
+            return p.sum()
 
         assert torch.autograd.gradgradcheck(fit_sum, (y,), eps=1e-6)
 
@@ -201,4 +201,4 @@ class TestFitMultidimensional:
 
         # First column should be ~[0, 1, 0] (for y = x)
         # Second column should be ~[0, 0, 1] (for y = x^2)
-        assert p.coeffs.shape == (3, 2)
+        assert p.shape == (3, 2)

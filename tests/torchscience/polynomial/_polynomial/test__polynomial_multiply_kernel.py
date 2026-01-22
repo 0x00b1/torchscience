@@ -14,7 +14,7 @@ class TestPolynomialMultiplyKernel:
         q = polynomial(torch.tensor([3.0, 4.0]))
         result = p * q
         expected = torch.tensor([3.0, 10.0, 8.0])
-        torch.testing.assert_close(result.coeffs, expected)
+        torch.testing.assert_close(result, expected)
 
     def test_multiply_different_degree(self):
         """Multiply polynomials of different degrees."""
@@ -23,7 +23,7 @@ class TestPolynomialMultiplyKernel:
         q = polynomial(torch.tensor([1.0, 1.0, 1.0]))
         result = p * q
         expected = torch.tensor([1.0, 2.0, 2.0, 1.0])
-        torch.testing.assert_close(result.coeffs, expected)
+        torch.testing.assert_close(result, expected)
 
     def test_multiply_by_constant(self):
         """Multiply by constant polynomial."""
@@ -32,7 +32,7 @@ class TestPolynomialMultiplyKernel:
         q = polynomial(torch.tensor([1.0, 1.0, 1.0]))
         result = p * q
         expected = torch.tensor([2.0, 2.0, 2.0])
-        torch.testing.assert_close(result.coeffs, expected)
+        torch.testing.assert_close(result, expected)
 
     def test_multiply_batched(self):
         """Multiply batched polynomials."""
@@ -42,7 +42,7 @@ class TestPolynomialMultiplyKernel:
         # (1 + 2x)(3 + 4x) = 3 + 10x + 8x^2
         # (1 + x)(1 + x) = 1 + 2x + x^2
         expected = torch.tensor([[3.0, 10.0, 8.0], [1.0, 2.0, 1.0]])
-        torch.testing.assert_close(result.coeffs, expected)
+        torch.testing.assert_close(result, expected)
 
     def test_multiply_broadcast(self):
         """Multiply with broadcasting."""
@@ -52,7 +52,7 @@ class TestPolynomialMultiplyKernel:
         # (1 + x) * 2 = 2 + 2x
         # (1 + x) * 3 = 3 + 3x
         expected = torch.tensor([[2.0, 2.0], [3.0, 3.0]])
-        torch.testing.assert_close(result.coeffs, expected)
+        torch.testing.assert_close(result, expected)
 
     def test_gradcheck(self):
         """Verify first-order gradients."""
@@ -90,7 +90,7 @@ class TestPolynomialMultiplyKernel:
         q = polynomial(torch.tensor([1.0 - 1.0j]))
         result = p * q
         expected = torch.tensor([2.0 + 0.0j])
-        torch.testing.assert_close(result.coeffs, expected)
+        torch.testing.assert_close(result, expected)
 
     def test_multiply_identity(self):
         """Multiply by identity polynomial (1)."""
@@ -98,4 +98,4 @@ class TestPolynomialMultiplyKernel:
         one = polynomial(torch.tensor([1.0]))
         result = p * one
         expected = torch.tensor([1.0, 2.0, 3.0])
-        torch.testing.assert_close(result.coeffs, expected)
+        torch.testing.assert_close(result, expected)

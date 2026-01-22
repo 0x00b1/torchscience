@@ -100,7 +100,7 @@ class TestComposeAutograd:
             p = polynomial(p_c)
             q = polynomial(q_c)
             result = polynomial_compose(p, q)
-            return result.coeffs.sum()
+            return result.sum()
 
         assert torch.autograd.gradcheck(
             compose_sum, (p_coeffs, q_coeffs), eps=1e-6
@@ -119,7 +119,7 @@ class TestComposeAutograd:
             p = polynomial(p_c)
             q = polynomial(q_c)
             result = polynomial_compose(p, q)
-            return result.coeffs.sum()
+            return result.sum()
 
         assert torch.autograd.gradgradcheck(
             compose_sum, (p_coeffs, q_coeffs), eps=1e-6
@@ -140,14 +140,10 @@ class TestComposeBatched:
 
         # First: (1+x) composed with (1+x) = 1 + (1+x) = 2 + x
         # Second: (2+2x) composed with (1+x) = 2 + 2(1+x) = 4 + 2x
-        assert result.coeffs.shape[0] == 2
+        assert result.shape[0] == 2
 
         # Verify values
         expected_0 = polynomial(torch.tensor([2.0, 1.0]))
         expected_1 = polynomial(torch.tensor([4.0, 2.0]))
-        assert polynomial_equal(
-            polynomial(result.coeffs[0]), expected_0, tol=1e-6
-        )
-        assert polynomial_equal(
-            polynomial(result.coeffs[1]), expected_1, tol=1e-6
-        )
+        assert polynomial_equal(polynomial(result[0]), expected_0, tol=1e-6)
+        assert polynomial_equal(polynomial(result[1]), expected_1, tol=1e-6)

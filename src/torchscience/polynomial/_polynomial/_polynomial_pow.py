@@ -1,6 +1,6 @@
 import torch
 
-from ._polynomial import Polynomial
+from ._polynomial import Polynomial, polynomial
 from ._polynomial_multiply import polynomial_multiply
 
 
@@ -29,20 +29,21 @@ def polynomial_pow(p: Polynomial, n: int) -> Polynomial:
     Examples
     --------
     >>> p = polynomial(torch.tensor([1.0, 1.0]))  # 1 + x
-    >>> polynomial_pow(p, 3).coeffs  # 1 + 3x + 3x^2 + x^3
-    tensor([1., 3., 3., 1.])
+    >>> polynomial_pow(p, 3)  # 1 + 3x + 3x^2 + x^3
+    Polynomial(tensor([1., 3., 3., 1.]))
     """
     if n < 0:
         raise ValueError(f"Exponent must be non-negative, got {n}")
 
     if n == 0:
         # Return constant 1 with same dtype/device
-        one = torch.ones(1, dtype=p.coeffs.dtype, device=p.coeffs.device)
+        # p IS the coefficient tensor now
+        one = torch.ones(1, dtype=p.dtype, device=p.device)
         # Handle batch dimensions
-        if p.coeffs.dim() > 1:
-            batch_shape = p.coeffs.shape[:-1]
+        if p.dim() > 1:
+            batch_shape = p.shape[:-1]
             one = one.expand(*batch_shape, 1)
-        return Polynomial(coeffs=one)
+        return polynomial(one)
 
     if n == 1:
         return p

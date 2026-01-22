@@ -1,6 +1,6 @@
 import torch
 
-from ._polynomial import Polynomial
+from ._polynomial import Polynomial, polynomial
 
 
 def polynomial_derivative(p: Polynomial, order: int = 1) -> Polynomial:
@@ -21,17 +21,18 @@ def polynomial_derivative(p: Polynomial, order: int = 1) -> Polynomial:
     Examples
     --------
     >>> p = polynomial(torch.tensor([1.0, 2.0, 3.0]))  # 1 + 2x + 3x^2
-    >>> polynomial_derivative(p).coeffs  # 2 + 6x
-    tensor([2., 6.])
+    >>> polynomial_derivative(p)  # 2 + 6x
+    Polynomial(tensor([2., 6.]))
     """
-    coeffs = p.coeffs
+    # p IS the coefficient tensor now
+    coeffs = p
 
     for _ in range(order):
         n = coeffs.shape[-1]
         if n <= 1:
             # Derivative of constant is zero
-            return Polynomial(
-                coeffs=torch.zeros(
+            return polynomial(
+                torch.zeros(
                     *coeffs.shape[:-1],
                     1,
                     dtype=coeffs.dtype,
@@ -47,4 +48,4 @@ def polynomial_derivative(p: Polynomial, order: int = 1) -> Polynomial:
 
         coeffs = new_coeffs
 
-    return Polynomial(coeffs=coeffs)
+    return polynomial(coeffs)

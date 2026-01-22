@@ -32,7 +32,7 @@ class TestPolynomialDivmod:
         expected_q = polynomial(torch.tensor([1.0, 1.0, 1.0]))
         assert polynomial_equal(quotient, expected_q, tol=1e-6)
         # Remainder should be zero (or near-zero)
-        assert torch.allclose(remainder.coeffs, torch.zeros(1), atol=1e-6)
+        assert torch.allclose(remainder, torch.zeros(1), atol=1e-6)
 
     def test_division_with_remainder(self):
         """(x^2 + 1) / (x - 1) = x + 1 with remainder 2."""
@@ -47,7 +47,7 @@ class TestPolynomialDivmod:
         expected_q = polynomial(torch.tensor([1.0, 1.0]))
         assert polynomial_equal(quotient, expected_q, tol=1e-6)
         # Expected remainder: 2
-        assert torch.allclose(remainder.coeffs, torch.tensor([2.0]), atol=1e-6)
+        assert torch.allclose(remainder, torch.tensor([2.0]), atol=1e-6)
 
     def test_dividend_smaller_degree(self):
         """When deg(p) < deg(q), quotient is 0, remainder is p."""
@@ -57,7 +57,7 @@ class TestPolynomialDivmod:
         quotient, remainder = polynomial_divmod(p, q)
 
         # Quotient should be zero polynomial
-        assert torch.allclose(quotient.coeffs, torch.zeros(1), atol=1e-6)
+        assert torch.allclose(quotient, torch.zeros(1), atol=1e-6)
         # Remainder should be p
         assert polynomial_equal(remainder, p, tol=1e-6)
 
@@ -70,7 +70,7 @@ class TestPolynomialDivmod:
 
         expected_q = polynomial(torch.tensor([1.0, 2.0, 3.0]))
         assert polynomial_equal(quotient, expected_q, tol=1e-6)
-        assert torch.allclose(remainder.coeffs, torch.zeros(1), atol=1e-6)
+        assert torch.allclose(remainder, torch.zeros(1), atol=1e-6)
 
     def test_division_identity(self):
         """p / p = 1 with remainder 0."""
@@ -80,7 +80,7 @@ class TestPolynomialDivmod:
 
         expected_q = polynomial(torch.tensor([1.0]))
         assert polynomial_equal(quotient, expected_q, tol=1e-6)
-        assert torch.allclose(remainder.coeffs, torch.zeros(1), atol=1e-6)
+        assert torch.allclose(remainder, torch.zeros(1), atol=1e-6)
 
     def test_division_verification(self):
         """Verify p = q * quotient + remainder."""
@@ -116,7 +116,7 @@ class TestPolynomialDivMod:
 
         remainder = polynomial_mod(p, q)
 
-        assert torch.allclose(remainder.coeffs, torch.tensor([2.0]), atol=1e-6)
+        assert torch.allclose(remainder, torch.tensor([2.0]), atol=1e-6)
 
 
 class TestDivisionErrors:
@@ -156,7 +156,7 @@ class TestDivisionNumpy:
         np_rem = np_rem[::-1].copy()
 
         assert torch.allclose(
-            quotient.coeffs,
+            quotient,
             torch.tensor(np_quot, dtype=torch.float32),
             atol=1e-5,
         )
@@ -166,7 +166,7 @@ class TestDivisionNumpy:
         if len(np_rem) == 0:
             np_rem = np.array([0.0])
         assert torch.allclose(
-            remainder.coeffs,
+            remainder,
             torch.tensor(np_rem, dtype=torch.float32),
             atol=1e-5,
         )
@@ -188,7 +188,7 @@ class TestDivisionAutograd:
             p = polynomial(p_c)
             q = polynomial(q_c)
             quot, rem = polynomial_divmod(p, q)
-            return quot.coeffs.sum() + rem.coeffs.sum()
+            return quot.sum() + rem.sum()
 
         assert torch.autograd.gradcheck(
             divmod_sum, (p_coeffs, q_coeffs), eps=1e-6
@@ -210,7 +210,7 @@ class TestDivisionAutograd:
             p = polynomial(p_c)
             q = polynomial(q_c)
             quot, rem = polynomial_divmod(p, q)
-            return quot.coeffs.sum() + rem.coeffs.sum()
+            return quot.sum() + rem.sum()
 
         assert torch.autograd.gradgradcheck(
             divmod_sum, (p_coeffs, q_coeffs), eps=1e-6
@@ -234,24 +234,16 @@ class TestDivisionBatched:
         quotient, remainder = polynomial_divmod(p, q)
 
         # Both should have quotient [1, 1] or [2, 2] and remainder 2 or 4
-        assert quotient.coeffs.shape[0] == 2
-        assert remainder.coeffs.shape[0] == 2
+        assert quotient.shape[0] == 2
+        assert remainder.shape[0] == 2
 
         # First polynomial: (x^2+1)/(x-1) = x+1 remainder 2
-        assert torch.allclose(
-            quotient.coeffs[0], torch.tensor([1.0, 1.0]), atol=1e-6
-        )
-        assert torch.allclose(
-            remainder.coeffs[0], torch.tensor([2.0]), atol=1e-6
-        )
+        assert torch.allclose(quotient[0], torch.tensor([1.0, 1.0]), atol=1e-6)
+        assert torch.allclose(remainder[0], torch.tensor([2.0]), atol=1e-6)
 
         # Second polynomial: (2x^2+2)/(x-1) = 2x+2 remainder 4
-        assert torch.allclose(
-            quotient.coeffs[1], torch.tensor([2.0, 2.0]), atol=1e-6
-        )
-        assert torch.allclose(
-            remainder.coeffs[1], torch.tensor([4.0]), atol=1e-6
-        )
+        assert torch.allclose(quotient[1], torch.tensor([2.0, 2.0]), atol=1e-6)
+        assert torch.allclose(remainder[1], torch.tensor([4.0]), atol=1e-6)
 
 
 class TestDivisionOperators:
@@ -274,4 +266,4 @@ class TestDivisionOperators:
 
         result = p % q
 
-        assert torch.allclose(result.coeffs, torch.tensor([2.0]), atol=1e-6)
+        assert torch.allclose(result, torch.tensor([2.0]), atol=1e-6)

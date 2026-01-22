@@ -131,14 +131,14 @@ class TestPolynomialFromRoots:
         # (x - 2) = -2 + x
         roots = torch.tensor([2.0])
         p = polynomial_from_roots(roots)
-        torch.testing.assert_close(p.coeffs, torch.tensor([-2.0, 1.0]))
+        torch.testing.assert_close(p, torch.tensor([-2.0, 1.0]))
 
     def test_two_roots(self):
         """Two roots."""
         # (x - 1)(x - 2) = 2 - 3x + x^2
         roots = torch.tensor([1.0, 2.0])
         p = polynomial_from_roots(roots)
-        torch.testing.assert_close(p.coeffs, torch.tensor([2.0, -3.0, 1.0]))
+        torch.testing.assert_close(p, torch.tensor([2.0, -3.0, 1.0]))
 
     def test_complex_roots(self):
         """Complex conjugate roots give real coefficients."""
@@ -147,18 +147,16 @@ class TestPolynomialFromRoots:
         p = polynomial_from_roots(roots)
         # Coefficients should be real (imaginary parts ~0)
         torch.testing.assert_close(
-            p.coeffs.real, torch.tensor([1.0, 0.0, 1.0]), atol=1e-6, rtol=0
+            p.real, torch.tensor([1.0, 0.0, 1.0]), atol=1e-6, rtol=0
         )
-        torch.testing.assert_close(
-            p.coeffs.imag, torch.zeros(3), atol=1e-6, rtol=0
-        )
+        torch.testing.assert_close(p.imag, torch.zeros(3), atol=1e-6, rtol=0)
 
     def test_empty_roots(self):
         """Empty roots gives constant 1."""
         roots = torch.tensor([])
         p = polynomial_from_roots(roots)
-        assert p.coeffs.shape[-1] == 1
-        assert p.coeffs.item() == 1.0
+        assert p.shape[-1] == 1
+        assert p.item() == 1.0
 
     def test_roundtrip_roots(self):
         """polynomial_roots(polynomial_from_roots(r)) recovers r."""
@@ -179,23 +177,19 @@ class TestPolynomialFromRoots:
         p_recovered = polynomial_from_roots(roots)
 
         # Should recover original monic polynomial (up to numerical error)
-        torch.testing.assert_close(
-            p_recovered.coeffs.real, coeffs, atol=1e-5, rtol=0
-        )
+        torch.testing.assert_close(p_recovered.real, coeffs, atol=1e-5, rtol=0)
 
     def test_batched_from_roots(self):
         """Batched polynomial construction from roots."""
         roots = torch.tensor([[1.0, 2.0], [3.0, 4.0]])
         p = polynomial_from_roots(roots)
         # Shape should be (2, 3) - two polynomials of degree 2
-        assert p.coeffs.shape == (2, 3)
+        assert p.shape == (2, 3)
 
         # First: (x-1)(x-2) = 2 - 3x + x^2
-        torch.testing.assert_close(p.coeffs[0], torch.tensor([2.0, -3.0, 1.0]))
+        torch.testing.assert_close(p[0], torch.tensor([2.0, -3.0, 1.0]))
         # Second: (x-3)(x-4) = 12 - 7x + x^2
-        torch.testing.assert_close(
-            p.coeffs[1], torch.tensor([12.0, -7.0, 1.0])
-        )
+        torch.testing.assert_close(p[1], torch.tensor([12.0, -7.0, 1.0]))
 
 
 class TestPolynomialTrim:
@@ -205,32 +199,32 @@ class TestPolynomialTrim:
         """No trimming when all coefficients nonzero."""
         p = polynomial(torch.tensor([1.0, 2.0, 3.0]))
         pt = polynomial_trim(p)
-        torch.testing.assert_close(pt.coeffs, p.coeffs)
+        torch.testing.assert_close(pt, p)
 
     def test_trim_trailing_zeros(self):
         """Trim trailing zeros."""
         p = polynomial(torch.tensor([1.0, 2.0, 0.0, 0.0]))
         pt = polynomial_trim(p)
-        torch.testing.assert_close(pt.coeffs, torch.tensor([1.0, 2.0]))
+        torch.testing.assert_close(pt, torch.tensor([1.0, 2.0]))
 
     def test_trim_with_tolerance(self):
         """Trim with tolerance."""
         p = polynomial(torch.tensor([1.0, 2.0, 1e-10]))
         pt = polynomial_trim(p, tol=1e-8)
-        torch.testing.assert_close(pt.coeffs, torch.tensor([1.0, 2.0]))
+        torch.testing.assert_close(pt, torch.tensor([1.0, 2.0]))
 
     def test_trim_all_zero(self):
         """Trimming all-zero polynomial leaves single zero."""
         p = polynomial(torch.tensor([0.0, 0.0, 0.0]))
         pt = polynomial_trim(p)
-        assert pt.coeffs.shape[-1] == 1
-        assert pt.coeffs[0] == 0.0
+        assert pt.shape[-1] == 1
+        assert pt[0] == 0.0
 
     def test_trim_constant(self):
         """Trimming constant polynomial is no-op."""
         p = polynomial(torch.tensor([5.0]))
         pt = polynomial_trim(p)
-        torch.testing.assert_close(pt.coeffs, torch.tensor([5.0]))
+        torch.testing.assert_close(pt, torch.tensor([5.0]))
 
 
 class TestPolynomialEqual:
@@ -302,7 +296,7 @@ class TestRootsAutograd:
 
         def from_roots_fn(r):
             p = polynomial_from_roots(r)
-            return p.coeffs
+            return p
 
         assert torch.autograd.gradcheck(
             from_roots_fn, (roots,), raise_exception=True

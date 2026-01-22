@@ -27,21 +27,20 @@ def polynomial_evaluate(p: Polynomial, x: Tensor) -> Tensor:
     >>> polynomial_evaluate(p, torch.tensor([0.0, 1.0, 2.0]))
     tensor([ 1.,  6., 17.])
     """
-    coeffs = p.coeffs
-
-    if coeffs.shape[-1] == 0:
+    # p IS the coefficient tensor now
+    if p.shape[-1] == 0:
         return x * 0.0
 
-    batch_shape = coeffs.shape[:-1]
+    batch_shape = p.shape[:-1]
     x_shape = x.shape
-    N = coeffs.shape[-1]
+    N = p.shape[-1]
 
     # Flatten batch dimensions: (...batch, N) -> (B, N)
-    B = coeffs[..., 0].numel() if len(batch_shape) > 0 else 1
+    B = p[..., 0].numel() if len(batch_shape) > 0 else 1
     M = x.numel()
 
     # Clone to avoid issues with in-place modifications after evaluate
-    coeffs_flat = coeffs.reshape(B, N).contiguous().clone()
+    coeffs_flat = p.reshape(B, N).contiguous().clone()
     x_flat = x.reshape(M).contiguous().clone()
 
     # Promote to common dtype (x must match coeffs dtype for the kernel)

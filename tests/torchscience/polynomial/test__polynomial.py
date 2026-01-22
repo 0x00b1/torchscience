@@ -33,20 +33,20 @@ class TestPolynomialConstructor:
     def test_single_coefficient(self):
         """Constant polynomial."""
         p = polynomial(torch.tensor([3.0]))
-        assert p.coeffs.shape == (1,)
-        assert p.coeffs[0] == 3.0
+        assert p.shape == (1,)
+        assert p[0] == 3.0
 
     def test_multiple_coefficients(self):
         """Standard polynomial."""
         p = polynomial(torch.tensor([1.0, 2.0, 3.0]))
-        assert p.coeffs.shape == (3,)
-        torch.testing.assert_close(p.coeffs, torch.tensor([1.0, 2.0, 3.0]))
+        assert p.shape == (3,)
+        torch.testing.assert_close(p, torch.tensor([1.0, 2.0, 3.0]))
 
     def test_batched_coefficients(self):
         """Batched polynomials."""
         coeffs = torch.tensor([[1.0, 2.0], [3.0, 4.0]])
         p = polynomial(coeffs)
-        assert p.coeffs.shape == (2, 2)
+        assert p.shape == (2, 2)
 
     def test_empty_raises(self):
         """Empty coefficients raise error."""
@@ -61,13 +61,13 @@ class TestPolynomialConstructor:
     def test_preserves_dtype(self):
         """Dtype is preserved."""
         p = polynomial(torch.tensor([1.0, 2.0], dtype=torch.float64))
-        assert p.coeffs.dtype == torch.float64
+        assert p.dtype == torch.float64
 
     def test_preserves_device(self):
         """Device is preserved."""
         coeffs = torch.tensor([1.0, 2.0])
         p = polynomial(coeffs)
-        assert p.coeffs.device == coeffs.device
+        assert p.device == coeffs.device
 
 
 class TestPolynomialArithmetic:
@@ -78,72 +78,72 @@ class TestPolynomialArithmetic:
         p = polynomial(torch.tensor([1.0, 2.0, 3.0]))
         q = polynomial(torch.tensor([4.0, 5.0, 6.0]))
         r = polynomial_add(p, q)
-        torch.testing.assert_close(r.coeffs, torch.tensor([5.0, 7.0, 9.0]))
+        torch.testing.assert_close(r, torch.tensor([5.0, 7.0, 9.0]))
 
     def test_add_different_degree(self):
         """Add polynomials of different degrees."""
         p = polynomial(torch.tensor([1.0, 2.0]))
         q = polynomial(torch.tensor([3.0, 4.0, 5.0]))
         r = polynomial_add(p, q)
-        torch.testing.assert_close(r.coeffs, torch.tensor([4.0, 6.0, 5.0]))
+        torch.testing.assert_close(r, torch.tensor([4.0, 6.0, 5.0]))
 
     def test_add_operator(self):
         """Test + operator."""
         p = polynomial(torch.tensor([1.0, 2.0]))
         q = polynomial(torch.tensor([3.0, 4.0]))
         r = p + q
-        torch.testing.assert_close(r.coeffs, torch.tensor([4.0, 6.0]))
+        torch.testing.assert_close(r, torch.tensor([4.0, 6.0]))
 
     def test_subtract_same_degree(self):
         """Subtract polynomials of same degree."""
         p = polynomial(torch.tensor([5.0, 7.0, 9.0]))
         q = polynomial(torch.tensor([1.0, 2.0, 3.0]))
         r = polynomial_subtract(p, q)
-        torch.testing.assert_close(r.coeffs, torch.tensor([4.0, 5.0, 6.0]))
+        torch.testing.assert_close(r, torch.tensor([4.0, 5.0, 6.0]))
 
     def test_subtract_different_degree(self):
         """Subtract polynomials of different degrees."""
         p = polynomial(torch.tensor([1.0, 2.0, 3.0]))
         q = polynomial(torch.tensor([1.0, 2.0]))
         r = polynomial_subtract(p, q)
-        torch.testing.assert_close(r.coeffs, torch.tensor([0.0, 0.0, 3.0]))
+        torch.testing.assert_close(r, torch.tensor([0.0, 0.0, 3.0]))
 
     def test_subtract_operator(self):
         """Test - operator."""
         p = polynomial(torch.tensor([5.0, 6.0]))
         q = polynomial(torch.tensor([1.0, 2.0]))
         r = p - q
-        torch.testing.assert_close(r.coeffs, torch.tensor([4.0, 4.0]))
+        torch.testing.assert_close(r, torch.tensor([4.0, 4.0]))
 
     def test_negate(self):
         """Negate polynomial."""
         p = polynomial(torch.tensor([1.0, -2.0, 3.0]))
         r = polynomial_negate(p)
-        torch.testing.assert_close(r.coeffs, torch.tensor([-1.0, 2.0, -3.0]))
+        torch.testing.assert_close(r, torch.tensor([-1.0, 2.0, -3.0]))
 
     def test_negate_operator(self):
         """Test unary - operator."""
         p = polynomial(torch.tensor([1.0, -2.0]))
         r = -p
-        torch.testing.assert_close(r.coeffs, torch.tensor([-1.0, 2.0]))
+        torch.testing.assert_close(r, torch.tensor([-1.0, 2.0]))
 
     def test_scale_scalar(self):
         """Scale by scalar."""
         p = polynomial(torch.tensor([1.0, 2.0, 3.0]))
         r = polynomial_scale(p, torch.tensor(2.0))
-        torch.testing.assert_close(r.coeffs, torch.tensor([2.0, 4.0, 6.0]))
+        torch.testing.assert_close(r, torch.tensor([2.0, 4.0, 6.0]))
 
     def test_scale_operator(self):
         """Test * operator with scalar."""
         p = polynomial(torch.tensor([1.0, 2.0]))
         r = p * torch.tensor(3.0)
-        torch.testing.assert_close(r.coeffs, torch.tensor([3.0, 6.0]))
+        torch.testing.assert_close(r, torch.tensor([3.0, 6.0]))
 
     def test_scale_rmul_operator(self):
         """Test scalar * polynomial."""
         p = polynomial(torch.tensor([1.0, 2.0]))
         r = torch.tensor(3.0) * p
-        torch.testing.assert_close(r.coeffs, torch.tensor([3.0, 6.0]))
+        torch.testing.assert_close(r, torch.tensor([3.0, 6.0]))
 
     def test_multiply_linear(self):
         """Multiply two linear polynomials."""
@@ -151,7 +151,7 @@ class TestPolynomialArithmetic:
         p = polynomial(torch.tensor([1.0, 2.0]))
         q = polynomial(torch.tensor([3.0, 4.0]))
         r = polynomial_multiply(p, q)
-        torch.testing.assert_close(r.coeffs, torch.tensor([3.0, 10.0, 8.0]))
+        torch.testing.assert_close(r, torch.tensor([3.0, 10.0, 8.0]))
 
     def test_multiply_quadratic(self):
         """Multiply linear by quadratic."""
@@ -159,9 +159,7 @@ class TestPolynomialArithmetic:
         p = polynomial(torch.tensor([1.0, 1.0]))
         q = polynomial(torch.tensor([1.0, 2.0, 1.0]))
         r = polynomial_multiply(p, q)
-        torch.testing.assert_close(
-            r.coeffs, torch.tensor([1.0, 3.0, 3.0, 1.0])
-        )
+        torch.testing.assert_close(r, torch.tensor([1.0, 3.0, 3.0, 1.0]))
 
     def test_multiply_operator(self):
         """Test * operator between polynomials."""
@@ -169,7 +167,7 @@ class TestPolynomialArithmetic:
         q = polynomial(torch.tensor([1.0, -1.0]))
         r = p * q
         # (1 + x)(1 - x) = 1 - x^2
-        torch.testing.assert_close(r.coeffs, torch.tensor([1.0, 0.0, -1.0]))
+        torch.testing.assert_close(r, torch.tensor([1.0, 0.0, -1.0]))
 
     def test_multiply_vs_numpy(self):
         """Compare multiplication against numpy."""
@@ -184,9 +182,7 @@ class TestPolynomialArithmetic:
         q_np = NpPolynomial(q_coeffs)
         r_np = p_np * q_np
 
-        np.testing.assert_allclose(
-            r_torch.coeffs.numpy(), r_np.coef, rtol=1e-6
-        )
+        np.testing.assert_allclose(r_torch.numpy(), r_np.coef, rtol=1e-6)
 
     def test_degree(self):
         """Test polynomial_degree."""
@@ -272,20 +268,20 @@ class TestPolynomialCalculus:
         # d/dx(1 + 2x + 3x^2) = 2 + 6x
         p = polynomial(torch.tensor([1.0, 2.0, 3.0]))
         dp = polynomial_derivative(p)
-        torch.testing.assert_close(dp.coeffs, torch.tensor([2.0, 6.0]))
+        torch.testing.assert_close(dp, torch.tensor([2.0, 6.0]))
 
     def test_derivative_constant(self):
         """Derivative of constant is zero."""
         p = polynomial(torch.tensor([5.0]))
         dp = polynomial_derivative(p)
-        torch.testing.assert_close(dp.coeffs, torch.tensor([0.0]))
+        torch.testing.assert_close(dp, torch.tensor([0.0]))
 
     def test_derivative_second_order(self):
         """Second derivative."""
         # d^2/dx^2(1 + 2x + 3x^2 + 4x^3) = 6 + 24x
         p = polynomial(torch.tensor([1.0, 2.0, 3.0, 4.0]))
         d2p = polynomial_derivative(p, order=2)
-        torch.testing.assert_close(d2p.coeffs, torch.tensor([6.0, 24.0]))
+        torch.testing.assert_close(d2p, torch.tensor([6.0, 24.0]))
 
     def test_derivative_vs_numpy(self):
         """Compare derivative against numpy."""
@@ -297,22 +293,20 @@ class TestPolynomialCalculus:
         p_np = NpPolynomial(coeffs)
         dp_np = p_np.deriv()
 
-        np.testing.assert_allclose(
-            dp_torch.coeffs.numpy(), dp_np.coef, rtol=1e-6
-        )
+        np.testing.assert_allclose(dp_torch.numpy(), dp_np.coef, rtol=1e-6)
 
     def test_antiderivative_linear(self):
         """Antiderivative of linear."""
         # integral(2 + 6x) = 2x + 3x^2 (with C=0)
         p = polynomial(torch.tensor([2.0, 6.0]))
         ap = polynomial_antiderivative(p)
-        torch.testing.assert_close(ap.coeffs, torch.tensor([0.0, 2.0, 3.0]))
+        torch.testing.assert_close(ap, torch.tensor([0.0, 2.0, 3.0]))
 
     def test_antiderivative_with_constant(self):
         """Antiderivative with integration constant."""
         p = polynomial(torch.tensor([2.0, 6.0]))
         ap = polynomial_antiderivative(p, constant=1.0)
-        torch.testing.assert_close(ap.coeffs, torch.tensor([1.0, 2.0, 3.0]))
+        torch.testing.assert_close(ap, torch.tensor([1.0, 2.0, 3.0]))
 
     def test_antiderivative_vs_numpy(self):
         """Compare antiderivative against numpy."""
@@ -324,9 +318,7 @@ class TestPolynomialCalculus:
         p_np = NpPolynomial(coeffs)
         ap_np = p_np.integ()
 
-        np.testing.assert_allclose(
-            ap_torch.coeffs.numpy(), ap_np.coef, rtol=1e-6
-        )
+        np.testing.assert_allclose(ap_torch.numpy(), ap_np.coef, rtol=1e-6)
 
     def test_definite_integral_quadratic(self):
         """Definite integral of quadratic."""
@@ -376,7 +368,7 @@ class TestPolynomialBatched:
         q = polynomial(torch.tensor([[5.0, 6.0], [7.0, 8.0]]))
         r = polynomial_add(p, q)
         expected = torch.tensor([[6.0, 8.0], [10.0, 12.0]])
-        torch.testing.assert_close(r.coeffs, expected)
+        torch.testing.assert_close(r, expected)
 
     def test_batched_multiply(self):
         """Multiply batched polynomials."""
@@ -386,7 +378,7 @@ class TestPolynomialBatched:
         q = polynomial(torch.tensor([[1.0, -1.0], [3.0, 1.0]]))
         r = polynomial_multiply(p, q)
         expected = torch.tensor([[1.0, 0.0, -1.0], [6.0, 5.0, 1.0]])
-        torch.testing.assert_close(r.coeffs, expected)
+        torch.testing.assert_close(r, expected)
 
     def test_batched_derivative(self):
         """Derivative of batched polynomials."""
@@ -395,7 +387,7 @@ class TestPolynomialBatched:
         p = polynomial(torch.tensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]))
         dp = polynomial_derivative(p)
         expected = torch.tensor([[2.0, 6.0], [5.0, 12.0]])
-        torch.testing.assert_close(dp.coeffs, expected)
+        torch.testing.assert_close(dp, expected)
 
 
 class TestPolynomialAutograd:
@@ -446,7 +438,7 @@ class TestPolynomialAutograd:
             p = polynomial(pc)
             q = polynomial(qc)
             r = polynomial_multiply(p, q)
-            return r.coeffs
+            return r
 
         assert torch.autograd.gradcheck(
             mul_fn, (p_coeffs, q_coeffs), raise_exception=True
@@ -461,7 +453,7 @@ class TestPolynomialAutograd:
         def deriv_fn(c):
             p = polynomial(c)
             dp = polynomial_derivative(p)
-            return dp.coeffs
+            return dp
 
         assert torch.autograd.gradcheck(
             deriv_fn, (coeffs,), raise_exception=True
@@ -476,7 +468,7 @@ class TestPolynomialAutograd:
         def antideriv_fn(c):
             p = polynomial(c)
             ap = polynomial_antiderivative(p, constant=0.0)
-            return ap.coeffs
+            return ap
 
         assert torch.autograd.gradcheck(
             antideriv_fn, (coeffs,), raise_exception=True
@@ -581,7 +573,7 @@ class TestPolynomialPowAutograd:
         def pow_sum(c):
             p = polynomial(c)
             result = polynomial_pow(p, 3)
-            return result.coeffs.sum()
+            return result.sum()
 
         assert torch.autograd.gradcheck(pow_sum, (coeffs,), eps=1e-6)
 
@@ -594,7 +586,7 @@ class TestPolynomialPowAutograd:
         def pow_sum(c):
             p = polynomial(c)
             result = polynomial_pow(p, 3)
-            return result.coeffs.sum()
+            return result.sum()
 
         assert torch.autograd.gradgradcheck(pow_sum, (coeffs,), eps=1e-6)
 

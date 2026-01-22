@@ -40,8 +40,8 @@ def polynomial_roots(p: Polynomial) -> Tensor:
 
     For high-degree polynomials (>20), use float64 for accuracy.
     """
-    coeffs = p.coeffs
-    n = coeffs.shape[-1]  # n = degree + 1
+    # p IS the coefficient tensor now
+    n = p.shape[-1]  # n = degree + 1
 
     if n < 2:
         raise DegreeError(
@@ -49,7 +49,7 @@ def polynomial_roots(p: Polynomial) -> Tensor:
         )
 
     # Leading coefficient (highest degree)
-    leading = coeffs[..., -1]
+    leading = p[..., -1]
 
     # Check for zero leading coefficient
     if torch.any(leading == 0):
@@ -60,7 +60,7 @@ def polynomial_roots(p: Polynomial) -> Tensor:
 
     # Normalize coefficients by leading coefficient
     # normalized[i] = -coeffs[i] / coeffs[-1]
-    normalized = -coeffs[..., :-1] / leading.unsqueeze(-1)
+    normalized = -p[..., :-1] / leading.unsqueeze(-1)
 
     # Construct companion matrix
     # For polynomial p(x) = a_0 + a_1*x + ... + a_{n-1}*x^{n-1} + x^n (monic)
@@ -76,7 +76,7 @@ def polynomial_roots(p: Polynomial) -> Tensor:
     degree = n - 1  # Degree of polynomial = number of roots
 
     # Handle batch dimensions
-    batch_shape = coeffs.shape[:-1]
+    batch_shape = p.shape[:-1]
     batch_size = batch_shape.numel() if len(batch_shape) > 0 else 1
 
     # Flatten batch dimensions for construction
@@ -88,12 +88,12 @@ def polynomial_roots(p: Polynomial) -> Tensor:
     # Build companion matrix
     # Start with zeros
     companion = torch.zeros(
-        batch_size, degree, degree, dtype=coeffs.dtype, device=coeffs.device
+        batch_size, degree, degree, dtype=p.dtype, device=p.device
     )
 
     # Set subdiagonal to 1
     if degree > 1:
-        eye_indices = torch.arange(degree - 1, device=coeffs.device)
+        eye_indices = torch.arange(degree - 1, device=p.device)
         companion[:, eye_indices + 1, eye_indices] = 1.0
 
     # Set last column to normalized coefficients (negated, already done above)
@@ -102,9 +102,7 @@ def polynomial_roots(p: Polynomial) -> Tensor:
     # Compute eigenvalues
     # Convert to complex for eigenvalue computation
     companion_complex = companion.to(
-        dtype=torch.complex128
-        if coeffs.dtype == torch.float64
-        else torch.complex64
+        dtype=torch.complex128 if p.dtype == torch.float64 else torch.complex64
     )
 
     roots = torch.linalg.eigvals(companion_complex)

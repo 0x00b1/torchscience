@@ -16,10 +16,8 @@ class TestPolynomialDivmodKernel:
         quot, rem = polynomial_divmod(p, q)
         expected_quot = torch.tensor([1.0, 1.0])  # x + 1
         expected_rem = torch.tensor([0.0])
-        torch.testing.assert_close(quot.coeffs, expected_quot)
-        torch.testing.assert_close(
-            rem.coeffs, expected_rem, atol=1e-6, rtol=1e-6
-        )
+        torch.testing.assert_close(quot, expected_quot)
+        torch.testing.assert_close(rem, expected_rem, atol=1e-6, rtol=1e-6)
 
     def test_divmod_with_remainder(self):
         """Divide polynomial with non-zero remainder."""
@@ -29,8 +27,8 @@ class TestPolynomialDivmodKernel:
         quot, rem = polynomial_divmod(p, q)
         expected_quot = torch.tensor([1.0, 1.0])  # x + 1
         expected_rem = torch.tensor([2.0])  # remainder 2
-        torch.testing.assert_close(quot.coeffs, expected_quot)
-        torch.testing.assert_close(rem.coeffs, expected_rem)
+        torch.testing.assert_close(quot, expected_quot)
+        torch.testing.assert_close(rem, expected_rem)
 
     def test_divmod_cubic(self):
         """Divide cubic polynomial."""
@@ -40,10 +38,8 @@ class TestPolynomialDivmodKernel:
         quot, rem = polynomial_divmod(p, q)
         expected_quot = torch.tensor([1.0, 1.0, 1.0])  # x^2 + x + 1
         expected_rem = torch.tensor([0.0])
-        torch.testing.assert_close(quot.coeffs, expected_quot)
-        torch.testing.assert_close(
-            rem.coeffs, expected_rem, atol=1e-6, rtol=1e-6
-        )
+        torch.testing.assert_close(quot, expected_quot)
+        torch.testing.assert_close(rem, expected_rem, atol=1e-6, rtol=1e-6)
 
     def test_divmod_by_constant(self):
         """Divide by constant polynomial."""
@@ -54,10 +50,8 @@ class TestPolynomialDivmodKernel:
         expected_quot = torch.tensor([1.0, 2.0, 3.0])
         # For degree 0 divisor, remainder size is 1
         expected_rem = torch.tensor([0.0])
-        torch.testing.assert_close(quot.coeffs, expected_quot)
-        torch.testing.assert_close(
-            rem.coeffs, expected_rem, atol=1e-6, rtol=1e-6
-        )
+        torch.testing.assert_close(quot, expected_quot)
+        torch.testing.assert_close(rem, expected_rem, atol=1e-6, rtol=1e-6)
 
     def test_divmod_batched(self):
         """Divide batched polynomials."""
@@ -73,10 +67,8 @@ class TestPolynomialDivmodKernel:
         # (x^2 + 1) / (x - 1) = (x + 1), rem 2
         expected_quot = torch.tensor([[1.0, 1.0], [1.0, 1.0]])
         expected_rem = torch.tensor([[0.0], [2.0]])
-        torch.testing.assert_close(quot.coeffs, expected_quot)
-        torch.testing.assert_close(
-            rem.coeffs, expected_rem, atol=1e-6, rtol=1e-6
-        )
+        torch.testing.assert_close(quot, expected_quot)
+        torch.testing.assert_close(rem, expected_rem, atol=1e-6, rtol=1e-6)
 
     def test_gradcheck(self):
         """Verify first-order gradients."""
@@ -132,12 +124,8 @@ class TestPolynomialDivmodKernel:
         quot, rem = polynomial_divmod(p, q)
         expected_quot = torch.tensor([0.0 - 1.0j, 1.0 + 0.0j])  # x - i
         expected_rem = torch.tensor([0.0 + 0.0j])
-        torch.testing.assert_close(
-            quot.coeffs, expected_quot, atol=1e-6, rtol=1e-6
-        )
-        torch.testing.assert_close(
-            rem.coeffs, expected_rem, atol=1e-6, rtol=1e-6
-        )
+        torch.testing.assert_close(quot, expected_quot, atol=1e-6, rtol=1e-6)
+        torch.testing.assert_close(rem, expected_rem, atol=1e-6, rtol=1e-6)
 
     def test_roundtrip(self):
         """Verify q * quot + rem = p."""
@@ -148,10 +136,8 @@ class TestPolynomialDivmodKernel:
         # Reconstruct: q * quot + rem should equal p
         reconstructed = q * quot
         # Pad remainder to match reconstructed size
-        rem_padded = torch.zeros_like(reconstructed.coeffs)
-        rem_padded[..., : rem.coeffs.shape[-1]] = rem.coeffs
-        reconstructed = polynomial(reconstructed.coeffs + rem_padded)
+        rem_padded = torch.zeros_like(reconstructed)
+        rem_padded[..., : rem.shape[-1]] = rem
+        reconstructed = polynomial(reconstructed + rem_padded)
 
-        torch.testing.assert_close(
-            reconstructed.coeffs, p.coeffs, atol=1e-5, rtol=1e-5
-        )
+        torch.testing.assert_close(reconstructed, p, atol=1e-5, rtol=1e-5)

@@ -37,42 +37,38 @@ def polynomial_divmod(
     >>> p = polynomial(torch.tensor([-1.0, 0.0, 0.0, 1.0]))  # x^3 - 1
     >>> q = polynomial(torch.tensor([-1.0, 1.0]))  # x - 1
     >>> quot, rem = polynomial_divmod(p, q)
-    >>> quot.coeffs  # x^2 + x + 1
-    tensor([1., 1., 1.])
+    >>> quot  # x^2 + x + 1
+    Polynomial(tensor([1., 1., 1.]))
     """
-    p_coeffs = p.coeffs
-    q_coeffs = q.coeffs
-
+    # p and q ARE the coefficient tensors now
     # Get degrees
-    n_p = p_coeffs.shape[-1]
-    n_q = q_coeffs.shape[-1]
+    n_p = p.shape[-1]
+    n_q = q.shape[-1]
     deg_p = n_p - 1
     deg_q = n_q - 1
 
     # Check for zero divisor
-    leading_q = q_coeffs[..., -1]
+    leading_q = q[..., -1]
     if torch.all(leading_q == 0):
         raise DegreeError("Cannot divide by zero polynomial")
 
     # If dividend degree < divisor degree, quotient is 0, remainder is dividend
     if deg_p < deg_q:
-        zero_shape = list(p_coeffs.shape)
+        zero_shape = list(p.shape)
         zero_shape[-1] = 1
-        zero_coeffs = torch.zeros(
-            zero_shape, dtype=p_coeffs.dtype, device=p_coeffs.device
-        )
+        zero_coeffs = torch.zeros(zero_shape, dtype=p.dtype, device=p.device)
         return polynomial(zero_coeffs), p
 
     # Get batch shapes
-    p_batch = p_coeffs.shape[:-1]
-    q_batch = q_coeffs.shape[:-1]
+    p_batch = p.shape[:-1]
+    q_batch = q.shape[:-1]
 
     # Broadcast batch dimensions
     broadcast_batch = torch.broadcast_shapes(p_batch, q_batch)
 
     # Expand to broadcast shape
-    p_expanded = p_coeffs.expand(*broadcast_batch, n_p)
-    q_expanded = q_coeffs.expand(*broadcast_batch, n_q)
+    p_expanded = p.expand(*broadcast_batch, n_p)
+    q_expanded = q.expand(*broadcast_batch, n_q)
 
     # Flatten batch dimensions for kernel: (...batch, N) -> (B, N)
     batch_size = broadcast_batch.numel() if len(broadcast_batch) > 0 else 1
@@ -101,4 +97,4 @@ def polynomial_divmod(
         quot_result = quot_flat.reshape(*broadcast_batch, quot_len)
         rem_result = rem_flat.reshape(*broadcast_batch, rem_len)
 
-    return Polynomial(coeffs=quot_result), Polynomial(coeffs=rem_result)
+    return polynomial(quot_result), polynomial(rem_result)

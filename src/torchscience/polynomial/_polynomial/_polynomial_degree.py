@@ -24,4 +24,5 @@ def polynomial_degree(p: Polynomial) -> Tensor:
     which would require checking for trailing zeros. Use polynomial_trim
     first if you need the actual degree.
     """
-    return torch.tensor(p.coeffs.shape[-1] - 1, device=p.coeffs.device)
+    # p IS the coefficient tensor now
+    return torch.tensor(p.shape[-1] - 1, device=p.device)

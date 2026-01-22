@@ -1,6 +1,6 @@
 import torch
 
-from ._polynomial import Polynomial
+from ._polynomial import Polynomial, polynomial
 
 
 def polynomial_add(p: Polynomial, q: Polynomial) -> Polynomial:
@@ -19,21 +19,19 @@ def polynomial_add(p: Polynomial, q: Polynomial) -> Polynomial:
     Polynomial
         Sum p + q.
     """
-    p_coeffs = p.coeffs
-    q_coeffs = q.coeffs
-
+    # p and q ARE the coefficient tensors now
     # Get shapes
-    p_batch = p_coeffs.shape[:-1]
-    q_batch = q_coeffs.shape[:-1]
-    n_p = p_coeffs.shape[-1]
-    n_q = q_coeffs.shape[-1]
+    p_batch = p.shape[:-1]
+    q_batch = q.shape[:-1]
+    n_p = p.shape[-1]
+    n_q = q.shape[-1]
 
     # Broadcast batch dimensions
     broadcast_batch = torch.broadcast_shapes(p_batch, q_batch)
 
     # Expand to broadcast shape
-    p_expanded = p_coeffs.expand(*broadcast_batch, n_p)
-    q_expanded = q_coeffs.expand(*broadcast_batch, n_q)
+    p_expanded = p.expand(*broadcast_batch, n_p)
+    q_expanded = q.expand(*broadcast_batch, n_q)
 
     # Flatten batch dimensions for kernel: (...batch, N) -> (B, N)
     batch_size = broadcast_batch.numel() if len(broadcast_batch) > 0 else 1
@@ -55,4 +53,4 @@ def polynomial_add(p: Polynomial, q: Polynomial) -> Polynomial:
     else:
         result = result_flat.reshape(*broadcast_batch, n_out)
 
-    return Polynomial(coeffs=result)
+    return polynomial(result)

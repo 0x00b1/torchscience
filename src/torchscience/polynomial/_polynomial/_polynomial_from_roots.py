@@ -23,8 +23,8 @@ def polynomial_from_roots(roots: Tensor) -> Polynomial:
     --------
     >>> roots = torch.tensor([1.0, 2.0])  # (x-1)(x-2) = x^2 - 3x + 2
     >>> p = polynomial_from_roots(roots)
-    >>> p.coeffs
-    tensor([2., -3., 1.])
+    >>> p
+    Polynomial(tensor([2., -3., 1.]))
     """
     # Build polynomial iteratively: start with (x - r_0), multiply by (x - r_i)
 
@@ -76,4 +76,4 @@ def polynomial_from_roots(roots: Tensor) -> Polynomial:
 
         coeffs = shifted + scaled
 
-    return Polynomial(coeffs=coeffs)
+    return polynomial(coeffs)

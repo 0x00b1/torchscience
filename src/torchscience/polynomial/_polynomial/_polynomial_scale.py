@@ -1,7 +1,7 @@
 import torch
 from torch import Tensor
 
-from ._polynomial import Polynomial
+from ._polynomial import Polynomial, polynomial
 
 
 def polynomial_scale(p: Polynomial, c: Tensor) -> Polynomial:
@@ -23,11 +23,10 @@ def polynomial_scale(p: Polynomial, c: Tensor) -> Polynomial:
     Polynomial
         Scaled polynomial c * p.
     """
-    p_coeffs = p.coeffs
-
+    # p IS the coefficient tensor now
     # Get shapes
-    p_batch = p_coeffs.shape[:-1]
-    n_coeffs = p_coeffs.shape[-1]
+    p_batch = p.shape[:-1]
+    n_coeffs = p.shape[-1]
 
     # Handle scalar vs batched c
     if c.dim() == 0:
@@ -41,7 +40,7 @@ def polynomial_scale(p: Polynomial, c: Tensor) -> Polynomial:
         c_expanded = c.expand(*broadcast_batch)
 
     # Expand p to broadcast shape
-    p_expanded = p_coeffs.expand(*broadcast_batch, n_coeffs)
+    p_expanded = p.expand(*broadcast_batch, n_coeffs)
 
     # Flatten batch dimensions for kernel: (...batch, N) -> (B, N)
     batch_size = broadcast_batch.numel() if len(broadcast_batch) > 0 else 1
@@ -67,4 +66,4 @@ def polynomial_scale(p: Polynomial, c: Tensor) -> Polynomial:
     else:
         result = result_flat.reshape(*broadcast_batch, n_coeffs)
 
-    return Polynomial(coeffs=result)
+    return polynomial(result)

@@ -1,6 +1,6 @@
 import torch
 
-from ._polynomial import Polynomial
+from ._polynomial import Polynomial, polynomial
 
 
 def polynomial_negate(p: Polynomial) -> Polynomial:
@@ -18,15 +18,14 @@ def polynomial_negate(p: Polynomial) -> Polynomial:
     Polynomial
         Negated polynomial -p.
     """
-    p_coeffs = p.coeffs
-
+    # p IS the coefficient tensor now
     # Get shapes
-    p_batch = p_coeffs.shape[:-1]
-    n_p = p_coeffs.shape[-1]
+    p_batch = p.shape[:-1]
+    n_p = p.shape[-1]
 
     # Flatten batch dimensions for kernel: (...batch, N) -> (B, N)
     batch_size = p_batch.numel() if len(p_batch) > 0 else 1
-    p_flat = p_coeffs.reshape(batch_size, n_p).contiguous()
+    p_flat = p.reshape(batch_size, n_p).contiguous()
 
     # Call C++ kernel
     result_flat = torch.ops.torchscience.polynomial_negate(p_flat)
@@ -37,4 +36,4 @@ def polynomial_negate(p: Polynomial) -> Polynomial:
     else:
         result = result_flat.reshape(*p_batch, n_p)
 
-    return Polynomial(coeffs=result)
+    return polynomial(result)

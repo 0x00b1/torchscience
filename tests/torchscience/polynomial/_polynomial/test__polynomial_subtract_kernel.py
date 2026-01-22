@@ -13,7 +13,7 @@ class TestPolynomialSubtractKernel:
         q = polynomial(torch.tensor([4.0, 5.0, 6.0]))
         result = p - q
         expected = torch.tensor([-3.0, -3.0, -3.0])
-        torch.testing.assert_close(result.coeffs, expected)
+        torch.testing.assert_close(result, expected)
 
     def test_subtract_different_degree(self):
         """Subtract polynomials of different degrees."""
@@ -21,7 +21,7 @@ class TestPolynomialSubtractKernel:
         q = polynomial(torch.tensor([4.0, 5.0]))
         result = p - q
         expected = torch.tensor([-3.0, -3.0, 3.0])
-        torch.testing.assert_close(result.coeffs, expected)
+        torch.testing.assert_close(result, expected)
 
     def test_subtract_different_degree_reversed(self):
         """Subtract where q has higher degree."""
@@ -29,7 +29,7 @@ class TestPolynomialSubtractKernel:
         q = polynomial(torch.tensor([4.0, 5.0, 6.0]))
         result = p - q
         expected = torch.tensor([-3.0, -3.0, -6.0])
-        torch.testing.assert_close(result.coeffs, expected)
+        torch.testing.assert_close(result, expected)
 
     def test_subtract_batched(self):
         """Subtract batched polynomials."""
@@ -37,7 +37,7 @@ class TestPolynomialSubtractKernel:
         q = polynomial(torch.tensor([[5.0, 6.0], [7.0, 8.0]]))
         result = p - q
         expected = torch.tensor([[-4.0, -4.0], [-4.0, -4.0]])
-        torch.testing.assert_close(result.coeffs, expected)
+        torch.testing.assert_close(result, expected)
 
     def test_subtract_broadcast(self):
         """Subtract with broadcasting."""
@@ -45,7 +45,7 @@ class TestPolynomialSubtractKernel:
         q = polynomial(torch.tensor([[3.0, 4.0], [5.0, 6.0]]))
         result = p - q
         expected = torch.tensor([[-2.0, -2.0], [-4.0, -4.0]])
-        torch.testing.assert_close(result.coeffs, expected)
+        torch.testing.assert_close(result, expected)
 
     def test_gradcheck(self):
         """Verify first-order gradients."""
@@ -81,14 +81,14 @@ class TestPolynomialSubtractKernel:
         q = polynomial(torch.tensor([5.0 + 6.0j, 7.0 + 8.0j]))
         result = p - q
         expected = torch.tensor([-4.0 - 4.0j, -4.0 - 4.0j])
-        torch.testing.assert_close(result.coeffs, expected)
+        torch.testing.assert_close(result, expected)
 
     def test_subtract_self(self):
         """Subtracting a polynomial from itself should give zero."""
         p = polynomial(torch.tensor([1.0, 2.0, 3.0]))
         result = p - p
         expected = torch.tensor([0.0, 0.0, 0.0])
-        torch.testing.assert_close(result.coeffs, expected)
+        torch.testing.assert_close(result, expected)
 
     def test_backward_negation(self):
         """Verify that grad_q is negated (key difference from add)."""
