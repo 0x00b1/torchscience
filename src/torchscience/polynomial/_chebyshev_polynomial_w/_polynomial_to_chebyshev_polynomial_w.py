@@ -2,14 +2,14 @@ import torch
 
 from torchscience.polynomial._polynomial import Polynomial
 
-from ._chebyshev_polynomial_w import ChebyshevPolynomialW
+from ._chebyshev_polynomial_w import chebyshev_polynomial_w
 from ._chebyshev_polynomial_w_add import chebyshev_polynomial_w_add
 from ._chebyshev_polynomial_w_mulx import chebyshev_polynomial_w_mulx
 
 
 def polynomial_to_chebyshev_polynomial_w(
     p: Polynomial,
-) -> ChebyshevPolynomialW:
+) -> chebyshev_polynomial_w:
     """Convert power polynomial to Chebyshev W series.
 
     Parameters
@@ -33,25 +33,26 @@ def polynomial_to_chebyshev_polynomial_w(
 
     Examples
     --------
-    >>> p = Polynomial(coeffs=torch.tensor([0.0, 0.0, 1.0]))  # x^2
+    >>> p = Polynomial(torch.tensor([0.0, 0.0, 1.0]))  # x^2
     >>> c = polynomial_to_chebyshev_polynomial_w(p)
     """
-    coeffs = p.coeffs
+    # The Polynomial IS the coefficients tensor
+    coeffs = p.as_subclass(torch.Tensor)
     n = coeffs.shape[-1]
 
     if n == 0:
-        return ChebyshevPolynomialW(
-            coeffs=torch.zeros(1, dtype=coeffs.dtype, device=coeffs.device)
+        return chebyshev_polynomial_w(
+            torch.zeros(1, dtype=coeffs.dtype, device=coeffs.device)
         )
 
     # Start with highest degree coefficient
-    result = ChebyshevPolynomialW(coeffs=coeffs[..., -1:].clone())
+    result = chebyshev_polynomial_w(coeffs[..., -1:].clone())
 
     # Horner's method: multiply by x, add next coefficient
     for i in range(n - 2, -1, -1):
         result = chebyshev_polynomial_w_mulx(result)
         result = chebyshev_polynomial_w_add(
-            result, ChebyshevPolynomialW(coeffs=coeffs[..., i : i + 1].clone())
+            result, chebyshev_polynomial_w(coeffs[..., i : i + 1].clone())
         )
 
     return result

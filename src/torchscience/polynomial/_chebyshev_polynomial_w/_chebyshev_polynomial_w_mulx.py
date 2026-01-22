@@ -1,6 +1,9 @@
 import torch
 
-from ._chebyshev_polynomial_w import ChebyshevPolynomialW
+from ._chebyshev_polynomial_w import (
+    ChebyshevPolynomialW,
+    chebyshev_polynomial_w,
+)
 
 
 def chebyshev_polynomial_w_mulx(
@@ -33,12 +36,13 @@ def chebyshev_polynomial_w_mulx(
 
     Examples
     --------
-    >>> a = ChebyshevPolynomialW(coeffs=torch.tensor([1.0]))  # W_0
+    >>> a = chebyshev_polynomial_w(torch.tensor([1.0]))  # W_0
     >>> b = chebyshev_polynomial_w_mulx(a)
-    >>> b.coeffs  # x * W_0 = 0.5 * (W_1 - W_0)
-    tensor([-0.5, 0.5])
+    >>> b  # x * W_0 = 0.5 * (W_1 - W_0)
+    ChebyshevPolynomialW(tensor([-0.5, 0.5]))
     """
-    coeffs = a.coeffs
+    # The polynomial IS the coefficients tensor
+    coeffs = a.as_subclass(torch.Tensor)
     n = coeffs.shape[-1]
 
     # Result has one more coefficient
@@ -63,4 +67,4 @@ def chebyshev_polynomial_w_mulx(
         result[..., k - 1] = result[..., k - 1] + 0.5 * c_k
         result[..., k + 1] = result[..., k + 1] + 0.5 * c_k
 
-    return ChebyshevPolynomialW(coeffs=result)
+    return chebyshev_polynomial_w(result)

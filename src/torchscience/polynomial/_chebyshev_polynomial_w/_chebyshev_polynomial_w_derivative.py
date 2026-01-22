@@ -1,6 +1,9 @@
 import torch
 
-from ._chebyshev_polynomial_w import ChebyshevPolynomialW
+from ._chebyshev_polynomial_w import (
+    ChebyshevPolynomialW,
+    chebyshev_polynomial_w,
+)
 
 
 def _derivative_coeffs_w(coeffs: torch.Tensor) -> torch.Tensor:
@@ -209,19 +212,20 @@ def chebyshev_polynomial_w_derivative(
     --------
     >>> a = chebyshev_polynomial_w(torch.tensor([0.0, 0.0, 1.0]))  # W_2
     >>> da = chebyshev_polynomial_w_derivative(a)
-    >>> da.coeffs  # d/dx W_2 = -2*W_0 + 4*W_1
-    tensor([-2.,  4.])
+    >>> da  # d/dx W_2 = -2*W_0 + 4*W_1
+    ChebyshevPolynomialW(tensor([-2.,  4.]))
     """
     if order < 0:
         raise ValueError(f"Order must be non-negative, got {order}")
 
     if order == 0:
-        return ChebyshevPolynomialW(coeffs=a.coeffs.clone())
+        return chebyshev_polynomial_w(a.clone())
 
-    coeffs = a.coeffs
+    # The polynomial IS the coefficients tensor
+    coeffs = a.as_subclass(torch.Tensor)
 
     # Apply derivative 'order' times
     for _ in range(order):
         coeffs = _derivative_coeffs_w(coeffs)
 
-    return ChebyshevPolynomialW(coeffs=coeffs)
+    return chebyshev_polynomial_w(coeffs)

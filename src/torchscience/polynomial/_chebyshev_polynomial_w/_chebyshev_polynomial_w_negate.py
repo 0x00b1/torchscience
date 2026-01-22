@@ -1,4 +1,9 @@
-from ._chebyshev_polynomial_w import ChebyshevPolynomialW
+import torch
+
+from ._chebyshev_polynomial_w import (
+    ChebyshevPolynomialW,
+    chebyshev_polynomial_w,
+)
 
 
 def chebyshev_polynomial_w_negate(
@@ -20,7 +25,8 @@ def chebyshev_polynomial_w_negate(
     --------
     >>> a = chebyshev_polynomial_w(torch.tensor([1.0, -2.0, 3.0]))
     >>> b = chebyshev_polynomial_w_negate(a)
-    >>> b.coeffs
-    tensor([-1.,  2., -3.])
+    >>> b
+    ChebyshevPolynomialW(tensor([-1.,  2., -3.]))
     """
-    return ChebyshevPolynomialW(coeffs=-a.coeffs)
+    result = torch.Tensor.neg(a)
+    return chebyshev_polynomial_w(result)

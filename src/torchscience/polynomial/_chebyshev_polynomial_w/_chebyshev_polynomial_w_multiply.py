@@ -1,6 +1,9 @@
 import torch
 
-from ._chebyshev_polynomial_w import ChebyshevPolynomialW
+from ._chebyshev_polynomial_w import (
+    ChebyshevPolynomialW,
+    chebyshev_polynomial_w,
+)
 
 
 def chebyshev_polynomial_w_multiply(
@@ -37,11 +40,12 @@ def chebyshev_polynomial_w_multiply(
     >>> a = chebyshev_polynomial_w(torch.tensor([0.0, 1.0]))  # W_1
     >>> b = chebyshev_polynomial_w(torch.tensor([0.0, 1.0]))  # W_1
     >>> c = chebyshev_polynomial_w_multiply(a, b)
-    >>> c.coeffs  # W_1 * W_1 = 0.5*(W_0 + W_2)
-    tensor([0.5, 0.0, 0.5])
+    >>> c  # W_1 * W_1 = 0.5*(W_0 + W_2)
+    ChebyshevPolynomialW(tensor([0.5, 0.0, 0.5]))
     """
-    a_coeffs = a.coeffs
-    b_coeffs = b.coeffs
+    # Convert to plain tensors to avoid operator interception
+    a_coeffs = a.as_subclass(torch.Tensor)
+    b_coeffs = b.as_subclass(torch.Tensor)
 
     n_a = a_coeffs.shape[-1]
     n_b = b_coeffs.shape[-1]
@@ -78,4 +82,4 @@ def chebyshev_polynomial_w_multiply(
                     c_coeffs[..., idx_diff] + 0.5 * coeff_product
                 )
 
-    return ChebyshevPolynomialW(coeffs=c_coeffs)
+    return chebyshev_polynomial_w(c_coeffs)

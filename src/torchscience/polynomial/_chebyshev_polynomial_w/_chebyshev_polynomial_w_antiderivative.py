@@ -1,6 +1,9 @@
 import torch
 
-from ._chebyshev_polynomial_w import ChebyshevPolynomialW
+from ._chebyshev_polynomial_w import (
+    ChebyshevPolynomialW,
+    chebyshev_polynomial_w,
+)
 from ._chebyshev_polynomial_w_evaluate import chebyshev_polynomial_w_evaluate
 
 
@@ -178,9 +181,10 @@ def chebyshev_polynomial_w_antiderivative(
         raise ValueError(f"Order must be non-negative, got {order}")
 
     if order == 0:
-        return ChebyshevPolynomialW(coeffs=a.coeffs.clone())
+        return chebyshev_polynomial_w(a.clone())
 
-    coeffs = a.coeffs
+    # The polynomial IS the coefficients tensor
+    coeffs = a.as_subclass(torch.Tensor)
 
     # Apply antiderivative 'order' times
     for iteration in range(order):
@@ -201,11 +205,11 @@ def chebyshev_polynomial_w_antiderivative(
 
         # Set constant so that F(0) = constant (only for first integration)
         k_val = constant if iteration == 0 else 0.0
-        temp = ChebyshevPolynomialW(coeffs=i_coeffs)
+        temp = chebyshev_polynomial_w(i_coeffs)
         x_zero = torch.zeros((), dtype=coeffs.dtype, device=coeffs.device)
         val_at_zero = chebyshev_polynomial_w_evaluate(temp, x_zero)
         i_coeffs[..., 0] = i_coeffs[..., 0] + (k_val - val_at_zero)
 
         coeffs = i_coeffs
 
-    return ChebyshevPolynomialW(coeffs=coeffs)
+    return chebyshev_polynomial_w(coeffs)

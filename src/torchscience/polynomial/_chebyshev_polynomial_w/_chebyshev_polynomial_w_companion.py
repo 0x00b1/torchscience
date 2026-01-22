@@ -32,12 +32,13 @@ def chebyshev_polynomial_w_companion(
 
     Examples
     --------
-    >>> c = ChebyshevPolynomialW(coeffs=torch.tensor([0.0, 0.0, 1.0]))  # W_2
+    >>> c = chebyshev_polynomial_w(torch.tensor([0.0, 0.0, 1.0]))  # W_2
     >>> A = chebyshev_polynomial_w_companion(c)
     >>> A.shape
     torch.Size([2, 2])
     """
-    coeffs = c.coeffs
+    # The polynomial IS the coefficients tensor
+    coeffs = c.as_subclass(torch.Tensor)
     n = coeffs.shape[-1] - 1  # degree
 
     if n < 1:

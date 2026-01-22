@@ -26,8 +26,8 @@ def chebyshev_polynomial_w_degree(
 
     Examples
     --------
-    >>> a = ChebyshevPolynomialW(coeffs=torch.tensor([1.0, 2.0, 3.0]))
+    >>> a = chebyshev_polynomial_w(torch.tensor([1.0, 2.0, 3.0]))
     >>> chebyshev_polynomial_w_degree(a)
     tensor(2)
     """
-    return torch.tensor(a.coeffs.shape[-1] - 1)
+    return torch.tensor(a.shape[-1] - 1)

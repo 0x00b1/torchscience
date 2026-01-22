@@ -1,6 +1,9 @@
 import torch
 
-from ._chebyshev_polynomial_w import ChebyshevPolynomialW
+from ._chebyshev_polynomial_w import (
+    ChebyshevPolynomialW,
+    chebyshev_polynomial_w,
+)
 
 
 def chebyshev_polynomial_w_trim(
@@ -29,10 +32,11 @@ def chebyshev_polynomial_w_trim(
 
     Examples
     --------
-    >>> a = ChebyshevPolynomialW(coeffs=torch.tensor([1.0, 2.0, 0.0, 0.0]))
+    >>> a = chebyshev_polynomial_w(torch.tensor([1.0, 2.0, 0.0, 0.0]))
     >>> chebyshev_polynomial_w_trim(a)  # Removes trailing zeros
     """
-    coeffs = a.coeffs
+    # The polynomial IS the coefficients tensor
+    coeffs = a.as_subclass(torch.Tensor)
 
     # Find last significant coefficient
     # Work from the end, find first coefficient with |c| > tol
@@ -48,4 +52,4 @@ def chebyshev_polynomial_w_trim(
     # Always keep at least one coefficient
     new_coeffs = coeffs[..., : last_idx + 1]
 
-    return ChebyshevPolynomialW(coeffs=new_coeffs)
+    return chebyshev_polynomial_w(new_coeffs)

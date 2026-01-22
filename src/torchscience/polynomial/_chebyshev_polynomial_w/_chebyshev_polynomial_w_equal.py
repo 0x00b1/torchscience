@@ -35,13 +35,14 @@ def chebyshev_polynomial_w_equal(
 
     Examples
     --------
-    >>> a = ChebyshevPolynomialW(coeffs=torch.tensor([1.0, 2.0]))
-    >>> b = ChebyshevPolynomialW(coeffs=torch.tensor([1.0, 2.0, 0.0]))
+    >>> a = chebyshev_polynomial_w(torch.tensor([1.0, 2.0]))
+    >>> b = chebyshev_polynomial_w(torch.tensor([1.0, 2.0, 0.0]))
     >>> chebyshev_polynomial_w_equal(a, b)
     tensor(True)
     """
-    c1 = a.coeffs
-    c2 = b.coeffs
+    # The polynomial IS the coefficients tensor
+    c1 = a.as_subclass(torch.Tensor)
+    c2 = b.as_subclass(torch.Tensor)
 
     n1 = c1.shape[-1]
     n2 = c2.shape[-1]
