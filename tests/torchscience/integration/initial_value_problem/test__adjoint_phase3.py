@@ -289,3 +289,47 @@ class TestNativeBatchedSolving:
                 t_span=(0.0, 1.0),
             )
             assert torch.allclose(y_final[i], y_single, rtol=1e-5)
+
+    def test_solve_ivp_batched_with_adjoint(self):
+        """solve_ivp_batched should work with adjoint sensitivity."""
+        from torchscience.integration.initial_value_problem import (
+            solve_ivp_batched,
+        )
+
+        theta = torch.tensor([1.0], requires_grad=True, dtype=torch.float64)
+
+        def batched_dynamics(t, y):
+            return -theta * y
+
+        y0_batch = torch.randn(4, 2, dtype=torch.float64)
+
+        y_final, _ = solve_ivp_batched(
+            batched_dynamics,
+            y0_batch,
+            t_span=(0.0, 1.0),
+            sensitivity="adjoint",
+            params=[theta],
+        )
+
+        loss = y_final.sum()
+        loss.backward()
+
+        assert theta.grad is not None
+        assert torch.isfinite(theta.grad)
+
+        # Verify gradient matches sum of individual gradients
+        total_grad = torch.zeros_like(theta)
+        for i in range(4):
+            theta_i = torch.tensor(
+                [1.0], requires_grad=True, dtype=torch.float64
+            )
+
+            def dyn_i(t, y, theta_i=theta_i):
+                return -theta_i * y
+
+            solver = adjoint(dormand_prince_5, params=[theta_i])
+            y_i, _ = solver(dyn_i, y0_batch[i], t_span=(0.0, 1.0))
+            y_i.sum().backward()
+            total_grad = total_grad + theta_i.grad
+
+        assert torch.allclose(theta.grad, total_grad, rtol=1e-4)
