@@ -38,7 +38,10 @@ find_package(Torch REQUIRED)
 include(cmake/backend_detection.cmake)
 
 # Base sources
-set(TORCHSCIENCE_SOURCES src/torchscience/csrc/torchscience.cpp)
+set(TORCHSCIENCE_SOURCES
+  src/torchscience/csrc/torchscience.cpp
+  src/torchscience/csrc/differentiation.cpp
+)
 
 # Create library target
 add_library(_csrc MODULE ${TORCHSCIENCE_SOURCES})
