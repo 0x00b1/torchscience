@@ -2,7 +2,10 @@ import numpy as np
 import torch
 from torch import Tensor
 
-from ._hermite_polynomial_he import HermitePolynomialHe
+from ._hermite_polynomial_he import (
+    HermitePolynomialHe,
+    hermite_polynomial_he,
+)
 
 
 def hermite_polynomial_he_from_roots(
@@ -42,4 +45,4 @@ def hermite_polynomial_he_from_roots(
         device=roots.device,
     )
 
-    return HermitePolynomialHe(coeffs=coeffs)
+    return hermite_polynomial_he(coeffs)

@@ -1,4 +1,9 @@
-from ._chebyshev_polynomial_v import ChebyshevPolynomialV
+import torch
+
+from ._chebyshev_polynomial_v import (
+    ChebyshevPolynomialV,
+    chebyshev_polynomial_v,
+)
 
 
 def chebyshev_polynomial_v_negate(
@@ -20,7 +25,7 @@ def chebyshev_polynomial_v_negate(
     --------
     >>> a = chebyshev_polynomial_v(torch.tensor([1.0, -2.0, 3.0]))
     >>> b = chebyshev_polynomial_v_negate(a)
-    >>> b.coeffs
-    tensor([-1.,  2., -3.])
+    >>> b
+    ChebyshevPolynomialV(tensor([-1.,  2., -3.]))
     """
-    return ChebyshevPolynomialV(coeffs=-a.coeffs)
+    return chebyshev_polynomial_v(-a.as_subclass(torch.Tensor))

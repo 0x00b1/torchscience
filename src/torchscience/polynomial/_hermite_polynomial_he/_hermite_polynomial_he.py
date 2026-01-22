@@ -1,30 +1,47 @@
-"""HermitePolynomialHe tensorclass for Probabilists' Hermite series."""
+"""HermitePolynomialHe Tensor subclass for Probabilists' Hermite series."""
 
 from __future__ import annotations
 
-from tensordict.tensorclass import tensorclass
+from typing import Union
+
+import torch
 from torch import Tensor
 
 from torchscience.polynomial._polynomial_error import PolynomialError
 
+# Operations that preserve polynomial type
+_SHAPE_PRESERVING_OPS = {
+    torch.clone,
+    torch.detach,
+    torch.Tensor.clone,
+    torch.Tensor.detach,
+    torch.Tensor.to,
+    torch.Tensor.cuda,
+    torch.Tensor.cpu,
+    torch.Tensor.contiguous,
+    torch.Tensor.requires_grad_,
+}
 
-@tensorclass
-class HermitePolynomialHe:
+_POLYNOMIAL_RETURNING_OPS = {
+    torch.stack,
+    torch.cat,
+    torch.Tensor.__getitem__,
+    torch.Tensor.reshape,
+    torch.Tensor.view,
+    torch.Tensor.squeeze,
+    torch.Tensor.unsqueeze,
+}
+
+
+class HermitePolynomialHe(Tensor):
     """Probabilists' Hermite polynomial series (He_n convention).
 
-    Represents f(x) = sum_{k=0}^{n} coeffs[..., k] * He_k(x)
+    Represents f(x) = sum_{k=0}^{n} c[k] * He_k(x)
 
     where He_k(x) are probabilists' Hermite polynomials.
 
-    The probabilists' Hermite polynomials are orthogonal on (-inf, inf) with weight
-    w(x) = exp(-x^2/2).
-
-    Attributes
-    ----------
-    coeffs : Tensor
-        Coefficients in ascending order, shape (..., N) where N = degree + 1.
-        coeffs[..., k] is the coefficient of He_k(x).
-        Batch dimensions come first, coefficient dimension last.
+    Shape: (...batch, N) where N = degree + 1
+    c[..., k] is the coefficient of He_k(x).
 
     Notes
     -----
@@ -39,9 +56,30 @@ class HermitePolynomialHe:
         He_n(x) = 2^{-n/2} * H_n(x / sqrt(2))
     """
 
-    coeffs: Tensor
-
     DOMAIN = (float("-inf"), float("inf"))
+
+    @staticmethod
+    def __new__(cls, data, *, dtype=None, device=None):
+        if isinstance(data, Tensor):
+            tensor = data.detach().clone()
+            if dtype is not None:
+                tensor = tensor.to(dtype=dtype)
+            if device is not None:
+                tensor = tensor.to(device=device)
+        else:
+            tensor = torch.as_tensor(data, dtype=dtype, device=device)
+        return tensor.as_subclass(cls)
+
+    @classmethod
+    def __torch_function__(cls, func, types, args=(), kwargs=None):
+        kwargs = kwargs or {}
+        result = super().__torch_function__(func, types, args, kwargs)
+
+        if func in _SHAPE_PRESERVING_OPS | _POLYNOMIAL_RETURNING_OPS:
+            if isinstance(result, Tensor) and not isinstance(result, cls):
+                result = result.as_subclass(cls)
+
+        return result
 
     def __call__(self, x: Tensor) -> Tensor:
         from ._hermite_polynomial_he_evaluate import (
@@ -81,35 +119,33 @@ class HermitePolynomialHe:
 
         return hermite_polynomial_he_negate(self)
 
-    def __mul__(self, other):
-        if isinstance(other, HermitePolynomialHe):
-            from ._hermite_polynomial_he_multiply import (
-                hermite_polynomial_he_multiply,
-            )
+    def __mul__(
+        self, other: Union["HermitePolynomialHe", Tensor]
+    ) -> "HermitePolynomialHe":
+        from ._hermite_polynomial_he_multiply import (
+            hermite_polynomial_he_multiply,
+        )
+        from ._hermite_polynomial_he_scale import (
+            hermite_polynomial_he_scale,
+        )
 
+        if isinstance(other, HermitePolynomialHe):
             return hermite_polynomial_he_multiply(self, other)
-        if isinstance(other, Tensor):
-            from ._hermite_polynomial_he_scale import (
-                hermite_polynomial_he_scale,
-            )
+        return hermite_polynomial_he_scale(self, other)
 
-            return hermite_polynomial_he_scale(self, other)
-        return NotImplemented
+    def __rmul__(
+        self, other: Union["HermitePolynomialHe", Tensor]
+    ) -> "HermitePolynomialHe":
+        from ._hermite_polynomial_he_multiply import (
+            hermite_polynomial_he_multiply,
+        )
+        from ._hermite_polynomial_he_scale import (
+            hermite_polynomial_he_scale,
+        )
 
-    def __rmul__(self, other):
         if isinstance(other, HermitePolynomialHe):
-            from ._hermite_polynomial_he_multiply import (
-                hermite_polynomial_he_multiply,
-            )
-
             return hermite_polynomial_he_multiply(other, self)
-        if isinstance(other, Tensor):
-            from ._hermite_polynomial_he_scale import (
-                hermite_polynomial_he_scale,
-            )
-
-            return hermite_polynomial_he_scale(self, other)
-        return NotImplemented
+        return hermite_polynomial_he_scale(self, other)
 
     def __pow__(self, n: int) -> "HermitePolynomialHe":
         from ._hermite_polynomial_he_pow import hermite_polynomial_he_pow
@@ -127,6 +163,9 @@ class HermitePolynomialHe:
         from ._hermite_polynomial_he_mod import hermite_polynomial_he_mod
 
         return hermite_polynomial_he_mod(self, other)
+
+    def __repr__(self) -> str:
+        return f"HermitePolynomialHe({Tensor.__repr__(self)})"
 
 
 def hermite_polynomial_he(coeffs: Tensor) -> HermitePolynomialHe:
@@ -152,12 +191,12 @@ def hermite_polynomial_he(coeffs: Tensor) -> HermitePolynomialHe:
     Examples
     --------
     >>> c = hermite_polynomial_he(torch.tensor([1.0, 2.0, 3.0]))  # 1*He_0 + 2*He_1 + 3*He_2
-    >>> c.coeffs
-    tensor([1., 2., 3.])
+    >>> c[0]
+    tensor(1.)
     """
     if coeffs.numel() == 0 or coeffs.shape[-1] == 0:
         raise PolynomialError(
             "Hermite series must have at least one coefficient"
         )
 
-    return HermitePolynomialHe(coeffs=coeffs)
+    return HermitePolynomialHe(coeffs)

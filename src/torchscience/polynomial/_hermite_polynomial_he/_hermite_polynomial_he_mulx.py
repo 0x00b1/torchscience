@@ -1,6 +1,9 @@
 import torch
 
-from ._hermite_polynomial_he import HermitePolynomialHe
+from ._hermite_polynomial_he import (
+    HermitePolynomialHe,
+    hermite_polynomial_he,
+)
 
 
 def hermite_polynomial_he_mulx(
@@ -35,10 +38,11 @@ def hermite_polynomial_he_mulx(
     --------
     >>> a = hermite_polynomial_he(torch.tensor([1.0]))  # He_0 = 1
     >>> b = hermite_polynomial_he_mulx(a)
-    >>> b.coeffs  # x * He_0 = x = He_1
-    tensor([0., 1.])
+    >>> b  # x * He_0 = x = He_1
+    HermitePolynomialHe(tensor([0., 1.]))
     """
-    coeffs = a.coeffs
+    # Convert to plain tensor for operations
+    coeffs = a.as_subclass(torch.Tensor)
     n = coeffs.shape[-1]
 
     # Result has one more coefficient
@@ -61,4 +65,4 @@ def hermite_polynomial_he_mulx(
         # Contribution to He_{k+1} coefficient: c_k
         result[..., k + 1] = result[..., k + 1] + c_k
 
-    return HermitePolynomialHe(coeffs=result)
+    return hermite_polynomial_he(result)

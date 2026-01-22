@@ -1,6 +1,9 @@
 import torch
 
-from ._chebyshev_polynomial_v import ChebyshevPolynomialV
+from ._chebyshev_polynomial_v import (
+    ChebyshevPolynomialV,
+    chebyshev_polynomial_v,
+)
 
 
 def chebyshev_polynomial_v_derivative(
@@ -37,15 +40,15 @@ def chebyshev_polynomial_v_derivative(
     --------
     >>> a = chebyshev_polynomial_v(torch.tensor([0.0, 0.0, 1.0]))  # V_2
     >>> da = chebyshev_polynomial_v_derivative(a)
-    >>> da.coeffs  # d/dx V_2
+    >>> da  # d/dx V_2
     """
     if order < 0:
         raise ValueError(f"Order must be non-negative, got {order}")
 
     if order == 0:
-        return ChebyshevPolynomialV(coeffs=a.coeffs.clone())
+        return chebyshev_polynomial_v(a.clone())
 
-    coeffs = a.coeffs
+    coeffs = a.as_subclass(torch.Tensor)
     n = coeffs.shape[-1]
 
     # Apply derivative 'order' times
@@ -102,4 +105,4 @@ def chebyshev_polynomial_v_derivative(
         coeffs = d_coeffs
         n = coeffs.shape[-1]
 
-    return ChebyshevPolynomialV(coeffs=coeffs)
+    return chebyshev_polynomial_v(coeffs)

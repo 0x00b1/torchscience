@@ -35,8 +35,9 @@ def hermite_polynomial_he_equal(
     >>> hermite_polynomial_he_equal(a, b)
     tensor(True)
     """
-    a_coeffs = a.coeffs
-    b_coeffs = b.coeffs
+    # Convert to plain tensors for operations
+    a_coeffs = a.as_subclass(torch.Tensor)
+    b_coeffs = b.as_subclass(torch.Tensor)
 
     # Pad to same length
     n_a = a_coeffs.shape[-1]

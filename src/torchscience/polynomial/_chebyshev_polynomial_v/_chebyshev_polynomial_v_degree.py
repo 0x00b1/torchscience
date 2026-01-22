@@ -25,4 +25,4 @@ def chebyshev_polynomial_v_degree(
     >>> chebyshev_polynomial_v_degree(c)
     tensor(2)
     """
-    return torch.tensor(c.coeffs.shape[-1] - 1)
+    return torch.tensor(c.shape[-1] - 1)

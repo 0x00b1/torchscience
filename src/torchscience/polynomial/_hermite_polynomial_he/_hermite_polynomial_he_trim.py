@@ -1,6 +1,9 @@
 import torch
 
-from ._hermite_polynomial_he import HermitePolynomialHe
+from ._hermite_polynomial_he import (
+    HermitePolynomialHe,
+    hermite_polynomial_he,
+)
 
 
 def hermite_polynomial_he_trim(
@@ -30,14 +33,15 @@ def hermite_polynomial_he_trim(
     --------
     >>> c = hermite_polynomial_he(torch.tensor([1.0, 2.0, 0.0, 0.0]))
     >>> t = hermite_polynomial_he_trim(c)
-    >>> t.coeffs
-    tensor([1., 2.])
+    >>> t
+    HermitePolynomialHe(tensor([1., 2.]))
     """
-    coeffs = p.coeffs
+    # Convert to plain tensor for operations
+    coeffs = p.as_subclass(torch.Tensor)
     n = coeffs.shape[-1]
 
     if n <= 1:
-        return p
+        return hermite_polynomial_he(coeffs.clone())
 
     # Find the last non-zero coefficient
     # For batched case, a coefficient position is non-zero if any batch element is non-zero
@@ -54,8 +58,8 @@ def hermite_polynomial_he_trim(
     mask = max_abs > tol
     if not mask.any():
         # All zeros, return single zero coefficient
-        return HermitePolynomialHe(
-            coeffs=torch.zeros(
+        return hermite_polynomial_he(
+            torch.zeros(
                 *coeffs.shape[:-1], 1, dtype=coeffs.dtype, device=coeffs.device
             )
         )
@@ -65,4 +69,4 @@ def hermite_polynomial_he_trim(
     last_nonzero = indices[mask].max().item()
 
     # Keep coefficients up to and including last_nonzero
-    return HermitePolynomialHe(coeffs=coeffs[..., : last_nonzero + 1])
+    return hermite_polynomial_he(coeffs[..., : last_nonzero + 1].clone())

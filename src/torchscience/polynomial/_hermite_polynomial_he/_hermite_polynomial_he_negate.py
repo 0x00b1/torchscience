@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from ._hermite_polynomial_he import HermitePolynomialHe
+import torch
+
+from ._hermite_polynomial_he import (
+    HermitePolynomialHe,
+    hermite_polynomial_he,
+)
 
 
 def hermite_polynomial_he_negate(
@@ -24,7 +29,9 @@ def hermite_polynomial_he_negate(
     --------
     >>> a = hermite_polynomial_he(torch.tensor([1.0, -2.0, 3.0]))
     >>> b = hermite_polynomial_he_negate(a)
-    >>> b.coeffs
-    tensor([-1.,  2., -3.])
+    >>> b
+    HermitePolynomialHe(tensor([-1.,  2., -3.]))
     """
-    return HermitePolynomialHe(coeffs=-a.coeffs)
+    # Convert to plain tensor to avoid operator interception
+    result = -a.as_subclass(torch.Tensor)
+    return hermite_polynomial_he(result)

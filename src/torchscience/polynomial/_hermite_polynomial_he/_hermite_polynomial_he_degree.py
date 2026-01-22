@@ -30,4 +30,4 @@ def hermite_polynomial_he_degree(p: HermitePolynomialHe) -> Tensor:
     >>> hermite_polynomial_he_degree(c)
     tensor(2)
     """
-    return torch.tensor(p.coeffs.shape[-1] - 1, device=p.coeffs.device)
+    return torch.tensor(p.shape[-1] - 1, device=p.device)

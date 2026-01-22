@@ -1,6 +1,9 @@
 import torch
 
-from torchscience.polynomial._polynomial import Polynomial
+from torchscience.polynomial._polynomial._polynomial import (
+    Polynomial,
+    polynomial,
+)
 
 from ._hermite_polynomial_he import HermitePolynomialHe
 
@@ -33,10 +36,11 @@ def hermite_polynomial_he_to_polynomial(
     --------
     >>> c = hermite_polynomial_he(torch.tensor([0.0, 0.0, 1.0]))  # He_2
     >>> p = hermite_polynomial_he_to_polynomial(c)
-    >>> p.coeffs  # He_2 = x^2 - 1
-    tensor([-1.,  0.,  1.])
+    >>> p  # He_2 = x^2 - 1
+    Polynomial(tensor([-1.,  0.,  1.]))
     """
-    coeffs = c.coeffs
+    # Convert to plain tensor for operations
+    coeffs = c.as_subclass(torch.Tensor)
     n = coeffs.shape[-1]
 
     # Build power representations of He_k for k = 0, ..., n-1
@@ -83,4 +87,4 @@ def hermite_polynomial_he_to_polynomial(
         He_k = He_power[k]
         result[: len(He_k)] = result[: len(He_k)] + c_k * He_k
 
-    return Polynomial(coeffs=result)
+    return polynomial(result)

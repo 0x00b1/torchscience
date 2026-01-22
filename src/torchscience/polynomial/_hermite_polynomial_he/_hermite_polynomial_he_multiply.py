@@ -5,7 +5,10 @@ from __future__ import annotations
 import numpy as np
 import torch
 
-from ._hermite_polynomial_he import HermitePolynomialHe
+from ._hermite_polynomial_he import (
+    HermitePolynomialHe,
+    hermite_polynomial_he,
+)
 
 
 def hermite_polynomial_he_multiply(
@@ -45,8 +48,9 @@ def hermite_polynomial_he_multiply(
     >>> c = hermite_polynomial_he_multiply(a, b)
     >>> # He_1 * He_1 = x^2 = He_2 + 1 = He_2 + He_0
     """
-    a_coeffs = a.coeffs
-    b_coeffs = b.coeffs
+    # Convert to plain tensors to avoid operator interception
+    a_coeffs = a.as_subclass(torch.Tensor)
+    b_coeffs = b.as_subclass(torch.Tensor)
 
     # Use NumPy's hermemul which implements the linearization formula
     # Note: numpy.polynomial.hermite_e uses the "probabilists'" convention
@@ -59,4 +63,4 @@ def hermite_polynomial_he_multiply(
         dtype=a_coeffs.dtype, device=a_coeffs.device
     )
 
-    return HermitePolynomialHe(coeffs=result_coeffs)
+    return hermite_polynomial_he(result_coeffs)

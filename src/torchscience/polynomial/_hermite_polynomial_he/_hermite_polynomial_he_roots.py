@@ -39,7 +39,8 @@ def hermite_polynomial_he_roots(
     >>> roots.real.sort().values  # He_2 = x^2 - 1 has roots at +/- 1
     tensor([-1.,  1.])
     """
-    coeffs = c.coeffs
+    # Convert to plain tensor for operations
+    coeffs = c.as_subclass(torch.Tensor)
 
     # Use NumPy's hermeroots for numerical stability
     coeffs_np = coeffs.detach().cpu().numpy()

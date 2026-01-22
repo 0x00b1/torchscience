@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+import torch
 from torch import Tensor
 
-from ._hermite_polynomial_he import HermitePolynomialHe
+from ._hermite_polynomial_he import (
+    HermitePolynomialHe,
+    hermite_polynomial_he,
+)
 
 
 def hermite_polynomial_he_scale(
@@ -29,7 +33,9 @@ def hermite_polynomial_he_scale(
     --------
     >>> a = hermite_polynomial_he(torch.tensor([1.0, 2.0, 3.0]))
     >>> b = hermite_polynomial_he_scale(a, torch.tensor(2.0))
-    >>> b.coeffs
-    tensor([2., 4., 6.])
+    >>> b
+    HermitePolynomialHe(tensor([2., 4., 6.]))
     """
-    return HermitePolynomialHe(coeffs=a.coeffs * scalar)
+    # Convert to plain tensor for multiplication to avoid operator interception
+    result = a.as_subclass(torch.Tensor) * scalar
+    return hermite_polynomial_he(result)

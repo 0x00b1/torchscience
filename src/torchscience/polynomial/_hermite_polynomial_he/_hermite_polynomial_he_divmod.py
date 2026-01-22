@@ -7,7 +7,10 @@ from typing import Tuple
 import numpy as np
 import torch
 
-from ._hermite_polynomial_he import HermitePolynomialHe
+from ._hermite_polynomial_he import (
+    HermitePolynomialHe,
+    hermite_polynomial_he,
+)
 
 
 def hermite_polynomial_he_divmod(
@@ -41,8 +44,9 @@ def hermite_polynomial_he_divmod(
     >>> b = hermite_polynomial_he(torch.tensor([1.0, 1.0]))
     >>> q, r = hermite_polynomial_he_divmod(a, b)
     """
-    a_coeffs = a.coeffs
-    b_coeffs = b.coeffs
+    # Convert to plain tensors for operations
+    a_coeffs = a.as_subclass(torch.Tensor)
+    b_coeffs = b.as_subclass(torch.Tensor)
 
     # Use NumPy's hermediv
     a_np = a_coeffs.detach().cpu().numpy()
@@ -58,6 +62,6 @@ def hermite_polynomial_he_divmod(
     )
 
     return (
-        HermitePolynomialHe(coeffs=q_coeffs),
-        HermitePolynomialHe(coeffs=r_coeffs),
+        hermite_polynomial_he(q_coeffs),
+        hermite_polynomial_he(r_coeffs),
     )

@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import torch
 
-from ._hermite_polynomial_he import HermitePolynomialHe
+from ._hermite_polynomial_he import (
+    HermitePolynomialHe,
+    hermite_polynomial_he,
+)
 
 
 def hermite_polynomial_he_derivative(
@@ -41,16 +44,17 @@ def hermite_polynomial_he_derivative(
     --------
     >>> a = hermite_polynomial_he(torch.tensor([0.0, 1.0]))  # He_1 = x
     >>> da = hermite_polynomial_he_derivative(a)
-    >>> da.coeffs  # d/dx He_1 = 1*He_0 = 1
-    tensor([1.])
+    >>> da  # d/dx He_1 = 1*He_0 = 1
+    HermitePolynomialHe(tensor([1.]))
     """
     if order < 0:
         raise ValueError(f"Order must be non-negative, got {order}")
 
     if order == 0:
-        return HermitePolynomialHe(coeffs=a.coeffs.clone())
+        return hermite_polynomial_he(a.clone())
 
-    coeffs = a.coeffs.clone()
+    # Convert to plain tensor for operations
+    coeffs = a.as_subclass(torch.Tensor).clone()
     n = coeffs.shape[-1]
 
     # Apply derivative 'order' times
@@ -81,4 +85,4 @@ def hermite_polynomial_he_derivative(
         coeffs = der
         n = new_n
 
-    return HermitePolynomialHe(coeffs=coeffs)
+    return hermite_polynomial_he(coeffs)

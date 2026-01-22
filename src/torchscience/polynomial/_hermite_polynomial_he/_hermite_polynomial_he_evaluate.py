@@ -53,7 +53,8 @@ def hermite_polynomial_he_evaluate(
     """
     # No domain check for Hermite polynomials since domain is (-inf, inf)
 
-    coeffs = c.coeffs
+    # Convert to plain tensor for operations
+    coeffs = c.as_subclass(torch.Tensor)
     n = coeffs.shape[-1]
 
     # Handle trivial cases

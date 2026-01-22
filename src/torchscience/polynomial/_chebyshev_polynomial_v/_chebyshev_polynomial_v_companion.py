@@ -37,7 +37,8 @@ def chebyshev_polynomial_v_companion(
     >>> A.shape
     torch.Size([2, 2])
     """
-    coeffs = c.coeffs
+    # The polynomial IS the coefficients tensor
+    coeffs = c.as_subclass(torch.Tensor)
     n = coeffs.shape[-1] - 1  # degree
 
     if n < 1:

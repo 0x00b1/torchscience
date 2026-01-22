@@ -1,6 +1,10 @@
+import torch
 from torch import Tensor
 
-from ._chebyshev_polynomial_v import ChebyshevPolynomialV
+from ._chebyshev_polynomial_v import (
+    ChebyshevPolynomialV,
+    chebyshev_polynomial_v,
+)
 
 
 def chebyshev_polynomial_v_scale(
@@ -25,7 +29,7 @@ def chebyshev_polynomial_v_scale(
     --------
     >>> a = chebyshev_polynomial_v(torch.tensor([1.0, 2.0, 3.0]))
     >>> b = chebyshev_polynomial_v_scale(a, torch.tensor(2.0))
-    >>> b.coeffs
-    tensor([2., 4., 6.])
+    >>> b
+    ChebyshevPolynomialV(tensor([2., 4., 6.]))
     """
-    return ChebyshevPolynomialV(coeffs=a.coeffs * scalar)
+    return chebyshev_polynomial_v(a.as_subclass(torch.Tensor) * scalar)
