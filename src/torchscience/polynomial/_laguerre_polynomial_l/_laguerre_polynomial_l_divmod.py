@@ -3,7 +3,10 @@ from typing import Tuple
 import numpy as np
 import torch
 
-from ._laguerre_polynomial_l import LaguerrePolynomialL
+from ._laguerre_polynomial_l import (
+    LaguerrePolynomialL,
+    laguerre_polynomial_l,
+)
 
 
 def laguerre_polynomial_l_divmod(
@@ -37,8 +40,8 @@ def laguerre_polynomial_l_divmod(
     >>> b = laguerre_polynomial_l(torch.tensor([1.0, 1.0]))
     >>> q, r = laguerre_polynomial_l_divmod(a, b)
     """
-    a_coeffs = a.coeffs
-    b_coeffs = b.coeffs
+    a_coeffs = a.as_subclass(torch.Tensor)
+    b_coeffs = b.as_subclass(torch.Tensor)
 
     # Use NumPy's lagdiv
     a_np = a_coeffs.detach().cpu().numpy()
@@ -54,6 +57,6 @@ def laguerre_polynomial_l_divmod(
     )
 
     return (
-        LaguerrePolynomialL(coeffs=q_coeffs),
-        LaguerrePolynomialL(coeffs=r_coeffs),
+        laguerre_polynomial_l(q_coeffs),
+        laguerre_polynomial_l(r_coeffs),
     )

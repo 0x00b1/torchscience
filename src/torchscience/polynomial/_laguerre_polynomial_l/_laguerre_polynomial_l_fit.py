@@ -3,7 +3,10 @@ from torch import Tensor
 
 from torchscience.polynomial._exceptions import DomainError
 
-from ._laguerre_polynomial_l import LaguerrePolynomialL
+from ._laguerre_polynomial_l import (
+    LaguerrePolynomialL,
+    laguerre_polynomial_l,
+)
 from ._laguerre_polynomial_l_vandermonde import (
     laguerre_polynomial_l_vandermonde,
 )
@@ -19,7 +22,7 @@ def laguerre_polynomial_l_fit(
     Parameters
     ----------
     x : Tensor
-        Sample points, shape (n,). Must be in [0, ∞).
+        Sample points, shape (n,). Must be in [0, inf).
     y : Tensor
         Sample values, shape (n,).
     degree : int
@@ -33,7 +36,7 @@ def laguerre_polynomial_l_fit(
     Raises
     ------
     DomainError
-        If any sample points are outside [0, ∞).
+        If any sample points are outside [0, inf).
 
     Notes
     -----
@@ -61,4 +64,4 @@ def laguerre_polynomial_l_fit(
     result = torch.linalg.lstsq(V, y.unsqueeze(-1))
     coeffs = result.solution.squeeze(-1)
 
-    return LaguerrePolynomialL(coeffs=coeffs)
+    return laguerre_polynomial_l(coeffs)

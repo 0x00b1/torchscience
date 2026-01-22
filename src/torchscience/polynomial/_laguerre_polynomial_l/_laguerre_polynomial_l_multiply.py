@@ -1,7 +1,10 @@
 import numpy as np
 import torch
 
-from ._laguerre_polynomial_l import LaguerrePolynomialL
+from ._laguerre_polynomial_l import (
+    LaguerrePolynomialL,
+    laguerre_polynomial_l,
+)
 
 
 def laguerre_polynomial_l_multiply(
@@ -39,11 +42,12 @@ def laguerre_polynomial_l_multiply(
     >>> a = laguerre_polynomial_l(torch.tensor([0.0, 1.0]))  # L_1
     >>> b = laguerre_polynomial_l(torch.tensor([0.0, 1.0]))  # L_1
     >>> c = laguerre_polynomial_l_multiply(a, b)
-    >>> c.coeffs  # L_1 * L_1
-    tensor([1., -4.,  2.])
+    >>> c  # L_1 * L_1
+    LaguerrePolynomialL(tensor([1., -4.,  2.]))
     """
-    a_coeffs = a.coeffs
-    b_coeffs = b.coeffs
+    # Convert to plain tensors to avoid operator interception
+    a_coeffs = a.as_subclass(torch.Tensor)
+    b_coeffs = b.as_subclass(torch.Tensor)
 
     # Use NumPy's lagmul which implements the linearization formula
     a_np = a_coeffs.detach().cpu().numpy()
@@ -55,4 +59,4 @@ def laguerre_polynomial_l_multiply(
         dtype=a_coeffs.dtype, device=a_coeffs.device
     )
 
-    return LaguerrePolynomialL(coeffs=result_coeffs)
+    return laguerre_polynomial_l(result_coeffs)

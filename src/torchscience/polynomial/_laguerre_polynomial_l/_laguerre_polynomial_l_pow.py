@@ -1,6 +1,9 @@
 import torch
 
-from ._laguerre_polynomial_l import LaguerrePolynomialL
+from ._laguerre_polynomial_l import (
+    LaguerrePolynomialL,
+    laguerre_polynomial_l,
+)
 from ._laguerre_polynomial_l_multiply import laguerre_polynomial_l_multiply
 
 
@@ -40,16 +43,14 @@ def laguerre_polynomial_l_pow(
 
     if n == 0:
         # a^0 = L_0 = 1
-        ones_shape = list(a.coeffs.shape)
+        ones_shape = list(a.shape)
         ones_shape[-1] = 1
-        return LaguerrePolynomialL(
-            coeffs=torch.ones(
-                ones_shape, dtype=a.coeffs.dtype, device=a.coeffs.device
-            )
+        return laguerre_polynomial_l(
+            torch.ones(ones_shape, dtype=a.dtype, device=a.device)
         )
 
     if n == 1:
-        return LaguerrePolynomialL(coeffs=a.coeffs.clone())
+        return laguerre_polynomial_l(a.as_subclass(torch.Tensor).clone())
 
     # Binary exponentiation
     result = None
@@ -58,7 +59,9 @@ def laguerre_polynomial_l_pow(
     while n > 0:
         if n % 2 == 1:
             if result is None:
-                result = LaguerrePolynomialL(coeffs=base.coeffs.clone())
+                result = laguerre_polynomial_l(
+                    base.as_subclass(torch.Tensor).clone()
+                )
             else:
                 result = laguerre_polynomial_l_multiply(result, base)
         base = laguerre_polynomial_l_multiply(base, base)

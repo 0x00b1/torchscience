@@ -1,6 +1,9 @@
 import torch
 
-from ._laguerre_polynomial_l import LaguerrePolynomialL
+from ._laguerre_polynomial_l import (
+    LaguerrePolynomialL,
+    laguerre_polynomial_l,
+)
 from ._laguerre_polynomial_l_evaluate import laguerre_polynomial_l_evaluate
 
 
@@ -47,16 +50,16 @@ def laguerre_polynomial_l_antiderivative(
     --------
     >>> a = laguerre_polynomial_l(torch.tensor([1.0]))  # L_0 = 1
     >>> ia = laguerre_polynomial_l_antiderivative(a)
-    >>> ia.coeffs  # integral(L_0) = L_0 - L_1
-    tensor([ 1., -1.])
+    >>> ia  # integral(L_0) = L_0 - L_1
+    LaguerrePolynomialL(tensor([ 1., -1.]))
     """
     if order < 0:
         raise ValueError(f"Order must be non-negative, got {order}")
 
     if order == 0:
-        return LaguerrePolynomialL(coeffs=a.coeffs.clone())
+        return laguerre_polynomial_l(a.as_subclass(torch.Tensor).clone())
 
-    coeffs = a.coeffs
+    coeffs = a.as_subclass(torch.Tensor)
 
     # Apply antiderivative 'order' times
     for i in range(order):
@@ -94,7 +97,7 @@ def laguerre_polynomial_l_antiderivative(
         # Set constant of integration so F(0) = constant (for first integration)
         # or F(0) = 0 (for subsequent integrations)
         k_val = constant if i == 0 else 0.0
-        temp = LaguerrePolynomialL(coeffs=i_coeffs)
+        temp = laguerre_polynomial_l(i_coeffs)
         x_zero = torch.zeros((), dtype=coeffs.dtype, device=coeffs.device)
         val_at_zero = laguerre_polynomial_l_evaluate(temp, x_zero)
         # L_k(0) = 1 for all k, so adding delta to i_coeffs[..., 0] shifts F(0) by delta
@@ -102,4 +105,4 @@ def laguerre_polynomial_l_antiderivative(
 
         coeffs = i_coeffs
 
-    return LaguerrePolynomialL(coeffs=coeffs)
+    return laguerre_polynomial_l(coeffs)

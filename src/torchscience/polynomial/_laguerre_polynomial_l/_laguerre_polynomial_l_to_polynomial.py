@@ -33,10 +33,10 @@ def laguerre_polynomial_l_to_polynomial(
     --------
     >>> c = laguerre_polynomial_l(torch.tensor([0.0, 0.0, 1.0]))  # L_2
     >>> p = laguerre_polynomial_l_to_polynomial(c)
-    >>> p.coeffs  # L_2 = 1 - 2x + x^2/2
-    tensor([1.0000, -2.0000,  0.5000])
+    >>> p  # L_2 = 1 - 2x + x^2/2
+    Polynomial(tensor([1.0000, -2.0000,  0.5000]))
     """
-    coeffs = c.coeffs
+    coeffs = c.as_subclass(torch.Tensor)
     n = coeffs.shape[-1]
 
     # Build power representations of L_k for k = 0, ..., n-1

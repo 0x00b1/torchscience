@@ -29,7 +29,7 @@ def laguerre_polynomial_l_evaluate(
     Warnings
     --------
     UserWarning
-        If any evaluation points are outside the natural domain [0, ∞).
+        If any evaluation points are outside the natural domain [0, inf).
 
     Notes
     -----
@@ -65,7 +65,7 @@ def laguerre_polynomial_l_evaluate(
                 stacklevel=2,
             )
 
-    coeffs = c.coeffs
+    coeffs = c.as_subclass(torch.Tensor)
     n = coeffs.shape[-1]
 
     # Handle trivial cases

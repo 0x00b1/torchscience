@@ -1,6 +1,9 @@
 import torch
 
-from ._laguerre_polynomial_l import LaguerrePolynomialL
+from ._laguerre_polynomial_l import (
+    LaguerrePolynomialL,
+    laguerre_polynomial_l,
+)
 
 
 def laguerre_polynomial_l_derivative(
@@ -38,16 +41,18 @@ def laguerre_polynomial_l_derivative(
     --------
     >>> a = laguerre_polynomial_l(torch.tensor([0.0, 1.0]))  # L_1
     >>> da = laguerre_polynomial_l_derivative(a)
-    >>> da.coeffs  # d/dx L_1 = -L_0
-    tensor([-1.])
+    >>> da  # d/dx L_1 = -L_0
+    LaguerrePolynomialL(tensor([-1.]))
     """
     if order < 0:
         raise ValueError(f"Order must be non-negative, got {order}")
 
     if order == 0:
-        return LaguerrePolynomialL(coeffs=a.coeffs.clone())
+        return laguerre_polynomial_l(a.as_subclass(torch.Tensor).clone())
 
-    coeffs = a.coeffs.clone()  # Will be modified during iteration
+    coeffs = a.as_subclass(
+        torch.Tensor
+    ).clone()  # Will be modified during iteration
     n = coeffs.shape[-1]
 
     # Apply derivative 'order' times
@@ -88,4 +93,4 @@ def laguerre_polynomial_l_derivative(
         coeffs = der
         n = new_n
 
-    return LaguerrePolynomialL(coeffs=coeffs)
+    return laguerre_polynomial_l(coeffs)

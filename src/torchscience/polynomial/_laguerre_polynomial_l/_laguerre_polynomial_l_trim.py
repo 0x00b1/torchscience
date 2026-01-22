@@ -1,6 +1,9 @@
 import torch
 
-from ._laguerre_polynomial_l import LaguerrePolynomialL
+from ._laguerre_polynomial_l import (
+    LaguerrePolynomialL,
+    laguerre_polynomial_l,
+)
 
 
 def laguerre_polynomial_l_trim(
@@ -30,10 +33,10 @@ def laguerre_polynomial_l_trim(
     --------
     >>> c = laguerre_polynomial_l(torch.tensor([1.0, 2.0, 0.0, 0.0]))
     >>> t = laguerre_polynomial_l_trim(c)
-    >>> t.coeffs
-    tensor([1., 2.])
+    >>> t
+    LaguerrePolynomialL(tensor([1., 2.]))
     """
-    coeffs = p.coeffs
+    coeffs = p.as_subclass(torch.Tensor)
     n = coeffs.shape[-1]
 
     if n <= 1:
@@ -54,8 +57,8 @@ def laguerre_polynomial_l_trim(
     mask = max_abs > tol
     if not mask.any():
         # All zeros, return single zero coefficient
-        return LaguerrePolynomialL(
-            coeffs=torch.zeros(
+        return laguerre_polynomial_l(
+            torch.zeros(
                 *coeffs.shape[:-1], 1, dtype=coeffs.dtype, device=coeffs.device
             )
         )
@@ -65,4 +68,4 @@ def laguerre_polynomial_l_trim(
     last_nonzero = indices[mask].max().item()
 
     # Keep coefficients up to and including last_nonzero
-    return LaguerrePolynomialL(coeffs=coeffs[..., : last_nonzero + 1])
+    return laguerre_polynomial_l(coeffs[..., : last_nonzero + 1])

@@ -1,4 +1,9 @@
-from ._laguerre_polynomial_l import LaguerrePolynomialL
+import torch
+
+from ._laguerre_polynomial_l import (
+    LaguerrePolynomialL,
+    laguerre_polynomial_l,
+)
 
 
 def laguerre_polynomial_l_negate(
@@ -20,7 +25,7 @@ def laguerre_polynomial_l_negate(
     --------
     >>> a = laguerre_polynomial_l(torch.tensor([1.0, -2.0, 3.0]))
     >>> b = laguerre_polynomial_l_negate(a)
-    >>> b.coeffs
-    tensor([-1.,  2., -3.])
+    >>> b
+    LaguerrePolynomialL(tensor([-1.,  2., -3.]))
     """
-    return LaguerrePolynomialL(coeffs=-a.coeffs)
+    return laguerre_polynomial_l(-a.as_subclass(torch.Tensor))

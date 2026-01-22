@@ -1,6 +1,9 @@
 import torch
 
-from ._laguerre_polynomial_l import LaguerrePolynomialL
+from ._laguerre_polynomial_l import (
+    LaguerrePolynomialL,
+    laguerre_polynomial_l,
+)
 
 
 def laguerre_polynomial_l_add(
@@ -30,32 +33,29 @@ def laguerre_polynomial_l_add(
     >>> a = laguerre_polynomial_l(torch.tensor([1.0, 2.0]))
     >>> b = laguerre_polynomial_l(torch.tensor([3.0, 4.0, 5.0]))
     >>> c = laguerre_polynomial_l_add(a, b)
-    >>> c.coeffs
-    tensor([4., 6., 5.])
+    >>> c
+    LaguerrePolynomialL(tensor([4., 6., 5.]))
     """
-    a_coeffs = a.coeffs
-    b_coeffs = b.coeffs
-
-    n_a = a_coeffs.shape[-1]
-    n_b = b_coeffs.shape[-1]
+    n_a = a.shape[-1]
+    n_b = b.shape[-1]
 
     if n_a == n_b:
-        return LaguerrePolynomialL(coeffs=a_coeffs + b_coeffs)
+        # Use Tensor addition to get raw tensor, then wrap
+        result = torch.Tensor.add(a, b)
+        return laguerre_polynomial_l(result)
 
     # Zero-pad the shorter series
     if n_a < n_b:
-        pad_shape = list(a_coeffs.shape)
+        pad_shape = list(a.shape)
         pad_shape[-1] = n_b - n_a
-        padding = torch.zeros(
-            pad_shape, dtype=a_coeffs.dtype, device=a_coeffs.device
-        )
-        a_coeffs = torch.cat([a_coeffs, padding], dim=-1)
+        padding = torch.zeros(pad_shape, dtype=a.dtype, device=a.device)
+        a_padded = torch.cat([a.as_subclass(torch.Tensor), padding], dim=-1)
+        result = a_padded + b.as_subclass(torch.Tensor)
     else:
-        pad_shape = list(b_coeffs.shape)
+        pad_shape = list(b.shape)
         pad_shape[-1] = n_a - n_b
-        padding = torch.zeros(
-            pad_shape, dtype=b_coeffs.dtype, device=b_coeffs.device
-        )
-        b_coeffs = torch.cat([b_coeffs, padding], dim=-1)
+        padding = torch.zeros(pad_shape, dtype=b.dtype, device=b.device)
+        b_padded = torch.cat([b.as_subclass(torch.Tensor), padding], dim=-1)
+        result = a.as_subclass(torch.Tensor) + b_padded
 
-    return LaguerrePolynomialL(coeffs=a_coeffs + b_coeffs)
+    return laguerre_polynomial_l(result)

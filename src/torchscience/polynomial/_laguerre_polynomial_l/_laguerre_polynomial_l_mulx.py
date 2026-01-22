@@ -1,6 +1,9 @@
 import torch
 
-from ._laguerre_polynomial_l import LaguerrePolynomialL
+from ._laguerre_polynomial_l import (
+    LaguerrePolynomialL,
+    laguerre_polynomial_l,
+)
 
 
 def laguerre_polynomial_l_mulx(
@@ -35,10 +38,10 @@ def laguerre_polynomial_l_mulx(
     --------
     >>> a = laguerre_polynomial_l(torch.tensor([1.0]))  # L_0
     >>> b = laguerre_polynomial_l_mulx(a)
-    >>> b.coeffs  # x * L_0 = x = L_0 - L_1
-    tensor([ 1., -1.])
+    >>> b  # x * L_0 = x = L_0 - L_1
+    LaguerrePolynomialL(tensor([ 1., -1.]))
     """
-    coeffs = a.coeffs
+    coeffs = a.as_subclass(torch.Tensor)
     n = coeffs.shape[-1]
 
     # Result has one more coefficient
@@ -62,4 +65,4 @@ def laguerre_polynomial_l_mulx(
         if k >= 1:
             result[..., k - 1] = result[..., k - 1] - k * c_k
 
-    return LaguerrePolynomialL(coeffs=result)
+    return laguerre_polynomial_l(result)

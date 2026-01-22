@@ -1,6 +1,10 @@
+import torch
 from torch import Tensor
 
-from ._laguerre_polynomial_l import LaguerrePolynomialL
+from ._laguerre_polynomial_l import (
+    LaguerrePolynomialL,
+    laguerre_polynomial_l,
+)
 
 
 def laguerre_polynomial_l_scale(
@@ -25,7 +29,7 @@ def laguerre_polynomial_l_scale(
     --------
     >>> a = laguerre_polynomial_l(torch.tensor([1.0, 2.0, 3.0]))
     >>> b = laguerre_polynomial_l_scale(a, torch.tensor(2.0))
-    >>> b.coeffs
-    tensor([2., 4., 6.])
+    >>> b
+    LaguerrePolynomialL(tensor([2., 4., 6.]))
     """
-    return LaguerrePolynomialL(coeffs=a.coeffs * scalar)
+    return laguerre_polynomial_l(a.as_subclass(torch.Tensor) * scalar)

@@ -28,4 +28,4 @@ def laguerre_polynomial_l_degree(
     >>> laguerre_polynomial_l_degree(c)
     2
     """
-    return p.coeffs.shape[-1] - 1
+    return p.shape[-1] - 1
