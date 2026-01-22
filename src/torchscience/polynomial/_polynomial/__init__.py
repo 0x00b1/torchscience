@@ -23,8 +23,8 @@ from ._polynomial_vandermonde import polynomial_vandermonde
 
 __all__ = [
     "Polynomial",
-    "_polynomial_from_roots",
     "polynomial",
+    "polynomial_from_roots",
     "polynomial_add",
     "polynomial_antiderivative",
     "polynomial_compose",
