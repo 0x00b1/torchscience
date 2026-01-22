@@ -32,7 +32,7 @@ def jacobi_polynomial_p_companion(
     The matrix is scaled to improve numerical stability.
 
     For the Jacobi recurrence:
-        P_{n+1}^{(α,β)} = (A_n + B_n*x) * P_n^{(α,β)} - C_n * P_{n-1}^{(α,β)}
+        P_{n+1}^{(alpha,beta)} = (A_n + B_n*x) * P_n^{(alpha,beta)} - C_n * P_{n-1}^{(alpha,beta)}
 
     The companion matrix has the form of a tridiagonal matrix plus a
     correction in the last column based on the polynomial coefficients.
@@ -44,7 +44,8 @@ def jacobi_polynomial_p_companion(
     >>> A.shape
     torch.Size([2, 2])
     """
-    coeffs = c.coeffs
+    # Get coefficients as plain tensor
+    coeffs = c.as_subclass(torch.Tensor)
     alpha = c.alpha
     beta = c.beta
     ab = alpha + beta
@@ -55,8 +56,8 @@ def jacobi_polynomial_p_companion(
 
     # Special case for degree 1
     if n == 1:
-        # P_1^{(α,β)}(x) = (α-β)/2 + (α+β+2)/2 * x = c_0 + c_1
-        # Root: x = -(c_0/c_1) * (2/(α+β+2)) - (α-β)/(α+β+2)
+        # P_1^{(alpha,beta)}(x) = (alpha-beta)/2 + (alpha+beta+2)/2 * x = c_0 + c_1
+        # Root: x = -(c_0/c_1) * (2/(alpha+beta+2)) - (alpha-beta)/(alpha+beta+2)
         # Simplified: x = -c_0/c_1 for monic, but need to account for normalization
         return torch.tensor(
             [[-coeffs[..., 0] / coeffs[..., 1]]],
@@ -77,7 +78,7 @@ def jacobi_polynomial_p_companion(
         two_k_ab_p2 = two_k_ab + 2
 
         # Recurrence: P_{k+1} = (A_k + B_k*x) * P_k - C_k * P_{k-1}
-        # where B_k = (2k+α+β+1)(2k+α+β+2) / (2(k+1)(k+α+β+1))
+        # where B_k = (2k+alpha+beta+1)(2k+alpha+beta+2) / (2(k+1)(k+alpha+beta+1))
         # Rearranging: x = (P_{k+1} + C_k*P_{k-1} - A_k*P_k) / (B_k*P_k)
 
         # For the companion matrix, we use scaled polynomials

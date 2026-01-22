@@ -48,15 +48,14 @@ def jacobi_polynomial_p_integral(
     >>> jacobi_polynomial_p_integral(a, torch.tensor(-1.0), torch.tensor(1.0))
     tensor(2.)
     """
+    # Get coefficients as plain tensor for dtype/device access
+    coeffs = a.as_subclass(torch.Tensor)
+
     # Convert scalars to tensors
     if not isinstance(lower, Tensor):
-        lower = torch.tensor(
-            lower, dtype=a.coeffs.dtype, device=a.coeffs.device
-        )
+        lower = torch.tensor(lower, dtype=coeffs.dtype, device=coeffs.device)
     if not isinstance(upper, Tensor):
-        upper = torch.tensor(
-            upper, dtype=a.coeffs.dtype, device=a.coeffs.device
-        )
+        upper = torch.tensor(upper, dtype=coeffs.dtype, device=coeffs.device)
 
     domain = JacobiPolynomialP.DOMAIN
 

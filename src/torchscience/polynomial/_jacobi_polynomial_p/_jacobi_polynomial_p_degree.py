@@ -30,4 +30,6 @@ def jacobi_polynomial_p_degree(p: JacobiPolynomialP) -> Tensor:
     >>> jacobi_polynomial_p_degree(c)
     tensor(2)
     """
-    return torch.tensor(p.coeffs.shape[-1] - 1, device=p.coeffs.device)
+    # Get coefficients as plain tensor
+    coeffs = p.as_subclass(torch.Tensor)
+    return torch.tensor(coeffs.shape[-1] - 1, device=coeffs.device)

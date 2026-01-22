@@ -2,7 +2,7 @@ import torch
 from torch import Tensor
 
 from .._domain_error import DomainError
-from ._jacobi_polynomial_p import JacobiPolynomialP
+from ._jacobi_polynomial_p import JacobiPolynomialP, jacobi_polynomial_p
 from ._jacobi_polynomial_p_vandermonde import jacobi_polynomial_p_vandermonde
 
 
@@ -24,9 +24,9 @@ def jacobi_polynomial_p_fit(
     degree : int
         Degree of fitting polynomial.
     alpha : Tensor or float
-        Jacobi parameter α, must be > -1.
+        Jacobi parameter alpha, must be > -1.
     beta : Tensor or float
-        Jacobi parameter β, must be > -1.
+        Jacobi parameter beta, must be > -1.
 
     Returns
     -------
@@ -70,4 +70,4 @@ def jacobi_polynomial_p_fit(
     result = torch.linalg.lstsq(V, y.unsqueeze(-1))
     coeffs = result.solution.squeeze(-1)
 
-    return JacobiPolynomialP(coeffs=coeffs, alpha=alpha, beta=beta)
+    return jacobi_polynomial_p(coeffs, alpha, beta)

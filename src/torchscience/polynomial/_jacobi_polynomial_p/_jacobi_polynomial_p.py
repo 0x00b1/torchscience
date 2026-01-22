@@ -1,55 +1,103 @@
 import torch
-from tensordict.tensorclass import tensorclass
 from torch import Tensor
 
 from .._parameter_error import ParameterError
 from .._polynomial_error import PolynomialError
 
+# Operations that preserve polynomial type
+_SHAPE_PRESERVING_OPS = {
+    torch.clone,
+    torch.detach,
+    torch.Tensor.clone,
+    torch.Tensor.detach,
+    torch.Tensor.to,
+    torch.Tensor.cuda,
+    torch.Tensor.cpu,
+    torch.Tensor.contiguous,
+    torch.Tensor.requires_grad_,
+}
 
-@tensorclass
-class JacobiPolynomialP:
-    """Jacobi polynomial series.
+_POLYNOMIAL_RETURNING_OPS = {
+    torch.stack,
+    torch.cat,
+    torch.Tensor.__getitem__,
+    torch.Tensor.reshape,
+    torch.Tensor.view,
+    torch.Tensor.squeeze,
+    torch.Tensor.unsqueeze,
+}
 
-    Represents f(x) = sum_{k=0}^{n} coeffs[..., k] * P_k^{(α,β)}(x)
 
-    where P_k^{(α,β)}(x) are Jacobi polynomials with parameters α and β.
+class JacobiPolynomialP(Tensor):
+    """Jacobi polynomial series P_n^{(alpha, beta)}(x).
+
+    Represents f(x) = sum_{k=0}^{n} coeffs[..., k] * P_k^{(alpha,beta)}(x)
+
+    where P_k^{(alpha,beta)}(x) are Jacobi polynomials with parameters alpha and beta.
+
+    The tensor itself stores the coefficients in ascending order, shape (..., N)
+    where N = degree + 1. coeffs[..., k] is the coefficient of P_k^{(alpha,beta)}(x).
+    Batch dimensions come first, coefficient dimension last.
 
     Attributes
     ----------
-    coeffs : Tensor
-        Coefficients in ascending order, shape (..., N) where N = degree + 1.
-        coeffs[..., k] is the coefficient of P_k^{(α,β)}(x).
-        Batch dimensions come first, coefficient dimension last.
     alpha : Tensor
-        Parameter α, must be > -1. Scalar tensor for consistency.
+        Parameter alpha, must be > -1. Scalar tensor for consistency.
     beta : Tensor
-        Parameter β, must be > -1. Scalar tensor for consistency.
+        Parameter beta, must be > -1. Scalar tensor for consistency.
 
     Notes
     -----
     The standard domain for Jacobi polynomials is [-1, 1].
 
     The Jacobi polynomials are orthogonal on [-1, 1] with weight function
-    w(x) = (1-x)^α * (1+x)^β.
+    w(x) = (1-x)^alpha * (1+x)^beta.
 
     Special cases:
-        - α = β = 0: Legendre polynomials P_n(x)
-        - α = β = -1/2: Chebyshev polynomials of the first kind T_n(x)
-        - α = β = 1/2: Chebyshev polynomials of the second kind U_n(x)
-        - α = β: Gegenbauer (ultraspherical) polynomials
+        - alpha = beta = 0: Legendre polynomials P_n(x)
+        - alpha = beta = -1/2: Chebyshev polynomials of the first kind T_n(x)
+        - alpha = beta = 1/2: Chebyshev polynomials of the second kind U_n(x)
+        - alpha = beta: Gegenbauer (ultraspherical) polynomials
     """
 
-    coeffs: Tensor
+    DOMAIN = (-1.0, 1.0)
     alpha: Tensor
     beta: Tensor
 
-    DOMAIN = (-1.0, 1.0)
+    @staticmethod
+    def __new__(
+        cls, data, alpha: Tensor, beta: Tensor, *, dtype=None, device=None
+    ):
+        if isinstance(data, Tensor):
+            tensor = data.detach().clone()
+            if dtype is not None:
+                tensor = tensor.to(dtype=dtype)
+            if device is not None:
+                tensor = tensor.to(device=device)
+        else:
+            tensor = torch.as_tensor(data, dtype=dtype, device=device)
+        instance = tensor.as_subclass(cls)
+        instance.alpha = alpha
+        instance.beta = beta
+        return instance
 
-    def __post_init__(self):
-        if (self.alpha <= -1).any():
-            raise ParameterError(f"alpha must be > -1, got {self.alpha}")
-        if (self.beta <= -1).any():
-            raise ParameterError(f"beta must be > -1, got {self.beta}")
+    @classmethod
+    def __torch_function__(cls, func, types, args=(), kwargs=None):
+        kwargs = kwargs or {}
+        result = super().__torch_function__(func, types, args, kwargs)
+
+        # Propagate alpha, beta to result for shape-preserving ops
+        if func in _SHAPE_PRESERVING_OPS | _POLYNOMIAL_RETURNING_OPS:
+            if isinstance(result, Tensor) and not isinstance(result, cls):
+                # Find source to copy params from
+                for arg in args:
+                    if isinstance(arg, cls):
+                        result = result.as_subclass(cls)
+                        result.alpha = arg.alpha
+                        result.beta = arg.beta
+                        break
+
+        return result
 
     def __call__(self, x: Tensor) -> Tensor:
         from ._jacobi_polynomial_p_evaluate import jacobi_polynomial_p_evaluate
@@ -122,6 +170,9 @@ class JacobiPolynomialP:
 
         return jacobi_polynomial_p_mod(self, other)
 
+    def __repr__(self) -> str:
+        return f"JacobiPolynomialP({Tensor.__repr__(self)}, alpha={self.alpha}, beta={self.beta})"
+
 
 def jacobi_polynomial_p(
     coeffs: Tensor,
@@ -134,12 +185,12 @@ def jacobi_polynomial_p(
     ----------
     coeffs : Tensor
         Coefficients in ascending order, shape (..., N).
-        coeffs[..., k] is the coefficient of P_k^{(α,β)}(x).
+        coeffs[..., k] is the coefficient of P_k^{(alpha,beta)}(x).
         Must have at least one coefficient.
     alpha : Tensor or float
-        Parameter α, must be > -1.
+        Parameter alpha, must be > -1.
     beta : Tensor or float
-        Parameter β, must be > -1.
+        Parameter beta, must be > -1.
 
     Returns
     -------
@@ -156,8 +207,8 @@ def jacobi_polynomial_p(
     Examples
     --------
     >>> c = jacobi_polynomial_p(torch.tensor([1.0, 2.0, 3.0]), alpha=0.5, beta=0.5)
-    >>> c.coeffs
-    tensor([1., 2., 3.])
+    >>> c[0]
+    tensor(1.)
     >>> c.alpha
     tensor(0.5)
     """
@@ -172,4 +223,9 @@ def jacobi_polynomial_p(
     if not isinstance(beta, Tensor):
         beta = torch.tensor(beta, dtype=coeffs.dtype, device=coeffs.device)
 
-    return JacobiPolynomialP(coeffs=coeffs, alpha=alpha, beta=beta)
+    if (alpha <= -1).any():
+        raise ParameterError(f"alpha must be > -1, got {alpha}")
+    if (beta <= -1).any():
+        raise ParameterError(f"beta must be > -1, got {beta}")
+
+    return JacobiPolynomialP(coeffs, alpha, beta)

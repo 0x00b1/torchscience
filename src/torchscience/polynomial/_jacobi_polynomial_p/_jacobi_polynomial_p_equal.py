@@ -50,8 +50,9 @@ def jacobi_polynomial_p_equal(
             f"to JacobiPolynomialP with alpha={b.alpha}, beta={b.beta}"
         )
 
-    a_coeffs = a.coeffs
-    b_coeffs = b.coeffs
+    # Get coefficients as plain tensors
+    a_coeffs = a.as_subclass(torch.Tensor)
+    b_coeffs = b.as_subclass(torch.Tensor)
 
     # Pad to same length
     n_a = a_coeffs.shape[-1]

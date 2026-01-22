@@ -22,43 +22,44 @@ def jacobi_polynomial_p_to_polynomial(
     Notes
     -----
     Uses the recurrence relation:
-        P_0^{(α,β)}(x) = 1
-        P_1^{(α,β)}(x) = (α - β)/2 + (α + β + 2)/2 * x
+        P_0^{(alpha,beta)}(x) = 1
+        P_1^{(alpha,beta)}(x) = (alpha - beta)/2 + (alpha + beta + 2)/2 * x
 
         For n >= 1:
-        a_n = 2(n+1)(n+α+β+1)(2n+α+β)
-        b_n = (2n+α+β+1)(α²-β²)
-        c_n = (2n+α+β)(2n+α+β+1)(2n+α+β+2)
-        d_n = 2(n+α)(n+β)(2n+α+β+2)
+        a_n = 2(n+1)(n+alpha+beta+1)(2n+alpha+beta)
+        b_n = (2n+alpha+beta+1)(alpha^2-beta^2)
+        c_n = (2n+alpha+beta)(2n+alpha+beta+1)(2n+alpha+beta+2)
+        d_n = 2(n+alpha)(n+beta)(2n+alpha+beta+2)
 
-        P_{n+1}^{(α,β)}(x) = ((b_n + c_n*x) * P_n - d_n * P_{n-1}) / a_n
+        P_{n+1}^{(alpha,beta)}(x) = ((b_n + c_n*x) * P_n - d_n * P_{n-1}) / a_n
 
-    to build power representations of each P_k^{(α,β)}, then combines them.
+    to build power representations of each P_k^{(alpha,beta)}, then combines them.
 
     Examples
     --------
     >>> c = jacobi_polynomial_p(torch.tensor([0.0, 0.0, 1.0]), alpha=0.0, beta=0.0)
     >>> p = jacobi_polynomial_p_to_polynomial(c)
-    >>> p.coeffs  # P_2^{(0,0)} = (3x^2 - 1)/2 (Legendre)
-    tensor([-0.5,  0.0,  1.5])
+    >>> p  # P_2^{(0,0)} = (3x^2 - 1)/2 (Legendre)
+    Polynomial(tensor([-0.5000,  0.0000,  1.5000]))
     """
-    coeffs = c.coeffs
+    # Get coefficients as plain tensor
+    coeffs = c.as_subclass(torch.Tensor)
     alpha = c.alpha
     beta = c.beta
     ab = alpha + beta
     n = coeffs.shape[-1]
 
-    # Build power representations of P_k^{(α,β)} for k = 0, ..., n-1
-    # P_k_power[j] is the coefficient of x^j in P_k^{(α,β)}
+    # Build power representations of P_k^{(alpha,beta)} for k = 0, ..., n-1
+    # P_k_power[j] is the coefficient of x^j in P_k^{(alpha,beta)}
     P_power = []
 
-    # P_0^{(α,β)}(x) = 1
+    # P_0^{(alpha,beta)}(x) = 1
     P_power.append(
         torch.tensor([1.0], dtype=coeffs.dtype, device=coeffs.device)
     )
 
     if n > 1:
-        # P_1^{(α,β)}(x) = (α - β)/2 + (α + β + 2)/2 * x
+        # P_1^{(alpha,beta)}(x) = (alpha - beta)/2 + (alpha + beta + 2)/2 * x
         c0 = (alpha - beta) / 2
         c1 = (ab + 2) / 2
         P_power.append(
@@ -110,7 +111,7 @@ def jacobi_polynomial_p_to_polynomial(
         P_kp1 = (term1_padded + P_k_shifted - P_km1_padded) / a_k
         P_power.append(P_kp1)
 
-    # Combine: p = sum(c_k * P_k^{(α,β)})
+    # Combine: p = sum(c_k * P_k^{(alpha,beta)})
     # Result has degree n-1
     result = torch.zeros(n, dtype=coeffs.dtype, device=coeffs.device)
 
@@ -119,4 +120,4 @@ def jacobi_polynomial_p_to_polynomial(
         P_k = P_power[k]
         result[: len(P_k)] = result[: len(P_k)] + c_k * P_k
 
-    return Polynomial(coeffs=result)
+    return Polynomial(result)

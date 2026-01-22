@@ -1,6 +1,6 @@
 import torch
 
-from ._jacobi_polynomial_p import JacobiPolynomialP
+from ._jacobi_polynomial_p import JacobiPolynomialP, jacobi_polynomial_p
 
 
 def jacobi_polynomial_p_mulx(
@@ -9,7 +9,7 @@ def jacobi_polynomial_p_mulx(
     """Multiply Jacobi series by x.
 
     Uses the recurrence relation for Jacobi polynomials to express
-    x * P_k^{(α,β)}(x) as a linear combination of P_{k-1}, P_k, P_{k+1}.
+    x * P_k^{(alpha,beta)}(x) as a linear combination of P_{k-1}, P_k, P_{k+1}.
 
     Parameters
     ----------
@@ -26,12 +26,12 @@ def jacobi_polynomial_p_mulx(
     The degree increases by 1.
 
     The Jacobi recurrence relation is:
-        P_{n+1}^{(α,β)}(x) = (A_n + B_n * x) * P_n^{(α,β)}(x) - C_n * P_{n-1}^{(α,β)}(x)
+        P_{n+1}^{(alpha,beta)}(x) = (A_n + B_n * x) * P_n^{(alpha,beta)}(x) - C_n * P_{n-1}^{(alpha,beta)}(x)
 
     where:
-        A_n = (α² - β²) / ((2n + α + β)(2n + α + β + 2))
-        B_n = (2n + α + β + 1)(2n + α + β + 2) / (2(n + 1)(n + α + β + 1))
-        C_n = (n + α)(n + β)(2n + α + β + 2) / ((n + 1)(n + α + β + 1)(2n + α + β))
+        A_n = (alpha^2 - beta^2) / ((2n + alpha + beta)(2n + alpha + beta + 2))
+        B_n = (2n + alpha + beta + 1)(2n + alpha + beta + 2) / (2(n + 1)(n + alpha + beta + 1))
+        C_n = (n + alpha)(n + beta)(2n + alpha + beta + 2) / ((n + 1)(n + alpha + beta + 1)(2n + alpha + beta))
 
     Solving for x * P_n:
         x * P_n = (P_{n+1} - A_n * P_n + C_n * P_{n-1}) / B_n
@@ -40,10 +40,11 @@ def jacobi_polynomial_p_mulx(
     --------
     >>> a = jacobi_polynomial_p(torch.tensor([1.0]), alpha=0.0, beta=0.0)  # P_0
     >>> b = jacobi_polynomial_p_mulx(a)
-    >>> b.coeffs  # x * P_0^{(0,0)} = P_1^{(0,0)} (for Legendre)
-    tensor([0., 1.])
+    >>> b  # x * P_0^{(0,0)} = P_1^{(0,0)} (for Legendre)
+    JacobiPolynomialP(tensor([0., 1.]), alpha=tensor(0.), beta=tensor(0.))
     """
-    coeffs = a.coeffs
+    # Get coefficients as plain tensor
+    coeffs = a.as_subclass(torch.Tensor)
     alpha = a.alpha
     beta = a.beta
     n = coeffs.shape[-1]
@@ -57,7 +58,7 @@ def jacobi_polynomial_p_mulx(
         result_shape, dtype=coeffs.dtype, device=coeffs.device
     )
 
-    # For each coefficient c_k, we need to express x * P_k^{(α,β)} in the Jacobi basis
+    # For each coefficient c_k, we need to express x * P_k^{(alpha,beta)} in the Jacobi basis
     # x * P_k = (P_{k+1} - A_k * P_k + C_k * P_{k-1}) / B_k
     # This means c_k contributes:
     #   c_k / B_k to coefficient of P_{k+1}
@@ -72,17 +73,17 @@ def jacobi_polynomial_p_mulx(
 
         # Handle special cases for small k or special parameter values
         if k == 0:
-            # x * P_0 = ((α-β) + (α+β+2)*x) / 2 in terms of standard normalization
-            # For P_0 = 1, P_1 = (α - β)/2 + (α + β + 2)/2 * x
-            # So x = (2*P_1 - (α - β)*P_0) / (α + β + 2)
+            # x * P_0 = ((alpha-beta) + (alpha+beta+2)*x) / 2 in terms of standard normalization
+            # For P_0 = 1, P_1 = (alpha - beta)/2 + (alpha + beta + 2)/2 * x
+            # So x = (2*P_1 - (alpha - beta)*P_0) / (alpha + beta + 2)
             denom = ab + 2
             if abs(denom.item() if hasattr(denom, "item") else denom) < 1e-15:
-                # Edge case: α + β = -2, but we require α, β > -1, so α + β > -2
+                # Edge case: alpha + beta = -2, but we require alpha, beta > -1, so alpha + beta > -2
                 # This shouldn't happen, but handle gracefully
                 result[..., 1] = result[..., 1] + c_k
             else:
-                # x = (2*P_1 - (α - β)*P_0) / (α + β + 2)
-                # x * c_0 * P_0 = c_0 * (2*P_1 - (α - β)*P_0) / (α + β + 2)
+                # x = (2*P_1 - (alpha - beta)*P_0) / (alpha + beta + 2)
+                # x * c_0 * P_0 = c_0 * (2*P_1 - (alpha - beta)*P_0) / (alpha + beta + 2)
                 result[..., 0] = result[..., 0] - c_k * (alpha - beta) / denom
                 result[..., 1] = result[..., 1] + c_k * 2.0 / denom
         else:
@@ -90,17 +91,17 @@ def jacobi_polynomial_p_mulx(
             # A_k, B_k, C_k for the recurrence
             two_k_ab_p2 = two_k_ab + 2
 
-            # A_k = (α² - β²) / ((2k + α + β)(2k + α + β + 2))
+            # A_k = (alpha^2 - beta^2) / ((2k + alpha + beta)(2k + alpha + beta + 2))
             A_k = (alpha * alpha - beta * beta) / (two_k_ab * two_k_ab_p2)
 
-            # B_k = (2k + α + β + 1)(2k + α + β + 2) / (2(k + 1)(k + α + β + 1))
+            # B_k = (2k + alpha + beta + 1)(2k + alpha + beta + 2) / (2(k + 1)(k + alpha + beta + 1))
             B_k = (
                 (two_k_ab + 1)
                 * two_k_ab_p2
                 / (2.0 * (k_f + 1) * (k_f + ab + 1))
             )
 
-            # C_k = (k + α)(k + β)(2k + α + β + 2) / ((k + 1)(k + α + β + 1)(2k + α + β))
+            # C_k = (k + alpha)(k + beta)(2k + alpha + beta + 2) / ((k + 1)(k + alpha + beta + 1)(2k + alpha + beta))
             C_k = (
                 (k_f + alpha)
                 * (k_f + beta)
@@ -118,6 +119,4 @@ def jacobi_polynomial_p_mulx(
             # Contribution to P_{k+1}
             result[..., k + 1] = result[..., k + 1] + c_k * inv_B_k
 
-    return JacobiPolynomialP(
-        coeffs=result, alpha=alpha.clone(), beta=beta.clone()
-    )
+    return jacobi_polynomial_p(result, alpha.clone(), beta.clone())

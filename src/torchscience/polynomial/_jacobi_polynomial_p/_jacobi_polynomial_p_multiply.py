@@ -1,7 +1,7 @@
 import torch
 
 from .._parameter_mismatch_error import ParameterMismatchError
-from ._jacobi_polynomial_p import JacobiPolynomialP
+from ._jacobi_polynomial_p import JacobiPolynomialP, jacobi_polynomial_p
 from ._jacobi_polynomial_p_add import jacobi_polynomial_p_add
 from ._jacobi_polynomial_p_mulx import jacobi_polynomial_p_mulx
 from ._jacobi_polynomial_p_scale import jacobi_polynomial_p_scale
@@ -54,8 +54,9 @@ def jacobi_polynomial_p_multiply(
             f"by JacobiPolynomialP with alpha={b.alpha}, beta={b.beta}"
         )
 
-    a_coeffs = a.coeffs
-    b_coeffs = b.coeffs
+    # Get coefficients as plain tensors
+    a_coeffs = a.as_subclass(torch.Tensor)
+    b_coeffs = b.as_subclass(torch.Tensor)
     alpha = a.alpha
     beta = a.beta
 
@@ -71,8 +72,8 @@ def jacobi_polynomial_p_multiply(
     # We build x^k * b iteratively using mulx
 
     # Start with x^0 * b = b
-    x_power_b = JacobiPolynomialP(
-        coeffs=b_coeffs.clone(), alpha=alpha.clone(), beta=beta.clone()
+    x_power_b = jacobi_polynomial_p(
+        b_coeffs.clone(), alpha.clone(), beta.clone()
     )
 
     # Initialize result with a_0 * b

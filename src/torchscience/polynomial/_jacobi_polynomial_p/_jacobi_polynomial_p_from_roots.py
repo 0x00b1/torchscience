@@ -1,7 +1,7 @@
 import torch
 from torch import Tensor
 
-from ._jacobi_polynomial_p import JacobiPolynomialP
+from ._jacobi_polynomial_p import JacobiPolynomialP, jacobi_polynomial_p
 from ._jacobi_polynomial_p_multiply import jacobi_polynomial_p_multiply
 
 
@@ -19,9 +19,9 @@ def jacobi_polynomial_p_from_roots(
     roots : Tensor
         Roots of the polynomial, shape (n,).
     alpha : Tensor or float
-        Jacobi parameter α, must be > -1.
+        Jacobi parameter alpha, must be > -1.
     beta : Tensor or float
-        Jacobi parameter β, must be > -1.
+        Jacobi parameter beta, must be > -1.
 
     Returns
     -------
@@ -31,10 +31,10 @@ def jacobi_polynomial_p_from_roots(
     Notes
     -----
     Builds the product of linear factors (x - r_k) in Jacobi form.
-    For Jacobi polynomials with parameters (α, β), the linear factor
+    For Jacobi polynomials with parameters (alpha, beta), the linear factor
     (x - r) must be expressed in the Jacobi basis.
 
-    Since x = (2/(α+β+2)) * P_1^{(α,β)} + ((α-β)/(α+β+2)) * P_0^{(α,β)},
+    Since x = (2/(alpha+beta+2)) * P_1^{(alpha,beta)} + ((alpha-beta)/(alpha+beta+2)) * P_0^{(alpha,beta)},
     the factor (x - r) can be written in terms of P_0 and P_1.
 
     Examples
@@ -54,44 +54,40 @@ def jacobi_polynomial_p_from_roots(
 
     if n == 0:
         # Empty roots -> constant 1
-        return JacobiPolynomialP(
-            coeffs=torch.ones(1, dtype=roots.dtype, device=roots.device),
-            alpha=alpha,
-            beta=beta,
+        return jacobi_polynomial_p(
+            torch.ones(1, dtype=roots.dtype, device=roots.device),
+            alpha,
+            beta,
         )
 
     # For Jacobi basis:
-    # P_0^{(α,β)}(x) = 1
-    # P_1^{(α,β)}(x) = (α-β)/2 + (α+β+2)/2 * x
+    # P_0^{(alpha,beta)}(x) = 1
+    # P_1^{(alpha,beta)}(x) = (alpha-beta)/2 + (alpha+beta+2)/2 * x
     #
-    # So x = (2*P_1 - (α-β)*P_0) / (α+β+2)
-    # And (x - r) = (2*P_1 - (α-β)*P_0 - r*(α+β+2)*P_0) / (α+β+2)
-    #             = (2*P_1 - ((α-β) + r*(α+β+2))*P_0) / (α+β+2)
+    # So x = (2*P_1 - (alpha-beta)*P_0) / (alpha+beta+2)
+    # And (x - r) = (2*P_1 - (alpha-beta)*P_0 - r*(alpha+beta+2)*P_0) / (alpha+beta+2)
+    #             = (2*P_1 - ((alpha-beta) + r*(alpha+beta+2))*P_0) / (alpha+beta+2)
 
     # Build (x - r_0) in Jacobi form
     denom = ab + 2
     # (x - r) = c_0 * P_0 + c_1 * P_1
-    # where c_1 = 2 / (α+β+2) and c_0 = -((α-β) + r*(α+β+2)) / (α+β+2)
+    # where c_1 = 2 / (alpha+beta+2) and c_0 = -((alpha-beta) + r*(alpha+beta+2)) / (alpha+beta+2)
     c_0 = -((alpha - beta) + roots[0] * denom) / denom
     c_1 = 2.0 / denom
 
-    result = JacobiPolynomialP(
-        coeffs=torch.tensor(
-            [c_0, c_1], dtype=roots.dtype, device=roots.device
-        ),
-        alpha=alpha.clone(),
-        beta=beta.clone(),
+    result = jacobi_polynomial_p(
+        torch.tensor([c_0, c_1], dtype=roots.dtype, device=roots.device),
+        alpha.clone(),
+        beta.clone(),
     )
 
     # Multiply by each subsequent (x - r_k)
     for k in range(1, n):
         c_0 = -((alpha - beta) + roots[k] * denom) / denom
-        factor = JacobiPolynomialP(
-            coeffs=torch.tensor(
-                [c_0, c_1], dtype=roots.dtype, device=roots.device
-            ),
-            alpha=alpha.clone(),
-            beta=beta.clone(),
+        factor = jacobi_polynomial_p(
+            torch.tensor([c_0, c_1], dtype=roots.dtype, device=roots.device),
+            alpha.clone(),
+            beta.clone(),
         )
         result = jacobi_polynomial_p_multiply(result, factor)
 

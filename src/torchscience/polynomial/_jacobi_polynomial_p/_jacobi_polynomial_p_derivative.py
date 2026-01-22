@@ -1,6 +1,6 @@
 import torch
 
-from ._jacobi_polynomial_p import JacobiPolynomialP
+from ._jacobi_polynomial_p import JacobiPolynomialP, jacobi_polynomial_p
 
 
 def jacobi_polynomial_p_derivative(
@@ -10,9 +10,9 @@ def jacobi_polynomial_p_derivative(
     """Compute derivative of Jacobi series.
 
     Uses the identity:
-        d/dx P_n^{(α,β)}(x) = (n + α + β + 1)/2 * P_{n-1}^{(α+1,β+1)}(x)
+        d/dx P_n^{(alpha,beta)}(x) = (n + alpha + beta + 1)/2 * P_{n-1}^{(alpha+1,beta+1)}(x)
 
-    However, to keep the result in the same (α,β) basis, we use the recurrence
+    However, to keep the result in the same (alpha,beta) basis, we use the recurrence
     relation to convert back.
 
     Parameters
@@ -25,16 +25,16 @@ def jacobi_polynomial_p_derivative(
     Returns
     -------
     JacobiPolynomialP
-        Derivative series with the same (α, β) parameters.
+        Derivative series with the same (alpha, beta) parameters.
 
     Notes
     -----
     The degree decreases by 1 for each differentiation.
 
     The derivative of a Jacobi polynomial can be expressed as:
-        d/dx P_n^{(α,β)}(x) = (n + α + β + 1)/2 * P_{n-1}^{(α+1,β+1)}(x)
+        d/dx P_n^{(alpha,beta)}(x) = (n + alpha + beta + 1)/2 * P_{n-1}^{(alpha+1,beta+1)}(x)
 
-    To express this in the original (α,β) basis, we use the connection
+    To express this in the original (alpha,beta) basis, we use the connection
     formula between Jacobi polynomials with different parameters.
 
     For the purpose of this implementation, we differentiate by converting
@@ -45,22 +45,21 @@ def jacobi_polynomial_p_derivative(
     --------
     >>> a = jacobi_polynomial_p(torch.tensor([0.0, 1.0]), alpha=0.0, beta=0.0)  # P_1
     >>> da = jacobi_polynomial_p_derivative(a)
-    >>> da.coeffs  # d/dx P_1^{(0,0)} = 1 = P_0
-    tensor([1.])
+    >>> da  # d/dx P_1^{(0,0)} = 1 = P_0
+    JacobiPolynomialP(tensor([1.]), alpha=tensor(0.), beta=tensor(0.))
     """
     if order < 0:
         raise ValueError(f"Order must be non-negative, got {order}")
 
-    if order == 0:
-        return JacobiPolynomialP(
-            coeffs=a.coeffs.clone(), alpha=a.alpha.clone(), beta=a.beta.clone()
-        )
-
-    coeffs = a.coeffs.clone()
+    # Get coefficients as plain tensor
+    coeffs = a.as_subclass(torch.Tensor).clone()
     alpha = a.alpha
     beta = a.beta
     ab = alpha + beta
     n = coeffs.shape[-1]
+
+    if order == 0:
+        return jacobi_polynomial_p(coeffs, alpha.clone(), beta.clone())
 
     # Apply derivative 'order' times
     for _ in range(order):
@@ -83,9 +82,9 @@ def jacobi_polynomial_p_derivative(
         )
 
         # The derivative of a Jacobi series requires expressing
-        # d/dx P_k^{(α,β)}(x) in the same (α,β) basis.
+        # d/dx P_k^{(alpha,beta)}(x) in the same (alpha,beta) basis.
         #
-        # Using the identity: d/dx P_n^{(α,β)} = (n+α+β+1)/2 * P_{n-1}^{(α+1,β+1)}
+        # Using the identity: d/dx P_n^{(alpha,beta)} = (n+alpha+beta+1)/2 * P_{n-1}^{(alpha+1,beta+1)}
         # and the connection formula, we can derive the coefficients.
         #
         # For a simpler approach, we use the recurrence-based derivative formula.
@@ -93,20 +92,20 @@ def jacobi_polynomial_p_derivative(
 
         # Using the relation between derivatives and the recurrence:
         # For Jacobi polynomials, we have:
-        # (1-x^2) * P'_n = -n*x*P_n + (n+α+β)*((1-x)/(α+β+1))*P_n + ...
+        # (1-x^2) * P'_n = -n*x*P_n + (n+alpha+beta)*((1-x)/(alpha+beta+1))*P_n + ...
         # This is complex. Use a matrix-based approach or the fact that:
         #
-        # d/dx [sum c_k P_k^{(α,β)}] = sum c_k * (k+α+β+1)/2 * P_{k-1}^{(α+1,β+1)}
+        # d/dx [sum c_k P_k^{(alpha,beta)}] = sum c_k * (k+alpha+beta+1)/2 * P_{k-1}^{(alpha+1,beta+1)}
         #
-        # Then convert P^{(α+1,β+1)} to P^{(α,β)} using connection formulas.
+        # Then convert P^{(alpha+1,beta+1)} to P^{(alpha,beta)} using connection formulas.
 
         # Simplified approach: use the derivative recurrence for Jacobi
         # der[k] = contribution from c_{k+1} * derivative of P_{k+1}
 
         for k in range(n - 1, 0, -1):
-            # Coefficient for d/dx P_k^{(α,β)} in terms of basis functions
-            # The leading term is (k + α + β + 1) / 2 contributing to P_{k-1}
-            # But we need to express in the same (α,β) basis
+            # Coefficient for d/dx P_k^{(alpha,beta)} in terms of basis functions
+            # The leading term is (k + alpha + beta + 1) / 2 contributing to P_{k-1}
+            # But we need to express in the same (alpha,beta) basis
 
             # Approximate: the k-th derivative coefficient gets contributions
             # from higher-order coefficients
@@ -116,6 +115,4 @@ def jacobi_polynomial_p_derivative(
         coeffs = der
         n = new_n
 
-    return JacobiPolynomialP(
-        coeffs=coeffs, alpha=alpha.clone(), beta=beta.clone()
-    )
+    return jacobi_polynomial_p(coeffs, alpha.clone(), beta.clone())

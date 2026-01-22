@@ -1,6 +1,6 @@
 import torch
 
-from ._jacobi_polynomial_p import JacobiPolynomialP
+from ._jacobi_polynomial_p import JacobiPolynomialP, jacobi_polynomial_p
 
 
 def jacobi_polynomial_p_trim(
@@ -30,14 +30,17 @@ def jacobi_polynomial_p_trim(
     --------
     >>> c = jacobi_polynomial_p(torch.tensor([1.0, 2.0, 0.0, 0.0]), alpha=0.0, beta=0.0)
     >>> t = jacobi_polynomial_p_trim(c)
-    >>> t.coeffs
-    tensor([1., 2.])
+    >>> t
+    JacobiPolynomialP(tensor([1., 2.]), alpha=tensor(0.), beta=tensor(0.))
     """
-    coeffs = p.coeffs
+    # Get coefficients as plain tensor
+    coeffs = p.as_subclass(torch.Tensor)
     n = coeffs.shape[-1]
 
     if n <= 1:
-        return p
+        return jacobi_polynomial_p(
+            coeffs.clone(), p.alpha.clone(), p.beta.clone()
+        )
 
     # Find the last non-zero coefficient
     # For batched case, a coefficient position is non-zero if any batch element is non-zero
@@ -54,12 +57,12 @@ def jacobi_polynomial_p_trim(
     mask = max_abs > tol
     if not mask.any():
         # All zeros, return single zero coefficient
-        return JacobiPolynomialP(
-            coeffs=torch.zeros(
+        return jacobi_polynomial_p(
+            torch.zeros(
                 *coeffs.shape[:-1], 1, dtype=coeffs.dtype, device=coeffs.device
             ),
-            alpha=p.alpha.clone(),
-            beta=p.beta.clone(),
+            p.alpha.clone(),
+            p.beta.clone(),
         )
 
     # Find last True position
@@ -67,8 +70,8 @@ def jacobi_polynomial_p_trim(
     last_nonzero = indices[mask].max().item()
 
     # Keep coefficients up to and including last_nonzero
-    return JacobiPolynomialP(
-        coeffs=coeffs[..., : last_nonzero + 1],
-        alpha=p.alpha.clone(),
-        beta=p.beta.clone(),
+    return jacobi_polynomial_p(
+        coeffs[..., : last_nonzero + 1],
+        p.alpha.clone(),
+        p.beta.clone(),
     )

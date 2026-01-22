@@ -1,7 +1,7 @@
 import torch
 
 from .._parameter_mismatch_error import ParameterMismatchError
-from ._jacobi_polynomial_p import JacobiPolynomialP
+from ._jacobi_polynomial_p import JacobiPolynomialP, jacobi_polynomial_p
 
 
 def jacobi_polynomial_p_subtract(
@@ -36,8 +36,8 @@ def jacobi_polynomial_p_subtract(
     >>> a = jacobi_polynomial_p(torch.tensor([5.0, 7.0, 9.0]), alpha=0.5, beta=0.5)
     >>> b = jacobi_polynomial_p(torch.tensor([1.0, 2.0, 3.0]), alpha=0.5, beta=0.5)
     >>> c = jacobi_polynomial_p_subtract(a, b)
-    >>> c.coeffs
-    tensor([4., 5., 6.])
+    >>> c
+    JacobiPolynomialP(tensor([4., 5., 6.]), alpha=tensor(0.5000), beta=tensor(0.5000))
     """
     # Check parameter compatibility
     if not torch.allclose(a.alpha, b.alpha) or not torch.allclose(
@@ -48,17 +48,18 @@ def jacobi_polynomial_p_subtract(
             f"from JacobiPolynomialP with alpha={b.alpha}, beta={b.beta}"
         )
 
-    a_coeffs = a.coeffs
-    b_coeffs = b.coeffs
+    # Get coefficients as plain tensors
+    a_coeffs = a.as_subclass(torch.Tensor)
+    b_coeffs = b.as_subclass(torch.Tensor)
 
     n_a = a_coeffs.shape[-1]
     n_b = b_coeffs.shape[-1]
 
     if n_a == n_b:
-        return JacobiPolynomialP(
-            coeffs=a_coeffs - b_coeffs,
-            alpha=a.alpha.clone(),
-            beta=a.beta.clone(),
+        return jacobi_polynomial_p(
+            a_coeffs - b_coeffs,
+            a.alpha.clone(),
+            a.beta.clone(),
         )
 
     # Zero-pad the shorter series
@@ -77,6 +78,6 @@ def jacobi_polynomial_p_subtract(
         )
         b_coeffs = torch.cat([b_coeffs, padding], dim=-1)
 
-    return JacobiPolynomialP(
-        coeffs=a_coeffs - b_coeffs, alpha=a.alpha.clone(), beta=a.beta.clone()
+    return jacobi_polynomial_p(
+        a_coeffs - b_coeffs, a.alpha.clone(), a.beta.clone()
     )

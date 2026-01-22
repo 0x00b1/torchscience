@@ -1,6 +1,7 @@
+import torch
 from torch import Tensor
 
-from ._jacobi_polynomial_p import JacobiPolynomialP
+from ._jacobi_polynomial_p import JacobiPolynomialP, jacobi_polynomial_p
 
 
 def jacobi_polynomial_p_scale(
@@ -25,9 +26,11 @@ def jacobi_polynomial_p_scale(
     --------
     >>> a = jacobi_polynomial_p(torch.tensor([1.0, 2.0, 3.0]), alpha=0.5, beta=0.5)
     >>> b = jacobi_polynomial_p_scale(a, torch.tensor(2.0))
-    >>> b.coeffs
-    tensor([2., 4., 6.])
+    >>> b
+    JacobiPolynomialP(tensor([2., 4., 6.]), alpha=tensor(0.5000), beta=tensor(0.5000))
     """
-    return JacobiPolynomialP(
-        coeffs=a.coeffs * scalar, alpha=a.alpha.clone(), beta=a.beta.clone()
+    # Get coefficients as plain tensor
+    coeffs = a.as_subclass(torch.Tensor)
+    return jacobi_polynomial_p(
+        coeffs * scalar, a.alpha.clone(), a.beta.clone()
     )

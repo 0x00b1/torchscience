@@ -17,7 +17,7 @@ def jacobi_polynomial_p_evaluate(
     Parameters
     ----------
     c : JacobiPolynomialP
-        Jacobi series with coefficients shape (...batch, N) and parameters α, β.
+        Jacobi series with coefficients shape (...batch, N) and parameters alpha, beta.
     x : Tensor
         Evaluation points, shape (...x_batch).
 
@@ -33,20 +33,20 @@ def jacobi_polynomial_p_evaluate(
 
     Notes
     -----
-    Uses forward recurrence to compute the sum f(x) = sum_{k=0}^{n-1} c_k * P_k^{(α,β)}(x).
+    Uses forward recurrence to compute the sum f(x) = sum_{k=0}^{n-1} c_k * P_k^{(alpha,beta)}(x).
 
     The Jacobi polynomials satisfy the three-term recurrence:
-        P_0^{(α,β)}(x) = 1
-        P_1^{(α,β)}(x) = (α - β)/2 + (α + β + 2)/2 * x
+        P_0^{(alpha,beta)}(x) = 1
+        P_1^{(alpha,beta)}(x) = (alpha - beta)/2 + (alpha + beta + 2)/2 * x
 
         For n >= 1:
-        P_{n+1}^{(α,β)}(x) = ((b_n + c_n*x) * P_n^{(α,β)}(x) - d_n * P_{n-1}^{(α,β)}(x)) / a_n
+        P_{n+1}^{(alpha,beta)}(x) = ((b_n + c_n*x) * P_n^{(alpha,beta)}(x) - d_n * P_{n-1}^{(alpha,beta)}(x)) / a_n
 
         where:
-        a_n = 2(n+1)(n+α+β+1)(2n+α+β)
-        b_n = (2n+α+β+1)(α²-β²)
-        c_n = (2n+α+β)(2n+α+β+1)(2n+α+β+2)
-        d_n = 2(n+α)(n+β)(2n+α+β+2)
+        a_n = 2(n+1)(n+alpha+beta+1)(2n+alpha+beta)
+        b_n = (2n+alpha+beta+1)(alpha^2-beta^2)
+        c_n = (2n+alpha+beta)(2n+alpha+beta+1)(2n+alpha+beta+2)
+        d_n = 2(n+alpha)(n+beta)(2n+alpha+beta+2)
 
     Examples
     --------
@@ -65,7 +65,8 @@ def jacobi_polynomial_p_evaluate(
                 stacklevel=2,
             )
 
-    coeffs = c.coeffs
+    # Get coefficients as plain tensor
+    coeffs = c.as_subclass(torch.Tensor)
     alpha = c.alpha
     beta = c.beta
     n = coeffs.shape[-1]

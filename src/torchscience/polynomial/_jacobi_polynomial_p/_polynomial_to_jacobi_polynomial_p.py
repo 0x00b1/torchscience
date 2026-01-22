@@ -2,7 +2,7 @@ import torch
 from torch import Tensor
 
 from .._polynomial import Polynomial
-from ._jacobi_polynomial_p import JacobiPolynomialP
+from ._jacobi_polynomial_p import JacobiPolynomialP, jacobi_polynomial_p
 from ._jacobi_polynomial_p_add import jacobi_polynomial_p_add
 from ._jacobi_polynomial_p_mulx import jacobi_polynomial_p_mulx
 
@@ -19,9 +19,9 @@ def polynomial_to_jacobi_polynomial_p(
     p : Polynomial
         Power polynomial.
     alpha : Tensor or float
-        Jacobi parameter α, must be > -1.
+        Jacobi parameter alpha, must be > -1.
     beta : Tensor or float
-        Jacobi parameter β, must be > -1.
+        Jacobi parameter beta, must be > -1.
 
     Returns
     -------
@@ -41,10 +41,11 @@ def polynomial_to_jacobi_polynomial_p(
     --------
     >>> p = polynomial(torch.tensor([0.0, 0.0, 1.0]))  # x^2
     >>> c = polynomial_to_jacobi_polynomial_p(p, alpha=0.0, beta=0.0)
-    >>> c.coeffs  # x^2 in Legendre basis
-    tensor([0.3333, 0.0000, 0.6667])
+    >>> c  # x^2 in Legendre basis
+    JacobiPolynomialP(tensor([0.3333, 0.0000, 0.6667]), alpha=tensor(0.), beta=tensor(0.))
     """
-    coeffs = p.coeffs
+    # Get coefficients as plain tensor
+    coeffs = p.as_subclass(torch.Tensor)
     n = coeffs.shape[-1]
 
     # Convert alpha and beta to tensors if needed
@@ -54,15 +55,15 @@ def polynomial_to_jacobi_polynomial_p(
         beta = torch.tensor(beta, dtype=coeffs.dtype, device=coeffs.device)
 
     if n == 0:
-        return JacobiPolynomialP(
-            coeffs=torch.zeros(1, dtype=coeffs.dtype, device=coeffs.device),
-            alpha=alpha,
-            beta=beta,
+        return jacobi_polynomial_p(
+            torch.zeros(1, dtype=coeffs.dtype, device=coeffs.device),
+            alpha,
+            beta,
         )
 
     # Start with highest degree coefficient
-    result = JacobiPolynomialP(
-        coeffs=coeffs[..., -1:].clone(), alpha=alpha.clone(), beta=beta.clone()
+    result = jacobi_polynomial_p(
+        coeffs[..., -1:].clone(), alpha.clone(), beta.clone()
     )
 
     # Horner's method: multiply by x, add next coefficient
@@ -70,10 +71,10 @@ def polynomial_to_jacobi_polynomial_p(
         result = jacobi_polynomial_p_mulx(result)
         result = jacobi_polynomial_p_add(
             result,
-            JacobiPolynomialP(
-                coeffs=coeffs[..., i : i + 1].clone(),
-                alpha=alpha.clone(),
-                beta=beta.clone(),
+            jacobi_polynomial_p(
+                coeffs[..., i : i + 1].clone(),
+                alpha.clone(),
+                beta.clone(),
             ),
         )
 
