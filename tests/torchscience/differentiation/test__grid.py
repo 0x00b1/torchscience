@@ -1,8 +1,8 @@
-"""Tests for RegularGrid dataclass."""
+"""Tests for RegularGrid and IrregularMesh dataclasses."""
 
 import torch
 
-from torchscience.differentiation import RegularGrid
+from torchscience.differentiation import IrregularMesh, RegularGrid
 
 
 class TestRegularGrid:
@@ -53,3 +53,49 @@ class TestRegularGrid:
         points = grid.points
         assert points.shape == (6, 2)
         # Points should be (0,0), (0,1), (0,2), (1,0), (1,1), (1,2)
+
+
+class TestIrregularMesh:
+    """Tests for IrregularMesh dataclass."""
+
+    def test_create_from_points(self):
+        """Create mesh from point coordinates."""
+        points = torch.tensor(
+            [
+                [0.0, 0.0],
+                [1.0, 0.0],
+                [0.5, 0.866],  # equilateral triangle
+            ]
+        )
+        mesh = IrregularMesh(points=points)
+        assert mesh.ndim == 2
+        assert mesh.n_points == 3
+
+    def test_neighbors(self):
+        """Find k-nearest neighbors."""
+        points = torch.tensor(
+            [
+                [0.0, 0.0],
+                [1.0, 0.0],
+                [2.0, 0.0],
+                [3.0, 0.0],
+            ]
+        )
+        mesh = IrregularMesh(points=points)
+        neighbors = mesh.neighbors(k=2)
+        # Each point has 2 nearest neighbors
+        assert neighbors.shape == (4, 2)
+        # Point 0's nearest neighbors should be 1 and 2
+        assert 1 in neighbors[0].tolist()
+
+    def test_from_regular_grid(self):
+        """Convert RegularGrid to IrregularMesh."""
+        grid = RegularGrid(
+            origin=torch.tensor([0.0, 0.0]),
+            spacing=torch.tensor([1.0, 1.0]),
+            shape=(3, 3),
+            boundary="replicate",
+        )
+        mesh = grid.to_mesh()
+        assert isinstance(mesh, IrregularMesh)
+        assert mesh.n_points == 9
