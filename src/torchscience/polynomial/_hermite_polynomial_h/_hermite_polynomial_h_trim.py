@@ -1,6 +1,9 @@
 import torch
 
-from ._hermite_polynomial_h import HermitePolynomialH
+from ._hermite_polynomial_h import (
+    HermitePolynomialH,
+    hermite_polynomial_h,
+)
 
 
 def hermite_polynomial_h_trim(
@@ -30,10 +33,10 @@ def hermite_polynomial_h_trim(
     --------
     >>> c = hermite_polynomial_h(torch.tensor([1.0, 2.0, 0.0, 0.0]))
     >>> t = hermite_polynomial_h_trim(c)
-    >>> t.coeffs
-    tensor([1., 2.])
+    >>> t
+    HermitePolynomialH(tensor([1., 2.]))
     """
-    coeffs = p.coeffs
+    coeffs = p.as_subclass(torch.Tensor)
     n = coeffs.shape[-1]
 
     if n <= 1:
@@ -54,8 +57,8 @@ def hermite_polynomial_h_trim(
     mask = max_abs > tol
     if not mask.any():
         # All zeros, return single zero coefficient
-        return HermitePolynomialH(
-            coeffs=torch.zeros(
+        return hermite_polynomial_h(
+            torch.zeros(
                 *coeffs.shape[:-1], 1, dtype=coeffs.dtype, device=coeffs.device
             )
         )
@@ -65,4 +68,4 @@ def hermite_polynomial_h_trim(
     last_nonzero = indices[mask].max().item()
 
     # Keep coefficients up to and including last_nonzero
-    return HermitePolynomialH(coeffs=coeffs[..., : last_nonzero + 1])
+    return hermite_polynomial_h(coeffs[..., : last_nonzero + 1])

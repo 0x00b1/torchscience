@@ -33,10 +33,10 @@ def hermite_polynomial_h_to_polynomial(
     --------
     >>> c = hermite_polynomial_h(torch.tensor([0.0, 0.0, 1.0]))  # H_2
     >>> p = hermite_polynomial_h_to_polynomial(c)
-    >>> p.coeffs  # H_2 = 4x^2 - 2
-    tensor([-2.,  0.,  4.])
+    >>> p  # H_2 = 4x^2 - 2
+    Polynomial(tensor([-2.,  0.,  4.]))
     """
-    coeffs = c.coeffs
+    coeffs = c.as_subclass(torch.Tensor)
     n = coeffs.shape[-1]
 
     # Build power representations of H_k for k = 0, ..., n-1
@@ -83,4 +83,4 @@ def hermite_polynomial_h_to_polynomial(
         H_k = H_power[k]
         result[: len(H_k)] = result[: len(H_k)] + c_k * H_k
 
-    return Polynomial(coeffs=result)
+    return Polynomial(result)

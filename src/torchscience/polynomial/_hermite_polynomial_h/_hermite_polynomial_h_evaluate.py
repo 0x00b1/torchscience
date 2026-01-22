@@ -49,7 +49,8 @@ def hermite_polynomial_h_evaluate(
     """
     # No domain check for Hermite polynomials since domain is (-inf, inf)
 
-    coeffs = c.coeffs
+    # The polynomial IS the coefficients tensor
+    coeffs = c
     n = coeffs.shape[-1]
 
     # Handle trivial cases

@@ -2,7 +2,10 @@ import torch
 
 from torchscience.polynomial._polynomial import Polynomial
 
-from ._hermite_polynomial_h import HermitePolynomialH
+from ._hermite_polynomial_h import (
+    HermitePolynomialH,
+    hermite_polynomial_h,
+)
 from ._hermite_polynomial_h_add import hermite_polynomial_h_add
 from ._hermite_polynomial_h_mulx import hermite_polynomial_h_mulx
 
@@ -35,25 +38,25 @@ def polynomial_to_hermite_polynomial_h(
     --------
     >>> p = polynomial(torch.tensor([-2.0, 0.0, 4.0]))  # -2 + 4x^2
     >>> c = polynomial_to_hermite_polynomial_h(p)
-    >>> c.coeffs  # -2 + 4x^2 = H_2 (since H_2 = 4x^2 - 2)
-    tensor([0., 0., 1.])
+    >>> c  # -2 + 4x^2 = H_2 (since H_2 = 4x^2 - 2)
+    HermitePolynomialH(tensor([0., 0., 1.]))
     """
-    coeffs = p.coeffs
+    coeffs = p.as_subclass(torch.Tensor)
     n = coeffs.shape[-1]
 
     if n == 0:
-        return HermitePolynomialH(
-            coeffs=torch.zeros(1, dtype=coeffs.dtype, device=coeffs.device)
+        return hermite_polynomial_h(
+            torch.zeros(1, dtype=coeffs.dtype, device=coeffs.device)
         )
 
     # Start with highest degree coefficient
-    result = HermitePolynomialH(coeffs=coeffs[..., -1:].clone())
+    result = hermite_polynomial_h(coeffs[..., -1:].clone())
 
     # Horner's method: multiply by x, add next coefficient
     for i in range(n - 2, -1, -1):
         result = hermite_polynomial_h_mulx(result)
         result = hermite_polynomial_h_add(
-            result, HermitePolynomialH(coeffs=coeffs[..., i : i + 1].clone())
+            result, hermite_polynomial_h(coeffs[..., i : i + 1].clone())
         )
 
     return result

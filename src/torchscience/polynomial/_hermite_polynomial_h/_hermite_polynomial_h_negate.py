@@ -1,4 +1,9 @@
-from ._hermite_polynomial_h import HermitePolynomialH
+import torch
+
+from ._hermite_polynomial_h import (
+    HermitePolynomialH,
+    hermite_polynomial_h,
+)
 
 
 def hermite_polynomial_h_negate(
@@ -20,7 +25,8 @@ def hermite_polynomial_h_negate(
     --------
     >>> a = hermite_polynomial_h(torch.tensor([1.0, -2.0, 3.0]))
     >>> b = hermite_polynomial_h_negate(a)
-    >>> b.coeffs
-    tensor([-1.,  2., -3.])
+    >>> b
+    HermitePolynomialH(tensor([-1.,  2., -3.]))
     """
-    return HermitePolynomialH(coeffs=-a.coeffs)
+    result = torch.Tensor.neg(a)
+    return hermite_polynomial_h(result)

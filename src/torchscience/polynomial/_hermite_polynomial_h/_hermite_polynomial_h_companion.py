@@ -44,7 +44,7 @@ def hermite_polynomial_h_companion(
     >>> A.shape
     torch.Size([2, 2])
     """
-    coeffs = c.coeffs
+    coeffs = c.as_subclass(torch.Tensor)
     n = coeffs.shape[-1] - 1  # degree
 
     if n < 1:

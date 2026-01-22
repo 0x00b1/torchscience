@@ -1,6 +1,9 @@
 import torch
 
-from ._hermite_polynomial_h import HermitePolynomialH
+from ._hermite_polynomial_h import (
+    HermitePolynomialH,
+    hermite_polynomial_h,
+)
 
 
 def hermite_polynomial_h_derivative(
@@ -37,16 +40,16 @@ def hermite_polynomial_h_derivative(
     --------
     >>> a = hermite_polynomial_h(torch.tensor([0.0, 1.0]))  # H_1 = 2x
     >>> da = hermite_polynomial_h_derivative(a)
-    >>> da.coeffs  # d/dx H_1 = 2*1*H_0 = 2
-    tensor([2.])
+    >>> da  # d/dx H_1 = 2*1*H_0 = 2
+    HermitePolynomialH(tensor([2.]))
     """
     if order < 0:
         raise ValueError(f"Order must be non-negative, got {order}")
 
     if order == 0:
-        return HermitePolynomialH(coeffs=a.coeffs.clone())
+        return hermite_polynomial_h(a.clone())
 
-    coeffs = a.coeffs.clone()
+    coeffs = a.as_subclass(torch.Tensor).clone()
     n = coeffs.shape[-1]
 
     # Apply derivative 'order' times
@@ -77,4 +80,4 @@ def hermite_polynomial_h_derivative(
         coeffs = der
         n = new_n
 
-    return HermitePolynomialH(coeffs=coeffs)
+    return hermite_polynomial_h(coeffs)

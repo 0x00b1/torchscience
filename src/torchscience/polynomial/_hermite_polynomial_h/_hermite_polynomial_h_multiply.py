@@ -1,7 +1,10 @@
 import numpy as np
 import torch
 
-from ._hermite_polynomial_h import HermitePolynomialH
+from ._hermite_polynomial_h import (
+    HermitePolynomialH,
+    hermite_polynomial_h,
+)
 
 
 def hermite_polynomial_h_multiply(
@@ -41,8 +44,9 @@ def hermite_polynomial_h_multiply(
     >>> c = hermite_polynomial_h_multiply(a, b)
     >>> # H_1 * H_1 = H_2 + 2 = (4x^2 - 2) + 2 = 4x^2 which is H_2 + 2*H_0
     """
-    a_coeffs = a.coeffs
-    b_coeffs = b.coeffs
+    # Convert to plain tensors to avoid operator interception
+    a_coeffs = a.as_subclass(torch.Tensor)
+    b_coeffs = b.as_subclass(torch.Tensor)
 
     # Use NumPy's hermmul which implements the linearization formula
     # Note: numpy.polynomial.hermite uses the "physicists'" convention
@@ -55,4 +59,4 @@ def hermite_polynomial_h_multiply(
         dtype=a_coeffs.dtype, device=a_coeffs.device
     )
 
-    return HermitePolynomialH(coeffs=result_coeffs)
+    return hermite_polynomial_h(result_coeffs)

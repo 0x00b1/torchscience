@@ -1,6 +1,9 @@
 import torch
 
-from ._hermite_polynomial_h import HermitePolynomialH
+from ._hermite_polynomial_h import (
+    HermitePolynomialH,
+    hermite_polynomial_h,
+)
 from ._hermite_polynomial_h_evaluate import hermite_polynomial_h_evaluate
 
 
@@ -46,16 +49,16 @@ def hermite_polynomial_h_antiderivative(
     --------
     >>> a = hermite_polynomial_h(torch.tensor([1.0]))  # H_0 = 1
     >>> ia = hermite_polynomial_h_antiderivative(a)
-    >>> ia.coeffs  # integral(1) = x = H_1/2
-    tensor([0., 0.5])
+    >>> ia  # integral(1) = x = H_1/2
+    HermitePolynomialH(tensor([0., 0.5]))
     """
     if order < 0:
         raise ValueError(f"Order must be non-negative, got {order}")
 
     if order == 0:
-        return HermitePolynomialH(coeffs=a.coeffs.clone())
+        return hermite_polynomial_h(a.clone())
 
-    coeffs = a.coeffs
+    coeffs = a.as_subclass(torch.Tensor)
 
     # Apply antiderivative 'order' times
     for i in range(order):
@@ -76,7 +79,7 @@ def hermite_polynomial_h_antiderivative(
         # Set constant of integration so F(0) = constant (for first integration)
         # or F(0) = 0 (for subsequent integrations)
         k_val = constant if i == 0 else 0.0
-        temp = HermitePolynomialH(coeffs=i_coeffs)
+        temp = hermite_polynomial_h(i_coeffs)
         x_zero = torch.zeros((), dtype=coeffs.dtype, device=coeffs.device)
         val_at_zero = hermite_polynomial_h_evaluate(temp, x_zero)
         # H_0(x) = 1, so adding delta to i_coeffs[..., 0] shifts F(0) by delta
@@ -84,4 +87,4 @@ def hermite_polynomial_h_antiderivative(
 
         coeffs = i_coeffs
 
-    return HermitePolynomialH(coeffs=coeffs)
+    return hermite_polynomial_h(coeffs)

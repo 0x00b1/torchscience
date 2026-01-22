@@ -1,7 +1,10 @@
 import torch
 from torch import Tensor
 
-from ._hermite_polynomial_h import HermitePolynomialH
+from ._hermite_polynomial_h import (
+    HermitePolynomialH,
+    hermite_polynomial_h,
+)
 from ._hermite_polynomial_h_vandermonde import (
     hermite_polynomial_h_vandermonde,
 )
@@ -51,4 +54,4 @@ def hermite_polynomial_h_fit(
     result = torch.linalg.lstsq(V, y.unsqueeze(-1))
     coeffs = result.solution.squeeze(-1)
 
-    return HermitePolynomialH(coeffs=coeffs)
+    return hermite_polynomial_h(coeffs)

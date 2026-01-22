@@ -39,7 +39,7 @@ def hermite_polynomial_h_roots(
     >>> roots.real.sort().values  # H_2 = 4x^2 - 2 has roots at +/- 1/sqrt(2)
     tensor([-0.7071,  0.7071])
     """
-    coeffs = c.coeffs
+    coeffs = c.as_subclass(torch.Tensor)
 
     # Use NumPy's hermroots for numerical stability
     coeffs_np = coeffs.detach().cpu().numpy()

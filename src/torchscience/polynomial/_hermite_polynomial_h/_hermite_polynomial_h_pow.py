@@ -1,6 +1,9 @@
 import torch
 
-from ._hermite_polynomial_h import HermitePolynomialH
+from ._hermite_polynomial_h import (
+    HermitePolynomialH,
+    hermite_polynomial_h,
+)
 from ._hermite_polynomial_h_multiply import hermite_polynomial_h_multiply
 
 
@@ -40,16 +43,14 @@ def hermite_polynomial_h_pow(
 
     if n == 0:
         # a^0 = H_0 = 1
-        ones_shape = list(a.coeffs.shape)
+        ones_shape = list(a.shape)
         ones_shape[-1] = 1
-        return HermitePolynomialH(
-            coeffs=torch.ones(
-                ones_shape, dtype=a.coeffs.dtype, device=a.coeffs.device
-            )
+        return hermite_polynomial_h(
+            torch.ones(ones_shape, dtype=a.dtype, device=a.device)
         )
 
     if n == 1:
-        return HermitePolynomialH(coeffs=a.coeffs.clone())
+        return hermite_polynomial_h(a.clone())
 
     # Binary exponentiation
     result = None
@@ -58,7 +59,7 @@ def hermite_polynomial_h_pow(
     while n > 0:
         if n % 2 == 1:
             if result is None:
-                result = HermitePolynomialH(coeffs=base.coeffs.clone())
+                result = hermite_polynomial_h(base.clone())
             else:
                 result = hermite_polynomial_h_multiply(result, base)
         base = hermite_polynomial_h_multiply(base, base)
