@@ -101,8 +101,93 @@ def _compute_gradient(f, y0, t_span, params, loss_fn, method, **kwargs):
 
 
 def _compute_jacobian(f, y0, t_span, params, method, **kwargs):
-    """Compute Jacobian dy_final/dtheta."""
-    raise NotImplementedError("Jacobian mode not yet implemented")
+    """Compute Jacobian dy_final/dtheta.
+
+    The Jacobian is computed by solving the ODE with gradient tracking,
+    then computing the gradient of each output component with respect to
+    all parameters.
+
+    For dy/dt = f(t, y; theta), the Jacobian J = dy(T)/dtheta has shape
+    (state_dim, param_dim) where each row i contains the gradient of
+    y_final[i] with respect to all parameters.
+
+    Parameters
+    ----------
+    f : callable
+        Dynamics function f(t, y).
+    y0 : Tensor
+        Initial state.
+    t_span : tuple of float
+        Integration interval (t0, t1).
+    params : list of Tensor
+        Parameters to compute sensitivities for.
+    method : str
+        ODE solver method.
+    **kwargs
+        Additional arguments for solver.
+
+    Returns
+    -------
+    J : Tensor
+        Jacobian tensor of shape (state_dim, total_param_dim).
+    """
+    import torch
+
+    # Get solver
+    if method == "dormand_prince_5":
+        solver = dormand_prince_5
+    else:
+        raise ValueError(f"Unknown method: {method}")
+
+    # Compute total parameter dimension
+    param_dims = [p.numel() for p in params]
+    total_param_dim = sum(param_dims)
+    state_dim = y0.numel()
+
+    # Initialize Jacobian matrix
+    J = torch.zeros(
+        state_dim, total_param_dim, dtype=y0.dtype, device=y0.device
+    )
+
+    # We need to compute gradients through the adjoint solver.
+    # The key issue is that the dynamics function `f` captures the original params
+    # from its closure. The adjoint solver will use these original params.
+    #
+    # To compute the full Jacobian, we use repeated backward passes, once for
+    # each output dimension, using the loss function approach from gradient mode.
+
+    # Ensure params require grad
+    for p in params:
+        p.requires_grad_(True)
+
+    # Wrap with adjoint for gradient computation
+    adjoint_solver = adjoint(solver, params=params)
+
+    # Solve ODE once
+    y_final, _ = adjoint_solver(f, y0, t_span=t_span, **kwargs)
+
+    # For each output dimension, compute gradient w.r.t. all params
+    y_final_flat = y_final.flatten()
+
+    for i in range(state_dim):
+        # Zero out any existing gradients
+        for p in params:
+            if p.grad is not None:
+                p.grad.zero_()
+
+        # Backward pass for the i-th output
+        # Create a one-hot selector for output i
+        retain = i < state_dim - 1
+        y_final_flat[i].backward(retain_graph=retain)
+
+        # Collect gradients into Jacobian row
+        offset = 0
+        for p in params:
+            if p.grad is not None:
+                J[i, offset : offset + p.numel()] = p.grad.flatten().clone()
+            offset += p.numel()
+
+    return J
 
 
 def _compute_fisher(f, y0, t_span, params, method, **kwargs):
