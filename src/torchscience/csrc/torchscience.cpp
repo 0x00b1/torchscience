@@ -1668,4 +1668,9 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("jacobi_polynomial_p_mulx(Tensor coeffs, Tensor alpha, Tensor beta) -> Tensor");
   module.def("jacobi_polynomial_p_mulx_backward(Tensor grad_output, Tensor coeffs, Tensor alpha, Tensor beta) -> (Tensor, Tensor, Tensor)");
   module.def("jacobi_polynomial_p_mulx_backward_backward(Tensor gg_coeffs, Tensor coeffs, Tensor alpha, Tensor beta) -> Tensor");
+
+  // pad
+  module.def("pad(Tensor input, int[] padding, str mode, float value, int[]? dim, int order, Tensor? out) -> Tensor");
+  module.def("pad_backward(Tensor grad_output, int[] input_shape, int[] padding, str mode, int[]? dim, int order) -> Tensor");
+  module.def("pad_backward_backward(Tensor grad_grad_input, int[] padding, str mode, int[]? dim, int order) -> Tensor");
 }
