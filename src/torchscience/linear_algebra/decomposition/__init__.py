@@ -1,3 +1,6 @@
+from torchscience.linear_algebra.decomposition._generalized_eigenvalue import (
+    generalized_eigenvalue,
+)
 from torchscience.linear_algebra.decomposition._result_types import (
     GeneralizedEigenvalueResult,
     SchurDecompositionResult,
@@ -14,6 +17,7 @@ __all__ = [
     "GeneralizedEigenvalueResult",
     "SymmetricGeneralizedEigenvalueResult",
     "SchurDecompositionResult",
+    "generalized_eigenvalue",
     "schur_decomposition",
     "symmetric_generalized_eigenvalue",
 ]
