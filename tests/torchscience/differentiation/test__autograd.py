@@ -275,3 +275,56 @@ class TestAllOperatorsAutograd:
             atol=1e-4,
             rtol=1e-3,
         )
+
+
+class TestAllOperatorsVmap:
+    """Vmap tests for all differentiation operators."""
+
+    def test_derivative_vmap(self):
+        from torchscience.differentiation import derivative
+
+        fields = torch.randn(4, 16, 16)
+        result = torch.vmap(lambda f: derivative(f, dim=-1, dx=0.1))(fields)
+        assert result.shape == (4, 16, 16)
+
+    def test_gradient_vmap(self):
+        from torchscience.differentiation import gradient
+
+        fields = torch.randn(4, 16, 16)
+        result = torch.vmap(lambda f: gradient(f, dx=0.1))(fields)
+        assert result.shape == (4, 2, 16, 16)
+
+    def test_laplacian_vmap(self):
+        from torchscience.differentiation import laplacian
+
+        fields = torch.randn(4, 16, 16)
+        result = torch.vmap(lambda f: laplacian(f, dx=0.1))(fields)
+        assert result.shape == (4, 16, 16)
+
+    def test_divergence_vmap(self):
+        from torchscience.differentiation import divergence
+
+        fields = torch.randn(4, 2, 16, 16)
+        result = torch.vmap(lambda f: divergence(f, dx=0.1))(fields)
+        assert result.shape == (4, 16, 16)
+
+    def test_curl_vmap(self):
+        from torchscience.differentiation import curl
+
+        fields = torch.randn(4, 3, 8, 8, 8)
+        result = torch.vmap(lambda f: curl(f, dx=0.1))(fields)
+        assert result.shape == (4, 3, 8, 8, 8)
+
+    def test_hessian_vmap(self):
+        from torchscience.differentiation import hessian
+
+        fields = torch.randn(4, 12, 12)
+        result = torch.vmap(lambda f: hessian(f, dx=0.1))(fields)
+        assert result.shape == (4, 2, 2, 12, 12)
+
+    def test_jacobian_vmap(self):
+        from torchscience.differentiation import jacobian
+
+        fields = torch.randn(4, 2, 12, 12)
+        result = torch.vmap(lambda f: jacobian(f, dx=0.1))(fields)
+        assert result.shape == (4, 2, 2, 12, 12)
