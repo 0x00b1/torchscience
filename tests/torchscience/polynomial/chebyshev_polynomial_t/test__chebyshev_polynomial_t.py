@@ -1,4 +1,4 @@
-"""Tests for ChebyshevPolynomialT tensorclass."""
+"""Tests for ChebyshevPolynomialT Tensor subclass."""
 
 import pytest
 import torch
@@ -12,14 +12,14 @@ class TestChebyshevPolynomialTConstructor:
     def test_single_coefficient(self):
         """Constant Chebyshev series."""
         c = chebyshev_polynomial_t(torch.tensor([3.0]))
-        assert c.coeffs.shape == (1,)
-        assert c.coeffs[0] == 3.0
+        assert c.shape == (1,)
+        assert c[0] == 3.0
 
     def test_multiple_coefficients(self):
         """Standard Chebyshev series."""
         c = chebyshev_polynomial_t(torch.tensor([1.0, 2.0, 3.0]))
-        assert c.coeffs.shape == (3,)
-        torch.testing.assert_close(c.coeffs, torch.tensor([1.0, 2.0, 3.0]))
+        assert c.shape == (3,)
+        torch.testing.assert_close(c, torch.tensor([1.0, 2.0, 3.0]))
 
     def test_empty_raises(self):
         """Empty coefficients raise error."""
@@ -33,13 +33,13 @@ class TestChebyshevPolynomialTConstructor:
         c = chebyshev_polynomial_t(
             torch.tensor([1.0, 2.0], dtype=torch.float64)
         )
-        assert c.coeffs.dtype == torch.float64
+        assert c.dtype == torch.float64
 
     def test_preserves_device(self):
         """Device is preserved."""
         coeffs = torch.tensor([1.0, 2.0])
         c = chebyshev_polynomial_t(coeffs)
-        assert c.coeffs.device == coeffs.device
+        assert c.device == coeffs.device
 
 
 from torchscience.polynomial import chebyshev_polynomial_t_evaluate
@@ -237,7 +237,7 @@ class TestChebyshevPolynomialTBatched:
         """Batched Chebyshev series."""
         coeffs = torch.tensor([[1.0, 2.0], [3.0, 4.0]])
         c = chebyshev_polynomial_t(coeffs)
-        assert c.coeffs.shape == (2, 2)
+        assert c.shape == (2, 2)
 
     def test_batched_evaluate(self):
         """Evaluate batched series at multiple points."""

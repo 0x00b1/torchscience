@@ -1,6 +1,6 @@
 import torch
 
-from torchscience.polynomial._polynomial import Polynomial
+from torchscience.polynomial._polynomial import Polynomial, polynomial
 
 from ._chebyshev_polynomial_t import ChebyshevPolynomialT
 
@@ -33,10 +33,11 @@ def chebyshev_polynomial_t_to_polynomial(
     --------
     >>> c = chebyshev_polynomial_t(torch.tensor([0.0, 0.0, 1.0]))  # T_2
     >>> p = chebyshev_polynomial_t_to_polynomial(c)
-    >>> p.coeffs  # T_2 = 2x^2 - 1
-    tensor([-1.,  0.,  2.])
+    >>> p  # T_2 = 2x^2 - 1
+    Polynomial(tensor([-1.,  0.,  2.]))
     """
-    coeffs = c.coeffs
+    # The polynomial IS the coefficients tensor
+    coeffs = c.as_subclass(torch.Tensor)
     n = coeffs.shape[-1]
 
     # Build power representations of T_k for k = 0, ..., n-1
@@ -83,4 +84,4 @@ def chebyshev_polynomial_t_to_polynomial(
         T_k = T_power[k]
         result[: len(T_k)] = result[: len(T_k)] + c_k * T_k
 
-    return Polynomial(coeffs=result)
+    return polynomial(result)

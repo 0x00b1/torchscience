@@ -22,7 +22,7 @@ class TestChebyshevPolynomialTDomain:
 
     def test_evaluate_warns_outside_domain(self):
         """Evaluating outside [-1, 1] should warn."""
-        p = ChebyshevPolynomialT(coeffs=torch.tensor([1.0, 2.0]))
+        p = chebyshev_polynomial_t(torch.tensor([1.0, 2.0]))
         x = torch.tensor([2.0])  # Outside [-1, 1]
 
         with pytest.warns(UserWarning, match="outside natural domain"):
@@ -30,7 +30,7 @@ class TestChebyshevPolynomialTDomain:
 
     def test_evaluate_warns_negative_outside_domain(self):
         """Evaluating at negative value outside [-1, 1] should warn."""
-        p = ChebyshevPolynomialT(coeffs=torch.tensor([1.0, 2.0]))
+        p = chebyshev_polynomial_t(torch.tensor([1.0, 2.0]))
         x = torch.tensor([-2.0])  # Outside [-1, 1]
 
         with pytest.warns(UserWarning, match="outside natural domain"):
@@ -38,7 +38,7 @@ class TestChebyshevPolynomialTDomain:
 
     def test_evaluate_warns_mixed_values(self):
         """Evaluating with some values outside [-1, 1] should warn."""
-        p = ChebyshevPolynomialT(coeffs=torch.tensor([1.0, 2.0]))
+        p = chebyshev_polynomial_t(torch.tensor([1.0, 2.0]))
         x = torch.tensor([0.5, 1.5])  # One inside, one outside
 
         with pytest.warns(UserWarning, match="outside natural domain"):
@@ -46,7 +46,7 @@ class TestChebyshevPolynomialTDomain:
 
     def test_evaluate_no_warning_inside_domain(self):
         """Evaluating inside [-1, 1] should not warn."""
-        p = ChebyshevPolynomialT(coeffs=torch.tensor([1.0, 2.0]))
+        p = chebyshev_polynomial_t(torch.tensor([1.0, 2.0]))
         x = torch.tensor([0.5])  # Inside [-1, 1]
 
         with warnings.catch_warnings():
@@ -55,7 +55,7 @@ class TestChebyshevPolynomialTDomain:
 
     def test_evaluate_no_warning_at_boundary(self):
         """Evaluating at domain boundaries [-1, 1] should not warn."""
-        p = ChebyshevPolynomialT(coeffs=torch.tensor([1.0, 2.0]))
+        p = chebyshev_polynomial_t(torch.tensor([1.0, 2.0]))
         x = torch.tensor([-1.0, 1.0])  # At boundaries
 
         with warnings.catch_warnings():
@@ -64,7 +64,7 @@ class TestChebyshevPolynomialTDomain:
 
     def test_evaluate_no_warning_all_inside(self):
         """Evaluating with all values inside [-1, 1] should not warn."""
-        p = ChebyshevPolynomialT(coeffs=torch.tensor([1.0, 2.0, 3.0]))
+        p = chebyshev_polynomial_t(torch.tensor([1.0, 2.0, 3.0]))
         x = torch.linspace(-1, 1, 10)  # All inside
 
         with warnings.catch_warnings():
@@ -103,7 +103,7 @@ class TestChebyshevPolynomialTDomain:
         # Should not raise
         result = chebyshev_polynomial_t_fit(x, y, degree=2)
         assert result is not None
-        assert result.coeffs.shape[-1] == 3  # degree + 1 coefficients
+        assert result.shape[-1] == 3  # degree + 1 coefficients
 
     def test_fit_succeeds_at_boundaries(self):
         """Fitting with points at domain boundaries should succeed."""

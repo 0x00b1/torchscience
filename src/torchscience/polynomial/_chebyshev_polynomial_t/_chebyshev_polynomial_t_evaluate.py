@@ -56,7 +56,8 @@ def chebyshev_polynomial_t_evaluate(
                 stacklevel=2,
             )
 
-    coeffs = c.coeffs
+    # The polynomial IS the coefficients tensor
+    coeffs = c
     n = coeffs.shape[-1]
 
     # Handle trivial cases

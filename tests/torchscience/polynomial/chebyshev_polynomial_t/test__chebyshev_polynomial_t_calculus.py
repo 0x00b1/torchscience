@@ -20,20 +20,20 @@ class TestChebyshevPolynomialTDerivative:
         """Derivative of constant is zero."""
         a = chebyshev_polynomial_t(torch.tensor([5.0]))
         da = chebyshev_polynomial_t_derivative(a)
-        torch.testing.assert_close(da.coeffs, torch.tensor([0.0]))
+        torch.testing.assert_close(da, torch.tensor([0.0]))
 
     def test_derivative_t1(self):
         """d/dx T_1(x) = 1 = T_0."""
         a = chebyshev_polynomial_t(torch.tensor([0.0, 1.0]))  # T_1 = x
         da = chebyshev_polynomial_t_derivative(a)
-        torch.testing.assert_close(da.coeffs, torch.tensor([1.0]))
+        torch.testing.assert_close(da, torch.tensor([1.0]))
 
     def test_derivative_t2(self):
         """d/dx T_2(x) = 4x = 4*T_1."""
         # T_2 = 2x^2 - 1, d/dx = 4x = 4*T_1
         a = chebyshev_polynomial_t(torch.tensor([0.0, 0.0, 1.0]))  # T_2
         da = chebyshev_polynomial_t_derivative(a)
-        torch.testing.assert_close(da.coeffs, torch.tensor([0.0, 4.0]))
+        torch.testing.assert_close(da, torch.tensor([0.0, 4.0]))
 
     def test_derivative_t3(self):
         """d/dx T_3(x) = 3*U_2(x) = 12x^2 - 3 = 6*T_2 + 3*T_0."""
@@ -42,14 +42,14 @@ class TestChebyshevPolynomialTDerivative:
         # = 3*T_0 + 6*T_2
         a = chebyshev_polynomial_t(torch.tensor([0.0, 0.0, 0.0, 1.0]))  # T_3
         da = chebyshev_polynomial_t_derivative(a)
-        torch.testing.assert_close(da.coeffs, torch.tensor([3.0, 0.0, 6.0]))
+        torch.testing.assert_close(da, torch.tensor([3.0, 0.0, 6.0]))
 
     def test_derivative_linear_combination(self):
         """Derivative of 1 + 2*T_1 + 3*T_2."""
         # d/dx (1 + 2*T_1 + 3*T_2) = 2*1 + 3*4*T_1 = 2 + 12*T_1
         a = chebyshev_polynomial_t(torch.tensor([1.0, 2.0, 3.0]))
         da = chebyshev_polynomial_t_derivative(a)
-        torch.testing.assert_close(da.coeffs, torch.tensor([2.0, 12.0]))
+        torch.testing.assert_close(da, torch.tensor([2.0, 12.0]))
 
     def test_derivative_second_order(self):
         """Second derivative."""
@@ -59,7 +59,7 @@ class TestChebyshevPolynomialTDerivative:
         d2a = chebyshev_polynomial_t_derivative(a, order=2)
         # First derivative: degree 2
         # Second derivative: degree 1
-        assert d2a.coeffs.shape[-1] <= 3
+        assert d2a.shape[-1] <= 3
 
     def test_derivative_vs_numpy(self):
         """Compare with numpy.polynomial.chebyshev.chebder."""
@@ -70,7 +70,7 @@ class TestChebyshevPolynomialTDerivative:
 
         da_np = np_cheb.chebder(coeffs)
 
-        np.testing.assert_allclose(da.coeffs.numpy(), da_np, rtol=1e-6)
+        np.testing.assert_allclose(da.numpy(), da_np, rtol=1e-6)
 
     def test_derivative_evaluation_consistency(self):
         """Numerical derivative matches symbolic derivative."""
@@ -98,21 +98,21 @@ class TestChebyshevPolynomialTAntiderivative:
         a = chebyshev_polynomial_t(torch.tensor([1.0]))  # 1 = T_0
         ia = chebyshev_polynomial_t_antiderivative(a)
         # Result: 0 + T_1 = [0, 1]
-        torch.testing.assert_close(ia.coeffs, torch.tensor([0.0, 1.0]))
+        torch.testing.assert_close(ia, torch.tensor([0.0, 1.0]))
 
     def test_antiderivative_with_constant(self):
         """Antiderivative with integration constant."""
         a = chebyshev_polynomial_t(torch.tensor([1.0]))  # constant 1
         ia = chebyshev_polynomial_t_antiderivative(a, constant=2.0)
         # integral(1) + 2 = x + 2 = 2*T_0 + T_1
-        torch.testing.assert_close(ia.coeffs, torch.tensor([2.0, 1.0]))
+        torch.testing.assert_close(ia, torch.tensor([2.0, 1.0]))
 
     def test_antiderivative_derivative_inverse(self):
         """Derivative of antiderivative recovers original."""
         a = chebyshev_polynomial_t(torch.tensor([1.0, 2.0, 3.0]))
         ia = chebyshev_polynomial_t_antiderivative(a)
         dia = chebyshev_polynomial_t_derivative(ia)
-        torch.testing.assert_close(dia.coeffs, a.coeffs, atol=1e-6, rtol=1e-6)
+        torch.testing.assert_close(dia, a, atol=1e-6, rtol=1e-6)
 
     def test_antiderivative_vs_numpy(self):
         """Compare with numpy.polynomial.chebyshev.chebint."""
@@ -123,7 +123,7 @@ class TestChebyshevPolynomialTAntiderivative:
 
         ia_np = np_cheb.chebint(coeffs)
 
-        np.testing.assert_allclose(ia.coeffs.numpy(), ia_np, rtol=1e-6)
+        np.testing.assert_allclose(ia.numpy(), ia_np, rtol=1e-6)
 
     def test_antiderivative_order_2(self):
         """Second antiderivative."""
@@ -134,7 +134,7 @@ class TestChebyshevPolynomialTAntiderivative:
 
         i2a_np = np_cheb.chebint(coeffs, m=2)
 
-        np.testing.assert_allclose(i2a.coeffs.numpy(), i2a_np, rtol=1e-5)
+        np.testing.assert_allclose(i2a.numpy(), i2a_np, rtol=1e-5)
 
     def test_antiderivative_t1_vs_numpy(self):
         """Antiderivative of T_1 matches numpy."""
@@ -145,7 +145,7 @@ class TestChebyshevPolynomialTAntiderivative:
 
         ia_np = np_cheb.chebint(coeffs)
 
-        np.testing.assert_allclose(ia.coeffs.numpy(), ia_np, rtol=1e-6)
+        np.testing.assert_allclose(ia.numpy(), ia_np, rtol=1e-6)
 
 
 class TestChebyshevPolynomialTIntegral:
@@ -232,9 +232,10 @@ class TestChebyshevPolynomialTCalculusAutograd:
         )
 
         def fn(c):
-            return chebyshev_polynomial_t_derivative(
+            result = chebyshev_polynomial_t_derivative(
                 chebyshev_polynomial_t(c)
-            ).coeffs
+            )
+            return result.as_subclass(torch.Tensor)
 
         assert torch.autograd.gradcheck(fn, (coeffs,), raise_exception=True)
 
@@ -245,9 +246,10 @@ class TestChebyshevPolynomialTCalculusAutograd:
         )
 
         def fn(c):
-            return chebyshev_polynomial_t_antiderivative(
+            result = chebyshev_polynomial_t_antiderivative(
                 chebyshev_polynomial_t(c), constant=0.0
-            ).coeffs
+            )
+            return result.as_subclass(torch.Tensor)
 
         assert torch.autograd.gradcheck(fn, (coeffs,), raise_exception=True)
 
@@ -288,9 +290,10 @@ class TestChebyshevPolynomialTCalculusAutograd:
         )
 
         def fn(c):
-            return chebyshev_polynomial_t_derivative(
+            result = chebyshev_polynomial_t_derivative(
                 chebyshev_polynomial_t(c)
-            ).coeffs.sum()
+            )
+            return result.as_subclass(torch.Tensor).sum()
 
         assert torch.autograd.gradgradcheck(
             fn, (coeffs,), raise_exception=True

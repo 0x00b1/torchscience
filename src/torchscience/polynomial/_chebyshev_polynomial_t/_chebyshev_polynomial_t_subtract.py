@@ -1,6 +1,9 @@
 import torch
 
-from ._chebyshev_polynomial_t import ChebyshevPolynomialT
+from ._chebyshev_polynomial_t import (
+    ChebyshevPolynomialT,
+    chebyshev_polynomial_t,
+)
 
 
 def chebyshev_polynomial_t_subtract(
@@ -30,32 +33,28 @@ def chebyshev_polynomial_t_subtract(
     >>> a = chebyshev_polynomial_t(torch.tensor([5.0, 7.0, 9.0]))
     >>> b = chebyshev_polynomial_t(torch.tensor([1.0, 2.0, 3.0]))
     >>> c = chebyshev_polynomial_t_subtract(a, b)
-    >>> c.coeffs
-    tensor([4., 5., 6.])
+    >>> c
+    ChebyshevPolynomialT(tensor([4., 5., 6.]))
     """
-    a_coeffs = a.coeffs
-    b_coeffs = b.coeffs
-
-    n_a = a_coeffs.shape[-1]
-    n_b = b_coeffs.shape[-1]
+    n_a = a.shape[-1]
+    n_b = b.shape[-1]
 
     if n_a == n_b:
-        return ChebyshevPolynomialT(coeffs=a_coeffs - b_coeffs)
+        result = torch.Tensor.sub(a, b)
+        return chebyshev_polynomial_t(result)
 
     # Zero-pad the shorter series
     if n_a < n_b:
-        pad_shape = list(a_coeffs.shape)
+        pad_shape = list(a.shape)
         pad_shape[-1] = n_b - n_a
-        padding = torch.zeros(
-            pad_shape, dtype=a_coeffs.dtype, device=a_coeffs.device
-        )
-        a_coeffs = torch.cat([a_coeffs, padding], dim=-1)
+        padding = torch.zeros(pad_shape, dtype=a.dtype, device=a.device)
+        a_padded = torch.cat([a.as_subclass(torch.Tensor), padding], dim=-1)
+        result = a_padded - b.as_subclass(torch.Tensor)
     else:
-        pad_shape = list(b_coeffs.shape)
+        pad_shape = list(b.shape)
         pad_shape[-1] = n_a - n_b
-        padding = torch.zeros(
-            pad_shape, dtype=b_coeffs.dtype, device=b_coeffs.device
-        )
-        b_coeffs = torch.cat([b_coeffs, padding], dim=-1)
+        padding = torch.zeros(pad_shape, dtype=b.dtype, device=b.device)
+        b_padded = torch.cat([b.as_subclass(torch.Tensor), padding], dim=-1)
+        result = a.as_subclass(torch.Tensor) - b_padded
 
-    return ChebyshevPolynomialT(coeffs=a_coeffs - b_coeffs)
+    return chebyshev_polynomial_t(result)

@@ -3,7 +3,10 @@ from torch import Tensor
 
 from torchscience.polynomial._exceptions import DomainError
 
-from ._chebyshev_polynomial_t import ChebyshevPolynomialT
+from ._chebyshev_polynomial_t import (
+    ChebyshevPolynomialT,
+    chebyshev_polynomial_t,
+)
 from ._chebyshev_polynomial_t_vandermonde import (
     chebyshev_polynomial_t_vandermonde,
 )
@@ -61,4 +64,4 @@ def chebyshev_polynomial_t_fit(
     result = torch.linalg.lstsq(V, y.unsqueeze(-1))
     coeffs = result.solution.squeeze(-1)
 
-    return ChebyshevPolynomialT(coeffs=coeffs)
+    return chebyshev_polynomial_t(coeffs)

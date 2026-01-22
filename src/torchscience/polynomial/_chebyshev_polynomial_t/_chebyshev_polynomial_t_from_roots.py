@@ -1,7 +1,10 @@
 import torch
 from torch import Tensor
 
-from ._chebyshev_polynomial_t import ChebyshevPolynomialT
+from ._chebyshev_polynomial_t import (
+    ChebyshevPolynomialT,
+    chebyshev_polynomial_t,
+)
 from ._chebyshev_polynomial_t_multiply import chebyshev_polynomial_t_multiply
 
 
@@ -36,21 +39,19 @@ def chebyshev_polynomial_t_from_roots(
 
     if n == 0:
         # Empty roots -> constant 1
-        return ChebyshevPolynomialT(
-            coeffs=torch.ones(1, dtype=roots.dtype, device=roots.device)
+        return chebyshev_polynomial_t(
+            torch.ones(1, dtype=roots.dtype, device=roots.device)
         )
 
     # Start with (x - r_0) = -r_0 * T_0 + T_1
-    result = ChebyshevPolynomialT(
-        coeffs=torch.tensor(
-            [-roots[0], 1.0], dtype=roots.dtype, device=roots.device
-        )
+    result = chebyshev_polynomial_t(
+        torch.tensor([-roots[0], 1.0], dtype=roots.dtype, device=roots.device)
     )
 
     # Multiply by each subsequent (x - r_k)
     for k in range(1, n):
-        factor = ChebyshevPolynomialT(
-            coeffs=torch.tensor(
+        factor = chebyshev_polynomial_t(
+            torch.tensor(
                 [-roots[k], 1.0], dtype=roots.dtype, device=roots.device
             )
         )

@@ -35,8 +35,8 @@ def chebyshev_polynomial_t_equal(
     >>> chebyshev_polynomial_t_equal(a, b)
     True
     """
-    a_coeffs = a.coeffs
-    b_coeffs = b.coeffs
+    a_coeffs = a.as_subclass(torch.Tensor)
+    b_coeffs = b.as_subclass(torch.Tensor)
 
     n_a = a_coeffs.shape[-1]
     n_b = b_coeffs.shape[-1]

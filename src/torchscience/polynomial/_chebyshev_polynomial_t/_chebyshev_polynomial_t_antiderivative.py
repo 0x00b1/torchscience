@@ -1,6 +1,9 @@
 import torch
 
-from ._chebyshev_polynomial_t import ChebyshevPolynomialT
+from ._chebyshev_polynomial_t import (
+    ChebyshevPolynomialT,
+    chebyshev_polynomial_t,
+)
 from ._chebyshev_polynomial_t_evaluate import chebyshev_polynomial_t_evaluate
 
 
@@ -42,16 +45,16 @@ def chebyshev_polynomial_t_antiderivative(
     --------
     >>> a = chebyshev_polynomial_t(torch.tensor([1.0]))  # constant 1 = T_0
     >>> ia = chebyshev_polynomial_t_antiderivative(a)
-    >>> ia.coeffs  # integral(1) = x = T_1
-    tensor([0., 1.])
+    >>> ia  # integral(1) = x = T_1
+    ChebyshevPolynomialT(tensor([0., 1.]))
     """
     if order < 0:
         raise ValueError(f"Order must be non-negative, got {order}")
 
     if order == 0:
-        return ChebyshevPolynomialT(coeffs=a.coeffs.clone())
+        return chebyshev_polynomial_t(a.clone())
 
-    coeffs = a.coeffs
+    coeffs = a.as_subclass(torch.Tensor)
 
     # Apply antiderivative 'order' times
     for i in range(order):
@@ -78,11 +81,11 @@ def chebyshev_polynomial_t_antiderivative(
         # Set a_0 so that the antiderivative evaluates to constant at x=0
         # (only for first integration; subsequent integrations use 0)
         k_val = constant if i == 0 else 0.0
-        temp = ChebyshevPolynomialT(coeffs=i_coeffs)
+        temp = chebyshev_polynomial_t(i_coeffs)
         x_zero = torch.zeros((), dtype=coeffs.dtype, device=coeffs.device)
         val_at_zero = chebyshev_polynomial_t_evaluate(temp, x_zero)
         i_coeffs[..., 0] = k_val - val_at_zero
 
         coeffs = i_coeffs
 
-    return ChebyshevPolynomialT(coeffs=coeffs)
+    return chebyshev_polynomial_t(coeffs)

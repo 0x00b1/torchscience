@@ -1,6 +1,9 @@
 import torch
 
-from ._chebyshev_polynomial_t import ChebyshevPolynomialT
+from ._chebyshev_polynomial_t import (
+    ChebyshevPolynomialT,
+    chebyshev_polynomial_t,
+)
 
 
 def chebyshev_polynomial_t_derivative(
@@ -34,16 +37,16 @@ def chebyshev_polynomial_t_derivative(
     --------
     >>> a = chebyshev_polynomial_t(torch.tensor([0.0, 0.0, 1.0]))  # T_2
     >>> da = chebyshev_polynomial_t_derivative(a)
-    >>> da.coeffs  # d/dx T_2 = 4*T_1
-    tensor([0., 4.])
+    >>> da  # d/dx T_2 = 4*T_1
+    ChebyshevPolynomialT(tensor([0., 4.]))
     """
     if order < 0:
         raise ValueError(f"Order must be non-negative, got {order}")
 
     if order == 0:
-        return ChebyshevPolynomialT(coeffs=a.coeffs.clone())
+        return chebyshev_polynomial_t(a.clone())
 
-    coeffs = a.coeffs
+    coeffs = a.as_subclass(torch.Tensor)
     n = coeffs.shape[-1]
 
     # Apply derivative 'order' times
@@ -99,4 +102,4 @@ def chebyshev_polynomial_t_derivative(
         coeffs = d_coeffs
         n = coeffs.shape[-1]
 
-    return ChebyshevPolynomialT(coeffs=coeffs)
+    return chebyshev_polynomial_t(coeffs)

@@ -26,21 +26,21 @@ class TestChebyshevPolynomialTAdd:
         a = chebyshev_polynomial_t(torch.tensor([1.0, 2.0, 3.0]))
         b = chebyshev_polynomial_t(torch.tensor([4.0, 5.0, 6.0]))
         c = chebyshev_polynomial_t_add(a, b)
-        torch.testing.assert_close(c.coeffs, torch.tensor([5.0, 7.0, 9.0]))
+        torch.testing.assert_close(c, torch.tensor([5.0, 7.0, 9.0]))
 
     def test_add_different_degree(self):
         """Add series of different degrees (zero-pad shorter)."""
         a = chebyshev_polynomial_t(torch.tensor([1.0, 2.0]))
         b = chebyshev_polynomial_t(torch.tensor([3.0, 4.0, 5.0]))
         c = chebyshev_polynomial_t_add(a, b)
-        torch.testing.assert_close(c.coeffs, torch.tensor([4.0, 6.0, 5.0]))
+        torch.testing.assert_close(c, torch.tensor([4.0, 6.0, 5.0]))
 
     def test_add_operator(self):
         """Test + operator."""
         a = chebyshev_polynomial_t(torch.tensor([1.0, 2.0]))
         b = chebyshev_polynomial_t(torch.tensor([3.0, 4.0]))
         c = a + b
-        torch.testing.assert_close(c.coeffs, torch.tensor([4.0, 6.0]))
+        torch.testing.assert_close(c, torch.tensor([4.0, 6.0]))
 
     def test_add_vs_numpy(self):
         """Compare with numpy.polynomial.chebyshev.chebadd."""
@@ -53,7 +53,7 @@ class TestChebyshevPolynomialTAdd:
 
         c_np = np_cheb.chebadd(a_coeffs, b_coeffs)
 
-        np.testing.assert_allclose(c.coeffs.numpy(), c_np, rtol=1e-6)
+        np.testing.assert_allclose(c.numpy(), c_np, rtol=1e-6)
 
 
 class TestChebyshevPolynomialTSubtract:
@@ -64,21 +64,21 @@ class TestChebyshevPolynomialTSubtract:
         a = chebyshev_polynomial_t(torch.tensor([5.0, 7.0, 9.0]))
         b = chebyshev_polynomial_t(torch.tensor([1.0, 2.0, 3.0]))
         c = chebyshev_polynomial_t_subtract(a, b)
-        torch.testing.assert_close(c.coeffs, torch.tensor([4.0, 5.0, 6.0]))
+        torch.testing.assert_close(c, torch.tensor([4.0, 5.0, 6.0]))
 
     def test_subtract_different_degree(self):
         """Subtract series of different degrees."""
         a = chebyshev_polynomial_t(torch.tensor([1.0, 2.0, 3.0]))
         b = chebyshev_polynomial_t(torch.tensor([1.0, 2.0]))
         c = chebyshev_polynomial_t_subtract(a, b)
-        torch.testing.assert_close(c.coeffs, torch.tensor([0.0, 0.0, 3.0]))
+        torch.testing.assert_close(c, torch.tensor([0.0, 0.0, 3.0]))
 
     def test_subtract_operator(self):
         """Test - operator."""
         a = chebyshev_polynomial_t(torch.tensor([5.0, 6.0]))
         b = chebyshev_polynomial_t(torch.tensor([1.0, 2.0]))
         c = a - b
-        torch.testing.assert_close(c.coeffs, torch.tensor([4.0, 4.0]))
+        torch.testing.assert_close(c, torch.tensor([4.0, 4.0]))
 
     def test_subtract_vs_numpy(self):
         """Compare with numpy.polynomial.chebyshev.chebsub."""
@@ -91,7 +91,7 @@ class TestChebyshevPolynomialTSubtract:
 
         c_np = np_cheb.chebsub(a_coeffs, b_coeffs)
 
-        np.testing.assert_allclose(c.coeffs.numpy(), c_np, rtol=1e-6)
+        np.testing.assert_allclose(c.numpy(), c_np, rtol=1e-6)
 
 
 class TestChebyshevPolynomialTNegate:
@@ -101,13 +101,13 @@ class TestChebyshevPolynomialTNegate:
         """Negate series."""
         a = chebyshev_polynomial_t(torch.tensor([1.0, -2.0, 3.0]))
         b = chebyshev_polynomial_t_negate(a)
-        torch.testing.assert_close(b.coeffs, torch.tensor([-1.0, 2.0, -3.0]))
+        torch.testing.assert_close(b, torch.tensor([-1.0, 2.0, -3.0]))
 
     def test_negate_operator(self):
         """Test unary - operator."""
         a = chebyshev_polynomial_t(torch.tensor([1.0, -2.0]))
         b = -a
-        torch.testing.assert_close(b.coeffs, torch.tensor([-1.0, 2.0]))
+        torch.testing.assert_close(b, torch.tensor([-1.0, 2.0]))
 
 
 class TestChebyshevPolynomialTScale:
@@ -117,19 +117,19 @@ class TestChebyshevPolynomialTScale:
         """Scale by scalar tensor."""
         a = chebyshev_polynomial_t(torch.tensor([1.0, 2.0, 3.0]))
         b = chebyshev_polynomial_t_scale(a, torch.tensor(2.0))
-        torch.testing.assert_close(b.coeffs, torch.tensor([2.0, 4.0, 6.0]))
+        torch.testing.assert_close(b, torch.tensor([2.0, 4.0, 6.0]))
 
     def test_scale_operator(self):
         """Test * operator with scalar."""
         a = chebyshev_polynomial_t(torch.tensor([1.0, 2.0]))
         b = a * torch.tensor(3.0)
-        torch.testing.assert_close(b.coeffs, torch.tensor([3.0, 6.0]))
+        torch.testing.assert_close(b, torch.tensor([3.0, 6.0]))
 
     def test_scale_rmul_operator(self):
         """Test scalar * series."""
         a = chebyshev_polynomial_t(torch.tensor([1.0, 2.0]))
         b = torch.tensor(3.0) * a
-        torch.testing.assert_close(b.coeffs, torch.tensor([3.0, 6.0]))
+        torch.testing.assert_close(b, torch.tensor([3.0, 6.0]))
 
 
 class TestChebyshevPolynomialTMultiply:
@@ -140,7 +140,7 @@ class TestChebyshevPolynomialTMultiply:
         a = chebyshev_polynomial_t(torch.tensor([1.0]))  # T_0
         b = chebyshev_polynomial_t(torch.tensor([1.0]))  # T_0
         c = chebyshev_polynomial_t_multiply(a, b)
-        torch.testing.assert_close(c.coeffs, torch.tensor([1.0]))
+        torch.testing.assert_close(c, torch.tensor([1.0]))
 
     def test_multiply_t0_t1(self):
         """T_0 * T_1 = T_1."""
@@ -148,7 +148,7 @@ class TestChebyshevPolynomialTMultiply:
         b = chebyshev_polynomial_t(torch.tensor([0.0, 1.0]))  # T_1
         c = chebyshev_polynomial_t_multiply(a, b)
         # Result should be T_1
-        torch.testing.assert_close(c.coeffs, torch.tensor([0.0, 1.0]))
+        torch.testing.assert_close(c, torch.tensor([0.0, 1.0]))
 
     def test_multiply_t1_t1(self):
         """T_1 * T_1 = 0.5*(T_2 + T_0) = 0.5*T_0 + 0.5*T_2."""
@@ -156,7 +156,7 @@ class TestChebyshevPolynomialTMultiply:
         b = chebyshev_polynomial_t(torch.tensor([0.0, 1.0]))  # T_1
         c = chebyshev_polynomial_t_multiply(a, b)
         # T_1 * T_1 = 0.5*(T_2 + T_0) -> [0.5, 0, 0.5]
-        torch.testing.assert_close(c.coeffs, torch.tensor([0.5, 0.0, 0.5]))
+        torch.testing.assert_close(c, torch.tensor([0.5, 0.0, 0.5]))
 
     def test_multiply_t1_t2(self):
         """T_1 * T_2 = 0.5*(T_3 + T_1)."""
@@ -164,9 +164,7 @@ class TestChebyshevPolynomialTMultiply:
         b = chebyshev_polynomial_t(torch.tensor([0.0, 0.0, 1.0]))  # T_2
         c = chebyshev_polynomial_t_multiply(a, b)
         # T_1 * T_2 = 0.5*(T_3 + T_1) -> [0, 0.5, 0, 0.5]
-        torch.testing.assert_close(
-            c.coeffs, torch.tensor([0.0, 0.5, 0.0, 0.5])
-        )
+        torch.testing.assert_close(c, torch.tensor([0.0, 0.5, 0.0, 0.5]))
 
     def test_multiply_linear(self):
         """(1 + T_1) * (2 + 3*T_1)."""
@@ -177,7 +175,7 @@ class TestChebyshevPolynomialTMultiply:
         # = 2 + 5*T_1 + 3*0.5*(T_0 + T_2)
         # = 2 + 5*T_1 + 1.5*T_0 + 1.5*T_2
         # = 3.5*T_0 + 5*T_1 + 1.5*T_2
-        torch.testing.assert_close(c.coeffs, torch.tensor([3.5, 5.0, 1.5]))
+        torch.testing.assert_close(c, torch.tensor([3.5, 5.0, 1.5]))
 
     def test_multiply_operator(self):
         """Test * operator between series."""
@@ -186,7 +184,7 @@ class TestChebyshevPolynomialTMultiply:
         c = a * b
         # (1 + T_1)^2 = 1 + 2*T_1 + T_1^2 = 1 + 2*T_1 + 0.5*(T_0 + T_2)
         # = 1.5*T_0 + 2*T_1 + 0.5*T_2
-        torch.testing.assert_close(c.coeffs, torch.tensor([1.5, 2.0, 0.5]))
+        torch.testing.assert_close(c, torch.tensor([1.5, 2.0, 0.5]))
 
     def test_multiply_vs_numpy(self):
         """Compare with numpy.polynomial.chebyshev.chebmul."""
@@ -199,7 +197,7 @@ class TestChebyshevPolynomialTMultiply:
 
         c_np = np_cheb.chebmul(a_coeffs, b_coeffs)
 
-        np.testing.assert_allclose(c.coeffs.numpy(), c_np, rtol=1e-6)
+        np.testing.assert_allclose(c.numpy(), c_np, rtol=1e-6)
 
     def test_multiply_evaluation_consistency(self):
         """(a*b)(x) == a(x)*b(x) for all x in [-1,1]."""
@@ -224,30 +222,28 @@ class TestChebyshevPolynomialTMulx:
         a = chebyshev_polynomial_t(torch.tensor([1.0]))  # T_0
         b = chebyshev_polynomial_t_mulx(a)
         # x * T_0 = T_1 -> [0, 1]
-        torch.testing.assert_close(b.coeffs, torch.tensor([0.0, 1.0]))
+        torch.testing.assert_close(b, torch.tensor([0.0, 1.0]))
 
     def test_mulx_t1(self):
         """x * T_1 = 0.5*(T_0 + T_2)."""
         a = chebyshev_polynomial_t(torch.tensor([0.0, 1.0]))  # T_1
         b = chebyshev_polynomial_t_mulx(a)
         # x * T_1 = 0.5*(T_0 + T_2) -> [0.5, 0, 0.5]
-        torch.testing.assert_close(b.coeffs, torch.tensor([0.5, 0.0, 0.5]))
+        torch.testing.assert_close(b, torch.tensor([0.5, 0.0, 0.5]))
 
     def test_mulx_t2(self):
         """x * T_2 = 0.5*(T_1 + T_3)."""
         a = chebyshev_polynomial_t(torch.tensor([0.0, 0.0, 1.0]))  # T_2
         b = chebyshev_polynomial_t_mulx(a)
         # x * T_2 = 0.5*(T_1 + T_3) -> [0, 0.5, 0, 0.5]
-        torch.testing.assert_close(
-            b.coeffs, torch.tensor([0.0, 0.5, 0.0, 0.5])
-        )
+        torch.testing.assert_close(b, torch.tensor([0.0, 0.5, 0.0, 0.5]))
 
     def test_mulx_linear(self):
         """x * (1 + 2*T_1) = T_1 + 2*0.5*(T_0 + T_2) = T_0 + T_1 + T_2."""
         a = chebyshev_polynomial_t(torch.tensor([1.0, 2.0]))  # 1 + 2*T_1
         b = chebyshev_polynomial_t_mulx(a)
         # x * (1 + 2*T_1) = T_1 + 2*0.5*(T_0 + T_2) = T_0 + T_1 + T_2
-        torch.testing.assert_close(b.coeffs, torch.tensor([1.0, 1.0, 1.0]))
+        torch.testing.assert_close(b, torch.tensor([1.0, 1.0, 1.0]))
 
     def test_mulx_vs_numpy(self):
         """Compare with numpy.polynomial.chebyshev.chebmulx."""
@@ -258,7 +254,7 @@ class TestChebyshevPolynomialTMulx:
 
         b_np = np_cheb.chebmulx(coeffs)
 
-        np.testing.assert_allclose(b.coeffs.numpy(), b_np, rtol=1e-6)
+        np.testing.assert_allclose(b.numpy(), b_np, rtol=1e-6)
 
     def test_mulx_evaluation_consistency(self):
         """(mulx(a))(x) == x * a(x) for all x in [-1,1]."""
@@ -279,13 +275,13 @@ class TestChebyshevPolynomialTPow:
         """a^0 = 1 (T_0)."""
         a = chebyshev_polynomial_t(torch.tensor([1.0, 2.0, 3.0]))
         b = chebyshev_polynomial_t_pow(a, 0)
-        torch.testing.assert_close(b.coeffs, torch.tensor([1.0]))
+        torch.testing.assert_close(b, torch.tensor([1.0]))
 
     def test_pow_one(self):
         """a^1 = a."""
         a = chebyshev_polynomial_t(torch.tensor([1.0, 2.0, 3.0]))
         b = chebyshev_polynomial_t_pow(a, 1)
-        torch.testing.assert_close(b.coeffs, a.coeffs)
+        torch.testing.assert_close(b, a)
 
     def test_pow_two(self):
         """(1 + T_1)^2."""
@@ -293,7 +289,7 @@ class TestChebyshevPolynomialTPow:
         b = chebyshev_polynomial_t_pow(a, 2)
         # (1 + T_1)^2 = 1 + 2*T_1 + T_1^2 = 1 + 2*T_1 + 0.5*(T_0 + T_2)
         # = 1.5*T_0 + 2*T_1 + 0.5*T_2
-        torch.testing.assert_close(b.coeffs, torch.tensor([1.5, 2.0, 0.5]))
+        torch.testing.assert_close(b, torch.tensor([1.5, 2.0, 0.5]))
 
     def test_pow_three(self):
         """(1 + T_1)^3."""
@@ -310,7 +306,7 @@ class TestChebyshevPolynomialTPow:
         """Test ** operator."""
         a = chebyshev_polynomial_t(torch.tensor([1.0, 1.0]))
         b = a**2
-        torch.testing.assert_close(b.coeffs, torch.tensor([1.5, 2.0, 0.5]))
+        torch.testing.assert_close(b, torch.tensor([1.5, 2.0, 0.5]))
 
     def test_pow_negative_raises(self):
         """Negative exponent raises ValueError."""
@@ -327,7 +323,7 @@ class TestChebyshevPolynomialTPow:
 
         b_np = np_cheb.chebpow(coeffs, 4)
 
-        np.testing.assert_allclose(b.coeffs.numpy(), b_np, rtol=1e-5)
+        np.testing.assert_allclose(b.numpy(), b_np, rtol=1e-5)
 
 
 class TestChebyshevPolynomialTArithmeticAutograd:
@@ -343,9 +339,10 @@ class TestChebyshevPolynomialTArithmeticAutograd:
         )
 
         def fn(a, b):
-            return chebyshev_polynomial_t_add(
+            result = chebyshev_polynomial_t_add(
                 chebyshev_polynomial_t(a), chebyshev_polynomial_t(b)
-            ).coeffs
+            )
+            return result.as_subclass(torch.Tensor)
 
         assert torch.autograd.gradcheck(
             fn, (a_coeffs, b_coeffs), raise_exception=True
@@ -361,9 +358,10 @@ class TestChebyshevPolynomialTArithmeticAutograd:
         )
 
         def fn(a, b):
-            return chebyshev_polynomial_t_subtract(
+            result = chebyshev_polynomial_t_subtract(
                 chebyshev_polynomial_t(a), chebyshev_polynomial_t(b)
-            ).coeffs
+            )
+            return result.as_subclass(torch.Tensor)
 
         assert torch.autograd.gradcheck(
             fn, (a_coeffs, b_coeffs), raise_exception=True
@@ -379,9 +377,10 @@ class TestChebyshevPolynomialTArithmeticAutograd:
         )
 
         def fn(a, b):
-            return chebyshev_polynomial_t_multiply(
+            result = chebyshev_polynomial_t_multiply(
                 chebyshev_polynomial_t(a), chebyshev_polynomial_t(b)
-            ).coeffs
+            )
+            return result.as_subclass(torch.Tensor)
 
         assert torch.autograd.gradcheck(
             fn, (a_coeffs, b_coeffs), raise_exception=True
@@ -394,9 +393,8 @@ class TestChebyshevPolynomialTArithmeticAutograd:
         )
 
         def fn(c):
-            return chebyshev_polynomial_t_mulx(
-                chebyshev_polynomial_t(c)
-            ).coeffs
+            result = chebyshev_polynomial_t_mulx(chebyshev_polynomial_t(c))
+            return result.as_subclass(torch.Tensor)
 
         assert torch.autograd.gradcheck(fn, (coeffs,), raise_exception=True)
 
@@ -407,9 +405,8 @@ class TestChebyshevPolynomialTArithmeticAutograd:
         )
 
         def fn(c):
-            return chebyshev_polynomial_t_pow(
-                chebyshev_polynomial_t(c), 3
-            ).coeffs
+            result = chebyshev_polynomial_t_pow(chebyshev_polynomial_t(c), 3)
+            return result.as_subclass(torch.Tensor)
 
         assert torch.autograd.gradcheck(fn, (coeffs,), raise_exception=True)
 
@@ -423,9 +420,10 @@ class TestChebyshevPolynomialTArithmeticAutograd:
         )
 
         def fn(a, b):
-            return chebyshev_polynomial_t_multiply(
+            result = chebyshev_polynomial_t_multiply(
                 chebyshev_polynomial_t(a), chebyshev_polynomial_t(b)
-            ).coeffs.sum()
+            )
+            return result.as_subclass(torch.Tensor).sum()
 
         assert torch.autograd.gradgradcheck(
             fn, (a_coeffs, b_coeffs), raise_exception=True
