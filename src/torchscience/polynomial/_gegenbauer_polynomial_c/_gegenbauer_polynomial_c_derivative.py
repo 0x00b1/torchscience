@@ -1,4 +1,9 @@
-from ._gegenbauer_polynomial_c import GegenbauerPolynomialC
+from torch import Tensor
+
+from ._gegenbauer_polynomial_c import (
+    GegenbauerPolynomialC,
+    gegenbauer_polynomial_c,
+)
 
 
 def gegenbauer_polynomial_c_derivative(
@@ -48,16 +53,16 @@ def gegenbauer_polynomial_c_derivative(
     --------
     >>> a = gegenbauer_polynomial_c(torch.tensor([0.0, 1.0]), torch.tensor(1.0))  # C_1^1
     >>> da = gegenbauer_polynomial_c_derivative(a)
-    >>> da.coeffs  # d/dx C_1^1 = d/dx (2x) = 2 = 2*C_0^1
-    tensor([2.])
+    >>> da  # d/dx C_1^1 = d/dx (2x) = 2 = 2*C_0^1
+    GegenbauerPolynomialC(tensor([2.]), lambda_=tensor(1.))
     """
     if order < 0:
         raise ValueError(f"Order must be non-negative, got {order}")
 
+    coeffs = a.as_subclass(Tensor)
+
     if order == 0:
-        return GegenbauerPolynomialC(
-            coeffs=a.coeffs.clone(), lambda_=a.lambda_
-        )
+        return gegenbauer_polynomial_c(coeffs.clone(), a.lambda_)
 
     # Convert to power basis, differentiate, convert back
     from torchscience.polynomial._polynomial import polynomial_derivative

@@ -66,7 +66,8 @@ def gegenbauer_polynomial_c_evaluate(
                 stacklevel=2,
             )
 
-    coeffs = c.coeffs
+    # Get coefficients as plain tensor
+    coeffs = c.as_subclass(Tensor)
     lambda_ = c.lambda_
     n = coeffs.shape[-1]
 

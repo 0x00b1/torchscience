@@ -1,4 +1,9 @@
-from ._gegenbauer_polynomial_c import GegenbauerPolynomialC
+from torch import Tensor
+
+from ._gegenbauer_polynomial_c import (
+    GegenbauerPolynomialC,
+    gegenbauer_polynomial_c,
+)
 
 
 def gegenbauer_polynomial_c_antiderivative(
@@ -36,16 +41,16 @@ def gegenbauer_polynomial_c_antiderivative(
     --------
     >>> a = gegenbauer_polynomial_c(torch.tensor([1.0]), torch.tensor(1.0))  # C_0^1 = 1
     >>> ia = gegenbauer_polynomial_c_antiderivative(a)
-    >>> ia.coeffs  # integral(1) = x = (1/2)*C_1^1
-    tensor([0., 0.5])
+    >>> ia  # integral(1) = x = (1/2)*C_1^1
+    GegenbauerPolynomialC(tensor([0., 0.5]), lambda_=tensor(1.))
     """
     if order < 0:
         raise ValueError(f"Order must be non-negative, got {order}")
 
+    coeffs = a.as_subclass(Tensor)
+
     if order == 0:
-        return GegenbauerPolynomialC(
-            coeffs=a.coeffs.clone(), lambda_=a.lambda_
-        )
+        return gegenbauer_polynomial_c(coeffs.clone(), a.lambda_)
 
     # Convert to power basis, integrate, convert back
     from torchscience.polynomial._polynomial import polynomial_antiderivative

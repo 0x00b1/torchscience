@@ -1,6 +1,10 @@
 import torch
+from torch import Tensor
 
-from ._gegenbauer_polynomial_c import GegenbauerPolynomialC
+from ._gegenbauer_polynomial_c import (
+    GegenbauerPolynomialC,
+    gegenbauer_polynomial_c,
+)
 from ._gegenbauer_polynomial_c_multiply import gegenbauer_polynomial_c_multiply
 
 
@@ -37,21 +41,19 @@ def gegenbauer_polynomial_c_pow(
     if n < 0:
         raise ValueError(f"Exponent must be non-negative, got {n}")
 
+    coeffs = a.as_subclass(Tensor)
+
     if n == 0:
         # a^0 = C_0^{lambda} = 1
-        ones_shape = list(a.coeffs.shape)
+        ones_shape = list(coeffs.shape)
         ones_shape[-1] = 1
-        return GegenbauerPolynomialC(
-            coeffs=torch.ones(
-                ones_shape, dtype=a.coeffs.dtype, device=a.coeffs.device
-            ),
-            lambda_=a.lambda_,
+        return gegenbauer_polynomial_c(
+            torch.ones(ones_shape, dtype=coeffs.dtype, device=coeffs.device),
+            a.lambda_,
         )
 
     if n == 1:
-        return GegenbauerPolynomialC(
-            coeffs=a.coeffs.clone(), lambda_=a.lambda_
-        )
+        return gegenbauer_polynomial_c(coeffs.clone(), a.lambda_)
 
     # Binary exponentiation
     result = None
@@ -60,8 +62,9 @@ def gegenbauer_polynomial_c_pow(
     while n > 0:
         if n % 2 == 1:
             if result is None:
-                result = GegenbauerPolynomialC(
-                    coeffs=base.coeffs.clone(), lambda_=base.lambda_
+                base_coeffs = base.as_subclass(Tensor)
+                result = gegenbauer_polynomial_c(
+                    base_coeffs.clone(), base.lambda_
                 )
             else:
                 result = gegenbauer_polynomial_c_multiply(result, base)

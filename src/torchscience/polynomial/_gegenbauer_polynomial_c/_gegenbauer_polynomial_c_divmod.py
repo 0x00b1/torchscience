@@ -1,5 +1,7 @@
 from typing import Tuple
 
+import torch
+
 from torchscience.polynomial._exceptions import ParameterMismatchError
 
 from ._gegenbauer_polynomial_c import GegenbauerPolynomialC
@@ -41,8 +43,6 @@ def gegenbauer_polynomial_c_divmod(
     >>> b = gegenbauer_polynomial_c(torch.tensor([1.0, 1.0]), torch.tensor(1.0))
     >>> q, r = gegenbauer_polynomial_c_divmod(a, b)
     """
-    import torch
-
     # Check parameter compatibility
     if not torch.allclose(a.lambda_, b.lambda_):
         raise ParameterMismatchError(

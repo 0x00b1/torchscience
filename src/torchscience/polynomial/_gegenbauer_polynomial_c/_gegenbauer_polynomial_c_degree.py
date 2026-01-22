@@ -30,4 +30,6 @@ def gegenbauer_polynomial_c_degree(p: GegenbauerPolynomialC) -> Tensor:
     >>> gegenbauer_polynomial_c_degree(c)
     tensor(2)
     """
-    return torch.tensor(p.coeffs.shape[-1] - 1, device=p.coeffs.device)
+    # Get coefficients as plain tensor
+    coeffs = p.as_subclass(Tensor)
+    return torch.tensor(coeffs.shape[-1] - 1, device=coeffs.device)

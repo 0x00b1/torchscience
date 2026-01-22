@@ -1,7 +1,10 @@
 import torch
 from torch import Tensor
 
-from ._gegenbauer_polynomial_c import GegenbauerPolynomialC
+from ._gegenbauer_polynomial_c import (
+    GegenbauerPolynomialC,
+    gegenbauer_polynomial_c,
+)
 from ._gegenbauer_polynomial_c_multiply import gegenbauer_polynomial_c_multiply
 
 
@@ -46,9 +49,9 @@ def gegenbauer_polynomial_c_from_roots(
 
     if n == 0:
         # Empty roots -> constant 1
-        return GegenbauerPolynomialC(
-            coeffs=torch.ones(1, dtype=roots.dtype, device=roots.device),
-            lambda_=lambda_,
+        return gegenbauer_polynomial_c(
+            torch.ones(1, dtype=roots.dtype, device=roots.device),
+            lambda_,
         )
 
     # For Gegenbauer: C_1^{lambda}(x) = 2*lambda*x
@@ -57,24 +60,24 @@ def gegenbauer_polynomial_c_from_roots(
     lambda_val = lambda_.item() if lambda_.dim() == 0 else lambda_[0].item()
 
     # Start with (x - r_0)
-    result = GegenbauerPolynomialC(
-        coeffs=torch.tensor(
+    result = gegenbauer_polynomial_c(
+        torch.tensor(
             [-roots[0], 1.0 / (2.0 * lambda_val)],
             dtype=roots.dtype,
             device=roots.device,
         ),
-        lambda_=lambda_,
+        lambda_,
     )
 
     # Multiply by each subsequent (x - r_k)
     for k in range(1, n):
-        factor = GegenbauerPolynomialC(
-            coeffs=torch.tensor(
+        factor = gegenbauer_polynomial_c(
+            torch.tensor(
                 [-roots[k], 1.0 / (2.0 * lambda_val)],
                 dtype=roots.dtype,
                 device=roots.device,
             ),
-            lambda_=lambda_,
+            lambda_,
         )
         result = gegenbauer_polynomial_c_multiply(result, factor)
 

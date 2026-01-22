@@ -1,6 +1,9 @@
 from torch import Tensor
 
-from ._gegenbauer_polynomial_c import GegenbauerPolynomialC
+from ._gegenbauer_polynomial_c import (
+    GegenbauerPolynomialC,
+    gegenbauer_polynomial_c,
+)
 
 
 def gegenbauer_polynomial_c_scale(
@@ -25,7 +28,8 @@ def gegenbauer_polynomial_c_scale(
     --------
     >>> a = gegenbauer_polynomial_c(torch.tensor([1.0, 2.0, 3.0]), torch.tensor(1.0))
     >>> b = gegenbauer_polynomial_c_scale(a, torch.tensor(2.0))
-    >>> b.coeffs
-    tensor([2., 4., 6.])
+    >>> b
+    GegenbauerPolynomialC(tensor([2., 4., 6.]), lambda_=tensor(1.))
     """
-    return GegenbauerPolynomialC(coeffs=a.coeffs * scalar, lambda_=a.lambda_)
+    coeffs = a.as_subclass(Tensor)
+    return gegenbauer_polynomial_c(coeffs * scalar, a.lambda_)

@@ -1,6 +1,10 @@
 import torch
+from torch import Tensor
 
-from ._gegenbauer_polynomial_c import GegenbauerPolynomialC
+from ._gegenbauer_polynomial_c import (
+    GegenbauerPolynomialC,
+    gegenbauer_polynomial_c,
+)
 
 
 def gegenbauer_polynomial_c_mulx(
@@ -36,10 +40,11 @@ def gegenbauer_polynomial_c_mulx(
     --------
     >>> a = gegenbauer_polynomial_c(torch.tensor([1.0]), torch.tensor(1.0))  # C_0^1
     >>> b = gegenbauer_polynomial_c_mulx(a)
-    >>> b.coeffs  # x * C_0^1 = x = (1/2)*C_1^1
-    tensor([0.0000, 0.5000])
+    >>> b  # x * C_0^1 = x = (1/2)*C_1^1
+    GegenbauerPolynomialC(tensor([0.0000, 0.5000]), lambda_=tensor(1.))
     """
-    coeffs = a.coeffs
+    # Get coefficients as plain tensor
+    coeffs = a.as_subclass(Tensor)
     lambda_ = a.lambda_
     n = coeffs.shape[-1]
 
@@ -70,4 +75,4 @@ def gegenbauer_polynomial_c_mulx(
         coeff_kp1 = (k + 1.0) / denom
         result[..., k + 1] = result[..., k + 1] + coeff_kp1 * c_k
 
-    return GegenbauerPolynomialC(coeffs=result, lambda_=lambda_)
+    return gegenbauer_polynomial_c(result, lambda_)

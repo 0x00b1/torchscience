@@ -45,7 +45,8 @@ def gegenbauer_polynomial_c_companion(
     >>> A.shape
     torch.Size([2, 2])
     """
-    coeffs = c.coeffs
+    # Get coefficients as plain tensor
+    coeffs = c.as_subclass(Tensor)
     lambda_ = c.lambda_
     n = coeffs.shape[-1] - 1  # degree
 

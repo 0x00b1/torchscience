@@ -1,4 +1,5 @@
 import torch
+from torch import Tensor
 
 from torchscience.polynomial._polynomial import Polynomial
 
@@ -35,10 +36,11 @@ def gegenbauer_polynomial_c_to_polynomial(
     ...     torch.tensor([0.0, 0.0, 1.0]), torch.tensor(1.0)
     ... )  # C_2^1
     >>> p = gegenbauer_polynomial_c_to_polynomial(c)
-    >>> p.coeffs  # C_2^1 = 2*(2x^2 - 1) = 4x^2 - 2
-    tensor([-1.,  0.,  4.])
+    >>> p  # C_2^1 = 2*(2x^2 - 1) = 4x^2 - 2
+    Polynomial(tensor([-1.,  0.,  4.]))
     """
-    coeffs = c.coeffs
+    # Get coefficients as plain tensor
+    coeffs = c.as_subclass(Tensor)
     lambda_ = c.lambda_
     n = coeffs.shape[-1]
 
@@ -97,4 +99,4 @@ def gegenbauer_polynomial_c_to_polynomial(
         C_k = C_power[k]
         result[: len(C_k)] = result[: len(C_k)] + c_k * C_k
 
-    return Polynomial(coeffs=result)
+    return Polynomial(result)

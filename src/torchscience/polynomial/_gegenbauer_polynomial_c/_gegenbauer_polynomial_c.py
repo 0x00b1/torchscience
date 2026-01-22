@@ -1,13 +1,33 @@
 import torch
-from tensordict.tensorclass import tensorclass
 from torch import Tensor
 
 from torchscience.polynomial._exceptions import ParameterError
 from torchscience.polynomial._polynomial_error import PolynomialError
 
+_SHAPE_PRESERVING_OPS = {
+    torch.clone,
+    torch.detach,
+    torch.Tensor.clone,
+    torch.Tensor.detach,
+    torch.Tensor.to,
+    torch.Tensor.cuda,
+    torch.Tensor.cpu,
+    torch.Tensor.contiguous,
+    torch.Tensor.requires_grad_,
+}
 
-@tensorclass
-class GegenbauerPolynomialC:
+_POLYNOMIAL_RETURNING_OPS = {
+    torch.stack,
+    torch.cat,
+    torch.Tensor.__getitem__,
+    torch.Tensor.reshape,
+    torch.Tensor.view,
+    torch.Tensor.squeeze,
+    torch.Tensor.unsqueeze,
+}
+
+
+class GegenbauerPolynomialC(Tensor):
     """Gegenbauer (ultraspherical) polynomial series.
 
     Represents f(x) = sum_{k=0}^{n} coeffs[..., k] * C_k^{lambda}(x)
@@ -17,12 +37,11 @@ class GegenbauerPolynomialC:
     The Gegenbauer polynomials are orthogonal on [-1, 1] with weight
     w(x) = (1 - x^2)^{lambda - 1/2}.
 
+    Shape: (...batch, N) where N = degree + 1
+    p[..., k] is the coefficient of C_k^{lambda}(x)
+
     Attributes
     ----------
-    coeffs : Tensor
-        Coefficients in ascending order, shape (..., N) where N = degree + 1.
-        coeffs[..., k] is the coefficient of C_k^{lambda}(x).
-        Batch dimensions come first, coefficient dimension last.
     lambda_ : Tensor
         Parameter lambda, must be > -1/2. Tensor for batch support.
 
@@ -36,14 +55,40 @@ class GegenbauerPolynomialC:
     - lambda -> 0: Chebyshev T polynomials (as limit)
     """
 
-    coeffs: Tensor
+    DOMAIN = (-1.0, 1.0)
     lambda_: Tensor
 
-    DOMAIN = (-1.0, 1.0)
+    @staticmethod
+    def __new__(cls, data, lambda_: Tensor, *, dtype=None, device=None):
+        if isinstance(data, Tensor):
+            tensor = data.detach().clone()
+            if dtype is not None:
+                tensor = tensor.to(dtype=dtype)
+            if device is not None:
+                tensor = tensor.to(device=device)
+        else:
+            tensor = torch.as_tensor(data, dtype=dtype, device=device)
+        instance = tensor.as_subclass(cls)
+        instance.lambda_ = lambda_
+        return instance
 
-    def __post_init__(self):
-        if (self.lambda_ <= -0.5).any():
-            raise ParameterError(f"lambda must be > -1/2, got {self.lambda_}")
+    @classmethod
+    def __torch_function__(cls, func, types, args=(), kwargs=None):
+        kwargs = kwargs or {}
+        result = super().__torch_function__(func, types, args, kwargs)
+
+        if func in _SHAPE_PRESERVING_OPS | _POLYNOMIAL_RETURNING_OPS:
+            # Copy lambda_ attribute if result is a Tensor subclass but missing it
+            if isinstance(result, Tensor) and result.dim() >= 1:
+                if not hasattr(result, "lambda_") or result.lambda_ is None:
+                    for arg in args:
+                        if isinstance(arg, cls) and hasattr(arg, "lambda_"):
+                            if not isinstance(result, cls):
+                                result = result.as_subclass(cls)
+                            result.lambda_ = arg.lambda_
+                            break
+
+        return result
 
     def __call__(self, x: Tensor) -> Tensor:
         from ._gegenbauer_polynomial_c_evaluate import (
@@ -140,10 +185,17 @@ class GegenbauerPolynomialC:
 
         return gegenbauer_polynomial_c_mod(self, other)
 
+    def __repr__(self) -> str:
+        if hasattr(self, "lambda_"):
+            return f"GegenbauerPolynomialC({Tensor.__repr__(self)}, lambda_={self.lambda_})"
+        else:
+            # Scalar result from indexing - just show as regular tensor
+            return Tensor.__repr__(self)
+
 
 def gegenbauer_polynomial_c(
     coeffs: Tensor,
-    lambda_: Tensor,
+    lambda_,
 ) -> GegenbauerPolynomialC:
     """Create Gegenbauer series from coefficient tensor and parameter.
 
@@ -153,7 +205,7 @@ def gegenbauer_polynomial_c(
         Coefficients in ascending order, shape (..., N).
         coeffs[..., k] is the coefficient of C_k^{lambda}(x).
         Must have at least one coefficient.
-    lambda_ : Tensor
+    lambda_ : Tensor or scalar
         Parameter lambda, must be > -1/2.
 
     Returns
@@ -174,8 +226,8 @@ def gegenbauer_polynomial_c(
     ...     torch.tensor([1.0, 2.0, 3.0]),
     ...     torch.tensor(1.0)
     ... )  # 1*C_0^1 + 2*C_1^1 + 3*C_2^1
-    >>> c.coeffs
-    tensor([1., 2., 3.])
+    >>> c[0]
+    tensor(1.)
     """
     if coeffs.numel() == 0 or coeffs.shape[-1] == 0:
         raise PolynomialError(
@@ -188,4 +240,7 @@ def gegenbauer_polynomial_c(
             lambda_, dtype=coeffs.dtype, device=coeffs.device
         )
 
-    return GegenbauerPolynomialC(coeffs=coeffs, lambda_=lambda_)
+    if (lambda_ <= -0.5).any():
+        raise ParameterError(f"lambda must be > -1/2, got {lambda_}")
+
+    return GegenbauerPolynomialC(coeffs, lambda_)

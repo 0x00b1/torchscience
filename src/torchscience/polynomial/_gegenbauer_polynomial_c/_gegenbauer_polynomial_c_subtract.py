@@ -1,8 +1,12 @@
 import torch
+from torch import Tensor
 
 from torchscience.polynomial._exceptions import ParameterMismatchError
 
-from ._gegenbauer_polynomial_c import GegenbauerPolynomialC
+from ._gegenbauer_polynomial_c import (
+    GegenbauerPolynomialC,
+    gegenbauer_polynomial_c,
+)
 
 
 def gegenbauer_polynomial_c_subtract(
@@ -38,8 +42,8 @@ def gegenbauer_polynomial_c_subtract(
     >>> a = gegenbauer_polynomial_c(torch.tensor([5.0, 7.0, 9.0]), torch.tensor(1.0))
     >>> b = gegenbauer_polynomial_c(torch.tensor([1.0, 2.0, 3.0]), torch.tensor(1.0))
     >>> c = gegenbauer_polynomial_c_subtract(a, b)
-    >>> c.coeffs
-    tensor([4., 5., 6.])
+    >>> c
+    GegenbauerPolynomialC(tensor([4., 5., 6.]), lambda_=tensor(1.))
     """
     # Check parameter compatibility
     if not torch.allclose(a.lambda_, b.lambda_):
@@ -48,16 +52,15 @@ def gegenbauer_polynomial_c_subtract(
             f"from GegenbauerPolynomialC with lambda={a.lambda_}"
         )
 
-    a_coeffs = a.coeffs
-    b_coeffs = b.coeffs
+    # Get coefficients as plain tensors
+    a_coeffs = a.as_subclass(Tensor)
+    b_coeffs = b.as_subclass(Tensor)
 
     n_a = a_coeffs.shape[-1]
     n_b = b_coeffs.shape[-1]
 
     if n_a == n_b:
-        return GegenbauerPolynomialC(
-            coeffs=a_coeffs - b_coeffs, lambda_=a.lambda_
-        )
+        return gegenbauer_polynomial_c(a_coeffs - b_coeffs, a.lambda_)
 
     # Zero-pad the shorter series
     if n_a < n_b:
@@ -75,4 +78,4 @@ def gegenbauer_polynomial_c_subtract(
         )
         b_coeffs = torch.cat([b_coeffs, padding], dim=-1)
 
-    return GegenbauerPolynomialC(coeffs=a_coeffs - b_coeffs, lambda_=a.lambda_)
+    return gegenbauer_polynomial_c(a_coeffs - b_coeffs, a.lambda_)

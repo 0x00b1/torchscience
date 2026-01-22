@@ -1,6 +1,10 @@
 import torch
+from torch import Tensor
 
-from ._gegenbauer_polynomial_c import GegenbauerPolynomialC
+from ._gegenbauer_polynomial_c import (
+    GegenbauerPolynomialC,
+    gegenbauer_polynomial_c,
+)
 
 
 def gegenbauer_polynomial_c_trim(
@@ -32,14 +36,15 @@ def gegenbauer_polynomial_c_trim(
     ...     torch.tensor([1.0, 2.0, 0.0, 0.0]), torch.tensor(1.0)
     ... )
     >>> t = gegenbauer_polynomial_c_trim(c)
-    >>> t.coeffs
-    tensor([1., 2.])
+    >>> t
+    GegenbauerPolynomialC(tensor([1., 2.]), lambda_=tensor(1.))
     """
-    coeffs = p.coeffs
+    # Get coefficients as plain tensor
+    coeffs = p.as_subclass(Tensor)
     n = coeffs.shape[-1]
 
     if n <= 1:
-        return p
+        return gegenbauer_polynomial_c(coeffs.clone(), p.lambda_)
 
     # Find the last non-zero coefficient
     # For batched case, a coefficient position is non-zero if any batch element is non-zero
@@ -56,11 +61,11 @@ def gegenbauer_polynomial_c_trim(
     mask = max_abs > tol
     if not mask.any():
         # All zeros, return single zero coefficient
-        return GegenbauerPolynomialC(
-            coeffs=torch.zeros(
+        return gegenbauer_polynomial_c(
+            torch.zeros(
                 *coeffs.shape[:-1], 1, dtype=coeffs.dtype, device=coeffs.device
             ),
-            lambda_=p.lambda_,
+            p.lambda_,
         )
 
     # Find last True position
@@ -68,7 +73,7 @@ def gegenbauer_polynomial_c_trim(
     last_nonzero = indices[mask].max().item()
 
     # Keep coefficients up to and including last_nonzero
-    return GegenbauerPolynomialC(
-        coeffs=coeffs[..., : last_nonzero + 1],
-        lambda_=p.lambda_,
+    return gegenbauer_polynomial_c(
+        coeffs[..., : last_nonzero + 1].clone(),
+        p.lambda_,
     )

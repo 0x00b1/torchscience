@@ -3,7 +3,10 @@ from torch import Tensor
 
 from torchscience.polynomial._polynomial import Polynomial
 
-from ._gegenbauer_polynomial_c import GegenbauerPolynomialC
+from ._gegenbauer_polynomial_c import (
+    GegenbauerPolynomialC,
+    gegenbauer_polynomial_c,
+)
 from ._gegenbauer_polynomial_c_add import gegenbauer_polynomial_c_add
 from ._gegenbauer_polynomial_c_mulx import gegenbauer_polynomial_c_mulx
 
@@ -42,7 +45,8 @@ def polynomial_to_gegenbauer_polynomial_c(
     >>> c = polynomial_to_gegenbauer_polynomial_c(p, torch.tensor(1.0))
     >>> # x^2 in Gegenbauer basis with lambda=1
     """
-    coeffs = p.coeffs
+    # Get coefficients as plain tensor
+    coeffs = p.as_subclass(Tensor)
     n = coeffs.shape[-1]
 
     # Ensure lambda_ is a tensor
@@ -52,24 +56,20 @@ def polynomial_to_gegenbauer_polynomial_c(
         )
 
     if n == 0:
-        return GegenbauerPolynomialC(
-            coeffs=torch.zeros(1, dtype=coeffs.dtype, device=coeffs.device),
-            lambda_=lambda_,
+        return gegenbauer_polynomial_c(
+            torch.zeros(1, dtype=coeffs.dtype, device=coeffs.device),
+            lambda_,
         )
 
     # Start with highest degree coefficient
-    result = GegenbauerPolynomialC(
-        coeffs=coeffs[..., -1:].clone(), lambda_=lambda_
-    )
+    result = gegenbauer_polynomial_c(coeffs[..., -1:].clone(), lambda_)
 
     # Horner's method: multiply by x, add next coefficient
     for i in range(n - 2, -1, -1):
         result = gegenbauer_polynomial_c_mulx(result)
         result = gegenbauer_polynomial_c_add(
             result,
-            GegenbauerPolynomialC(
-                coeffs=coeffs[..., i : i + 1].clone(), lambda_=lambda_
-            ),
+            gegenbauer_polynomial_c(coeffs[..., i : i + 1].clone(), lambda_),
         )
 
     return result

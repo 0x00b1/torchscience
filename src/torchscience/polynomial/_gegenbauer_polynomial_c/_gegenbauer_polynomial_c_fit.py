@@ -3,7 +3,10 @@ from torch import Tensor
 
 from torchscience.polynomial._exceptions import DomainError
 
-from ._gegenbauer_polynomial_c import GegenbauerPolynomialC
+from ._gegenbauer_polynomial_c import (
+    GegenbauerPolynomialC,
+    gegenbauer_polynomial_c,
+)
 from ._gegenbauer_polynomial_c_vandermonde import (
     gegenbauer_polynomial_c_vandermonde,
 )
@@ -68,4 +71,4 @@ def gegenbauer_polynomial_c_fit(
     result = torch.linalg.lstsq(V, y.unsqueeze(-1))
     coeffs = result.solution.squeeze(-1)
 
-    return GegenbauerPolynomialC(coeffs=coeffs, lambda_=lambda_)
+    return gegenbauer_polynomial_c(coeffs, lambda_)

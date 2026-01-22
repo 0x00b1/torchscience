@@ -37,10 +37,13 @@ def gegenbauer_polynomial_c_equal(
     """
     # Check parameter equality
     if not torch.allclose(a.lambda_, b.lambda_, atol=tol):
-        return torch.tensor(False, device=a.coeffs.device)
+        # Get device from either polynomial
+        a_coeffs = a.as_subclass(Tensor)
+        return torch.tensor(False, device=a_coeffs.device)
 
-    a_coeffs = a.coeffs
-    b_coeffs = b.coeffs
+    # Get coefficients as plain tensors
+    a_coeffs = a.as_subclass(Tensor)
+    b_coeffs = b.as_subclass(Tensor)
 
     # Pad to same length
     n_a = a_coeffs.shape[-1]
