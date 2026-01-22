@@ -333,3 +333,64 @@ class TestNativeBatchedSolving:
             total_grad = total_grad + theta_i.grad
 
         assert torch.allclose(theta.grad, total_grad, rtol=1e-4)
+
+
+class TestReproducibility:
+    """Tests for deterministic/reproducible behavior."""
+
+    def test_adjoint_reproducibility_with_seed(self):
+        """Adjoint should produce identical results with same seed."""
+        results = []
+
+        for run in range(3):
+            torch.manual_seed(42)
+
+            theta = torch.tensor(
+                [1.0], requires_grad=True, dtype=torch.float64
+            )
+            y0 = torch.randn(10, dtype=torch.float64)
+
+            def dynamics(t, y):
+                return -theta * y + 0.1 * torch.sin(torch.as_tensor(t))
+
+            solver = adjoint(dormand_prince_5, params=[theta])
+            y_final, _ = solver(dynamics, y0, t_span=(0.0, 1.0))
+            y_final.sum().backward()
+
+            results.append(
+                {
+                    "y_final": y_final.clone().detach(),
+                    "grad": theta.grad.clone().detach(),
+                }
+            )
+            theta.grad = None
+
+        # All runs should produce identical results
+        for i in range(1, 3):
+            assert torch.equal(results[0]["y_final"], results[i]["y_final"]), (
+                f"y_final differs between run 0 and run {i}"
+            )
+            assert torch.equal(results[0]["grad"], results[i]["grad"]), (
+                f"gradient differs between run 0 and run {i}"
+            )
+
+    def test_deterministic_mode(self):
+        """Results should be deterministic in torch.use_deterministic_algorithms mode."""
+        try:
+            torch.use_deterministic_algorithms(True)
+
+            theta = torch.tensor(
+                [1.0], requires_grad=True, dtype=torch.float64
+            )
+            y0 = torch.tensor([1.0, 2.0], dtype=torch.float64)
+
+            def dynamics(t, y):
+                return -theta * y
+
+            solver = adjoint(dormand_prince_5, params=[theta])
+            y_final, _ = solver(dynamics, y0, t_span=(0.0, 1.0))
+            y_final.sum().backward()
+
+            assert theta.grad is not None
+        finally:
+            torch.use_deterministic_algorithms(False)
