@@ -124,3 +124,26 @@ class TestSymmetricGeneralizedEigenvalue:
                 rtol=1e-10,
                 atol=1e-10,
             )
+
+    def test_gradcheck(self):
+        """Test gradient correctness via torch.autograd.gradcheck."""
+        torch.manual_seed(456)
+        n = 3
+
+        # Generate well-conditioned matrices
+        X = torch.randn(n, n, dtype=torch.float64)
+        a = X @ X.T + 2 * torch.eye(n, dtype=torch.float64)
+        a.requires_grad_(True)
+
+        Y = torch.randn(n, n, dtype=torch.float64)
+        b = Y @ Y.T + 2 * torch.eye(n, dtype=torch.float64)
+        b.requires_grad_(True)
+
+        def func(a, b):
+            result = symmetric_generalized_eigenvalue(a, b)
+            # Sum eigenvalues for scalar output
+            return result.eigenvalues.sum()
+
+        assert torch.autograd.gradcheck(
+            func, (a, b), eps=1e-6, atol=1e-4, rtol=1e-4
+        )
