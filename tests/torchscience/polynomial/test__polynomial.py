@@ -599,6 +599,44 @@ class TestPolynomialPowAutograd:
         assert torch.autograd.gradgradcheck(pow_sum, (coeffs,), eps=1e-6)
 
 
+class TestPolynomialTensorSubclass:
+    """Tests for Polynomial as Tensor subclass."""
+
+    def test_polynomial_is_tensor(self):
+        """Polynomial should be a Tensor subclass."""
+        p = polynomial(torch.tensor([1.0, 2.0, 3.0]))
+        assert isinstance(p, torch.Tensor)
+
+    def test_polynomial_indexing_returns_tensor(self):
+        """Indexing coefficients returns plain Tensor values."""
+        p = polynomial(torch.tensor([1.0, 2.0, 3.0]))
+        assert p[0] == 1.0
+        assert p[1] == 2.0
+
+    def test_polynomial_shape(self):
+        """Shape property works like Tensor."""
+        p = polynomial(torch.tensor([1.0, 2.0, 3.0]))
+        assert p.shape == (3,)
+
+    def test_polynomial_clone_preserves_type(self):
+        """Clone preserves Polynomial type."""
+        p = polynomial(torch.tensor([1.0, 2.0, 3.0]))
+        q = p.clone()
+        assert type(q) == type(p)
+
+    def test_polynomial_to_device_preserves_type(self):
+        """Device transfer preserves type."""
+        p = polynomial(torch.tensor([1.0, 2.0, 3.0]))
+        q = p.to(dtype=torch.float64)
+        assert type(q) == type(p)
+
+    def test_polynomial_reshape_preserves_type(self):
+        """Reshape preserves Polynomial type."""
+        p = polynomial(torch.tensor([[1.0, 2.0], [3.0, 4.0]]))
+        q = p.reshape(4)
+        assert type(q) == type(p)
+
+
 class TestPolynomialIntegration:
     """Integration tests combining multiple operations."""
 

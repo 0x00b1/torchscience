@@ -1,34 +1,49 @@
-from typing import TYPE_CHECKING, Union
+from typing import Union
 
-from tensordict.tensorclass import tensorclass
+import torch
 from torch import Tensor
 
 from torchscience.polynomial._polynomial_error import PolynomialError
 
-if TYPE_CHECKING:
-    pass
+# Operations that preserve polynomial type
+_SHAPE_PRESERVING_OPS = {
+    torch.clone,
+    torch.detach,
+    torch.Tensor.clone,
+    torch.Tensor.detach,
+    torch.Tensor.to,
+    torch.Tensor.cuda,
+    torch.Tensor.cpu,
+    torch.Tensor.contiguous,
+    torch.Tensor.requires_grad_,
+}
+
+_POLYNOMIAL_RETURNING_OPS = {
+    torch.stack,
+    torch.cat,
+    torch.Tensor.__getitem__,
+    torch.Tensor.reshape,
+    torch.Tensor.view,
+    torch.Tensor.squeeze,
+    torch.Tensor.unsqueeze,
+}
 
 
-@tensorclass
-class Polynomial:
-    """Polynomial in power basis with ascending coefficients.
+class Polynomial(Tensor):
+    """Polynomial in power basis - IS the coefficients tensor.
 
-    Represents p(x) = coeffs[..., 0] + coeffs[..., 1]*x + coeffs[..., 2]*x^2 + ...
+    Represents p(x) = c[..., 0] + c[..., 1]*x + c[..., 2]*x^2 + ...
 
-    Attributes
-    ----------
-    coeffs : Tensor
-        Coefficients in ascending order, shape (..., N) where N = degree + 1.
-        coeffs[..., i] is the coefficient of x^i.
-        Batch dimensions come first, coefficient dimension last.
+    Shape: (...batch, N) where N = degree + 1
+    p[..., i] is the coefficient of x^i
 
     Examples
     --------
     Single polynomial 1 + 2x + 3x^2:
-        Polynomial(coeffs=torch.tensor([1.0, 2.0, 3.0]))
+        polynomial(torch.tensor([1.0, 2.0, 3.0]))
 
     Batch of 2 polynomials:
-        Polynomial(coeffs=torch.tensor([[1.0, 2.0], [3.0, 4.0]]))
+        polynomial(torch.tensor([[1.0, 2.0], [3.0, 4.0]]))
         # First: 1 + 2x, Second: 3 + 4x
 
     Operator overloading:
@@ -39,7 +54,30 @@ class Polynomial:
         p(x)     # polynomial_evaluate(p, x)
     """
 
-    coeffs: Tensor
+    DOMAIN = (-float("inf"), float("inf"))
+
+    @staticmethod
+    def __new__(cls, data, *, dtype=None, device=None):
+        if isinstance(data, Tensor):
+            tensor = data.detach().clone()
+            if dtype is not None:
+                tensor = tensor.to(dtype=dtype)
+            if device is not None:
+                tensor = tensor.to(device=device)
+        else:
+            tensor = torch.as_tensor(data, dtype=dtype, device=device)
+        return tensor.as_subclass(cls)
+
+    @classmethod
+    def __torch_function__(cls, func, types, args=(), kwargs=None):
+        kwargs = kwargs or {}
+        result = super().__torch_function__(func, types, args, kwargs)
+
+        if func in _SHAPE_PRESERVING_OPS | _POLYNOMIAL_RETURNING_OPS:
+            if isinstance(result, Tensor) and not isinstance(result, cls):
+                result = result.as_subclass(cls)
+
+        return result
 
     def __add__(self, other: "Polynomial") -> "Polynomial":
         from ._polynomial_add import polynomial_add
@@ -102,6 +140,9 @@ class Polynomial:
 
         return polynomial_mod(self, other)
 
+    def __repr__(self) -> str:
+        return f"Polynomial({super().__repr__()})"
+
 
 def polynomial(coeffs: Tensor) -> Polynomial:
     """Create polynomial from coefficient tensor.
@@ -125,10 +166,10 @@ def polynomial(coeffs: Tensor) -> Polynomial:
     Examples
     --------
     >>> p = polynomial(torch.tensor([1.0, 2.0, 3.0]))  # 1 + 2x + 3x^2
-    >>> p.coeffs
-    tensor([1., 2., 3.])
+    >>> p[0]
+    tensor(1.)
     """
     if coeffs.numel() == 0 or coeffs.shape[-1] == 0:
         raise PolynomialError("Polynomial must have at least one coefficient")
 
-    return Polynomial(coeffs=coeffs)
+    return Polynomial(coeffs)
