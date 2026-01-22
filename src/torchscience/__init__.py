@@ -5,6 +5,7 @@ from . import (
     distance,
     graphics,
     optimization,
+    root_finding,
     signal_processing,
     statistics,
 )
@@ -14,6 +15,7 @@ __all__ = [
     "distance",
     "graphics",
     "optimization",
+    "root_finding",
     "signal_processing",
     "statistics",
 ]

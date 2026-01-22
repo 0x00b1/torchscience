@@ -154,7 +154,7 @@ def brent(
     Find the square root of 2 (solve x^2 - 2 = 0):
 
     >>> import torch
-    >>> from torchscience.optimization.root_finding import brent
+    >>> from torchscience.root_finding import brent
     >>> f = lambda x: x**2 - 2
     >>> a, b = torch.tensor([1.0]), torch.tensor([2.0])
     >>> root = brent(f, a, b)

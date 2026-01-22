@@ -1,10 +1,10 @@
-# tests/torchscience/optimization/root_finding/test__brent.py
+# tests/torchscience/root_finding/test__brent.py
 import math
 
 import pytest
 import torch
 
-from torchscience.optimization.root_finding import brent
+from torchscience.root_finding import brent
 
 # Check if scipy is available for comparison tests
 try:
