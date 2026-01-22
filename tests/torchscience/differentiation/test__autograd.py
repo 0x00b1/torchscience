@@ -173,3 +173,105 @@ class TestAllOperatorsAutocast:
         with torch.amp.autocast("cpu", dtype=torch.float16):
             result = jacobian(field, dx=0.1)
         assert result.dtype == torch.float32
+
+
+class TestAllOperatorsAutograd:
+    """Autograd tests for all differentiation operators."""
+
+    def test_derivative_gradcheck(self):
+        from torchscience.differentiation import derivative
+
+        field = torch.randn(12, 12, dtype=torch.float64, requires_grad=True)
+        assert gradcheck(
+            lambda f: derivative(f, dim=-1, dx=0.1),
+            (field,),
+            eps=1e-6,
+            atol=1e-4,
+            rtol=1e-3,
+        )
+
+    def test_derivative_gradgradcheck(self):
+        from torchscience.differentiation import derivative
+
+        field = torch.randn(12, 12, dtype=torch.float64, requires_grad=True)
+        assert gradgradcheck(
+            lambda f: derivative(f, dim=-1, dx=0.1).sum(),
+            (field,),
+            eps=1e-6,
+            atol=1e-4,
+            rtol=1e-3,
+        )
+
+    def test_laplacian_gradcheck(self):
+        from torchscience.differentiation import laplacian
+
+        field = torch.randn(12, 12, dtype=torch.float64, requires_grad=True)
+        assert gradcheck(
+            lambda f: laplacian(f, dx=0.1),
+            (field,),
+            eps=1e-6,
+            atol=1e-4,
+            rtol=1e-3,
+        )
+
+    def test_laplacian_gradgradcheck(self):
+        from torchscience.differentiation import laplacian
+
+        field = torch.randn(12, 12, dtype=torch.float64, requires_grad=True)
+        assert gradgradcheck(
+            lambda f: laplacian(f, dx=0.1).sum(),
+            (field,),
+            eps=1e-6,
+            atol=1e-4,
+            rtol=1e-3,
+        )
+
+    def test_divergence_gradcheck(self):
+        from torchscience.differentiation import divergence
+
+        field = torch.randn(2, 12, 12, dtype=torch.float64, requires_grad=True)
+        assert gradcheck(
+            lambda f: divergence(f, dx=0.1),
+            (field,),
+            eps=1e-6,
+            atol=1e-4,
+            rtol=1e-3,
+        )
+
+    def test_curl_gradcheck(self):
+        from torchscience.differentiation import curl
+
+        field = torch.randn(
+            3, 8, 8, 8, dtype=torch.float64, requires_grad=True
+        )
+        assert gradcheck(
+            lambda f: curl(f, dx=0.1),
+            (field,),
+            eps=1e-6,
+            atol=1e-4,
+            rtol=1e-3,
+        )
+
+    def test_hessian_gradcheck(self):
+        from torchscience.differentiation import hessian
+
+        field = torch.randn(10, 10, dtype=torch.float64, requires_grad=True)
+        assert gradcheck(
+            lambda f: hessian(f, dx=0.1),
+            (field,),
+            eps=1e-6,
+            atol=1e-4,
+            rtol=1e-3,
+        )
+
+    def test_jacobian_gradcheck(self):
+        from torchscience.differentiation import jacobian
+
+        field = torch.randn(2, 10, 10, dtype=torch.float64, requires_grad=True)
+        assert gradcheck(
+            lambda f: jacobian(f, dx=0.1),
+            (field,),
+            eps=1e-6,
+            atol=1e-4,
+            rtol=1e-3,
+        )
