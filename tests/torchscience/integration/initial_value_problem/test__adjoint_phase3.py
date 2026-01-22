@@ -254,3 +254,38 @@ class TestTorchFuncComposability:
         expected_J = torch.diag(expected_diag.expand(2))
 
         assert torch.allclose(J, expected_J, rtol=1e-4)
+
+
+class TestNativeBatchedSolving:
+    """Tests for native batched ODE solving (more efficient than vmap)."""
+
+    def test_solve_ivp_batched_basic(self):
+        """solve_ivp_batched should handle explicit batch dimension."""
+        from torchscience.integration.initial_value_problem import (
+            solve_ivp_batched,
+        )
+
+        theta = torch.tensor([1.0], dtype=torch.float64)
+
+        def batched_dynamics(t, y):
+            # y has shape (batch, state_dim)
+            return -theta * y
+
+        y0_batch = torch.randn(8, 4, dtype=torch.float64)
+
+        y_final, interp = solve_ivp_batched(
+            batched_dynamics,
+            y0_batch,
+            t_span=(0.0, 1.0),
+        )
+
+        assert y_final.shape == (8, 4)
+
+        # Verify against sequential solves
+        for i in range(8):
+            y_single, _ = solve_ivp(
+                lambda t, y: -theta * y,
+                y0_batch[i],
+                t_span=(0.0, 1.0),
+            )
+            assert torch.allclose(y_final[i], y_single, rtol=1e-5)

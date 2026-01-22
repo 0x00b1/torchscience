@@ -111,6 +111,9 @@ from torchscience.integration.initial_value_problem._adjoint import adjoint
 from torchscience.integration.initial_value_problem._backward_euler import (
     backward_euler,
 )
+from torchscience.integration.initial_value_problem._batched import (
+    solve_ivp_batched,
+)
 from torchscience.integration.initial_value_problem._cnf import (
     cnf_dynamics,
     exact_trace,
@@ -153,6 +156,7 @@ __all__ = [
     # Unified API
     "ODESolution",
     "solve_ivp",
+    "solve_ivp_batched",
     # CNF utilities
     "cnf_dynamics",
     "exact_trace",
