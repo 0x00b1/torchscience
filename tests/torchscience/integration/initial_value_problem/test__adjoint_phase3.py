@@ -163,3 +163,94 @@ class TestVmapCompatibility:
         grads_stack = torch.stack(grads)
         assert grads_stack.shape[0] == 4
         assert torch.all(torch.isfinite(grads_stack))
+
+
+class TestTorchFuncComposability:
+    """Tests for torch.func composability (grad, jacrev, hessian).
+
+    Note: torch.func transforms (grad, jacrev, jvp, etc.) require autograd.Function
+    subclasses to implement the setup_context staticmethod. The current adjoint
+    implementation does not yet support this, so tests using adjoint sensitivity
+    with torch.func transforms are marked as xfail.
+
+    See: https://pytorch.org/docs/main/notes/extending.func.html
+    """
+
+    @pytest.mark.xfail(
+        reason="_AdjointODEFunction does not yet implement setup_context for functorch",
+        raises=RuntimeError,
+    )
+    def test_func_grad_basic(self):
+        """torch.func.grad should work with solve_ivp.
+
+        Currently expected to fail because _AdjointODEFunction needs to implement
+        the setup_context staticmethod for compatibility with functorch transforms.
+        """
+        from torch.func import grad
+
+        def loss_fn(theta):
+            def dynamics(t, y):
+                return -theta * y
+
+            y0 = torch.tensor([1.0], dtype=torch.float64)
+            y_final, _ = solve_ivp(
+                dynamics,
+                y0,
+                t_span=(0.0, 1.0),
+                method="dormand_prince_5",
+                sensitivity="adjoint",
+                params=[theta],
+            )
+            return y_final.sum()
+
+        theta = torch.tensor([1.0], dtype=torch.float64)
+
+        # torch.func.grad should work
+        grad_fn = grad(loss_fn)
+        g = grad_fn(theta)
+
+        assert g.shape == theta.shape
+        assert torch.isfinite(g)
+
+        # Verify matches manual backward
+        theta_manual = torch.tensor(
+            [1.0], requires_grad=True, dtype=torch.float64
+        )
+        loss = loss_fn(theta_manual)
+        loss.backward()
+
+        assert torch.allclose(g, theta_manual.grad, rtol=1e-5)
+
+    def test_func_jacrev_wrt_initial_condition(self):
+        """jacrev should compute Jacobian dy_final/dy0."""
+        from torch.func import jacrev
+
+        theta = torch.tensor([1.0], dtype=torch.float64)
+
+        def solve_for_final(y0):
+            def dynamics(t, y):
+                return -theta * y
+
+            y_final, _ = solve_ivp(
+                dynamics,
+                y0,
+                t_span=(0.0, 1.0),
+                method="dormand_prince_5",
+            )
+            return y_final
+
+        y0 = torch.tensor([1.0, 2.0], dtype=torch.float64)
+
+        # Jacobian dy_final/dy0
+        J = jacrev(solve_for_final)(y0)
+
+        assert J.shape == (2, 2)
+        assert torch.all(torch.isfinite(J))
+
+        # For dy/dt = -theta*y, solution is y(t) = y0*exp(-theta*t)
+        # So dy_final/dy0 = diag(exp(-theta*T))
+        T = 1.0
+        expected_diag = torch.exp(-theta * T)
+        expected_J = torch.diag(expected_diag.expand(2))
+
+        assert torch.allclose(J, expected_J, rtol=1e-4)
