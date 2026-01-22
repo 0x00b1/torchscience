@@ -57,7 +57,7 @@ def pagerank(
     Simple directed graph:
 
     >>> import torch
-    >>> from torchscience.graph_theory import pagerank
+    >>> from torchscience.graph import pagerank
     >>> # Graph: 0 -> 1 -> 2 -> 0 (cycle)
     >>> adj = torch.tensor([
     ...     [0., 1., 0.],

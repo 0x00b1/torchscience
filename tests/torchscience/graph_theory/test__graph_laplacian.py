@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchscience.graph_theory import graph_laplacian
+from torchscience.graph import graph_laplacian
 
 
 class TestGraphLaplacianCombinatorial:

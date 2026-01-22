@@ -65,7 +65,7 @@ def floyd_warshall(
     Simple directed graph:
 
     >>> import torch
-    >>> from torchscience.graph_theory import floyd_warshall
+    >>> from torchscience.graph import floyd_warshall
     >>> inf = float("inf")
     >>> adj = torch.tensor([
     ...     [0.0, 1.0, 4.0],

@@ -71,7 +71,7 @@ def katz_centrality(
     Examples
     --------
     >>> import torch
-    >>> from torchscience.graph_theory import katz_centrality
+    >>> from torchscience.graph import katz_centrality
     >>> adj = torch.tensor([
     ...     [0.0, 1.0, 1.0],
     ...     [1.0, 0.0, 1.0],

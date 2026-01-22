@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchscience.graph_theory import pagerank
+from torchscience.graph import pagerank
 
 
 class TestPageRankBasic:

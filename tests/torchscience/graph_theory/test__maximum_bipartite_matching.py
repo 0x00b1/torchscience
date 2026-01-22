@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchscience.graph_theory import maximum_bipartite_matching
+from torchscience.graph import maximum_bipartite_matching
 
 
 class TestMaximumBipartiteMatchingBasic:

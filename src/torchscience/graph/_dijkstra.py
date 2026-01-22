@@ -126,7 +126,7 @@ def dijkstra(
     Simple directed graph:
 
     >>> import torch
-    >>> from torchscience.graph_theory import dijkstra
+    >>> from torchscience.graph import dijkstra
     >>> inf = float("inf")
     >>> adj = torch.tensor([
     ...     [0.0, 1.0, 4.0],

@@ -67,7 +67,7 @@ def eigenvector_centrality(adjacency: Tensor) -> Tensor:
     Examples
     --------
     >>> import torch
-    >>> from torchscience.graph_theory import eigenvector_centrality
+    >>> from torchscience.graph import eigenvector_centrality
     >>> adj = torch.tensor([
     ...     [0.0, 1.0, 1.0],
     ...     [1.0, 0.0, 1.0],

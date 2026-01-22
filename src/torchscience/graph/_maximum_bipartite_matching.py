@@ -48,7 +48,7 @@ def maximum_bipartite_matching(
     Simple bipartite graph:
 
     >>> import torch
-    >>> from torchscience.graph_theory import maximum_bipartite_matching
+    >>> from torchscience.graph import maximum_bipartite_matching
     >>> # 3 left nodes, 3 right nodes
     >>> # Edges: (0,0), (0,1), (1,1), (1,2), (2,2)
     >>> biadj = torch.tensor([

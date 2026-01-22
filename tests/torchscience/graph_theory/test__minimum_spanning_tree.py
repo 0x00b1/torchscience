@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchscience.graph_theory import minimum_spanning_tree
+from torchscience.graph import minimum_spanning_tree
 
 
 class TestMinimumSpanningTreeBasic:

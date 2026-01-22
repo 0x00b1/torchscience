@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchscience.graph_theory import (
+from torchscience.graph import (
     BellmanFordNegativeCycleError,
     bellman_ford,
 )

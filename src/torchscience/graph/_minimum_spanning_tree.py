@@ -100,7 +100,7 @@ def minimum_spanning_tree(
     Simple triangle graph:
 
     >>> import torch
-    >>> from torchscience.graph_theory import minimum_spanning_tree
+    >>> from torchscience.graph import minimum_spanning_tree
     >>> inf = float("inf")
     >>> adj = torch.tensor([
     ...     [0.0, 1.0, 3.0],

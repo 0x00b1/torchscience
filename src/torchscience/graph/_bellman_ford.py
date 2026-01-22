@@ -139,7 +139,7 @@ def bellman_ford(
     Graph with negative edges:
 
     >>> import torch
-    >>> from torchscience.graph_theory import bellman_ford
+    >>> from torchscience.graph import bellman_ford
     >>> inf = float("inf")
     >>> adj = torch.tensor([
     ...     [0.0, 4.0, inf],

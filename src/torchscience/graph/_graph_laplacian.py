@@ -60,7 +60,7 @@ def graph_laplacian(
     Combinatorial Laplacian of a simple graph:
 
     >>> import torch
-    >>> from torchscience.graph_theory import graph_laplacian
+    >>> from torchscience.graph import graph_laplacian
     >>> adj = torch.tensor([
     ...     [0., 1., 1.],
     ...     [1., 0., 1.],

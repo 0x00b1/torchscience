@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchscience.graph_theory import eigenvector_centrality
+from torchscience.graph import eigenvector_centrality
 
 
 class TestEigenvectorCentralityBasic:

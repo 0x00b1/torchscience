@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchscience.graph_theory import NegativeCycleError, floyd_warshall
+from torchscience.graph import NegativeCycleError, floyd_warshall
 
 
 class TestFloydWarshallBasic:
