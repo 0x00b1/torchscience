@@ -191,5 +191,36 @@ def _compute_jacobian(f, y0, t_span, params, method, **kwargs):
 
 
 def _compute_fisher(f, y0, t_span, params, method, **kwargs):
-    """Compute Fisher information matrix."""
-    raise NotImplementedError("Fisher mode not yet implemented")
+    """Compute Fisher information matrix F = J^T @ J.
+
+    The Fisher information matrix provides a measure of how much information
+    the ODE solution carries about the parameters. It is useful for uncertainty
+    quantification via the Cramér-Rao bound.
+
+    Parameters
+    ----------
+    f : callable
+        Dynamics function f(t, y).
+    y0 : Tensor
+        Initial state.
+    t_span : tuple of float
+        Integration interval (t0, t1).
+    params : list of Tensor
+        Parameters to compute sensitivities for.
+    method : str
+        ODE solver method.
+    **kwargs
+        Additional arguments for solver.
+
+    Returns
+    -------
+    fisher : Tensor
+        Fisher information matrix of shape (param_dim, param_dim).
+    """
+    # First compute Jacobian
+    J = _compute_jacobian(f, y0, t_span, params, method, **kwargs)
+
+    # Fisher = J^T @ J
+    fisher = J.T @ J
+
+    return fisher

@@ -64,3 +64,33 @@ class TestSensitivityAnalysis:
         T = 1.0
         expected_J = -T * y0.unsqueeze(1) * torch.exp(-theta * T)
         assert torch.allclose(J, expected_J, rtol=1e-4)
+
+    def test_solve_ivp_sensitivity_fisher_mode(self):
+        """sensitivity mode='fisher' should return Fisher information matrix."""
+        from torchscience.integration.initial_value_problem import (
+            solve_ivp_sensitivity,
+        )
+
+        theta = torch.tensor([1.0, 0.5], dtype=torch.float64)
+
+        def dynamics(t, y):
+            return -theta[0] * y + theta[1]
+
+        y0 = torch.tensor([1.0], dtype=torch.float64)
+
+        fisher = solve_ivp_sensitivity(
+            dynamics,
+            y0,
+            t_span=(0.0, 1.0),
+            params=[theta],
+            mode="fisher",
+        )
+
+        # Fisher should be (param_dim, param_dim)
+        assert fisher.shape == (2, 2)
+        assert torch.all(torch.isfinite(fisher))
+
+        # Fisher should be symmetric positive semi-definite
+        assert torch.allclose(fisher, fisher.T)
+        eigvals = torch.linalg.eigvalsh(fisher)
+        assert torch.all(eigvals >= -1e-10)  # Allow small numerical error
