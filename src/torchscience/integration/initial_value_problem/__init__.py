@@ -133,6 +133,9 @@ from torchscience.integration.initial_value_problem._midpoint import midpoint
 from torchscience.integration.initial_value_problem._runge_kutta_4 import (
     runge_kutta_4,
 )
+from torchscience.integration.initial_value_problem._second_order import (
+    solve_ivp_hvp,
+)
 from torchscience.integration.initial_value_problem._sensitivity import (
     solve_ivp_sensitivity,
 )
@@ -160,6 +163,7 @@ __all__ = [
     "ODESolution",
     "solve_ivp",
     "solve_ivp_batched",
+    "solve_ivp_hvp",
     "solve_ivp_sensitivity",
     # CNF utilities
     "cnf_dynamics",
