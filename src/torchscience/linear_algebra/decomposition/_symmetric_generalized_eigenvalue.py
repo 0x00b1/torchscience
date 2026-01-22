@@ -69,10 +69,10 @@ def symmetric_generalized_eigenvalue(
     try:
         L = torch.linalg.cholesky(b)
         # Solve L^{-1} A L^{-T} = C
-        # First: L^{-1} A
-        L_inv_A = torch.linalg.solve_triangular(L, a, upper=False)
-        # Then: (L^{-1} A) L^{-T} = L^{-1} A L^{-T}
-        C = torch.linalg.solve_triangular(L.mH, L_inv_A.mH, upper=True).mH
+        # First: Y = L^{-1} A (solve L Y = A)
+        Y = torch.linalg.solve_triangular(L, a, upper=False)
+        # Then: C = Y L^{-T} (solve C L^T = Y, i.e., L C^T = Y^T)
+        C = torch.linalg.solve_triangular(L, Y.mH, upper=False).mH
 
         # Standard eigenvalue problem
         eigenvalues, Y = torch.linalg.eigh(C)
