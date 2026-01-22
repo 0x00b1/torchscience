@@ -250,6 +250,49 @@ class _AdjointODEFunction(torch.autograd.Function):
         n_steps = adjoint_options.get("n_steps", 100)
         mixed_precision = adjoint_options.get("mixed_precision", False)
 
+        # Get gradient clipping options
+        gradient_clip = adjoint_options.get("gradient_clip", None)
+        gradient_clip_mode = adjoint_options.get(
+            "gradient_clip_mode", "norm"
+        )  # "norm" or "value"
+        clip_warned = [False]
+
+        # Validate gradient_clip_mode
+        if gradient_clip is not None and gradient_clip_mode not in (
+            "norm",
+            "value",
+        ):
+            raise ValueError(
+                f"Invalid gradient_clip_mode: {gradient_clip_mode}. "
+                f"Must be 'norm' or 'value'."
+            )
+
+        def clip_adjoint(a_val):
+            """Clip adjoint state to prevent explosion."""
+            if gradient_clip is None:
+                return a_val
+
+            if gradient_clip_mode == "norm":
+                a_norm = a_val.norm()
+                if a_norm > gradient_clip:
+                    if not clip_warned[0]:
+                        warnings.warn(
+                            f"Adjoint clipped: norm {a_norm:.2e} > {gradient_clip:.2e}",
+                            AdjointStabilityWarning,
+                        )
+                        clip_warned[0] = True
+                    return a_val * (gradient_clip / a_norm)
+            elif gradient_clip_mode == "value":
+                clipped = a_val.clamp(-gradient_clip, gradient_clip)
+                if not torch.equal(a_val, clipped) and not clip_warned[0]:
+                    warnings.warn(
+                        f"Adjoint values clipped to [-{gradient_clip}, {gradient_clip}]",
+                        AdjointStabilityWarning,
+                    )
+                    clip_warned[0] = True
+                return clipped
+            return a_val
+
         # Check for sparse Jacobian option
         sparsity = adjoint_options.get("sparsity_pattern")
         sparse_ctx = (
@@ -376,6 +419,9 @@ class _AdjointODEFunction(torch.autograd.Function):
                 # RK4 update
                 a = a + (dt / 6) * (k1 + 2 * k2 + 2 * k3 + k4)
 
+                # Apply gradient clipping
+                a = clip_adjoint(a)
+
                 # Check adjoint stability
                 _check_adjoint_stability(a, a_prev, t, dt, warned)
                 a_prev = a.clone()
@@ -394,6 +440,9 @@ class _AdjointODEFunction(torch.autograd.Function):
                 # Approximate: a_prev = a + dt * a^T @ (df/dy)
                 vjp_result = compute_vjp(t, a, y_at_t)
                 a = a + dt * vjp_result
+
+                # Apply gradient clipping
+                a = clip_adjoint(a)
 
                 # Check adjoint stability
                 _check_adjoint_stability(a, a_prev, t, dt, warned)
@@ -1534,6 +1583,12 @@ def adjoint(
               Handles stiff adjoint ODEs that arise from stiff forward problems.
         - 'n_steps': int, number of integration steps for fixed-step methods
           (rk4, euler, implicit). Default: 100. Ignored for 'adaptive' method.
+        - 'gradient_clip': float, optional. Threshold for clipping adjoint
+          gradients to prevent explosion in unstable/chaotic systems.
+          None (default) disables clipping.
+        - 'gradient_clip_mode': str, clipping mode. Options:
+            - 'norm': Rescale adjoint vector if norm exceeds threshold (default)
+            - 'value': Element-wise clamping to [-gradient_clip, gradient_clip]
 
     Returns
     -------

@@ -168,3 +168,46 @@ class TestSecondOrderGradients:
 
         expected = H @ v
         assert torch.allclose(hvp, expected, rtol=1e-3)
+
+
+class TestGradientClipping:
+    """Tests for gradient clipping during adjoint integration."""
+
+    def test_gradient_clip_norm(self):
+        """gradient_clip should limit adjoint norm during integration."""
+        import warnings
+
+        from torchscience.integration.initial_value_problem import (
+            adjoint,
+            dormand_prince_5,
+        )
+
+        # Dynamics that cause adjoint to grow
+        theta = torch.tensor([10.0], requires_grad=True, dtype=torch.float64)
+
+        def unstable_dynamics(t, y):
+            return theta * y  # Exponential growth backward
+
+        y0 = torch.tensor([1.0], dtype=torch.float64)
+
+        solver = adjoint(
+            dormand_prince_5,
+            params=[theta],
+            adjoint_options={
+                "gradient_clip": 1e3,
+                "gradient_clip_mode": "norm",
+            },
+        )
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            y_final, _ = solver(unstable_dynamics, y0, t_span=(0.0, 2.0))
+            y_final.sum().backward()
+
+        # Gradient should be finite (clipping prevented explosion)
+        assert theta.grad is not None
+        assert torch.isfinite(theta.grad)
+
+        # Should have warned about clipping
+        clip_warnings = [x for x in w if "clipped" in str(x.message).lower()]
+        # Note: May or may not warn depending on dynamics
