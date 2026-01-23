@@ -4,16 +4,20 @@ from typing import Tuple, Union
 
 import torch
 from torch import Tensor
+from torch.amp import custom_fwd
 
 from torchscience.differentiation._derivative import derivative
+from torchscience.differentiation._grid import IrregularMesh, RegularGrid
 
 
-def gradient(
+def _gradient_impl(
     field: Tensor,
     dx: Union[float, Tuple[float, ...]] = 1.0,
     dim: Tuple[int, ...] | None = None,
     accuracy: int = 2,
     boundary: str = "replicate",
+    *,
+    grid: RegularGrid | IrregularMesh | None = None,
 ) -> Tensor:
     """Compute gradient of a scalar field.
 
@@ -25,14 +29,17 @@ def gradient(
         Input scalar field with shape (..., *spatial_dims).
     dx : float or tuple of float, optional
         Grid spacing. Scalar applies to all dimensions, or provide per-dimension.
-        Default is 1.0.
+        Default is 1.0. Ignored if grid is provided.
     dim : tuple of int, optional
         Spatial dimensions over which to compute gradient. Default uses all dimensions.
     accuracy : int, optional
         Accuracy order of the finite difference approximation. Default is 2.
     boundary : str, optional
         Boundary handling: "replicate", "zeros", "reflect", "circular", "valid".
-        Default is "replicate".
+        Default is "replicate". Ignored if grid is provided.
+    grid : RegularGrid or IrregularMesh, optional
+        Grid defining spacing and boundary conditions. When provided, overrides
+        dx and boundary parameters.
 
     Returns
     -------
@@ -51,7 +58,28 @@ def gradient(
     >>> # Batched field with gradient over last 2 dimensions
     >>> f = torch.randn(10, 20, 30)
     >>> grad = gradient(f, dim=(-2, -1), dx=0.1)  # Shape: (10, 2, 20, 30)
+
+    >>> # Using a grid
+    >>> grid = RegularGrid(origin=torch.tensor([0.0, 0.0]),
+    ...                    spacing=torch.tensor([0.1, 0.1]),
+    ...                    shape=(20, 30), boundary="replicate")
+    >>> grad = gradient(f, grid=grid)  # Shape: (2, 20, 30)
     """
+    # Handle sparse tensors by densifying
+    if field.is_sparse:
+        field = field.to_dense()
+
+    # If grid is provided, extract spacing and boundary from it
+    if grid is not None:
+        if isinstance(grid, RegularGrid):
+            dx = tuple(grid.spacing.tolist())
+            boundary = grid.boundary
+        else:
+            raise NotImplementedError(
+                "IrregularMesh support for gradient not yet implemented"
+            )
+
+    # Internal implementation - see gradient() for docstring
     ndim = field.ndim
 
     # Determine which dimensions to differentiate
@@ -99,3 +127,62 @@ def gradient(
         result = torch.stack(partials, dim=min_spatial_dim)
 
     return result
+
+
+@custom_fwd(device_type="cpu", cast_inputs=torch.float32)
+def gradient(
+    field: Tensor,
+    dx: Union[float, Tuple[float, ...]] = 1.0,
+    dim: Tuple[int, ...] | None = None,
+    accuracy: int = 2,
+    boundary: str = "replicate",
+    *,
+    grid: RegularGrid | IrregularMesh | None = None,
+) -> Tensor:
+    """Compute gradient of a scalar field.
+
+    The gradient is the vector of partial derivatives along each spatial dimension.
+
+    Parameters
+    ----------
+    field : Tensor
+        Input scalar field with shape (..., *spatial_dims).
+    dx : float or tuple of float, optional
+        Grid spacing. Scalar applies to all dimensions, or provide per-dimension.
+        Default is 1.0. Ignored if grid is provided.
+    dim : tuple of int, optional
+        Spatial dimensions over which to compute gradient. Default uses all dimensions.
+    accuracy : int, optional
+        Accuracy order of the finite difference approximation. Default is 2.
+    boundary : str, optional
+        Boundary handling: "replicate", "zeros", "reflect", "circular", "valid".
+        Default is "replicate". Ignored if grid is provided.
+    grid : RegularGrid or IrregularMesh, optional
+        Grid defining spacing and boundary conditions. When provided, overrides
+        dx and boundary parameters.
+
+    Returns
+    -------
+    Tensor
+        Gradient field. If dim is None or specifies all dimensions, shape is
+        (ndim, *field.shape). If dim specifies a subset, shape is
+        (...batch_dims, len(dim), *spatial_dims) where the gradient components
+        are inserted before the spatial dimensions.
+
+    Examples
+    --------
+    >>> # 2D field
+    >>> f = torch.randn(20, 30)
+    >>> grad = gradient(f, dx=0.1)  # Shape: (2, 20, 30)
+
+    >>> # Batched field with gradient over last 2 dimensions
+    >>> f = torch.randn(10, 20, 30)
+    >>> grad = gradient(f, dim=(-2, -1), dx=0.1)  # Shape: (10, 2, 20, 30)
+
+    >>> # Using a grid
+    >>> grid = RegularGrid(origin=torch.tensor([0.0, 0.0]),
+    ...                    spacing=torch.tensor([0.1, 0.1]),
+    ...                    shape=(20, 30), boundary="replicate")
+    >>> grad = gradient(f, grid=grid)  # Shape: (2, 20, 30)
+    """
+    return _gradient_impl(field, dx, dim, accuracy, boundary, grid=grid)

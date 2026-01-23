@@ -4,16 +4,20 @@ from typing import Tuple, Union
 
 import torch
 from torch import Tensor
+from torch.amp import custom_fwd
 
 from torchscience.differentiation._derivative import derivative
+from torchscience.differentiation._grid import IrregularMesh, RegularGrid
 
 
-def hessian(
+def _hessian_impl(
     field: Tensor,
     dx: Union[float, Tuple[float, ...]] = 1.0,
     dim: Tuple[int, ...] | None = None,
     accuracy: int = 2,
     boundary: str = "replicate",
+    *,
+    grid: RegularGrid | IrregularMesh | None = None,
 ) -> Tensor:
     """Compute Hessian matrix of a scalar field.
 
@@ -26,14 +30,17 @@ def hessian(
         Input scalar field with shape (..., *spatial_dims).
     dx : float or tuple of float, optional
         Grid spacing. Scalar applies to all dimensions, or provide per-dimension.
-        Default is 1.0.
+        Default is 1.0. Ignored if grid is provided.
     dim : tuple of int, optional
         Spatial dimensions over which to compute Hessian. Default uses all dimensions.
     accuracy : int, optional
         Accuracy order of the finite difference approximation. Default is 2.
     boundary : str, optional
         Boundary handling: "replicate", "zeros", "reflect", "circular", "valid".
-        Default is "replicate".
+        Default is "replicate". Ignored if grid is provided.
+    grid : RegularGrid or IrregularMesh, optional
+        Grid defining spacing and boundary conditions. When provided, overrides
+        dx and boundary parameters.
 
     Returns
     -------
@@ -50,6 +57,19 @@ def hessian(
     >>> f = 2*X**2 + 3*X*Y + 4*Y**2
     >>> H = hessian(f, dx=0.05)  # Shape: (2, 2, 21, 21)
     """
+    # Handle sparse tensors by densifying
+    if field.is_sparse:
+        field = field.to_dense()
+
+    # If grid is provided, extract spacing and boundary from it
+    if grid is not None:
+        if isinstance(grid, RegularGrid):
+            dx = tuple(grid.spacing.tolist())
+            boundary = grid.boundary
+        else:
+            raise NotImplementedError(
+                "IrregularMesh support for hessian not yet implemented"
+            )
     ndim = field.ndim
 
     # Determine which dimensions to differentiate
@@ -119,3 +139,54 @@ def hessian(
     result = torch.stack(rows, dim=0)
 
     return result
+
+
+@custom_fwd(device_type="cpu", cast_inputs=torch.float32)
+def hessian(
+    field: Tensor,
+    dx: Union[float, Tuple[float, ...]] = 1.0,
+    dim: Tuple[int, ...] | None = None,
+    accuracy: int = 2,
+    boundary: str = "replicate",
+    *,
+    grid: RegularGrid | IrregularMesh | None = None,
+) -> Tensor:
+    """Compute Hessian matrix of a scalar field.
+
+    The Hessian is the matrix of all second partial derivatives:
+    H[i,j] = d^2f / (dx_i dx_j).
+
+    Parameters
+    ----------
+    field : Tensor
+        Input scalar field with shape (..., *spatial_dims).
+    dx : float or tuple of float, optional
+        Grid spacing. Scalar applies to all dimensions, or provide per-dimension.
+        Default is 1.0. Ignored if grid is provided.
+    dim : tuple of int, optional
+        Spatial dimensions over which to compute Hessian. Default uses all dimensions.
+    accuracy : int, optional
+        Accuracy order of the finite difference approximation. Default is 2.
+    boundary : str, optional
+        Boundary handling: "replicate", "zeros", "reflect", "circular", "valid".
+        Default is "replicate". Ignored if grid is provided.
+    grid : RegularGrid or IrregularMesh, optional
+        Grid defining spacing and boundary conditions. When provided, overrides
+        dx and boundary parameters.
+
+    Returns
+    -------
+    Tensor
+        Hessian field with shape (ndim, ndim, *field.shape) if dim is None,
+        or (len(dim), len(dim), *field.shape) if dim is specified.
+
+    Examples
+    --------
+    >>> # Hessian of 2x^2 + 3xy + 4y^2 is [[4, 3], [3, 8]]
+    >>> x = torch.linspace(0, 1, 21)
+    >>> y = torch.linspace(0, 1, 21)
+    >>> X, Y = torch.meshgrid(x, y, indexing="ij")
+    >>> f = 2*X**2 + 3*X*Y + 4*Y**2
+    >>> H = hessian(f, dx=0.05)  # Shape: (2, 2, 21, 21)
+    """
+    return _hessian_impl(field, dx, dim, accuracy, boundary, grid=grid)

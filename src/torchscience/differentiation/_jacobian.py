@@ -4,16 +4,20 @@ from typing import Tuple, Union
 
 import torch
 from torch import Tensor
+from torch.amp import custom_fwd
 
 from torchscience.differentiation._derivative import derivative
+from torchscience.differentiation._grid import IrregularMesh, RegularGrid
 
 
-def jacobian(
+def _jacobian_impl(
     vector_field: Tensor,
     dx: Union[float, Tuple[float, ...]] = 1.0,
     dim: Tuple[int, ...] | None = None,
     accuracy: int = 2,
     boundary: str = "replicate",
+    *,
+    grid: RegularGrid | IrregularMesh | None = None,
 ) -> Tensor:
     """Compute Jacobian matrix of a vector field.
 
@@ -27,7 +31,7 @@ def jacobian(
         number of vector components.
     dx : float or tuple of float, optional
         Grid spacing. Scalar applies to all dimensions, or provide per-dimension.
-        Default is 1.0.
+        Default is 1.0. Ignored if grid is provided.
     dim : tuple of int, optional
         Spatial dimensions over which to compute Jacobian. Default uses dimensions
         1, 2, ..., n after the component dimension.
@@ -35,7 +39,10 @@ def jacobian(
         Accuracy order of the finite difference approximation. Default is 2.
     boundary : str, optional
         Boundary handling: "replicate", "zeros", "reflect", "circular", "valid".
-        Default is "replicate".
+        Default is "replicate". Ignored if grid is provided.
+    grid : RegularGrid or IrregularMesh, optional
+        Grid defining spacing and boundary conditions. When provided, overrides
+        dx and boundary parameters.
 
     Returns
     -------
@@ -52,6 +59,19 @@ def jacobian(
     >>> V = torch.stack([2*X + 3*Y, 4*X + 5*Y], dim=0)  # Shape: (2, 21, 21)
     >>> J = jacobian(V, dx=0.05)  # Shape: (2, 2, 21, 21)
     """
+    # Handle sparse tensors by densifying
+    if vector_field.is_sparse:
+        vector_field = vector_field.to_dense()
+
+    # If grid is provided, extract spacing and boundary from it
+    if grid is not None:
+        if isinstance(grid, RegularGrid):
+            dx = tuple(grid.spacing.tolist())
+            boundary = grid.boundary
+        else:
+            raise NotImplementedError(
+                "IrregularMesh support for jacobian not yet implemented"
+            )
     ndim = vector_field.ndim
     n_components = vector_field.shape[0]
 
@@ -107,3 +127,56 @@ def jacobian(
     result = torch.stack(jacobian_rows, dim=0)
 
     return result
+
+
+@custom_fwd(device_type="cpu", cast_inputs=torch.float32)
+def jacobian(
+    vector_field: Tensor,
+    dx: Union[float, Tuple[float, ...]] = 1.0,
+    dim: Tuple[int, ...] | None = None,
+    accuracy: int = 2,
+    boundary: str = "replicate",
+    *,
+    grid: RegularGrid | IrregularMesh | None = None,
+) -> Tensor:
+    """Compute Jacobian matrix of a vector field.
+
+    The Jacobian is the matrix of all partial derivatives:
+    J[i, j] = dV_i / dx_j.
+
+    Parameters
+    ----------
+    vector_field : Tensor
+        Input vector field with shape (..., m, *spatial_dims) where m is the
+        number of vector components.
+    dx : float or tuple of float, optional
+        Grid spacing. Scalar applies to all dimensions, or provide per-dimension.
+        Default is 1.0. Ignored if grid is provided.
+    dim : tuple of int, optional
+        Spatial dimensions over which to compute Jacobian. Default uses dimensions
+        1, 2, ..., n after the component dimension.
+    accuracy : int, optional
+        Accuracy order of the finite difference approximation. Default is 2.
+    boundary : str, optional
+        Boundary handling: "replicate", "zeros", "reflect", "circular", "valid".
+        Default is "replicate". Ignored if grid is provided.
+    grid : RegularGrid or IrregularMesh, optional
+        Grid defining spacing and boundary conditions. When provided, overrides
+        dx and boundary parameters.
+
+    Returns
+    -------
+    Tensor
+        Jacobian field with shape (..., m, ndim, *spatial_dims) where m is the
+        number of components and ndim is the number of spatial dimensions.
+
+    Examples
+    --------
+    >>> # Jacobian of (2x + 3y, 4x + 5y) is [[2, 3], [4, 5]]
+    >>> x = torch.linspace(0, 1, 21)
+    >>> y = torch.linspace(0, 1, 21)
+    >>> X, Y = torch.meshgrid(x, y, indexing="ij")
+    >>> V = torch.stack([2*X + 3*Y, 4*X + 5*Y], dim=0)  # Shape: (2, 21, 21)
+    >>> J = jacobian(V, dx=0.05)  # Shape: (2, 2, 21, 21)
+    """
+    return _jacobian_impl(vector_field, dx, dim, accuracy, boundary, grid=grid)
