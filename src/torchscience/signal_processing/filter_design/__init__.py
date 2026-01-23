@@ -48,6 +48,7 @@ from ._freqs_ba import freqs_ba
 from ._freqs_zpk import freqs_zpk
 from ._iirnotch import iirnotch
 from ._iirpeak import iirpeak
+from ._lfilter import lfilter
 from ._lfilter_zi import lfilter_zi
 from ._lowpass_to_bandpass_zpk import lowpass_to_bandpass_zpk
 from ._lowpass_to_bandstop_zpk import lowpass_to_bandstop_zpk
@@ -60,6 +61,7 @@ from ._sos_normalize import sos_normalize
 from ._sos_sections_count import sos_sections_count
 from ._sos_to_ba import sos_to_ba
 from ._sos_to_zpk import sos_to_zpk
+from ._sosfilt import sosfilt
 from ._sosfilt_zi import sosfilt_zi
 from ._yule_walker import yule_walker
 from ._zpk_to_ba import zpk_to_ba
@@ -96,6 +98,7 @@ __all__ = [
     "remez",
     "iirnotch",
     "iirpeak",
+    "lfilter",
     "lfilter_zi",
     "minimum_phase",
     "savgol_coeffs",
@@ -118,6 +121,7 @@ __all__ = [
     "cascade_sos",
     "sos_normalize",
     "sos_sections_count",
+    "sosfilt",
     "sosfilt_zi",
     # Constants
     "Q_BUTTERWORTH",
