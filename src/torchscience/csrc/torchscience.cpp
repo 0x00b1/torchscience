@@ -359,6 +359,8 @@
 #include "autocast/linear_algebra/symmetric_generalized_eigenvalue.h"
 #include "cpu/linear_algebra/generalized_eigenvalue.h"
 #include "meta/linear_algebra/generalized_eigenvalue.h"
+#include "cpu/linear_algebra/schur_decomposition.h"
+#include "meta/linear_algebra/schur_decomposition.h"
 
 // pad
 #include "cpu/pad/pad.h"
@@ -1696,6 +1698,7 @@ TORCH_LIBRARY(torchscience, module) {
   // linear_algebra decomposition
   module.def("symmetric_generalized_eigenvalue(Tensor a, Tensor b) -> (Tensor, Tensor, Tensor)");
   module.def("generalized_eigenvalue(Tensor a, Tensor b) -> (Tensor, Tensor, Tensor, Tensor)");
+  module.def("schur_decomposition(Tensor a, str output='real') -> (Tensor, Tensor, Tensor, Tensor)");
 
   // morphology
   module.def("erosion(Tensor input, Tensor structuring_element, int[]? origin, int padding_mode) -> Tensor");
