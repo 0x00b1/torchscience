@@ -1,4 +1,5 @@
 from ._brent import brent
+from ._broyden import broyden
 from ._convergence import check_convergence, default_tolerances
 from ._differentiation import (
     compute_derivative,
@@ -15,6 +16,7 @@ from ._secant import secant
 
 __all__ = [
     "brent",
+    "broyden",
     "check_convergence",
     "compute_derivative",
     "compute_jacobian",
