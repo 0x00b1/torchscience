@@ -70,8 +70,8 @@ class TestJordanDecomposition:
 
         # Sort both for comparison (eigenvalues may be in different order)
         def sort_complex(t):
-            # Sort by real part, then imaginary part
-            idx = torch.argsort(t.real + 1j * t.imag * 1e-10)
+            # Sort by real part (sufficient for comparison)
+            idx = torch.argsort(t.real)
             return t[idx]
 
         torch.testing.assert_close(

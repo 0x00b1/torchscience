@@ -364,6 +364,12 @@
 #include "cpu/linear_algebra/polar_decomposition.h"
 #include "meta/linear_algebra/polar_decomposition.h"
 #include "autograd/linear_algebra/polar_decomposition.h"
+#include "cpu/linear_algebra/hessenberg.h"
+#include "meta/linear_algebra/hessenberg.h"
+#include "cpu/linear_algebra/generalized_schur.h"
+#include "meta/linear_algebra/generalized_schur.h"
+#include "cpu/linear_algebra/jordan_decomposition.h"
+#include "meta/linear_algebra/jordan_decomposition.h"
 
 // pad
 #include "cpu/pad/pad.h"
@@ -1703,6 +1709,9 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("generalized_eigenvalue(Tensor a, Tensor b) -> (Tensor, Tensor, Tensor, Tensor)");
   module.def("schur_decomposition(Tensor a, str output='real') -> (Tensor, Tensor, Tensor, Tensor)");
   module.def("polar_decomposition(Tensor a, str side='right') -> (Tensor, Tensor, Tensor)");
+  module.def("hessenberg(Tensor a) -> (Tensor, Tensor, Tensor)");
+  module.def("generalized_schur(Tensor a, Tensor b, str output='real') -> (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor)");
+  module.def("jordan_decomposition(Tensor a) -> (Tensor, Tensor, Tensor)");
 
   // morphology
   module.def("erosion(Tensor input, Tensor structuring_element, int[]? origin, int padding_mode) -> Tensor");

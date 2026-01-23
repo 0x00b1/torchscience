@@ -59,8 +59,8 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> hessenberg(
                 at::Tensor x = a_slice.slice(0, k + 1, n).slice(1, k, k + 1).squeeze(-1);
 
                 // Compute Householder vector v such that Hx = ||x|| e_1
-                at::Scalar x_norm = x.norm();
-                if (x_norm.toDouble() < tol) {
+                at::Tensor x_norm = x.norm();
+                if (x_norm.item<double>() < tol) {
                     continue;  // Skip if column is already zero
                 }
 
@@ -77,8 +77,8 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> hessenberg(
                 }
                 v[0] = v[0] + sign_x0 * x_norm;
 
-                at::Scalar v_norm = v.norm();
-                if (v_norm.toDouble() < tol) {
+                at::Tensor v_norm = v.norm();
+                if (v_norm.item<double>() < tol) {
                     continue;
                 }
                 v = v / v_norm;
