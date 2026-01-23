@@ -59,6 +59,10 @@ def _divergence_impl(
     >>> V = torch.stack([X, Y], dim=0)  # Shape: (2, 21, 21)
     >>> div = divergence(V, dx=0.05)  # Shape: (21, 21)
     """
+    # Handle sparse tensors by densifying
+    if vector_field.is_sparse:
+        vector_field = vector_field.to_dense()
+
     # If grid is provided, extract spacing and boundary from it
     if grid is not None:
         if isinstance(grid, RegularGrid):

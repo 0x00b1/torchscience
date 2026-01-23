@@ -57,6 +57,10 @@ def _derivative_impl(
     >>> df = derivative(f, dim=0, order=1, dx=0.05)  # df/dx = 2x
     >>> d2f = derivative(f, dim=0, order=2, dx=0.05)  # d^2f/dx^2 = 2
     """
+    # Handle sparse tensors by densifying
+    if field.is_sparse:
+        field = field.to_dense()
+
     # If grid is provided, extract spacing and boundary from it
     if grid is not None:
         if isinstance(grid, RegularGrid):

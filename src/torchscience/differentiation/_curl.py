@@ -59,6 +59,10 @@ def _curl_impl(
     ValueError
         If the vector field is not 3D (does not have exactly 3 components).
     """
+    # Handle sparse tensors by densifying
+    if vector_field.is_sparse:
+        vector_field = vector_field.to_dense()
+
     # If grid is provided, extract spacing and boundary from it
     if grid is not None:
         if isinstance(grid, RegularGrid):

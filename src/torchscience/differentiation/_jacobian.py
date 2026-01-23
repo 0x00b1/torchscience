@@ -59,6 +59,10 @@ def _jacobian_impl(
     >>> V = torch.stack([2*X + 3*Y, 4*X + 5*Y], dim=0)  # Shape: (2, 21, 21)
     >>> J = jacobian(V, dx=0.05)  # Shape: (2, 2, 21, 21)
     """
+    # Handle sparse tensors by densifying
+    if vector_field.is_sparse:
+        vector_field = vector_field.to_dense()
+
     # If grid is provided, extract spacing and boundary from it
     if grid is not None:
         if isinstance(grid, RegularGrid):

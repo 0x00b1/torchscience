@@ -65,6 +65,10 @@ def _gradient_impl(
     ...                    shape=(20, 30), boundary="replicate")
     >>> grad = gradient(f, grid=grid)  # Shape: (2, 20, 30)
     """
+    # Handle sparse tensors by densifying
+    if field.is_sparse:
+        field = field.to_dense()
+
     # If grid is provided, extract spacing and boundary from it
     if grid is not None:
         if isinstance(grid, RegularGrid):

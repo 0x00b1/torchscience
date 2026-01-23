@@ -51,6 +51,10 @@ def _biharmonic_impl(
     >>> f = torch.randn(20, 20)
     >>> biharm = biharmonic(f, dx=0.1)  # Shape: (20, 20)
     """
+    # Handle sparse tensors by densifying
+    if field.is_sparse:
+        field = field.to_dense()
+
     # If grid is provided, extract spacing and boundary from it
     if grid is not None:
         if isinstance(grid, RegularGrid):

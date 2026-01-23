@@ -55,6 +55,10 @@ def _laplacian_impl(
     >>> f = X**2 + Y**2
     >>> lap = laplacian(f, dx=0.05)  # Should be ~4
     """
+    # Handle sparse tensors by densifying
+    if field.is_sparse:
+        field = field.to_dense()
+
     # If grid is provided, extract spacing and boundary from it
     if grid is not None:
         if isinstance(grid, RegularGrid):

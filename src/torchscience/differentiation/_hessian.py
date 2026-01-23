@@ -57,6 +57,10 @@ def _hessian_impl(
     >>> f = 2*X**2 + 3*X*Y + 4*Y**2
     >>> H = hessian(f, dx=0.05)  # Shape: (2, 2, 21, 21)
     """
+    # Handle sparse tensors by densifying
+    if field.is_sparse:
+        field = field.to_dense()
+
     # If grid is provided, extract spacing and boundary from it
     if grid is not None:
         if isinstance(grid, RegularGrid):
