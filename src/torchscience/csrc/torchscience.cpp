@@ -352,6 +352,11 @@
 #include "autograd/polynomial/jacobi_polynomial_p/jacobi_polynomial_p_mulx.h"
 #include "autocast/polynomial/jacobi_polynomial_p/jacobi_polynomial_p_mulx.h"
 
+// pad
+#include "cpu/pad/pad.h"
+#include "meta/pad/pad.h"
+#include "autograd/pad/pad.h"
+
 // probability
 #include "cpu/probability/normal.h"
 #include "cpu/probability/chi2.h"
@@ -502,6 +507,7 @@
 #include "autocast/space_partitioning/kd_tree.h"
 #include "autocast/space_partitioning/k_nearest_neighbors.h"
 #include "autocast/space_partitioning/range_search.h"
+#include "autocast/pad/pad.h"
 
 #include "sparse/coo/cpu/optimization/test_functions.h"
 #include "sparse/coo/cpu/integral_transform/hilbert_transform.h"
@@ -1685,4 +1691,9 @@ TORCH_LIBRARY(torchscience, module) {
 
   module.def("dilation(Tensor input, Tensor structuring_element, int[]? origin, int padding_mode) -> Tensor");
   module.def("dilation_backward(Tensor grad_output, Tensor input, Tensor structuring_element, int[]? origin, int padding_mode) -> Tensor");
+
+  // pad
+  module.def("pad(Tensor input, int[] padding, str mode, float value, int[]? dim, int order, Tensor? out) -> Tensor");
+  module.def("pad_backward(Tensor grad_output, int[] input_shape, int[] padding, str mode, int[]? dim, int order) -> Tensor");
+  module.def("pad_backward_backward(Tensor grad_grad_input, int[] padding, str mode, int[]? dim, int order) -> Tensor");
 }
