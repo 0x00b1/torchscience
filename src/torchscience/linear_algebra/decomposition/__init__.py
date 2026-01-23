@@ -30,6 +30,10 @@ polar_decomposition
     Computes the polar decomposition A = UP (right) or A = PU (left) where
     U is unitary and P is positive semidefinite Hermitian.
 
+jordan_decomposition
+    Computes the Jordan decomposition A = PJP^{-1} where J is the Jordan
+    normal form. Does not support gradients (discontinuous).
+
 Result Types
 ------------
 GeneralizedEigenvalueResult
@@ -49,6 +53,9 @@ HessenbergResult
 
 PolarDecompositionResult
     Named tuple with U, P, info.
+
+JordanDecompositionResult
+    Named tuple with J, P, info.
 """
 
 from torchscience.linear_algebra.decomposition._generalized_eigenvalue import (
@@ -60,6 +67,9 @@ from torchscience.linear_algebra.decomposition._generalized_schur import (
 from torchscience.linear_algebra.decomposition._hessenberg import (
     hessenberg,
 )
+from torchscience.linear_algebra.decomposition._jordan_decomposition import (
+    jordan_decomposition,
+)
 from torchscience.linear_algebra.decomposition._polar_decomposition import (
     polar_decomposition,
 )
@@ -67,6 +77,7 @@ from torchscience.linear_algebra.decomposition._result_types import (
     GeneralizedEigenvalueResult,
     GeneralizedSchurResult,
     HessenbergResult,
+    JordanDecompositionResult,
     PolarDecompositionResult,
     SchurDecompositionResult,
     SymmetricGeneralizedEigenvalueResult,
@@ -82,12 +93,14 @@ __all__ = [
     "GeneralizedEigenvalueResult",
     "GeneralizedSchurResult",
     "HessenbergResult",
+    "JordanDecompositionResult",
     "PolarDecompositionResult",
     "SymmetricGeneralizedEigenvalueResult",
     "SchurDecompositionResult",
     "generalized_eigenvalue",
     "generalized_schur",
     "hessenberg",
+    "jordan_decomposition",
     "polar_decomposition",
     "schur_decomposition",
     "symmetric_generalized_eigenvalue",

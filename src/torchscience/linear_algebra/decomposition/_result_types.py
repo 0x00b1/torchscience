@@ -80,3 +80,22 @@ class PolarDecompositionResult(NamedTuple):
     U: Tensor  # (..., m, n) - Unitary factor
     P: Tensor  # (..., n, n) or (..., m, m) - Positive semidefinite factor
     info: Tensor  # (...) - int, convergence info
+
+
+class JordanDecompositionResult(NamedTuple):
+    """Result of Jordan decomposition A = PJP^{-1}.
+
+    Factors a square matrix into its Jordan normal form.
+
+    For diagonalizable matrices, J is the diagonal matrix of eigenvalues.
+    For defective matrices, J contains Jordan blocks with 1s on the superdiagonal.
+
+    Note: This decomposition does not support gradients as the Jordan form
+    is discontinuous with respect to matrix entries.
+    """
+
+    J: Tensor  # (..., n, n) - Jordan normal form (complex)
+    P: Tensor  # (..., n, n) - Similarity transformation matrix (complex)
+    info: (
+        Tensor  # (...) - int, 0 indicates success, 1 indicates near-defective
+    )
