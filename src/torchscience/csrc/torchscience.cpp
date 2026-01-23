@@ -142,6 +142,7 @@
 #include "cpu/information_theory/dual_total_correlation.h"
 #include "cpu/information_theory/interaction_information.h"
 #include "cpu/information_theory/coinformation.h"
+#include "cpu/information_theory/transfer_entropy.h"
 #include "cpu/space_partitioning/kd_tree.h"
 #include "cpu/space_partitioning/k_nearest_neighbors.h"
 #include "cpu/space_partitioning/range_search.h"
@@ -505,6 +506,7 @@
 #include "autograd/information_theory/dual_total_correlation.h"
 #include "autograd/information_theory/interaction_information.h"
 #include "autograd/information_theory/coinformation.h"
+#include "autograd/information_theory/transfer_entropy.h"
 #include "autograd/geometry/transform/reflect.h"
 #include "autograd/geometry/transform/refract.h"
 #include "autograd/geometry/transform/quaternion_multiply.h"
@@ -594,6 +596,7 @@
 #include "meta/information_theory/dual_total_correlation.h"
 #include "meta/information_theory/interaction_information.h"
 #include "meta/information_theory/coinformation.h"
+#include "meta/information_theory/transfer_entropy.h"
 #include "meta/space_partitioning/kd_tree.h"
 #include "meta/space_partitioning/k_nearest_neighbors.h"
 #include "meta/space_partitioning/range_search.h"
@@ -1423,6 +1426,10 @@ TORCH_LIBRARY(torchscience, module) {
   // Coinformation (N-variable generalization of interaction information)
   module.def("coinformation(Tensor joint, str input_type, str reduction, float? base) -> Tensor");
   module.def("coinformation_backward(Tensor grad_output, Tensor joint, str input_type, str reduction, float? base) -> Tensor");
+
+  // Transfer entropy
+  module.def("transfer_entropy(Tensor joint, str input_type, str reduction, float? base) -> Tensor");
+  module.def("transfer_entropy_backward(Tensor grad_output, Tensor joint, str input_type, str reduction, float? base) -> Tensor");
 
   // Renyi entropy
   module.def("renyi_entropy(Tensor p, float alpha, int dim, str input_type, str reduction, float? base) -> Tensor");

@@ -18,6 +18,7 @@ from ._renyi_divergence import renyi_divergence
 from ._renyi_entropy import renyi_entropy
 from ._shannon_entropy import shannon_entropy
 from ._total_correlation import total_correlation
+from ._transfer_entropy import transfer_entropy
 from ._tsallis_entropy import tsallis_entropy
 
 __all__ = [
@@ -39,5 +40,6 @@ __all__ = [
     "renyi_entropy",
     "shannon_entropy",
     "total_correlation",
+    "transfer_entropy",
     "tsallis_entropy",
 ]
