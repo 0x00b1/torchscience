@@ -49,6 +49,7 @@ from ._freqs_ba import freqs_ba
 from ._freqs_zpk import freqs_zpk
 from ._iirnotch import iirnotch
 from ._iirpeak import iirpeak
+from ._leaky_lms import leaky_lms
 from ._lfilter import lfilter
 from ._lfilter_zi import lfilter_zi
 from ._lms import lms
@@ -57,6 +58,7 @@ from ._lowpass_to_bandstop_zpk import lowpass_to_bandstop_zpk
 from ._lowpass_to_highpass_zpk import lowpass_to_highpass_zpk
 from ._lowpass_to_lowpass_zpk import lowpass_to_lowpass_zpk
 from ._minimum_phase import minimum_phase
+from ._nlms import nlms
 from ._remez import remez
 from ._savgol_coeffs import savgol_coeffs
 from ._sos_normalize import sos_normalize
@@ -102,10 +104,12 @@ __all__ = [
     "remez",
     "iirnotch",
     "iirpeak",
+    "leaky_lms",
     "lfilter",
     "lfilter_zi",
     "lms",
     "minimum_phase",
+    "nlms",
     "savgol_coeffs",
     "yule_walker",
     # Transforms
