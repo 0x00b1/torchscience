@@ -34,6 +34,9 @@ from torchscience.differentiation._line_integral import (
     circulation,
     line_integral,
 )
+from torchscience.differentiation._material_derivative import (
+    material_derivative,
+)
 from torchscience.differentiation._path import Path, Surface
 from torchscience.differentiation._q_criterion import q_criterion
 from torchscience.differentiation._richardson import richardson_extrapolation
@@ -81,6 +84,7 @@ __all__ = [
     "laplacian",
     "laplacian_stencil",
     "line_integral",
+    "material_derivative",
     "q_criterion",
     "richardson_extrapolation",
     "spectral_derivative",
