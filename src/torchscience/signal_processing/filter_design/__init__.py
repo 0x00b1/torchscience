@@ -41,6 +41,7 @@ from ._exceptions import (
     SOSNormalizationError,
     SpecificationError,
 )
+from ._fftfilt import fftfilt
 from ._firwin import firwin
 from ._firwin2 import firwin2
 from ._freqs_ba import freqs_ba
@@ -85,6 +86,7 @@ __all__ = [
     "chebyshev_type_2_analog",
     "elliptic_analog",
     # FIR design functions
+    "fftfilt",
     "firwin",
     "firwin2",
     "freqs_ba",
