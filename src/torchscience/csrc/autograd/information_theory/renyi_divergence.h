@@ -3,11 +3,135 @@
 
 #include <string>
 #include <tuple>
+#include <vector>
 
-#include <torch/extension.h>
+#include <ATen/core/Tensor.h>
+#include <torch/autograd.h>
+#include <torch/library.h>
 #include <c10/util/Optional.h>
 
 namespace torchscience::autograd::information_theory {
+
+/**
+ * Autograd Function for Renyi divergence backward pass.
+ * Enables second-order gradients by dispatching to backward_backward.
+ */
+class RenyiDivergenceBackward
+    : public torch::autograd::Function<RenyiDivergenceBackward> {
+public:
+    static torch::autograd::variable_list forward(
+        torch::autograd::AutogradContext* ctx,
+        const at::Tensor& grad_output,
+        const at::Tensor& p,
+        const at::Tensor& q,
+        double alpha,
+        int64_t dim,
+        const std::string& input_type,
+        const std::string& reduction,
+        c10::optional<double> base,
+        bool p_requires_grad,
+        bool q_requires_grad
+    ) {
+        ctx->save_for_backward({grad_output, p, q});
+        ctx->saved_data["alpha"] = alpha;
+        ctx->saved_data["dim"] = dim;
+        ctx->saved_data["input_type"] = input_type;
+        ctx->saved_data["reduction"] = reduction;
+        ctx->saved_data["has_base"] = base.has_value();
+        ctx->saved_data["base"] = base.has_value() ? base.value() : 0.0;
+        ctx->saved_data["p_requires_grad"] = p_requires_grad;
+        ctx->saved_data["q_requires_grad"] = q_requires_grad;
+
+        at::AutoDispatchBelowAutograd guard;
+
+        auto result = c10::Dispatcher::singleton()
+            .findSchemaOrThrow("torchscience::renyi_divergence_backward", "")
+            .typed<std::tuple<at::Tensor, at::Tensor>(
+                const at::Tensor&,
+                const at::Tensor&,
+                const at::Tensor&,
+                double,
+                int64_t,
+                const std::string&,
+                const std::string&,
+                c10::optional<double>,
+                bool
+            )>()
+            .call(grad_output, p, q, alpha, dim, input_type, reduction, base, false);
+
+        return {std::get<0>(result), std::get<1>(result)};
+    }
+
+    static torch::autograd::variable_list backward(
+        torch::autograd::AutogradContext* ctx,
+        const torch::autograd::variable_list& grad_outputs
+    ) {
+        const torch::autograd::variable_list saved = ctx->get_saved_variables();
+        at::Tensor grad_output = saved[0];
+        at::Tensor p = saved[1];
+        at::Tensor q = saved[2];
+
+        double alpha = ctx->saved_data["alpha"].toDouble();
+        int64_t dim = ctx->saved_data["dim"].toInt();
+        std::string input_type = ctx->saved_data["input_type"].toStringRef();
+        std::string reduction = ctx->saved_data["reduction"].toStringRef();
+        bool has_base = ctx->saved_data["has_base"].toBool();
+        double base_val = ctx->saved_data["base"].toDouble();
+        c10::optional<double> base = has_base ? c10::optional<double>(base_val) : c10::nullopt;
+        bool p_requires_grad = ctx->saved_data["p_requires_grad"].toBool();
+        bool q_requires_grad = ctx->saved_data["q_requires_grad"].toBool();
+
+        at::Tensor gg_p = grad_outputs[0];
+        at::Tensor gg_q = grad_outputs[1];
+
+        if ((!gg_p.defined() || !p_requires_grad) &&
+            (!gg_q.defined() || !q_requires_grad)) {
+            return {
+                at::Tensor(),  // grad_grad_output
+                at::Tensor(),  // grad_p
+                at::Tensor(),  // grad_q
+                at::Tensor(),  // grad_alpha
+                at::Tensor(),  // grad_dim
+                at::Tensor(),  // grad_input_type
+                at::Tensor(),  // grad_reduction
+                at::Tensor(),  // grad_base
+                at::Tensor(),  // grad_p_requires_grad
+                at::Tensor()   // grad_q_requires_grad
+            };
+        }
+
+        at::AutoDispatchBelowAutograd guard;
+
+        auto result = c10::Dispatcher::singleton()
+            .findSchemaOrThrow("torchscience::renyi_divergence_backward_backward", "")
+            .typed<std::tuple<at::Tensor, at::Tensor, at::Tensor>(
+                const at::Tensor&,
+                const at::Tensor&,
+                const at::Tensor&,
+                const at::Tensor&,
+                const at::Tensor&,
+                double,
+                int64_t,
+                const std::string&,
+                const std::string&,
+                c10::optional<double>
+            )>()
+            .call(gg_p, gg_q, grad_output, p, q, alpha, dim, input_type, reduction, base);
+
+        return {
+            std::get<0>(result),  // grad_grad_output
+            std::get<1>(result),  // grad_p
+            std::get<2>(result),  // grad_q
+            at::Tensor(),         // grad_alpha
+            at::Tensor(),         // grad_dim
+            at::Tensor(),         // grad_input_type
+            at::Tensor(),         // grad_reduction
+            at::Tensor(),         // grad_base
+            at::Tensor(),         // grad_p_requires_grad
+            at::Tensor()          // grad_q_requires_grad
+        };
+    }
+};
 
 /**
  * Autograd Function for Renyi divergence.
@@ -98,26 +222,28 @@ public:
             };
         }
 
-        at::AutoDispatchBelowAutograd guard;
+        if (!grad_output.defined()) {
+            return {
+                at::Tensor(),  // grad_p
+                at::Tensor(),  // grad_q
+                at::Tensor(),  // grad_alpha
+                at::Tensor(),  // grad_dim
+                at::Tensor(),  // grad_input_type
+                at::Tensor(),  // grad_reduction
+                at::Tensor(),  // grad_base
+                at::Tensor()   // grad_pairwise
+            };
+        }
 
-        auto [grad_p, grad_q] = c10::Dispatcher::singleton()
-            .findSchemaOrThrow("torchscience::renyi_divergence_backward", "")
-            .typed<std::tuple<at::Tensor, at::Tensor>(
-                const at::Tensor&,
-                const at::Tensor&,
-                const at::Tensor&,
-                double,
-                int64_t,
-                const std::string&,
-                const std::string&,
-                c10::optional<double>,
-                bool
-            )>()
-            .call(grad_output, p, q, alpha, dim, input_type, reduction, base, pairwise);
+        // Use the backward function class to enable second-order gradients
+        auto grads = RenyiDivergenceBackward::apply(
+            grad_output, p, q, alpha, dim, input_type, reduction, base,
+            p_requires_grad, q_requires_grad
+        );
 
         return {
-            p_requires_grad ? grad_p : at::Tensor(),
-            q_requires_grad ? grad_q : at::Tensor(),
+            p_requires_grad ? grads[0] : at::Tensor(),
+            q_requires_grad ? grads[1] : at::Tensor(),
             at::Tensor(),  // grad_alpha (not differentiable)
             at::Tensor(),  // grad_dim (not differentiable)
             at::Tensor(),  // grad_input_type (not differentiable)
@@ -154,8 +280,27 @@ inline at::Tensor renyi_divergence(
     return RenyiDivergence::apply(p, q, alpha, dim, input_type, reduction, base, pairwise);
 }
 
+inline std::tuple<at::Tensor, at::Tensor> renyi_divergence_backward(
+    const at::Tensor& grad_output,
+    const at::Tensor& p,
+    const at::Tensor& q,
+    double alpha,
+    int64_t dim,
+    const std::string& input_type,
+    const std::string& reduction,
+    c10::optional<double> base,
+    bool pairwise
+) {
+    auto result = RenyiDivergenceBackward::apply(
+        grad_output, p, q, alpha, dim, input_type, reduction, base,
+        p.requires_grad(), q.requires_grad()
+    );
+    return std::make_tuple(result[0], result[1]);
+}
+
 }  // namespace torchscience::autograd::information_theory
 
-TORCH_LIBRARY_IMPL(torchscience, Autograd, module) {
-    module.impl("renyi_divergence", &torchscience::autograd::information_theory::renyi_divergence);
+TORCH_LIBRARY_IMPL(torchscience, Autograd, m) {
+    m.impl("renyi_divergence", &torchscience::autograd::information_theory::renyi_divergence);
+    m.impl("renyi_divergence_backward", &torchscience::autograd::information_theory::renyi_divergence_backward);
 }
