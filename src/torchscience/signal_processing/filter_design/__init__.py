@@ -44,6 +44,7 @@ from ._lowpass_to_bandpass_zpk import lowpass_to_bandpass_zpk
 from ._lowpass_to_bandstop_zpk import lowpass_to_bandstop_zpk
 from ._lowpass_to_highpass_zpk import lowpass_to_highpass_zpk
 from ._lowpass_to_lowpass_zpk import lowpass_to_lowpass_zpk
+from ._savgol_coeffs import savgol_coeffs
 from ._sos_normalize import sos_normalize
 from ._sos_sections_count import sos_sections_count
 from ._sos_to_ba import sos_to_ba
@@ -71,6 +72,7 @@ __all__ = [
     "firwin2",
     "iirnotch",
     "iirpeak",
+    "savgol_coeffs",
     # Transforms
     "bilinear_transform_ba",
     "bilinear_transform_zpk",
