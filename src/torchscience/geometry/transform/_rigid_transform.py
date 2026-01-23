@@ -518,3 +518,189 @@ def rigid_transform_slerp(
     ) * t1.translation + alpha_expanded * t2.translation
 
     return RigidTransform(rotation=rotation, translation=translation)
+
+
+def rigid_transform_to_dual_quaternion(t: RigidTransform) -> Tensor:
+    """Convert rigid transform to dual quaternion representation.
+
+    A dual quaternion is a compact 8-dimensional representation of SE(3) rigid
+    body transformations, consisting of a real quaternion (rotation) and a dual
+    quaternion (encoding translation).
+
+    The dual quaternion is computed as:
+
+    .. math::
+
+        \\hat{q} = (q_r, q_d)
+
+    where:
+    - :math:`q_r` is the rotation quaternion (the real part)
+    - :math:`q_d = \\frac{1}{2} q_t \\cdot q_r` where :math:`q_t = (0, t)` is the
+      pure quaternion formed from the translation vector
+
+    Parameters
+    ----------
+    t : RigidTransform
+        Rigid transform to convert.
+
+    Returns
+    -------
+    Tensor
+        Dual quaternion, shape (..., 8) where:
+        - [..., :4] is the real part (rotation quaternion, wxyz convention)
+        - [..., 4:] is the dual part
+
+    Notes
+    -----
+    - Dual quaternions provide a singularity-free representation of SE(3).
+    - They are commonly used in skeletal animation, robotics, and
+      smooth interpolation of rigid body motions.
+    - The real part is always a unit quaternion for valid SE(3) transforms.
+    - Uses wxyz convention for both the real and dual quaternion parts.
+
+    See Also
+    --------
+    dual_quaternion_to_rigid_transform : Convert dual quaternion to rigid transform.
+    rigid_transform_to_matrix : Convert to 4x4 matrix representation.
+
+    References
+    ----------
+    .. [1] Kenwright, Ben. "A Beginners Guide to Dual-Quaternions."
+           Conference on Computer Graphics, Visualization and Computer Vision, 2012.
+    .. [2] https://en.wikipedia.org/wiki/Dual_quaternion
+
+    Examples
+    --------
+    Identity transform gives [1,0,0,0, 0,0,0,0]:
+
+    >>> identity = rigid_transform_identity()
+    >>> rigid_transform_to_dual_quaternion(identity)
+    tensor([1., 0., 0., 0., 0., 0., 0., 0.])
+
+    Pure translation (t = [2, 4, 6]):
+
+    >>> from torchscience.geometry.transform import quaternion
+    >>> q = quaternion(torch.tensor([1.0, 0.0, 0.0, 0.0]))
+    >>> transform = rigid_transform(q, torch.tensor([2.0, 4.0, 6.0]))
+    >>> dq = rigid_transform_to_dual_quaternion(transform)
+    >>> dq[:4]  # Real part: identity rotation
+    tensor([1., 0., 0., 0.])
+    >>> dq[4:]  # Dual part: (0, t/2)
+    tensor([0., 1., 2., 3.])
+    """
+    # Get the rotation quaternion (real part)
+    q_r = t.rotation.wxyz  # (..., 4)
+
+    # Create pure quaternion from translation: q_t = (0, translation)
+    # Shape: (..., 4) with w=0
+    batch_shape = t.translation.shape[:-1]
+    q_t = torch.zeros(
+        (*batch_shape, 4),
+        device=t.translation.device,
+        dtype=t.translation.dtype,
+    )
+    q_t[..., 1:] = t.translation  # (0, tx, ty, tz)
+
+    # Compute dual part: q_d = (1/2) * q_t * q_r
+    # Using quaternion multiplication
+    q_t_quat = Quaternion(wxyz=q_t)
+    q_r_quat = t.rotation
+    q_d = quaternion_multiply(q_t_quat, q_r_quat).wxyz * 0.5
+
+    # Concatenate real and dual parts
+    return torch.cat([q_r, q_d], dim=-1)
+
+
+def dual_quaternion_to_rigid_transform(dq: Tensor) -> RigidTransform:
+    """Convert dual quaternion to rigid transform.
+
+    Extracts the rotation and translation from an 8-dimensional dual quaternion
+    representation of an SE(3) transform.
+
+    The conversion is:
+
+    .. math::
+
+        q_r = \\hat{q}_{real}
+
+        t = 2 \\cdot q_d \\cdot q_r^*
+
+    where :math:`q_r^*` is the conjugate of the rotation quaternion.
+
+    Parameters
+    ----------
+    dq : Tensor
+        Dual quaternion, shape (..., 8) where:
+        - [..., :4] is the real part (rotation quaternion, wxyz convention)
+        - [..., 4:] is the dual part
+
+    Returns
+    -------
+    RigidTransform
+        Rigid transform with extracted rotation and translation.
+
+    Raises
+    ------
+    ValueError
+        If dq does not have last dimension 8.
+
+    Notes
+    -----
+    - The real part is expected to be a unit quaternion for valid SE(3) transforms.
+    - Uses wxyz convention for both the real and dual quaternion parts.
+    - The extracted translation is the imaginary part of 2 * q_d * conj(q_r).
+
+    See Also
+    --------
+    rigid_transform_to_dual_quaternion : Convert rigid transform to dual quaternion.
+    rigid_transform_from_matrix : Convert from 4x4 matrix representation.
+
+    References
+    ----------
+    .. [1] Kenwright, Ben. "A Beginners Guide to Dual-Quaternions."
+           Conference on Computer Graphics, Visualization and Computer Vision, 2012.
+    .. [2] https://en.wikipedia.org/wiki/Dual_quaternion
+
+    Examples
+    --------
+    Identity dual quaternion:
+
+    >>> dq = torch.tensor([1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+    >>> transform = dual_quaternion_to_rigid_transform(dq)
+    >>> transform.rotation.wxyz
+    tensor([1., 0., 0., 0.])
+    >>> transform.translation
+    tensor([0., 0., 0.])
+
+    Dual quaternion with translation:
+
+    >>> dq = torch.tensor([1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 3.0])
+    >>> transform = dual_quaternion_to_rigid_transform(dq)
+    >>> transform.translation
+    tensor([2., 4., 6.])
+    """
+    if dq.shape[-1] != 8:
+        raise ValueError(
+            f"dual_quaternion_to_rigid_transform: dq must have last dimension 8, "
+            f"got {dq.shape[-1]}"
+        )
+
+    # Extract real and dual parts
+    q_r = dq[..., :4]  # Rotation quaternion (real part)
+    q_d = dq[..., 4:]  # Dual part
+
+    # Create Quaternion objects
+    rotation = Quaternion(wxyz=q_r)
+
+    # Compute translation: t = 2 * q_d * conj(q_r)
+    # conj(q_r) for unit quaternion is just the inverse
+    q_r_inv = quaternion_inverse(rotation)
+
+    # Multiply: 2 * q_d * q_r_inv
+    q_d_quat = Quaternion(wxyz=q_d)
+    t_quat = quaternion_multiply(q_d_quat, q_r_inv)
+
+    # Extract translation from imaginary part (xyz) and scale by 2
+    translation = t_quat.wxyz[..., 1:] * 2.0
+
+    return RigidTransform(rotation=rotation, translation=translation)

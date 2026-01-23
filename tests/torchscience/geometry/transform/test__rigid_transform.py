@@ -13,6 +13,7 @@ from torchscience.geometry.transform import (
 )
 from torchscience.geometry.transform._rigid_transform import (
     RigidTransform,
+    dual_quaternion_to_rigid_transform,
     rigid_transform,
     rigid_transform_apply,
     rigid_transform_apply_vector,
@@ -21,6 +22,7 @@ from torchscience.geometry.transform._rigid_transform import (
     rigid_transform_identity,
     rigid_transform_inverse,
     rigid_transform_slerp,
+    rigid_transform_to_dual_quaternion,
     rigid_transform_to_matrix,
 )
 
@@ -846,3 +848,302 @@ class TestRigidTransformIntegration:
         )
         expected = rotated + t
         assert torch.allclose(result_torch, expected, atol=1e-6)
+
+
+class TestRigidTransformToDualQuaternion:
+    """Tests for rigid_transform_to_dual_quaternion."""
+
+    def test_identity_dual_quaternion(self):
+        """Identity transform gives dual quaternion [1,0,0,0, 0,0,0,0]."""
+        identity = rigid_transform_identity()
+        dq = rigid_transform_to_dual_quaternion(identity)
+
+        expected = torch.tensor([1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+        assert dq.shape == (8,)
+        assert torch.allclose(dq, expected, atol=1e-5)
+
+    def test_pure_translation(self):
+        """Pure translation: q_r = identity, q_d = (0, t/2)."""
+        identity_rot = quaternion(torch.tensor([1.0, 0.0, 0.0, 0.0]))
+        translation = torch.tensor([2.0, 4.0, 6.0])
+        transform = rigid_transform(identity_rot, translation)
+
+        dq = rigid_transform_to_dual_quaternion(transform)
+
+        # Real part should be identity
+        assert torch.allclose(
+            dq[..., :4], torch.tensor([1.0, 0.0, 0.0, 0.0]), atol=1e-5
+        )
+
+        # Dual part: q_d = (1/2) * q_t * q_r where q_t = (0, t)
+        # For identity rotation: q_d = (0, t/2) = (0, 1, 2, 3)
+        expected_dual = torch.tensor([0.0, 1.0, 2.0, 3.0])
+        assert torch.allclose(dq[..., 4:], expected_dual, atol=1e-5)
+
+    def test_pure_rotation(self):
+        """Pure rotation: q_d should be zero (no translation)."""
+        # 90 degrees around z-axis
+        q = quaternion(
+            torch.tensor(
+                [math.cos(math.pi / 4), 0.0, 0.0, math.sin(math.pi / 4)]
+            )
+        )
+        transform = rigid_transform(q, torch.zeros(3))
+
+        dq = rigid_transform_to_dual_quaternion(transform)
+
+        # Real part should be the rotation quaternion
+        assert torch.allclose(dq[..., :4], q.wxyz, atol=1e-5)
+
+        # Dual part should be zero (no translation)
+        assert torch.allclose(dq[..., 4:], torch.zeros(4), atol=1e-5)
+
+    def test_rotation_and_translation(self):
+        """Combined rotation and translation."""
+        # 90 degrees around z-axis
+        q = quaternion(
+            torch.tensor(
+                [math.cos(math.pi / 4), 0.0, 0.0, math.sin(math.pi / 4)]
+            )
+        )
+        t = torch.tensor([2.0, 4.0, 6.0])
+        transform = rigid_transform(q, t)
+
+        dq = rigid_transform_to_dual_quaternion(transform)
+
+        # Real part should be the rotation quaternion
+        assert torch.allclose(dq[..., :4], q.wxyz, atol=1e-5)
+
+        # Verify the output has correct shape
+        assert dq.shape == (8,)
+
+    def test_batch(self):
+        """Batched dual quaternion conversion."""
+        q = quaternion_normalize(quaternion(torch.randn(10, 4)))
+        t = torch.randn(10, 3)
+        transform = rigid_transform(q, t)
+
+        dq = rigid_transform_to_dual_quaternion(transform)
+
+        assert dq.shape == (10, 8)
+
+    def test_multi_batch(self):
+        """Multi-dimensional batch conversion."""
+        q = quaternion_normalize(quaternion(torch.randn(5, 3, 4)))
+        t = torch.randn(5, 3, 3)
+        transform = rigid_transform(q, t)
+
+        dq = rigid_transform_to_dual_quaternion(transform)
+
+        assert dq.shape == (5, 3, 8)
+
+
+class TestDualQuaternionToRigidTransform:
+    """Tests for dual_quaternion_to_rigid_transform."""
+
+    def test_identity_dual_quaternion(self):
+        """Identity dual quaternion [1,0,0,0, 0,0,0,0] gives identity transform."""
+        dq = torch.tensor([1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+        transform = dual_quaternion_to_rigid_transform(dq)
+
+        assert torch.allclose(
+            transform.rotation.wxyz,
+            torch.tensor([1.0, 0.0, 0.0, 0.0]),
+            atol=1e-5,
+        )
+        assert torch.allclose(transform.translation, torch.zeros(3), atol=1e-5)
+
+    def test_pure_translation(self):
+        """Dual quaternion with identity rotation and translation."""
+        # q_r = identity, q_d = (0, t/2) for translation t = (2, 4, 6)
+        dq = torch.tensor([1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 3.0])
+        transform = dual_quaternion_to_rigid_transform(dq)
+
+        assert torch.allclose(
+            transform.rotation.wxyz,
+            torch.tensor([1.0, 0.0, 0.0, 0.0]),
+            atol=1e-5,
+        )
+        expected_translation = torch.tensor([2.0, 4.0, 6.0])
+        assert torch.allclose(
+            transform.translation, expected_translation, atol=1e-5
+        )
+
+    def test_pure_rotation(self):
+        """Dual quaternion with rotation only (zero dual part)."""
+        # 90 degrees around z-axis
+        q_r = torch.tensor(
+            [math.cos(math.pi / 4), 0.0, 0.0, math.sin(math.pi / 4)]
+        )
+        q_d = torch.zeros(4)
+        dq = torch.cat([q_r, q_d])
+
+        transform = dual_quaternion_to_rigid_transform(dq)
+
+        assert torch.allclose(transform.rotation.wxyz, q_r, atol=1e-5)
+        assert torch.allclose(transform.translation, torch.zeros(3), atol=1e-5)
+
+    def test_batch(self):
+        """Batched dual quaternion conversion."""
+        # Create batch of dual quaternions
+        q_r = torch.randn(10, 4)
+        q_r = q_r / torch.linalg.norm(q_r, dim=-1, keepdim=True)
+        q_d = torch.randn(10, 4)
+        dq = torch.cat([q_r, q_d], dim=-1)
+
+        transform = dual_quaternion_to_rigid_transform(dq)
+
+        assert transform.rotation.wxyz.shape == (10, 4)
+        assert transform.translation.shape == (10, 3)
+
+    def test_invalid_shape(self):
+        """Raise error for wrong input shape."""
+        with pytest.raises(ValueError, match="8"):
+            dual_quaternion_to_rigid_transform(torch.randn(6))
+
+        with pytest.raises(ValueError, match="8"):
+            dual_quaternion_to_rigid_transform(torch.randn(10, 4))
+
+
+class TestDualQuaternionRoundtrip:
+    """Tests for roundtrip conversions between rigid transform and dual quaternion."""
+
+    def test_transform_to_dq_to_transform(self):
+        """Roundtrip: transform -> dual quaternion -> transform."""
+        q = quaternion_normalize(
+            quaternion(torch.tensor([0.5, 0.5, 0.5, 0.5]))
+        )
+        t = torch.tensor([1.0, 2.0, 3.0])
+        original = rigid_transform(q, t)
+
+        # Convert to dual quaternion and back
+        dq = rigid_transform_to_dual_quaternion(original)
+        recovered = dual_quaternion_to_rigid_transform(dq)
+
+        # Check rotation matches (or negation)
+        assert torch.allclose(
+            recovered.rotation.wxyz, q.wxyz, atol=1e-5
+        ) or torch.allclose(recovered.rotation.wxyz, -q.wxyz, atol=1e-5)
+
+        # Check translation matches
+        assert torch.allclose(recovered.translation, t, atol=1e-5)
+
+    def test_batch_roundtrip(self):
+        """Batched roundtrip conversion."""
+        q = quaternion_normalize(quaternion(torch.randn(10, 4)))
+        t = torch.randn(10, 3)
+        original = rigid_transform(q, t)
+
+        dq = rigid_transform_to_dual_quaternion(original)
+        recovered = dual_quaternion_to_rigid_transform(dq)
+
+        # Check translations match
+        assert torch.allclose(recovered.translation, t, atol=1e-5)
+
+        # Check rotations produce same effect
+        test_point = torch.randn(3)
+        original_applied = rigid_transform_apply(original, test_point)
+        recovered_applied = rigid_transform_apply(recovered, test_point)
+        assert torch.allclose(original_applied, recovered_applied, atol=1e-5)
+
+    def test_identity_roundtrip(self):
+        """Identity transform roundtrip."""
+        identity = rigid_transform_identity()
+        dq = rigid_transform_to_dual_quaternion(identity)
+        recovered = dual_quaternion_to_rigid_transform(dq)
+
+        assert torch.allclose(
+            recovered.rotation.wxyz,
+            torch.tensor([1.0, 0.0, 0.0, 0.0]),
+            atol=1e-5,
+        )
+        assert torch.allclose(recovered.translation, torch.zeros(3), atol=1e-5)
+
+    def test_pure_translation_roundtrip(self):
+        """Pure translation roundtrip."""
+        identity_rot = quaternion(torch.tensor([1.0, 0.0, 0.0, 0.0]))
+        t = torch.tensor([1.0, 2.0, 3.0])
+        original = rigid_transform(identity_rot, t)
+
+        dq = rigid_transform_to_dual_quaternion(original)
+        recovered = dual_quaternion_to_rigid_transform(dq)
+
+        assert torch.allclose(recovered.translation, t, atol=1e-5)
+
+    def test_various_rotations_roundtrip(self):
+        """Roundtrip for various rotation angles."""
+        angles = [
+            0.0,
+            math.pi / 6,
+            math.pi / 4,
+            math.pi / 3,
+            math.pi / 2,
+            math.pi,
+        ]
+
+        for angle in angles:
+            # Rotation around z-axis
+            q = quaternion(
+                torch.tensor(
+                    [math.cos(angle / 2), 0.0, 0.0, math.sin(angle / 2)]
+                )
+            )
+            t = torch.tensor([1.0, 2.0, 3.0])
+            original = rigid_transform(q, t)
+
+            dq = rigid_transform_to_dual_quaternion(original)
+            recovered = dual_quaternion_to_rigid_transform(dq)
+
+            # Verify transformation effect is preserved
+            test_point = torch.tensor([1.0, 0.0, 0.0])
+            original_result = rigid_transform_apply(original, test_point)
+            recovered_result = rigid_transform_apply(recovered, test_point)
+            assert torch.allclose(
+                original_result, recovered_result, atol=1e-5
+            ), f"Failed for angle {angle}"
+
+
+class TestDualQuaternionGradients:
+    """Tests for dual quaternion gradient computation."""
+
+    def test_to_dual_quaternion_gradcheck(self):
+        """Gradient check for rigid_transform_to_dual_quaternion."""
+        q = torch.randn(4, dtype=torch.float64)
+        q = q / torch.linalg.norm(q)
+        q = q.clone().detach().requires_grad_(True)
+        t = torch.randn(3, dtype=torch.float64, requires_grad=True)
+
+        def to_dq_fn(q_val, t_val):
+            transform = rigid_transform(Quaternion(wxyz=q_val), t_val)
+            return rigid_transform_to_dual_quaternion(transform)
+
+        assert gradcheck(to_dq_fn, (q, t), eps=1e-6, atol=1e-4)
+
+    def test_from_dual_quaternion_gradcheck(self):
+        """Gradient check for dual_quaternion_to_rigid_transform."""
+        # Create a valid dual quaternion
+        q_r = torch.randn(4, dtype=torch.float64)
+        q_r = q_r / torch.linalg.norm(q_r)
+        q_d = torch.randn(4, dtype=torch.float64)
+        dq = torch.cat([q_r, q_d]).requires_grad_(True)
+
+        def from_dq_fn(dq_val):
+            transform = dual_quaternion_to_rigid_transform(dq_val)
+            return transform.translation
+
+        assert gradcheck(from_dq_fn, (dq,), eps=1e-6, atol=1e-4)
+
+    def test_roundtrip_gradcheck(self):
+        """Gradient check for roundtrip conversion."""
+        q = torch.randn(4, dtype=torch.float64)
+        q = q / torch.linalg.norm(q)
+        q = q.clone().detach().requires_grad_(True)
+        t = torch.randn(3, dtype=torch.float64, requires_grad=True)
+
+        def roundtrip_fn(q_val, t_val):
+            transform = rigid_transform(Quaternion(wxyz=q_val), t_val)
+            dq = rigid_transform_to_dual_quaternion(transform)
+            recovered = dual_quaternion_to_rigid_transform(dq)
+            return recovered.translation
+
+        assert gradcheck(roundtrip_fn, (q, t), eps=1e-6, atol=1e-4)

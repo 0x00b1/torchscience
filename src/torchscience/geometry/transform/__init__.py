@@ -40,6 +40,7 @@ from torchscience.geometry.transform._reflect import reflect
 from torchscience.geometry.transform._refract import refract
 from torchscience.geometry.transform._rigid_transform import (
     RigidTransform,
+    dual_quaternion_to_rigid_transform,
     rigid_transform,
     rigid_transform_apply,
     rigid_transform_apply_vector,
@@ -48,6 +49,7 @@ from torchscience.geometry.transform._rigid_transform import (
     rigid_transform_identity,
     rigid_transform_inverse,
     rigid_transform_slerp,
+    rigid_transform_to_dual_quaternion,
     rigid_transform_to_matrix,
 )
 from torchscience.geometry.transform._rotation_6d import (
@@ -121,7 +123,9 @@ __all__ = [
     "rigid_transform_identity",
     "rigid_transform_inverse",
     "rigid_transform_slerp",
+    "rigid_transform_to_dual_quaternion",
     "rigid_transform_to_matrix",
+    "dual_quaternion_to_rigid_transform",
     "rotation_6d",
     "rotation_6d_to_matrix",
     "rotation_6d_to_quaternion",
