@@ -156,3 +156,45 @@ class TestPadIntegration:
         result = pad(x, (1, 1, 2, 2), mode="constant")
         assert result.shape == (7, 6)
         assert result.device.type == "meta"
+
+
+class TestPadEdgeCases:
+    """Edge case tests."""
+
+    def test_empty_tensor(self):
+        """Handles empty input tensors."""
+        x = torch.empty(0, 3)
+        with pytest.raises(RuntimeError):
+            pad(x, (1, 1), mode="constant")
+
+    def test_large_padding(self):
+        """Padding larger than input size."""
+        x = torch.tensor([1.0, 2.0, 3.0])
+        # Padding of 5 on each side for input of size 3
+        result = pad(x, (5, 5), mode="reflect")
+        assert result.shape == (13,)
+
+    def test_asymmetric_padding(self):
+        """Different before/after padding amounts."""
+        x = torch.randn(5, 5)
+        result = pad(x, (1, 3, 2, 4), mode="constant", value=0.0)
+        assert result.shape == (11, 9)
+
+    def test_5d_tensor(self):
+        """N-dimensional padding beyond 3D."""
+        x = torch.randn(2, 3, 4, 5, 6)
+        result = pad(x, (1, 1), mode="replicate", dim=-1)
+        assert result.shape == (2, 3, 4, 5, 8)
+
+    def test_negative_dim(self):
+        """Negative dimension indexing."""
+        x = torch.randn(2, 3, 4)
+        result = pad(x, (1, 1), mode="reflect", dim=-2)
+        assert result.shape == (2, 5, 4)
+
+    @pytest.mark.parametrize("order", [1, 2, 3, 4])
+    def test_polynomial_orders(self, order):
+        """Polynomial extrapolation with different orders."""
+        x = torch.randn(10, dtype=torch.float64)
+        result = pad(x, (2, 2), mode="polynomial", order=order)
+        assert result.shape == (14,)
