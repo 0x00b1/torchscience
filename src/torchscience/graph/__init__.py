@@ -30,8 +30,13 @@ from torchscience.graph._minimum_spanning_tree import (
     minimum_spanning_tree,
 )
 from torchscience.graph._pagerank import pagerank
+from torchscience.graph._topological_sort import (
+    CycleError,
+    topological_sort,
+)
 
 __all__ = [
+    "CycleError",
     "BellmanFordNegativeCycleError",
     "NegativeCycleError",
     "bellman_ford",
@@ -46,4 +51,5 @@ __all__ = [
     "maximum_bipartite_matching",
     "minimum_spanning_tree",
     "pagerank",
+    "topological_sort",
 ]
