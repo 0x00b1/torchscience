@@ -94,4 +94,4 @@ def laguerre_polynomial_l_to_polynomial(
         L_k = L_power[k]
         result[: len(L_k)] = result[: len(L_k)] + c_k * L_k
 
-    return Polynomial(coeffs=result)
+    return Polynomial(result)

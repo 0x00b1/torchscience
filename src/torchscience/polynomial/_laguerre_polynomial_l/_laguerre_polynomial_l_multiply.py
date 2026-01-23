@@ -1,10 +1,32 @@
-import numpy as np
 import torch
 
 from ._laguerre_polynomial_l import (
     LaguerrePolynomialL,
-    laguerre_polynomial_l,
 )
+from ._laguerre_polynomial_l_to_polynomial import (
+    laguerre_polynomial_l_to_polynomial,
+)
+from ._polynomial_to_laguerre_polynomial_l import (
+    polynomial_to_laguerre_polynomial_l,
+)
+
+
+def _polynomial_convolve(p: torch.Tensor, q: torch.Tensor) -> torch.Tensor:
+    """Multiply two polynomial coefficient tensors (convolution).
+
+    Pure PyTorch implementation of polynomial multiplication.
+    """
+    n_p = p.shape[-1]
+    n_q = q.shape[-1]
+    n_out = n_p + n_q - 1
+
+    result = torch.zeros(n_out, dtype=p.dtype, device=p.device)
+
+    for i in range(n_p):
+        for j in range(n_q):
+            result[i + j] = result[i + j] + p[i] * q[j]
+
+    return result
 
 
 def laguerre_polynomial_l_multiply(
@@ -13,7 +35,7 @@ def laguerre_polynomial_l_multiply(
 ) -> LaguerrePolynomialL:
     """Multiply two Laguerre series.
 
-    Uses NumPy's Laguerre linearization for the product.
+    Converts to polynomial basis, multiplies, and converts back.
 
     Parameters
     ----------
@@ -30,33 +52,32 @@ def laguerre_polynomial_l_multiply(
     Notes
     -----
     The product of two Laguerre series of degrees m and n has degree m + n.
-    The linearization identity for Laguerre polynomials ensures the product
-    remains in Laguerre form:
+    The linearization identity ensures the product remains in Laguerre form.
 
-        L_m(x) * L_n(x) = sum_k c_k L_k(x)
-
-    where the coefficients c_k are determined by the linearization formula.
+    This implementation is pure PyTorch and supports autograd, GPU tensors,
+    and torch.compile.
 
     Examples
     --------
     >>> a = laguerre_polynomial_l(torch.tensor([0.0, 1.0]))  # L_1
     >>> b = laguerre_polynomial_l(torch.tensor([0.0, 1.0]))  # L_1
     >>> c = laguerre_polynomial_l_multiply(a, b)
-    >>> c  # L_1 * L_1
-    LaguerrePolynomialL(tensor([1., -4.,  2.]))
+    >>> c  # L_1 * L_1 = L_0 - 2*L_1 + 2*L_2
+    LaguerrePolynomialL(tensor([1., -2.,  2.]))
     """
-    # Convert to plain tensors to avoid operator interception
-    a_coeffs = a.as_subclass(torch.Tensor)
-    b_coeffs = b.as_subclass(torch.Tensor)
+    # Convert to polynomial basis
+    p_a = laguerre_polynomial_l_to_polynomial(a)
+    p_b = laguerre_polynomial_l_to_polynomial(b)
 
-    # Use NumPy's lagmul which implements the linearization formula
-    a_np = a_coeffs.detach().cpu().numpy()
-    b_np = b_coeffs.detach().cpu().numpy()
+    # Get coefficient tensors
+    p_a_coeffs = p_a.as_subclass(torch.Tensor)
+    p_b_coeffs = p_b.as_subclass(torch.Tensor)
 
-    result_np = np.polynomial.laguerre.lagmul(a_np, b_np)
+    # Multiply in polynomial basis (convolution)
+    from torchscience.polynomial._polynomial import Polynomial
 
-    result_coeffs = torch.from_numpy(result_np).to(
-        dtype=a_coeffs.dtype, device=a_coeffs.device
-    )
+    p_c_coeffs = _polynomial_convolve(p_a_coeffs, p_b_coeffs)
+    p_c = Polynomial(p_c_coeffs)
 
-    return laguerre_polynomial_l(result_coeffs)
+    # Convert back to Laguerre basis
+    return polynomial_to_laguerre_polynomial_l(p_c)

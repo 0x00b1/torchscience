@@ -1,4 +1,5 @@
-import numpy as np
+import math
+
 import torch
 
 from ._hermite_polynomial_h import (
@@ -13,7 +14,9 @@ def hermite_polynomial_h_multiply(
 ) -> HermitePolynomialH:
     """Multiply two Physicists' Hermite series.
 
-    Uses NumPy's Hermite linearization for the product.
+    Uses the linearization formula for Hermite polynomials (physicists' convention):
+
+        H_m(x) * H_n(x) = sum_{k=0}^{min(m,n)} 2^k * k! * C(m,k) * C(n,k) * H_{m+n-2k}(x)
 
     Parameters
     ----------
@@ -30,12 +33,10 @@ def hermite_polynomial_h_multiply(
     Notes
     -----
     The product of two Hermite series of degrees m and n has degree m + n.
-    The linearization identity for Hermite polynomials ensures the product
-    remains in Hermite form:
+    The linearization identity ensures the product remains in Hermite form.
 
-        H_m(x) * H_n(x) = sum_k c_k H_k(x)
-
-    where the coefficients c_k are determined by the linearization formula.
+    This implementation is pure PyTorch and supports autograd, GPU tensors,
+    and torch.compile.
 
     Examples
     --------
@@ -48,15 +49,42 @@ def hermite_polynomial_h_multiply(
     a_coeffs = a.as_subclass(torch.Tensor)
     b_coeffs = b.as_subclass(torch.Tensor)
 
-    # Use NumPy's hermmul which implements the linearization formula
-    # Note: numpy.polynomial.hermite uses the "physicists'" convention
-    a_np = a_coeffs.detach().cpu().numpy()
-    b_np = b_coeffs.detach().cpu().numpy()
+    n_a = a_coeffs.shape[-1]
+    n_b = b_coeffs.shape[-1]
 
-    result_np = np.polynomial.hermite.hermmul(a_np, b_np)
+    # Result has degree (n_a - 1) + (n_b - 1) = n_a + n_b - 2
+    # So we need n_a + n_b - 1 coefficients
+    n_c = n_a + n_b - 1
 
-    result_coeffs = torch.from_numpy(result_np).to(
-        dtype=a_coeffs.dtype, device=a_coeffs.device
-    )
+    # Precompute 2^k * k! for linearization coefficients
+    max_k = min(n_a, n_b)
+    two_pow_k_factorial = [(2**k) * math.factorial(k) for k in range(max_k)]
 
-    return hermite_polynomial_h(result_coeffs)
+    # Build result by accumulating contributions (for autograd support)
+    # Apply linearization: H_i * H_j = sum_{k=0}^{min(i,j)} 2^k * k! * C(i,k) * C(j,k) * H_{i+j-2k}
+    contributions = []
+    for idx in range(n_c):
+        contrib = torch.zeros_like(a_coeffs[..., 0])
+        for i in range(n_a):
+            for j in range(n_b):
+                # Check if (i,j) contributes to index idx
+                # idx = i + j - 2*k => k = (i + j - idx) / 2
+                diff = i + j - idx
+                if diff < 0 or diff % 2 != 0:
+                    continue
+                k = diff // 2
+                if k > min(i, j):
+                    continue
+
+                # Linearization coefficient: 2^k * k! * C(i,k) * C(j,k)
+                linearization_coeff = (
+                    two_pow_k_factorial[k] * math.comb(i, k) * math.comb(j, k)
+                )
+                contrib = (
+                    contrib
+                    + a_coeffs[..., i] * b_coeffs[..., j] * linearization_coeff
+                )
+        contributions.append(contrib)
+
+    c_coeffs = torch.stack(contributions, dim=-1)
+    return hermite_polynomial_h(c_coeffs)
