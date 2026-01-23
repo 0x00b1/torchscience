@@ -107,6 +107,7 @@
 #include "cpu/graph_theory/betweenness_centrality.h"
 #include "cpu/graph_theory/topological_sort.h"
 #include "cpu/graph_theory/breadth_first_search.h"
+#include "cpu/graph_theory/depth_first_search.h"
 #include "cpu/information_theory/kullback_leibler_divergence.h"
 #include "cpu/information_theory/jensen_shannon_divergence.h"
 #include "cpu/information_theory/shannon_entropy.h"
@@ -469,6 +470,7 @@
 #include "meta/graph_theory/betweenness_centrality.h"
 #include "meta/graph_theory/topological_sort.h"
 #include "meta/graph_theory/breadth_first_search.h"
+#include "meta/graph_theory/depth_first_search.h"
 #include "meta/information_theory/kullback_leibler_divergence.h"
 #include "meta/information_theory/jensen_shannon_divergence.h"
 #include "meta/information_theory/shannon_entropy.h"
@@ -1181,6 +1183,7 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("betweenness_centrality(Tensor adjacency, bool normalized) -> Tensor");
   module.def("topological_sort(Tensor adjacency) -> Tensor");
   module.def("breadth_first_search(Tensor adjacency, int source, bool directed) -> (Tensor, Tensor)");
+  module.def("depth_first_search(Tensor adjacency, int source, bool directed) -> (Tensor, Tensor, Tensor)");
 
   // combinatorics
   module.def("binomial_coefficient(Tensor n, Tensor k) -> Tensor");

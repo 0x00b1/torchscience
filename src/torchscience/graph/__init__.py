@@ -16,6 +16,9 @@ from torchscience.graph._closeness_centrality import (
 from torchscience.graph._connected_components import (
     connected_components,
 )
+from torchscience.graph._depth_first_search import (
+    depth_first_search,
+)
 from torchscience.graph._dijkstra import dijkstra
 from torchscience.graph._eigenvector_centrality import (
     eigenvector_centrality,
@@ -45,6 +48,7 @@ __all__ = [
     "bellman_ford",
     "betweenness_centrality",
     "breadth_first_search",
+    "depth_first_search",
     "closeness_centrality",
     "connected_components",
     "dijkstra",
