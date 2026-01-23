@@ -66,10 +66,27 @@ void pad_1d_kernel(
                 }
                 output_data[i] = result;
             }
+        } else if (mode == PaddingMode::ReflectOdd) {
+            // Antisymmetric reflection: f(x) = 2 * edge_value - f(reflected_x)
+            int64_t rel_idx = i - pad_before;
+            if (rel_idx >= 0 && rel_idx < in_size) {
+                // In valid region
+                output_data[i] = input_data[rel_idx];
+            } else {
+                // Determine which edge we're reflecting around
+                int64_t mapped = reflect_index(rel_idx, in_size);
+                scalar_t edge_value;
+                if (rel_idx < 0) {
+                    edge_value = input_data[0];  // Left edge
+                } else {
+                    edge_value = input_data[in_size - 1];  // Right edge
+                }
+                output_data[i] = scalar_t(2) * edge_value - input_data[mapped];
+            }
         } else {
             auto [src_idx, mult] = map_index(i, in_size, pad_before, mode);
             if (src_idx >= 0) {
-                output_data[i] = static_cast<scalar_t>(mult) * input_data[src_idx];
+                output_data[i] = input_data[src_idx];
             } else {
                 output_data[i] = value;
             }
@@ -132,12 +149,13 @@ inline at::Tensor pad(
         int64_t in_size = current.size(dim_idx);
         int64_t out_size = in_size + pad_before + pad_after;
 
-        std::vector<int64_t> step_shape = current.sizes().vec();
-        step_shape[dim_idx] = out_size;
-        at::Tensor step_output = at::empty(step_shape, current.options());
-
         at::Tensor current_t = current.movedim(dim_idx, -1).contiguous();
-        at::Tensor output_t = step_output.movedim(dim_idx, -1);
+
+        // Create output tensor with target dim moved to last position
+        // We need shape like current_t but with last dim = out_size
+        std::vector<int64_t> output_t_shape = current_t.sizes().vec();
+        output_t_shape.back() = out_size;
+        at::Tensor output_t = at::empty(output_t_shape, current.options());
 
         int64_t batch_size = current_t.numel() / in_size;
 
@@ -167,6 +185,7 @@ inline at::Tensor pad(
             }
         );
 
+        // Move the padded dimension back from -1 to its original position
         current = output_t.movedim(-1, dim_idx).contiguous();
     }
 
@@ -209,15 +228,15 @@ inline at::Tensor pad_backward(
             continue;
         }
 
-        std::vector<int64_t> target_shape = current_grad.sizes().vec();
-        target_shape[dim_idx] -= pad_before + pad_after;
-        int64_t in_size = target_shape[dim_idx];
         int64_t out_size = current_grad.size(dim_idx);
-
-        at::Tensor step_grad = at::zeros(target_shape, current_grad.options());
+        int64_t in_size = out_size - pad_before - pad_after;
 
         at::Tensor grad_t = current_grad.movedim(dim_idx, -1).contiguous();
-        at::Tensor step_t = step_grad.movedim(dim_idx, -1);
+
+        // Create output tensor with target dim moved to last position
+        std::vector<int64_t> step_t_shape = grad_t.sizes().vec();
+        step_t_shape.back() = in_size;
+        at::Tensor step_t = at::zeros(step_t_shape, current_grad.options());
 
         int64_t batch_size = grad_t.numel() / out_size;
 
@@ -247,19 +266,33 @@ inline at::Tensor pad_backward(
                             for (int64_t i = 0; i < pad_after; ++i) {
                                 o_row[in_size - 1] += g_row[pad_before + in_size + i];
                             }
-                        } else if (mode == PaddingMode::Reflect || mode == PaddingMode::ReflectOdd) {
-                            bool odd = (mode == PaddingMode::ReflectOdd);
+                        } else if (mode == PaddingMode::Reflect) {
                             for (int64_t i = 0; i < pad_before; ++i) {
                                 int64_t rel_idx = -(pad_before - i);
                                 int64_t src_idx = reflect_index(rel_idx, in_size);
-                                scalar_t mult = odd ? static_cast<scalar_t>(reflect_sign(rel_idx, in_size)) : scalar_t(1);
-                                o_row[src_idx] += mult * g_row[i];
+                                o_row[src_idx] += g_row[i];
                             }
                             for (int64_t i = 0; i < pad_after; ++i) {
                                 int64_t rel_idx = in_size + i;
                                 int64_t src_idx = reflect_index(rel_idx, in_size);
-                                scalar_t mult = odd ? static_cast<scalar_t>(reflect_sign(rel_idx, in_size)) : scalar_t(1);
-                                o_row[src_idx] += mult * g_row[pad_before + in_size + i];
+                                o_row[src_idx] += g_row[pad_before + in_size + i];
+                            }
+                        } else if (mode == PaddingMode::ReflectOdd) {
+                            // Antisymmetric: f(x) = 2*edge - f(reflected)
+                            // Gradient: d_edge += 2*grad, d_reflected -= grad
+                            for (int64_t i = 0; i < pad_before; ++i) {
+                                int64_t rel_idx = -(pad_before - i);
+                                int64_t src_idx = reflect_index(rel_idx, in_size);
+                                scalar_t g = g_row[i];
+                                o_row[0] += scalar_t(2) * g;  // Edge gradient
+                                o_row[src_idx] -= g;          // Reflected value gradient
+                            }
+                            for (int64_t i = 0; i < pad_after; ++i) {
+                                int64_t rel_idx = in_size + i;
+                                int64_t src_idx = reflect_index(rel_idx, in_size);
+                                scalar_t g = g_row[pad_before + in_size + i];
+                                o_row[in_size - 1] += scalar_t(2) * g;  // Edge gradient
+                                o_row[src_idx] -= g;                     // Reflected value gradient
                             }
                         } else if (mode == PaddingMode::Circular) {
                             for (int64_t i = 0; i < pad_before; ++i) {

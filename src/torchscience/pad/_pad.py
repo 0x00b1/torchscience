@@ -164,6 +164,13 @@ def pad(
     else:
         dim_list = None
 
-    return torch.ops.torchscience.pad(
+    result = torch.ops.torchscience.pad(
         input, padding_list, mode, value, dim_list, order, out
     )
+
+    # When out is provided, return the out tensor (same object)
+    # The underlying storage was already updated by the kernel
+    if out is not None:
+        return out
+
+    return result
