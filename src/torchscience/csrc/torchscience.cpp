@@ -117,6 +117,7 @@
 #include "cpu/information_theory/renyi_entropy.h"
 #include "cpu/information_theory/tsallis_entropy.h"
 #include "cpu/information_theory/renyi_divergence.h"
+#include "cpu/information_theory/conditional_mutual_information.h"
 #include "cpu/space_partitioning/kd_tree.h"
 #include "cpu/space_partitioning/k_nearest_neighbors.h"
 #include "cpu/space_partitioning/range_search.h"
@@ -411,6 +412,7 @@
 #include "autograd/information_theory/renyi_entropy.h"
 #include "autograd/information_theory/tsallis_entropy.h"
 #include "autograd/information_theory/renyi_divergence.h"
+#include "autograd/information_theory/conditional_mutual_information.h"
 #include "autograd/geometry/transform/reflect.h"
 #include "autograd/geometry/transform/refract.h"
 #include "autograd/geometry/transform/quaternion_multiply.h"
@@ -477,6 +479,7 @@
 #include "meta/information_theory/renyi_entropy.h"
 #include "meta/information_theory/tsallis_entropy.h"
 #include "meta/information_theory/renyi_divergence.h"
+#include "meta/information_theory/conditional_mutual_information.h"
 #include "meta/space_partitioning/kd_tree.h"
 #include "meta/space_partitioning/k_nearest_neighbors.h"
 #include "meta/space_partitioning/range_search.h"
@@ -1224,6 +1227,10 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("pointwise_mutual_information(Tensor joint, int[] dims, str input_type, float? base) -> Tensor");
   module.def("pointwise_mutual_information_backward(Tensor grad_output, Tensor joint, int[] dims, str input_type, float? base) -> Tensor");
   module.def("pointwise_mutual_information_backward_backward(Tensor gg_joint, Tensor grad_output, Tensor joint, int[] dims, str input_type, float? base) -> (Tensor, Tensor)");
+
+  // Conditional mutual information
+  module.def("conditional_mutual_information(Tensor joint, int[] dims_x, int[] dims_y, int[] dims_z, str input_type, str reduction, float? base) -> Tensor");
+  module.def("conditional_mutual_information_backward(Tensor grad_output, Tensor joint, int[] dims_x, int[] dims_y, int[] dims_z, str input_type, str reduction, float? base) -> Tensor");
 
   // Renyi entropy
   module.def("renyi_entropy(Tensor p, float alpha, int dim, str input_type, str reduction, float? base) -> Tensor");
