@@ -296,6 +296,94 @@ class TestFixedPoint:
             torch.testing.assert_close(results[0], r, rtol=1e-8, atol=1e-8)
 
 
+class TestFixedPointVmap:
+    """Tests for vmap compatibility.
+
+    Note: vmap is currently NOT compatible with fixed_point due to:
+    1. Data-dependent control flow (if torch.all(converged)) not supported
+
+    These tests document the expected incompatibility. Use explicit batching
+    (e.g., fixed_point(g, batched_x0)) instead of vmap for vectorized computation.
+    """
+
+    @pytest.mark.xfail(reason="vmap incompatible: data-dependent control flow")
+    def test_vmap_basic(self):
+        """vmap works with fixed_point for vectorized parameter sweeps."""
+        from torch.func import vmap
+
+        # Find sqrt(c) using Babylonian method
+        c = torch.tensor([2.0, 3.0, 4.0], dtype=torch.float64)
+
+        def solve_one(ci):
+            g = lambda x: (x + ci / x) / 2
+            x0 = torch.tensor([1.5], dtype=torch.float64)
+            fp, converged = fixed_point(g, x0)
+            return fp
+
+        # Use vmap to vectorize over the first dimension
+        fps = vmap(solve_one)(c)
+
+        expected = torch.sqrt(c)
+        torch.testing.assert_close(
+            fps.squeeze(-1), expected, rtol=1e-6, atol=1e-6
+        )
+
+    @pytest.mark.xfail(reason="vmap incompatible: data-dependent control flow")
+    def test_vmap_different_starting_points(self):
+        """vmap works with different starting points for the same problem."""
+        from torch.func import vmap
+
+        def solve_dottie(x0_scalar):
+            x0 = x0_scalar.unsqueeze(0)
+            g = lambda x: torch.cos(x)
+            fp, converged = fixed_point(g, x0)
+            return fp
+
+        x0_vals = torch.tensor([0.5, 1.0, 1.5], dtype=torch.float64)
+        fps = vmap(solve_dottie)(x0_vals)
+
+        # Dottie number
+        expected = torch.full((3, 1), 0.7390851332151607, dtype=torch.float64)
+        torch.testing.assert_close(fps, expected, rtol=1e-6, atol=1e-6)
+
+    @pytest.mark.xfail(reason="vmap incompatible: data-dependent control flow")
+    def test_vmap_system(self):
+        """vmap works with fixed-point systems."""
+        from torch.func import vmap
+
+        k = torch.tensor([0.3, 0.4, 0.5], dtype=torch.float64)
+
+        def solve_one(ki):
+            def g(x):
+                # Simple contraction: x_new = k * x + (1 - k)
+                # Fixed point is 1.0 for any k in (0, 1)
+                return ki * x + (1 - ki)
+
+            x0 = torch.tensor([0.0], dtype=torch.float64)
+            fp, converged = fixed_point(g, x0)
+            return fp
+
+        fps = vmap(solve_one)(k)
+
+        expected = torch.ones(3, 1, dtype=torch.float64)
+        torch.testing.assert_close(fps, expected, rtol=1e-6, atol=1e-6)
+
+    def test_explicit_batching_alternative(self):
+        """Demonstrates explicit batching as alternative to vmap.
+
+        Instead of using vmap, pass batched inputs directly to fixed_point.
+        """
+        c = torch.tensor([2.0, 3.0, 4.0], dtype=torch.float64)
+        g = lambda x: (x + c / x) / 2  # Babylonian method
+        x0 = torch.full((3,), 1.5, dtype=torch.float64)
+
+        fps, converged = fixed_point(g, x0)
+
+        expected = torch.sqrt(c)
+        torch.testing.assert_close(fps, expected, rtol=1e-6, atol=1e-6)
+        assert converged.all()
+
+
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 class TestFixedPointCUDA:
     """Tests for CUDA device support."""

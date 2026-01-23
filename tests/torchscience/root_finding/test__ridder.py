@@ -444,6 +444,130 @@ class TestRidderAutograd:
             analytical_grad, numerical_grad, rtol=1e-3, atol=1e-6
         )
 
+    def test_gradgradcheck(self):
+        """Test second-order gradients via gradgradcheck.
+
+        For f(x) = x^2 - theta, root x* = sqrt(theta).
+        First derivative: dx*/dtheta = 1/(2*sqrt(theta))
+        Second derivative: d^2x*/dtheta^2 = -1/(4*theta^(3/2))
+        """
+
+        def func(theta):
+            f = lambda x: x**2 - theta
+            a = torch.tensor([0.5], dtype=torch.float64)
+            b = torch.tensor([3.0], dtype=torch.float64)
+            root, _ = ridder(f, a, b)
+            return root.sum()
+
+        theta = torch.tensor([2.0], dtype=torch.float64, requires_grad=True)
+        torch.autograd.gradgradcheck(func, theta)
+
+    def test_gradgradcheck_cubic(self):
+        """Test second-order gradients with a cubic function.
+
+        For f(x) = x^3 - theta, root x* = theta^(1/3).
+        First derivative: dx*/dtheta = 1/(3*theta^(2/3))
+        Second derivative: d^2x*/dtheta^2 = -2/(9*theta^(5/3))
+        """
+
+        def func(theta):
+            f = lambda x: x**3 - theta
+            a = torch.tensor([0.5], dtype=torch.float64)
+            b = torch.tensor([3.0], dtype=torch.float64)
+            root, _ = ridder(f, a, b)
+            return root.sum()
+
+        theta = torch.tensor([2.0], dtype=torch.float64, requires_grad=True)
+        torch.autograd.gradgradcheck(func, theta)
+
+
+class TestRidderVmap:
+    """Tests for vmap compatibility.
+
+    Note: vmap is currently NOT compatible with ridder due to:
+    1. Data-dependent control flow (if torch.all(converged)) not supported
+
+    These tests document the expected incompatibility. Use explicit batching
+    (e.g., ridder(f, batched_a, batched_b)) instead of vmap for vectorized computation.
+    """
+
+    @pytest.mark.xfail(reason="vmap incompatible: data-dependent control flow")
+    def test_vmap_basic(self):
+        """vmap works with ridder for vectorized parameter sweeps."""
+        from torch.func import vmap
+
+        c = torch.tensor([2.0, 3.0, 4.0], dtype=torch.float64)
+
+        def solve_one(ci):
+            f = lambda x: x**2 - ci
+            a = torch.tensor([1.0], dtype=torch.float64)
+            b = torch.tensor([10.0], dtype=torch.float64)
+            root, converged = ridder(f, a, b)
+            return root
+
+        # Use vmap to vectorize over the first dimension
+        roots = vmap(solve_one)(c)
+
+        expected = torch.sqrt(c)
+        torch.testing.assert_close(
+            roots.squeeze(-1), expected, rtol=1e-6, atol=1e-6
+        )
+
+    @pytest.mark.xfail(reason="vmap incompatible: data-dependent control flow")
+    def test_vmap_different_brackets(self):
+        """vmap works with different brackets for the same problem."""
+        from torch.func import vmap
+
+        def solve_sqrt2(a_scalar):
+            a = a_scalar.unsqueeze(0)
+            b = torch.tensor([3.0], dtype=torch.float64)
+            f = lambda x: x**2 - 2.0
+            root, converged = ridder(f, a, b)
+            return root
+
+        a_vals = torch.tensor([0.5, 1.0, 1.2], dtype=torch.float64)
+        roots = vmap(solve_sqrt2)(a_vals)
+
+        expected = torch.full((3, 1), math.sqrt(2), dtype=torch.float64)
+        torch.testing.assert_close(roots, expected, rtol=1e-6, atol=1e-6)
+
+    @pytest.mark.xfail(reason="vmap incompatible: data-dependent control flow")
+    def test_vmap_with_grad(self):
+        """vmap + grad works together for parameter gradients."""
+        from torch.func import grad, vmap
+
+        def solve_and_return(ci):
+            f = lambda x: x**2 - ci
+            a = torch.tensor([0.5], dtype=torch.float64)
+            b = torch.tensor([10.0], dtype=torch.float64)
+            root, _ = ridder(f, a, b)
+            return root.sum()
+
+        c = torch.tensor([2.0, 3.0, 4.0], dtype=torch.float64)
+
+        # grad of vmapped function
+        grads = vmap(grad(solve_and_return))(c)
+
+        # d(sqrt(c))/dc = 1/(2*sqrt(c))
+        expected = 1.0 / (2.0 * torch.sqrt(c))
+        torch.testing.assert_close(grads, expected, rtol=1e-4, atol=1e-6)
+
+    def test_explicit_batching_alternative(self):
+        """Demonstrates explicit batching as alternative to vmap.
+
+        Instead of using vmap, pass batched inputs directly to ridder.
+        """
+        c = torch.tensor([2.0, 3.0, 4.0], dtype=torch.float64)
+        f = lambda x: x**2 - c
+        a = torch.ones(3, dtype=torch.float64)
+        b = torch.full((3,), 10.0, dtype=torch.float64)
+
+        roots, converged = ridder(f, a, b)
+
+        expected = torch.sqrt(c)
+        torch.testing.assert_close(roots, expected, rtol=1e-6, atol=1e-6)
+        assert converged.all()
+
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 class TestRidderCUDA:

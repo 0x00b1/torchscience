@@ -307,6 +307,138 @@ class TestNewtonSystem:
         assert converged.shape == (0,)
 
 
+class TestNewtonSystemVmap:
+    """Tests for vmap compatibility.
+
+    Note: vmap is currently NOT compatible with newton_system due to:
+    1. Internal use of requires_grad_() for autodiff (not supported in vmap)
+    2. Data-dependent control flow (if torch.all(converged)) not supported
+    3. torch.linalg.solve operations inside vmap
+
+    These tests document the expected incompatibility. Use explicit batching
+    (e.g., newton_system(f, batched_x0)) instead of vmap for vectorized computation.
+    """
+
+    @pytest.mark.xfail(
+        reason="vmap incompatible: requires_grad_() and data-dependent control flow"
+    )
+    def test_vmap_basic(self):
+        """vmap works with newton_system for vectorized parameter sweeps."""
+        from torch.func import vmap
+
+        theta = torch.tensor([1.0, 2.0, 4.0], dtype=torch.float64)
+
+        def solve_one(t):
+            def f(x):
+                x1, x2 = x[..., 0], x[..., 1]
+                f1 = x1**2 + x2**2 - t
+                f2 = x1 - x2
+                return torch.stack([f1, f2], dim=-1)
+
+            x0 = torch.tensor([0.5, 0.5], dtype=torch.float64)
+            root, converged = newton_system(f, x0)
+            return root
+
+        # Use vmap to vectorize over the first dimension
+        roots = vmap(solve_one)(theta)
+
+        # Root is (sqrt(theta/2), sqrt(theta/2))
+        expected_vals = torch.sqrt(theta / 2)
+        expected = torch.stack([expected_vals, expected_vals], dim=-1)
+        torch.testing.assert_close(roots, expected, rtol=1e-6, atol=1e-6)
+
+    @pytest.mark.xfail(
+        reason="vmap incompatible: requires_grad_() and data-dependent control flow"
+    )
+    def test_vmap_different_starting_points(self):
+        """vmap works with different starting points for the same problem."""
+        from torch.func import vmap
+
+        def solve_circle(x0):
+            def f(x):
+                x1, x2 = x[..., 0], x[..., 1]
+                f1 = x1**2 + x2**2 - 1.0
+                f2 = x1 - x2
+                return torch.stack([f1, f2], dim=-1)
+
+            root, converged = newton_system(f, x0)
+            return root
+
+        x0_vals = torch.tensor(
+            [[0.4, 0.4], [0.5, 0.5], [0.6, 0.6]], dtype=torch.float64
+        )
+        roots = vmap(solve_circle)(x0_vals)
+
+        expected_val = 1.0 / math.sqrt(2)
+        expected = torch.tensor(
+            [[expected_val, expected_val]] * 3, dtype=torch.float64
+        )
+        torch.testing.assert_close(roots, expected, rtol=1e-6, atol=1e-6)
+
+    @pytest.mark.xfail(reason="vmap incompatible: data-dependent control flow")
+    def test_vmap_with_explicit_jacobian(self):
+        """vmap works with explicit Jacobian."""
+        from torch.func import vmap
+
+        theta = torch.tensor([1.0, 2.0, 4.0], dtype=torch.float64)
+
+        def solve_one(t):
+            def f(x):
+                x1, x2 = x[..., 0], x[..., 1]
+                f1 = x1**2 + x2**2 - t
+                f2 = x1 - x2
+                return torch.stack([f1, f2], dim=-1)
+
+            def jacobian(x):
+                batch_size = x.shape[0]
+                x1, x2 = x[..., 0], x[..., 1]
+                J = torch.zeros(
+                    batch_size, 2, 2, dtype=x.dtype, device=x.device
+                )
+                J[..., 0, 0] = 2 * x1
+                J[..., 0, 1] = 2 * x2
+                J[..., 1, 0] = 1
+                J[..., 1, 1] = -1
+                return J
+
+            x0 = torch.tensor([[0.5, 0.5]], dtype=torch.float64)
+            root, converged = newton_system(f, x0, jacobian=jacobian)
+            return root.squeeze(0)
+
+        # Use vmap to vectorize over the first dimension
+        roots = vmap(solve_one)(theta)
+
+        # Root is (sqrt(theta/2), sqrt(theta/2))
+        expected_vals = torch.sqrt(theta / 2)
+        expected = torch.stack([expected_vals, expected_vals], dim=-1)
+        torch.testing.assert_close(roots, expected, rtol=1e-6, atol=1e-6)
+
+    def test_explicit_batching_alternative(self):
+        """Demonstrates explicit batching as alternative to vmap.
+
+        Instead of using vmap, pass batched inputs directly to newton_system.
+        """
+
+        def f(x):
+            x1, x2 = x[..., 0], x[..., 1]
+            f1 = x1**2 + x2**2 - 1.0
+            f2 = x1 - x2
+            return torch.stack([f1, f2], dim=-1)
+
+        x0 = torch.tensor(
+            [[0.5, 0.5], [0.6, 0.6], [0.7, 0.7]], dtype=torch.float64
+        )
+
+        roots, converged = newton_system(f, x0)
+
+        expected_val = 1.0 / math.sqrt(2)
+        expected = torch.tensor(
+            [[expected_val, expected_val]] * 3, dtype=torch.float64
+        )
+        torch.testing.assert_close(roots, expected, rtol=1e-6, atol=1e-6)
+        assert converged.all()
+
+
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 class TestNewtonSystemCUDA:
     """Tests for CUDA device support."""

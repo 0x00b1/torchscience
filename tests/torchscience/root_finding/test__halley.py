@@ -399,6 +399,153 @@ class TestHalleyAutograd:
         torch.testing.assert_close(theta.grad, expected, rtol=1e-4, atol=1e-6)
         assert converged.all()
 
+    def test_gradgradcheck(self):
+        """Test second-order gradients via gradgradcheck.
+
+        For f(x) = x^2 - theta, root x* = sqrt(theta).
+        First derivative: dx*/dtheta = 1/(2*sqrt(theta))
+        Second derivative: d^2x*/dtheta^2 = -1/(4*theta^(3/2))
+        """
+
+        def func(theta):
+            f = lambda x: x**2 - theta
+            x0 = torch.tensor([1.5], dtype=torch.float64)
+            root, _ = halley(f, x0)
+            return root.sum()
+
+        theta = torch.tensor([2.0], dtype=torch.float64, requires_grad=True)
+        torch.autograd.gradgradcheck(func, theta)
+
+    def test_gradgradcheck_cubic(self):
+        """Test second-order gradients with a cubic function.
+
+        For f(x) = x^3 - theta, root x* = theta^(1/3).
+        First derivative: dx*/dtheta = 1/(3*theta^(2/3))
+        Second derivative: d^2x*/dtheta^2 = -2/(9*theta^(5/3))
+        """
+
+        def func(theta):
+            f = lambda x: x**3 - theta
+            x0 = torch.tensor([1.5], dtype=torch.float64)
+            root, _ = halley(f, x0)
+            return root.sum()
+
+        theta = torch.tensor([2.0], dtype=torch.float64, requires_grad=True)
+        torch.autograd.gradgradcheck(func, theta)
+
+
+class TestHalleyVmap:
+    """Tests for vmap compatibility.
+
+    Note: vmap is currently NOT compatible with halley due to:
+    1. Internal use of requires_grad_() for autodiff (not supported in vmap)
+    2. Data-dependent control flow (if torch.all(converged)) not supported
+
+    These tests document the expected incompatibility. Use explicit batching
+    (e.g., halley(f, batched_x0)) instead of vmap for vectorized computation.
+    """
+
+    @pytest.mark.xfail(
+        reason="vmap incompatible: requires_grad_() and data-dependent control flow"
+    )
+    def test_vmap_basic(self):
+        """vmap works with halley for vectorized parameter sweeps."""
+        from torch.func import vmap
+
+        c = torch.tensor([2.0, 3.0, 4.0], dtype=torch.float64)
+
+        def solve_one(ci):
+            f = lambda x: x**2 - ci
+            x0 = torch.tensor([1.5], dtype=torch.float64)
+            root, converged = halley(f, x0)
+            return root
+
+        # Use vmap to vectorize over the first dimension
+        roots = vmap(solve_one)(c)
+
+        expected = torch.sqrt(c)
+        torch.testing.assert_close(
+            roots.squeeze(-1), expected, rtol=1e-6, atol=1e-6
+        )
+
+    @pytest.mark.xfail(
+        reason="vmap incompatible: requires_grad_() and data-dependent control flow"
+    )
+    def test_vmap_different_starting_points(self):
+        """vmap works with different starting points for the same problem."""
+        from torch.func import vmap
+
+        def solve_sqrt2(x0_scalar):
+            x0 = x0_scalar.unsqueeze(0)
+            f = lambda x: x**2 - 2.0
+            root, converged = halley(f, x0)
+            return root
+
+        x0_vals = torch.tensor([1.0, 1.5, 2.0], dtype=torch.float64)
+        roots = vmap(solve_sqrt2)(x0_vals)
+
+        expected = torch.full((3, 1), math.sqrt(2), dtype=torch.float64)
+        torch.testing.assert_close(roots, expected, rtol=1e-6, atol=1e-6)
+
+    @pytest.mark.xfail(
+        reason="vmap incompatible: requires_grad_() and data-dependent control flow"
+    )
+    def test_vmap_with_grad(self):
+        """vmap + grad works together for parameter gradients."""
+        from torch.func import grad, vmap
+
+        def solve_and_return(ci):
+            f = lambda x: x**2 - ci
+            x0 = torch.tensor([1.5], dtype=torch.float64)
+            root, _ = halley(f, x0)
+            return root.sum()
+
+        c = torch.tensor([2.0, 3.0, 4.0], dtype=torch.float64)
+
+        # grad of vmapped function
+        grads = vmap(grad(solve_and_return))(c)
+
+        # d(sqrt(c))/dc = 1/(2*sqrt(c))
+        expected = 1.0 / (2.0 * torch.sqrt(c))
+        torch.testing.assert_close(grads, expected, rtol=1e-4, atol=1e-6)
+
+    @pytest.mark.xfail(reason="vmap incompatible: data-dependent control flow")
+    def test_vmap_explicit_derivatives(self):
+        """vmap works with explicit derivatives."""
+        from torch.func import vmap
+
+        c = torch.tensor([2.0, 3.0, 4.0], dtype=torch.float64)
+
+        def solve_one(ci):
+            f = lambda x: x**2 - ci
+            df = lambda x: 2 * x
+            ddf = lambda x: torch.full_like(x, 2.0)
+            x0 = torch.tensor([1.5], dtype=torch.float64)
+            root, converged = halley(f, x0, df=df, ddf=ddf)
+            return root
+
+        roots = vmap(solve_one)(c)
+
+        expected = torch.sqrt(c)
+        torch.testing.assert_close(
+            roots.squeeze(-1), expected, rtol=1e-6, atol=1e-6
+        )
+
+    def test_explicit_batching_alternative(self):
+        """Demonstrates explicit batching as alternative to vmap.
+
+        Instead of using vmap, pass batched inputs directly to halley.
+        """
+        c = torch.tensor([2.0, 3.0, 4.0], dtype=torch.float64)
+        f = lambda x: x**2 - c
+        x0 = torch.full((3,), 1.5, dtype=torch.float64)
+
+        roots, converged = halley(f, x0)
+
+        expected = torch.sqrt(c)
+        torch.testing.assert_close(roots, expected, rtol=1e-6, atol=1e-6)
+        assert converged.all()
+
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 class TestHalleyCUDA:

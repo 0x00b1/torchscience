@@ -462,6 +462,29 @@ class TestTrustRegionAutograd:
             atol=1e-5,
         )
 
+    def test_gradgradcheck(self):
+        """Test second-order gradients via gradgradcheck.
+
+        For 2D system f(x,y) = [x^2 + y^2 - theta, x - y],
+        root is x* = y* = sqrt(theta/2), so x* + y* = sqrt(2*theta).
+        First derivative: d(x*+y*)/dtheta = 1/sqrt(2*theta)
+        Second derivative: d^2(x*+y*)/dtheta^2 = -1/(2*(2*theta)^(3/2))
+        """
+
+        def func(theta):
+            def f(x):
+                x1, x2 = x[..., 0], x[..., 1]
+                f1 = x1**2 + x2**2 - theta
+                f2 = x1 - x2
+                return torch.stack([f1, f2], dim=-1)
+
+            x0 = torch.tensor([1.5, 1.5], dtype=torch.float64)
+            root, _ = trust_region(f, x0)
+            return root.sum()
+
+        theta = torch.tensor([2.0], dtype=torch.float64, requires_grad=True)
+        torch.autograd.gradgradcheck(func, theta)
+
 
 class TestTrustRegionComparison:
     """Compare Trust-Region to scipy.optimize.root."""
@@ -495,6 +518,127 @@ class TestTrustRegionComparison:
             rtol=1e-6,
             atol=1e-6,
         )
+
+
+class TestTrustRegionVmap:
+    """Tests for vmap compatibility.
+
+    Note: vmap is currently NOT compatible with trust_region due to:
+    1. Internal use of requires_grad_() for autodiff (not supported in vmap)
+    2. Data-dependent control flow (if torch.all(converged)) not supported
+    3. torch.linalg.solve operations inside vmap
+
+    These tests document the expected incompatibility. Use explicit batching
+    (e.g., trust_region(f, batched_x0)) instead of vmap for vectorized computation.
+    """
+
+    @pytest.mark.xfail(
+        reason="vmap incompatible: requires_grad_() and data-dependent control flow"
+    )
+    def test_vmap_basic(self):
+        """vmap works with trust_region for vectorized parameter sweeps."""
+        from torch.func import vmap
+
+        theta = torch.tensor([1.0, 2.0, 4.0], dtype=torch.float64)
+
+        def solve_one(t):
+            def f(x):
+                x1, x2 = x[..., 0], x[..., 1]
+                f1 = x1**2 + x2**2 - t
+                f2 = x1 - x2
+                return torch.stack([f1, f2], dim=-1)
+
+            x0 = torch.tensor([0.5, 0.5], dtype=torch.float64)
+            root, converged = trust_region(f, x0)
+            return root
+
+        # Use vmap to vectorize over the first dimension
+        roots = vmap(solve_one)(theta)
+
+        # Root is (sqrt(theta/2), sqrt(theta/2))
+        expected_vals = torch.sqrt(theta / 2)
+        expected = torch.stack([expected_vals, expected_vals], dim=-1)
+        torch.testing.assert_close(roots, expected, rtol=1e-6, atol=1e-6)
+
+    @pytest.mark.xfail(
+        reason="vmap incompatible: requires_grad_() and data-dependent control flow"
+    )
+    def test_vmap_different_starting_points(self):
+        """vmap works with different starting points for the same problem."""
+        from torch.func import vmap
+
+        def solve_circle(x0):
+            def f(x):
+                x1, x2 = x[..., 0], x[..., 1]
+                f1 = x1**2 + x2**2 - 1.0
+                f2 = x1 - x2
+                return torch.stack([f1, f2], dim=-1)
+
+            root, converged = trust_region(f, x0)
+            return root
+
+        x0_vals = torch.tensor(
+            [[0.4, 0.4], [0.5, 0.5], [0.6, 0.6]], dtype=torch.float64
+        )
+        roots = vmap(solve_circle)(x0_vals)
+
+        expected_val = 1.0 / math.sqrt(2)
+        expected = torch.tensor(
+            [[expected_val, expected_val]] * 3, dtype=torch.float64
+        )
+        torch.testing.assert_close(roots, expected, rtol=1e-6, atol=1e-6)
+
+    @pytest.mark.xfail(
+        reason="vmap incompatible: requires_grad_() and data-dependent control flow"
+    )
+    def test_vmap_with_grad(self):
+        """vmap + grad works together for parameter gradients."""
+        from torch.func import grad, vmap
+
+        def solve_and_sum(t):
+            def f(x):
+                x1, x2 = x[..., 0], x[..., 1]
+                f1 = x1**2 + x2**2 - t
+                f2 = x1 - x2
+                return torch.stack([f1, f2], dim=-1)
+
+            x0 = torch.tensor([0.5, 0.5], dtype=torch.float64)
+            root, _ = trust_region(f, x0)
+            return root.sum()
+
+        theta = torch.tensor([1.0, 2.0, 4.0], dtype=torch.float64)
+
+        # grad of vmapped function
+        grads = vmap(grad(solve_and_sum))(theta)
+
+        # d(x1+x2)/dtheta = 1/sqrt(2*theta) from implicit diff
+        expected = 1.0 / torch.sqrt(2.0 * theta)
+        torch.testing.assert_close(grads, expected, rtol=1e-3, atol=1e-5)
+
+    def test_explicit_batching_alternative(self):
+        """Demonstrates explicit batching as alternative to vmap.
+
+        Instead of using vmap, pass batched inputs directly to trust_region.
+        """
+
+        def f(x):
+            x1, x2 = x[..., 0], x[..., 1]
+            f1 = x1**2 + x2**2 - 1.0
+            f2 = x1 - x2
+            return torch.stack([f1, f2], dim=-1)
+
+        x0 = torch.tensor(
+            [[0.5, 0.5], [0.6, 0.6], [0.7, 0.7]], dtype=torch.float64
+        )
+
+        roots, converged = trust_region(f, x0)
+
+        expected_val = 1.0 / math.sqrt(2)
+        expected = torch.tensor(
+            [[expected_val, expected_val]] * 3, dtype=torch.float64
+        )
+        torch.testing.assert_close(roots, expected, rtol=1e-6, atol=1e-6)
+        assert converged.all()
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
