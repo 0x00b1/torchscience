@@ -11,6 +11,14 @@ from torchscience.geometry.transform._axis_angle import (
     matrix_to_axis_angle,
     quaternion_to_axis_angle,
 )
+from torchscience.geometry.transform._euler_angles import (
+    EulerAngles,
+    euler_angles,
+    euler_angles_to_matrix,
+    euler_angles_to_quaternion,
+    matrix_to_euler_angles,
+    quaternion_to_euler_angles,
+)
 from torchscience.geometry.transform._quaternion import (
     Quaternion,
     matrix_to_quaternion,
@@ -47,6 +55,7 @@ from torchscience.geometry.transform._rotation_vector import (
 
 __all__ = [
     "AxisAngle",
+    "EulerAngles",
     "Quaternion",
     "Rotation6D",
     "RotationMatrix",
@@ -54,7 +63,11 @@ __all__ = [
     "axis_angle",
     "axis_angle_to_matrix",
     "axis_angle_to_quaternion",
+    "euler_angles",
+    "euler_angles_to_matrix",
+    "euler_angles_to_quaternion",
     "matrix_to_axis_angle",
+    "matrix_to_euler_angles",
     "matrix_to_quaternion",
     "matrix_to_rotation_6d",
     "matrix_to_rotation_vector",
@@ -65,6 +78,7 @@ __all__ = [
     "quaternion_normalize",
     "quaternion_slerp",
     "quaternion_to_axis_angle",
+    "quaternion_to_euler_angles",
     "quaternion_to_matrix",
     "quaternion_to_rotation_6d",
     "quaternion_to_rotation_vector",
