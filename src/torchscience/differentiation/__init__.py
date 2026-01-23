@@ -26,6 +26,10 @@ from torchscience.differentiation._hessian import hessian
 from torchscience.differentiation._jacobian import jacobian
 from torchscience.differentiation._laplacian import laplacian
 from torchscience.differentiation._laplacian_stencil import laplacian_stencil
+from torchscience.differentiation._line_integral import (
+    circulation,
+    line_integral,
+)
 from torchscience.differentiation._path import Path, Surface
 from torchscience.differentiation._q_criterion import q_criterion
 from torchscience.differentiation._richardson import richardson_extrapolation
@@ -55,6 +59,7 @@ __all__ = [
     "apply_stencil",
     "biharmonic",
     "biharmonic_stencil",
+    "circulation",
     "curl",
     "derivative",
     "diffuse",
@@ -69,6 +74,7 @@ __all__ = [
     "jacobian",
     "laplacian",
     "laplacian_stencil",
+    "line_integral",
     "q_criterion",
     "richardson_extrapolation",
     "spectral_derivative",
