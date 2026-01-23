@@ -345,6 +345,7 @@
 // pad
 #include "cpu/pad/pad.h"
 #include "meta/pad/pad.h"
+#include "autograd/pad/pad.h"
 
 // probability
 #include "cpu/probability/normal.h"
