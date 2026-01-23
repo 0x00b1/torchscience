@@ -16,7 +16,13 @@ public:
     ) {
         at::AutoDispatchBelowAutograd guard;
         auto [eigenvalues, eigenvectors, info] =
-            at::_ops::torchscience_symmetric_generalized_eigenvalue::call(a, b);
+            c10::Dispatcher::singleton()
+                .findSchemaOrThrow("torchscience::symmetric_generalized_eigenvalue", "")
+                .typed<std::tuple<at::Tensor, at::Tensor, at::Tensor>(
+                    const at::Tensor&,
+                    const at::Tensor&
+                )>()
+                .call(a, b);
 
         ctx->save_for_backward({eigenvalues, eigenvectors, a, b});
 

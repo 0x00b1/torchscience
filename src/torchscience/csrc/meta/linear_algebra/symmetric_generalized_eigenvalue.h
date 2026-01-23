@@ -42,9 +42,9 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> symmetric_generalized_eige
     vec_shape.push_back(n);
     vec_shape.push_back(n);
 
-    at::Tensor eigenvalues = at::empty_symint(eig_shape, a.options().dtype(common_dtype));
-    at::Tensor eigenvectors = at::empty_symint(vec_shape, a.options().dtype(common_dtype));
-    at::Tensor info = at::empty_symint(broadcast_shape, a.options().dtype(at::kInt));
+    at::Tensor eigenvalues = at::empty(eig_shape, a.options().dtype(common_dtype));
+    at::Tensor eigenvectors = at::empty(vec_shape, a.options().dtype(common_dtype));
+    at::Tensor info = at::empty(broadcast_shape, a.options().dtype(at::kInt));
 
     return std::make_tuple(eigenvalues, eigenvectors, info);
 }

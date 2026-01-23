@@ -352,6 +352,12 @@
 #include "autograd/polynomial/jacobi_polynomial_p/jacobi_polynomial_p_mulx.h"
 #include "autocast/polynomial/jacobi_polynomial_p/jacobi_polynomial_p_mulx.h"
 
+// linear_algebra decomposition
+#include "cpu/linear_algebra/symmetric_generalized_eigenvalue.h"
+#include "meta/linear_algebra/symmetric_generalized_eigenvalue.h"
+#include "autograd/linear_algebra/symmetric_generalized_eigenvalue.h"
+#include "autocast/linear_algebra/symmetric_generalized_eigenvalue.h"
+
 // pad
 #include "cpu/pad/pad.h"
 #include "meta/pad/pad.h"
@@ -1684,6 +1690,9 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("jacobi_polynomial_p_mulx(Tensor coeffs, Tensor alpha, Tensor beta) -> Tensor");
   module.def("jacobi_polynomial_p_mulx_backward(Tensor grad_output, Tensor coeffs, Tensor alpha, Tensor beta) -> (Tensor, Tensor, Tensor)");
   module.def("jacobi_polynomial_p_mulx_backward_backward(Tensor gg_coeffs, Tensor coeffs, Tensor alpha, Tensor beta) -> Tensor");
+
+  // linear_algebra decomposition
+  module.def("symmetric_generalized_eigenvalue(Tensor a, Tensor b) -> (Tensor, Tensor, Tensor)");
 
   // morphology
   module.def("erosion(Tensor input, Tensor structuring_element, int[]? origin, int padding_mode) -> Tensor");
