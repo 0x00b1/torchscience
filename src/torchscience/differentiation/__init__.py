@@ -22,6 +22,7 @@ from torchscience.differentiation._hessian import hessian
 from torchscience.differentiation._jacobian import jacobian
 from torchscience.differentiation._laplacian import laplacian
 from torchscience.differentiation._laplacian_stencil import laplacian_stencil
+from torchscience.differentiation._path import Path, Surface
 from torchscience.differentiation._richardson import richardson_extrapolation
 from torchscience.differentiation._spectral_derivative import (
     spectral_derivative,
@@ -39,8 +40,10 @@ __all__ = [
     "DifferentiationError",
     "FiniteDifferenceStencil",
     "IrregularMesh",
+    "Path",
     "RegularGrid",
     "StencilError",
+    "Surface",
     "apply_stencil",
     "biharmonic",
     "biharmonic_stencil",
