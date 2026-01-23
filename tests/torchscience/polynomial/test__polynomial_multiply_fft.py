@@ -160,7 +160,6 @@ class TestPolynomialMultiplyFFT:
         expected = torch.tensor([4, 13, 22, 15])
         torch.testing.assert_close(result, expected)
 
-    @pytest.mark.xfail(reason="polynomial() doesn't preserve requires_grad")
     def test_gradients(self):
         """Test that gradients flow through FFT multiply."""
         p_coeffs = torch.tensor(
@@ -181,6 +180,49 @@ class TestPolynomialMultiplyFFT:
         assert q_coeffs.grad is not None
         assert p_coeffs.grad.shape == p_coeffs.shape
         assert q_coeffs.grad.shape == q_coeffs.shape
+
+
+class TestPolynomialMultiplyFFTAutograd:
+    """Autograd tests for FFT multiplication."""
+
+    def test_gradcheck(self):
+        """torch.autograd.gradcheck for FFT multiply."""
+        a_coeffs = torch.tensor(
+            [1.0, 2.0, 3.0], dtype=torch.float64, requires_grad=True
+        )
+        b_coeffs = torch.tensor(
+            [4.0, 5.0], dtype=torch.float64, requires_grad=True
+        )
+
+        def mul_fn(a, b):
+            return polynomial_multiply_fft(polynomial(a), polynomial(b))
+
+        assert torch.autograd.gradcheck(mul_fn, (a_coeffs, b_coeffs))
+
+    def test_gradgradcheck(self):
+        """torch.autograd.gradgradcheck for FFT multiply."""
+        a_coeffs = torch.tensor(
+            [1.0, 2.0], dtype=torch.float64, requires_grad=True
+        )
+        b_coeffs = torch.tensor(
+            [3.0, 4.0], dtype=torch.float64, requires_grad=True
+        )
+
+        def mul_fn(a, b):
+            return polynomial_multiply_fft(polynomial(a), polynomial(b)).sum()
+
+        assert torch.autograd.gradgradcheck(mul_fn, (a_coeffs, b_coeffs))
+
+    def test_gradcheck_high_degree(self):
+        """torch.autograd.gradcheck for high-degree FFT multiply."""
+        torch.manual_seed(42)
+        a_coeffs = torch.randn(20, dtype=torch.float64, requires_grad=True)
+        b_coeffs = torch.randn(15, dtype=torch.float64, requires_grad=True)
+
+        def mul_fn(a, b):
+            return polynomial_multiply_fft(polynomial(a), polynomial(b))
+
+        assert torch.autograd.gradcheck(mul_fn, (a_coeffs, b_coeffs))
 
 
 class TestPolynomialMultiplyAuto:
