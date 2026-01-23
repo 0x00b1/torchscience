@@ -2,9 +2,9 @@
 
 import pytest
 import torch
-from torch.autograd import gradcheck
+from torch.autograd import gradcheck, gradgradcheck
 
-from torchscience.information_theory import (
+from torchscience.information import (
     conditional_entropy,
     joint_entropy,
     mutual_information,
@@ -191,6 +191,30 @@ class TestMutualInformationGradients:
 
         assert joint.grad is not None
         assert joint.grad.shape == joint.shape
+
+    def test_gradgradcheck(self):
+        """Second-order gradients are correct."""
+        joint = torch.softmax(
+            torch.randn(3, 4, dtype=torch.float64).flatten(), dim=-1
+        ).view(3, 4)
+        joint.requires_grad_(True)
+
+        def func(j):
+            return mutual_information(j)
+
+        assert gradgradcheck(func, (joint,), eps=1e-6, atol=1e-4, rtol=1e-3)
+
+    def test_gradgradcheck_batched(self):
+        """Second-order gradients are correct for batched input."""
+        joint = torch.softmax(
+            torch.randn(5, 3, 4, dtype=torch.float64).flatten(-2), dim=-1
+        ).view(5, 3, 4)
+        joint.requires_grad_(True)
+
+        def func(j):
+            return mutual_information(j).sum()
+
+        assert gradgradcheck(func, (joint,), eps=1e-6, atol=1e-4, rtol=1e-3)
 
 
 class TestMutualInformationMeta:
