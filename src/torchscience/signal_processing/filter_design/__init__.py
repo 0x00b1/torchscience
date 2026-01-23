@@ -45,6 +45,7 @@ from ._lowpass_to_bandstop_zpk import lowpass_to_bandstop_zpk
 from ._lowpass_to_highpass_zpk import lowpass_to_highpass_zpk
 from ._lowpass_to_lowpass_zpk import lowpass_to_lowpass_zpk
 from ._minimum_phase import minimum_phase
+from ._remez import remez
 from ._savgol_coeffs import savgol_coeffs
 from ._sos_normalize import sos_normalize
 from ._sos_sections_count import sos_sections_count
@@ -72,6 +73,7 @@ __all__ = [
     "elliptic_prototype",
     "firwin",
     "firwin2",
+    "remez",
     "iirnotch",
     "iirpeak",
     "minimum_phase",
