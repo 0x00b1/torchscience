@@ -6,6 +6,7 @@ from torchscience.differentiation._biharmonic_stencil import biharmonic_stencil
 from torchscience.differentiation._curl import curl
 from torchscience.differentiation._derivative import derivative
 from torchscience.differentiation._divergence import divergence
+from torchscience.differentiation._enstrophy import enstrophy
 from torchscience.differentiation._exceptions import (
     BoundaryError,
     DifferentiationError,
@@ -51,6 +52,7 @@ __all__ = [
     "curl",
     "derivative",
     "divergence",
+    "enstrophy",
     "finite_difference_stencil",
     "fornberg_weights",
     "gradient",
