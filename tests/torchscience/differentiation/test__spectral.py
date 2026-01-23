@@ -4,7 +4,11 @@ import math
 
 import torch
 
-from torchscience.differentiation import spectral_derivative, spectral_gradient
+from torchscience.differentiation import (
+    spectral_derivative,
+    spectral_gradient,
+    spectral_laplacian,
+)
 
 
 class TestSpectralDerivative:
@@ -144,3 +148,98 @@ class TestSpectralGradient:
         # Should equal spectral_derivative
         expected = spectral_derivative(f, dim=0, dx=dx)
         torch.testing.assert_close(grad[0], expected, rtol=1e-5, atol=1e-5)
+
+
+class TestSpectralLaplacian:
+    """Tests for spectral_laplacian function."""
+
+    def test_sin_2d(self):
+        """Laplacian of sin(x)*sin(y) is -2*sin(x)*sin(y)."""
+        n = 64
+        x = torch.linspace(0, 2 * math.pi, n + 1)[:-1]  # Periodic domain
+        y = torch.linspace(0, 2 * math.pi, n + 1)[:-1]
+        X, Y = torch.meshgrid(x, y, indexing="ij")
+
+        f = torch.sin(X) * torch.sin(Y)
+        dx = 2 * math.pi / n
+
+        lap = spectral_laplacian(f, spacing=dx)
+        expected = -2 * torch.sin(X) * torch.sin(Y)
+
+        torch.testing.assert_close(lap, expected, rtol=1e-3, atol=1e-3)
+
+    def test_cos_3d(self):
+        """Laplacian of cos(x)*cos(y)*cos(z) is -3*cos(x)*cos(y)*cos(z)."""
+        n = 32
+        x = torch.linspace(0, 2 * math.pi, n + 1)[:-1]
+        y = torch.linspace(0, 2 * math.pi, n + 1)[:-1]
+        z = torch.linspace(0, 2 * math.pi, n + 1)[:-1]
+        X, Y, Z = torch.meshgrid(x, y, z, indexing="ij")
+
+        f = torch.cos(X) * torch.cos(Y) * torch.cos(Z)
+        dx = 2 * math.pi / n
+
+        lap = spectral_laplacian(f, spacing=dx)
+        expected = -3 * torch.cos(X) * torch.cos(Y) * torch.cos(Z)
+
+        torch.testing.assert_close(lap, expected, rtol=1e-3, atol=1e-3)
+
+    def test_partial_dims(self):
+        """Laplacian over subset of dimensions."""
+        n = 64
+        x = torch.linspace(0, 2 * math.pi, n + 1)[:-1]
+        y = torch.linspace(0, 2 * math.pi, n + 1)[:-1]
+        X, Y = torch.meshgrid(x, y, indexing="ij")
+
+        f = torch.sin(X) * torch.sin(Y)
+        dx = 2 * math.pi / n
+
+        # Laplacian only in x direction: d^2/dx^2[sin(x)sin(y)] = -sin(x)sin(y)
+        lap_x = spectral_laplacian(f, dims=[0], spacing=dx)
+        expected_x = -torch.sin(X) * torch.sin(Y)
+
+        torch.testing.assert_close(lap_x, expected_x, rtol=1e-3, atol=1e-3)
+
+    def test_1d_second_derivative(self):
+        """1D Laplacian equals second derivative."""
+        n = 64
+        x = torch.linspace(0, 2 * math.pi, n + 1)[:-1]
+        dx = 2 * math.pi / n
+
+        # f = sin(x), d^2f/dx^2 = -sin(x)
+        f = torch.sin(x)
+        lap = spectral_laplacian(f, spacing=dx)
+        expected = -torch.sin(x)
+
+        torch.testing.assert_close(lap, expected, rtol=1e-3, atol=1e-3)
+
+    def test_different_spacings(self):
+        """Laplacian with different spacing per dimension."""
+        n = 64
+        # Domain [0, 2*pi] x [0, 4*pi]
+        x = torch.linspace(0, 2 * math.pi, n + 1)[:-1]
+        y = torch.linspace(0, 4 * math.pi, n + 1)[:-1]
+        X, Y = torch.meshgrid(x, y, indexing="ij")
+
+        # f = sin(x) * sin(y/2), so Laplacian = -sin(x)*sin(y/2) - (1/4)*sin(x)*sin(y/2)
+        #                                     = -(5/4)*sin(x)*sin(y/2)
+        f = torch.sin(X) * torch.sin(Y / 2)
+        dx = 2 * math.pi / n
+        dy = 4 * math.pi / n
+
+        lap = spectral_laplacian(f, spacing=[dx, dy])
+        expected = -(1 + 0.25) * torch.sin(X) * torch.sin(Y / 2)
+
+        torch.testing.assert_close(lap, expected, rtol=1e-3, atol=1e-3)
+
+    def test_preserves_shape(self):
+        """Output has same shape as input."""
+        field = torch.randn(16, 32, 24)
+        lap = spectral_laplacian(field)
+        assert lap.shape == field.shape
+
+    def test_preserves_dtype(self):
+        """Output has same dtype as input."""
+        field = torch.randn(32, 32, dtype=torch.float64)
+        lap = spectral_laplacian(field)
+        assert lap.dtype == torch.float64
