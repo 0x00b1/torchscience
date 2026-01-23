@@ -75,7 +75,7 @@ class _BroydenImplicitGrad(torch.autograd.Function):
             # Backpropagate v through f to get df/dtheta contribution
             if fx.grad_fn is not None:
                 # Sum over batch and system dimensions with v as weights
-                torch.autograd.backward(fx, v)
+                torch.autograd.backward(fx, v, create_graph=True)
 
         return None, None, None
 

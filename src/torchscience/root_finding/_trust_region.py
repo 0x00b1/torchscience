@@ -83,9 +83,9 @@ class _TrustRegionImplicitGrad(torch.autograd.Function):
                 if m != n:
                     # For overdetermined, we need to compute contribution differently
                     v_expanded = torch.einsum("bij,bj->bi", jacobian, v)
-                    torch.autograd.backward(fx, v_expanded)
+                    torch.autograd.backward(fx, v_expanded, create_graph=True)
                 else:
-                    torch.autograd.backward(fx, v)
+                    torch.autograd.backward(fx, v, create_graph=True)
 
         return None, None, None
 

@@ -143,7 +143,7 @@ class _HalleyImplicitGrad(torch.autograd.Function):
                 # Handle case where df_dx is exactly zero (sign returns 0)
                 safe_df_dx = torch.where(safe_df_dx == 0, eps, safe_df_dx)
                 modified_grad = -grad_output / safe_df_dx
-                torch.autograd.backward(fx, modified_grad)
+                torch.autograd.backward(fx, modified_grad, create_graph=True)
 
         return None, None, None
 
