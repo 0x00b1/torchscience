@@ -8,6 +8,7 @@ from ._differentiation import (
 from ._exceptions import BracketError, DerivativeError, RootFindingError
 from ._halley import halley
 from ._newton import newton
+from ._ridder import ridder
 from ._secant import secant
 
 __all__ = [
@@ -19,6 +20,7 @@ __all__ = [
     "default_tolerances",
     "halley",
     "newton",
+    "ridder",
     "secant",
     "BracketError",
     "DerivativeError",
