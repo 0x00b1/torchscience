@@ -7,7 +7,7 @@ import torch
 import torch.nn.functional as F
 from torch.autograd import gradcheck
 
-from torchscience.information_theory import kullback_leibler_divergence
+from torchscience.information import kullback_leibler_divergence
 
 
 class TestKLDivergenceBasic:

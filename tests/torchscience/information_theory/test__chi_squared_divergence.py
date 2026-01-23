@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchscience.information_theory import chi_squared_divergence
+from torchscience.information import chi_squared_divergence
 
 
 class TestChiSquaredDivergenceBasic:
