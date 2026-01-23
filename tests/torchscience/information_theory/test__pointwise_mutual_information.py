@@ -5,7 +5,7 @@ import math
 import pytest
 import torch
 
-from torchscience.information_theory import pointwise_mutual_information
+from torchscience.information import pointwise_mutual_information
 
 
 class TestPointwiseMutualInformationForward:
@@ -147,9 +147,6 @@ class TestPointwiseMutualInformationGradients:
             pmi_func, (joint,), raise_exception=True
         )
 
-    @pytest.mark.xfail(
-        reason="Second-order gradients for PMI involve complex Hessian terms; needs refinement"
-    )
     def test_gradgradcheck(self) -> None:
         """Test second-order gradients with gradgradcheck."""
         joint = torch.rand(3, 4, dtype=torch.float64, requires_grad=True)
@@ -284,7 +281,7 @@ class TestPointwiseMutualInformationRelationships:
 
     def test_expected_pmi_equals_mi(self) -> None:
         """Test that E[PMI] = MI (mutual information is expected PMI)."""
-        from torchscience.information_theory import mutual_information
+        from torchscience.information import mutual_information
 
         joint = torch.tensor([[0.4, 0.1], [0.1, 0.4]], dtype=torch.float64)
 
