@@ -246,6 +246,123 @@ class TestSpectralLaplacian:
         assert lap.dtype == torch.float64
 
 
+class TestSpectralVsFiniteDifference:
+    """Compare spectral and finite difference accuracy."""
+
+    def test_derivative_accuracy_comparison(self):
+        """Spectral derivative should be more accurate than FD for smooth periodic functions."""
+
+        n = 64
+        # Use float64 for high-precision comparison
+        x = torch.linspace(0, 2 * math.pi, n + 1, dtype=torch.float64)[:-1]
+        dx = 2 * math.pi / n
+
+        # sin(x) -> cos(x)
+        f = torch.sin(x)
+        expected = torch.cos(x)
+
+        # Spectral derivative (using impl directly to avoid autocast)
+        from torchscience.differentiation._spectral_derivative import (
+            _spectral_derivative_impl,
+        )
+
+        spectral_result = _spectral_derivative_impl(f, dim=0, dx=dx)
+        spectral_error = (spectral_result - expected).abs().max().item()
+
+        # Finite difference derivative with circular boundary for fair comparison
+        from torchscience.differentiation._derivative import _derivative_impl
+
+        fd_result = _derivative_impl(
+            f, dim=0, dx=dx, accuracy=2, boundary="circular"
+        )
+        fd_error = (fd_result - expected).abs().max().item()
+
+        # Spectral should be significantly more accurate
+        assert spectral_error < fd_error, (
+            f"Spectral error {spectral_error} should be less than FD error {fd_error}"
+        )
+        # Spectral should achieve near-machine precision for this simple case
+        assert spectral_error < 1e-10, (
+            f"Spectral error {spectral_error} should be near machine precision"
+        )
+
+    def test_gradient_accuracy_comparison(self):
+        """Spectral gradient should be more accurate than FD for smooth periodic functions."""
+        n = 32
+        # Use float64 for high-precision comparison
+        x = torch.linspace(0, 2 * math.pi, n + 1, dtype=torch.float64)[:-1]
+        y = torch.linspace(0, 2 * math.pi, n + 1, dtype=torch.float64)[:-1]
+        X, Y = torch.meshgrid(x, y, indexing="ij")
+        dx = 2 * math.pi / n
+
+        # sin(x)*sin(y)
+        f = torch.sin(X) * torch.sin(Y)
+        expected_dx = torch.cos(X) * torch.sin(Y)
+        expected_dy = torch.sin(X) * torch.cos(Y)
+
+        # Spectral gradient (using impl directly to avoid autocast)
+        from torchscience.differentiation._spectral_gradient import (
+            _spectral_gradient_impl,
+        )
+
+        spectral_grad = _spectral_gradient_impl(f, dx=dx)
+        spectral_gx, spectral_gy = spectral_grad[0], spectral_grad[1]
+        spectral_error_x = (spectral_gx - expected_dx).abs().max().item()
+        spectral_error_y = (spectral_gy - expected_dy).abs().max().item()
+        spectral_error = max(spectral_error_x, spectral_error_y)
+
+        # Finite difference gradient with circular boundary for fair comparison
+        from torchscience.differentiation._gradient import _gradient_impl
+
+        fd_grad = _gradient_impl(f, dx=dx, accuracy=2, boundary="circular")
+        fd_gx = fd_grad[0]
+        fd_gy = fd_grad[1]
+        fd_error_x = (fd_gx - expected_dx).abs().max().item()
+        fd_error_y = (fd_gy - expected_dy).abs().max().item()
+        fd_error = max(fd_error_x, fd_error_y)
+
+        # Spectral should be more accurate
+        assert spectral_error < fd_error, (
+            f"Spectral error {spectral_error} should be less than FD error {fd_error}"
+        )
+
+    def test_laplacian_accuracy_comparison(self):
+        """Spectral Laplacian should be more accurate than FD for smooth periodic functions."""
+        n = 32
+        # Use float64 for high-precision comparison
+        x = torch.linspace(0, 2 * math.pi, n + 1, dtype=torch.float64)[:-1]
+        y = torch.linspace(0, 2 * math.pi, n + 1, dtype=torch.float64)[:-1]
+        X, Y = torch.meshgrid(x, y, indexing="ij")
+        dx = 2 * math.pi / n
+
+        # sin(x)*sin(y) -> Laplacian = -2*sin(x)*sin(y)
+        f = torch.sin(X) * torch.sin(Y)
+        expected = -2 * torch.sin(X) * torch.sin(Y)
+
+        # Spectral Laplacian (using impl directly to avoid autocast)
+        from torchscience.differentiation._spectral_laplacian import (
+            _spectral_laplacian_impl,
+        )
+
+        spectral_result = _spectral_laplacian_impl(f, spacing=dx)
+        spectral_error = (spectral_result - expected).abs().max().item()
+
+        # Finite difference Laplacian with circular boundary for fair comparison
+        from torchscience.differentiation._laplacian import _laplacian_impl
+
+        fd_result = _laplacian_impl(f, dx=dx, accuracy=2, boundary="circular")
+        fd_error = (fd_result - expected).abs().max().item()
+
+        # Spectral should be more accurate
+        assert spectral_error < fd_error, (
+            f"Spectral error {spectral_error} should be less than FD error {fd_error}"
+        )
+        # Spectral should achieve high accuracy
+        assert spectral_error < 1e-8, (
+            f"Spectral error {spectral_error} should be very small"
+        )
+
+
 class TestSpectralAutograd:
     """Autograd tests for spectral operators."""
 
