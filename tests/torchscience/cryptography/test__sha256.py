@@ -1,7 +1,8 @@
 import hashlib
 
 import torch
-from torchscience.encryption import sha256
+
+from torchscience.cryptography import sha256
 
 
 class TestSHA256:
