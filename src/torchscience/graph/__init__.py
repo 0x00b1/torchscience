@@ -7,6 +7,9 @@ from torchscience.graph._bellman_ford import (
 from torchscience.graph._betweenness_centrality import (
     betweenness_centrality,
 )
+from torchscience.graph._breadth_first_search import (
+    breadth_first_search,
+)
 from torchscience.graph._closeness_centrality import (
     closeness_centrality,
 )
@@ -41,6 +44,7 @@ __all__ = [
     "NegativeCycleError",
     "bellman_ford",
     "betweenness_centrality",
+    "breadth_first_search",
     "closeness_centrality",
     "connected_components",
     "dijkstra",
