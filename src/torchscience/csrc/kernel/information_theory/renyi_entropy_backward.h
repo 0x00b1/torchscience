@@ -77,4 +77,79 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE void renyi_entropy_backward_kernel(
   }
 }
 
+/**
+ * Compute second-order gradient of Renyi entropy.
+ *
+ * H_α = (1/(1-α)) · log(S)  where S = Σ p_i^α
+ * g_j = grad_output · log_base_scale · α / ((1-α)·S) · p_j^(α-1)
+ *
+ * @param gg_p Upstream gradient w.r.t. grad_p
+ * @param grad_output Original upstream gradient
+ * @param p Pointer to probability distribution
+ * @param n Size of distribution
+ * @param alpha Order of Renyi entropy
+ * @param log_base_scale Scale factor for log base
+ * @param grad_grad_output Output: gradient w.r.t. grad_output
+ * @param grad_p Output: second-order gradient w.r.t. p
+ */
+template <typename T>
+C10_HOST_DEVICE C10_ALWAYS_INLINE void renyi_entropy_backward_backward_kernel(
+    const T* gg_p,
+    T grad_output,
+    const T* p,
+    int64_t n,
+    T alpha,
+    T log_base_scale,
+    T& grad_grad_output,
+    T* grad_p
+) {
+  T eps = get_eps<T>();
+
+  // Handle special cases (alpha=0 or alpha->inf have zero gradients)
+  if (alpha < eps || alpha > T(100)) {
+    grad_grad_output = T(0);
+    for (int64_t i = 0; i < n; ++i) {
+      grad_p[i] = T(0);
+    }
+    return;
+  }
+
+  // Compute S = Σ p_i^α
+  T S = T(0);
+  for (int64_t i = 0; i < n; ++i) {
+    T p_i = p[i] > eps ? p[i] : eps;
+    S += std::pow(p_i, alpha);
+  }
+
+  T coeff = log_base_scale * alpha / (T(1) - alpha);
+
+  grad_grad_output = T(0);
+
+  // First pass: compute grad_grad_output and accumulate gg_dot_p_alpha_m1
+  T gg_dot_p_alpha_m1 = T(0);  // Σ gg_p_i · p_i^(α-1)
+  for (int64_t i = 0; i < n; ++i) {
+    T p_i = p[i] > eps ? p[i] : eps;
+    T gg_p_i = gg_p ? gg_p[i] : T(0);
+    T p_alpha_m1 = std::pow(p_i, alpha - T(1));
+
+    // ∂g_i/∂grad_output = coeff / S · p_i^(α-1)
+    grad_grad_output += gg_p_i * coeff / S * p_alpha_m1;
+
+    gg_dot_p_alpha_m1 += gg_p_i * p_alpha_m1;
+  }
+
+  // Second pass: compute grad_p
+  // grad_p[i] = Σ_j gg_p_j · ∂g_j/∂p_i
+  // = coeff/S · [gg_p_i·(α-1)·p_i^(α-2) - (Σ_j gg_p_j·p_j^(α-1))·α·p_i^(α-1)/S]
+  for (int64_t i = 0; i < n; ++i) {
+    T p_i = p[i] > eps ? p[i] : eps;
+    T gg_p_i = gg_p ? gg_p[i] : T(0);
+
+    T diag_term = gg_p_i * (alpha - T(1)) * std::pow(p_i, alpha - T(2));
+    T off_diag_term = gg_dot_p_alpha_m1 * alpha * std::pow(p_i, alpha - T(1)) / S;
+
+    grad_p[i] = grad_output * coeff / S * (diag_term - off_diag_term);
+  }
+}
+
 }  // namespace torchscience::kernel::information_theory
