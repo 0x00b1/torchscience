@@ -458,3 +458,90 @@ class TestPolarDecomposition:
         P_squared = result.P @ result.P
         AAt = a @ a.mH
         torch.testing.assert_close(P_squared, AAt, rtol=1e-10, atol=1e-10)
+
+    def test_gradcheck(self):
+        """Test gradient computation."""
+        torch.manual_seed(1212)
+        # Use a well-conditioned matrix for stable gradients
+        a = torch.randn(3, 3, dtype=torch.float64, requires_grad=True)
+        a = a + 2 * torch.eye(3, dtype=torch.float64)
+        a = a.clone().detach().requires_grad_(True)
+
+        def fn(x):
+            result = polar_decomposition(x)
+            return result.U.real.sum() + result.P.real.sum()
+
+        assert torch.autograd.gradcheck(fn, (a,), eps=1e-6, atol=1e-4)
+
+    def test_gradcheck_left(self):
+        """Test gradient computation for left polar."""
+        torch.manual_seed(1313)
+        # Use a well-conditioned matrix for stable gradients
+        a = torch.randn(3, 3, dtype=torch.float64, requires_grad=True)
+        a = a + 2 * torch.eye(3, dtype=torch.float64)
+        a = a.clone().detach().requires_grad_(True)
+
+        def fn(x):
+            result = polar_decomposition(x, side="left")
+            return result.U.real.sum() + result.P.real.sum()
+
+        assert torch.autograd.gradcheck(fn, (a,), eps=1e-6, atol=1e-4)
+
+    def test_gradcheck_batched(self):
+        """Test gradient computation with batched input."""
+        torch.manual_seed(1414)
+        batch_size = 2
+        n = 3
+        a = torch.randn(batch_size, n, n, dtype=torch.float64)
+        # Make well-conditioned
+        a = a + 2 * torch.eye(n, dtype=torch.float64).unsqueeze(0)
+        a = a.clone().detach().requires_grad_(True)
+
+        def fn(x):
+            result = polar_decomposition(x)
+            return result.U.real.sum() + result.P.real.sum()
+
+        assert torch.autograd.gradcheck(fn, (a,), eps=1e-6, atol=1e-4)
+
+    def test_grad_only_U(self):
+        """Test gradient flows only through U."""
+        torch.manual_seed(1515)
+        a = torch.randn(3, 3, dtype=torch.float64, requires_grad=True)
+        a = a + 2 * torch.eye(3, dtype=torch.float64)
+        a = a.clone().detach().requires_grad_(True)
+
+        result = polar_decomposition(a)
+        loss = result.U.sum()
+        loss.backward()
+
+        assert a.grad is not None
+        assert not torch.all(a.grad == 0)
+
+    def test_grad_only_P(self):
+        """Test gradient flows only through P."""
+        torch.manual_seed(1616)
+        a = torch.randn(3, 3, dtype=torch.float64, requires_grad=True)
+        a = a + 2 * torch.eye(3, dtype=torch.float64)
+        a = a.clone().detach().requires_grad_(True)
+
+        result = polar_decomposition(a)
+        loss = result.P.sum()
+        loss.backward()
+
+        assert a.grad is not None
+        assert not torch.all(a.grad == 0)
+
+    def test_grad_complex(self):
+        """Test gradient computation with complex input."""
+        torch.manual_seed(1717)
+        a = torch.randn(3, 3, dtype=torch.complex128, requires_grad=True)
+        a = a + 2 * torch.eye(3, dtype=torch.complex128)
+        a = a.clone().detach().requires_grad_(True)
+
+        def fn(x):
+            result = polar_decomposition(x)
+            # For complex, sum the absolute values
+            return result.U.abs().sum() + result.P.abs().sum()
+
+        # gradcheck with complex tensors
+        assert torch.autograd.gradcheck(fn, (a,), eps=1e-6, atol=1e-4)

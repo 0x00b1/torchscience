@@ -361,6 +361,9 @@
 #include "meta/linear_algebra/generalized_eigenvalue.h"
 #include "cpu/linear_algebra/schur_decomposition.h"
 #include "meta/linear_algebra/schur_decomposition.h"
+#include "cpu/linear_algebra/polar_decomposition.h"
+#include "meta/linear_algebra/polar_decomposition.h"
+#include "autograd/linear_algebra/polar_decomposition.h"
 
 // pad
 #include "cpu/pad/pad.h"
@@ -1699,6 +1702,7 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("symmetric_generalized_eigenvalue(Tensor a, Tensor b) -> (Tensor, Tensor, Tensor)");
   module.def("generalized_eigenvalue(Tensor a, Tensor b) -> (Tensor, Tensor, Tensor, Tensor)");
   module.def("schur_decomposition(Tensor a, str output='real') -> (Tensor, Tensor, Tensor, Tensor)");
+  module.def("polar_decomposition(Tensor a, str side='right') -> (Tensor, Tensor, Tensor)");
 
   // morphology
   module.def("erosion(Tensor input, Tensor structuring_element, int[]? origin, int padding_mode) -> Tensor");

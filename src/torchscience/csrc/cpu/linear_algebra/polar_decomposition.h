@@ -70,14 +70,18 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> polar_decomposition(
             // Unitary factor: U = U_svd @ Vh
             at::Tensor U_result = at::matmul(U_svd, Vh);
 
+            // Convert S to the same dtype as input for complex support
+            // (SVD returns real singular values even for complex input)
+            at::Tensor S_typed = S.to(a_slice.scalar_type());
+
             // Positive semidefinite factor P
             at::Tensor P_result;
             if (is_right) {
                 // Right polar: A = UP, so P = V @ diag(S) @ V.H
-                P_result = at::matmul(V, at::matmul(at::diag_embed(S), Vh));
+                P_result = at::matmul(V, at::matmul(at::diag_embed(S_typed), Vh));
             } else {
                 // Left polar: A = PU, so P = U_svd @ diag(S) @ U_svd.H
-                P_result = at::matmul(U_svd, at::matmul(at::diag_embed(S), U_svd.mH()));
+                P_result = at::matmul(U_svd, at::matmul(at::diag_embed(S_typed), U_svd.mH()));
             }
 
             U_flat[batch].copy_(U_result);
