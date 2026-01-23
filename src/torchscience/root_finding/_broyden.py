@@ -8,6 +8,131 @@ from torch import Tensor
 from ._convergence import default_tolerances
 
 
+class _BroydenImplicitGrad(torch.autograd.Function):
+    """Custom autograd for implicit differentiation through Broyden root-finding.
+
+    For systems of equations, the implicit function theorem gives:
+        dx*/dtheta = -J^{-1} @ df/dtheta
+    where J = df/dx is the Jacobian matrix at the root.
+    """
+
+    @staticmethod
+    def forward(ctx, root: Tensor, f_callable, was_unbatched: bool) -> Tensor:
+        ctx.f_callable = f_callable
+        ctx.was_unbatched = was_unbatched
+        ctx.save_for_backward(root)
+        return root
+
+    @staticmethod
+    def backward(ctx, grad_output: Tensor) -> tuple[Tensor | None, None, None]:
+        (root,) = ctx.saved_tensors
+
+        # root already comes in batched form (B, n) from the main function
+        # No need to add batch dimension here
+        root_batched = root
+        grad_batched = grad_output
+
+        batch_size = root_batched.shape[0]
+        n = root_batched.shape[1]
+
+        # Compute Jacobian df/dx at the root
+        x = root_batched.detach().requires_grad_(True)
+        with torch.enable_grad():
+            fx = ctx.f_callable(x)
+
+            # Compute full Jacobian matrix for each batch element
+            # J[b, i, j] = d(f_i)/d(x_j) for batch b
+            jacobian = torch.zeros(
+                batch_size, n, n, dtype=x.dtype, device=x.device
+            )
+            for i in range(n):
+                # Compute gradient of f_i w.r.t. x
+                grad_fi = torch.autograd.grad(
+                    fx[..., i].sum(),
+                    x,
+                    create_graph=True,
+                    retain_graph=True,
+                )[0]
+                jacobian[:, i, :] = grad_fi
+
+            # Apply implicit function theorem:
+            # dL/dtheta = dL/dx* @ dx*/dtheta = -dL/dx* @ J^{-1} @ df/dtheta
+            # We compute: v = -J^{-T} @ grad_output, then backprop v through f
+            # This is because: dL/dtheta = grad_output^T @ (-J^{-1} @ df/dtheta)
+            #                            = (-J^{-T} @ grad_output)^T @ df/dtheta
+            try:
+                # Solve J^T @ v = -grad_output for v
+                # Equivalent to v = -J^{-T} @ grad_output
+                neg_grad = -grad_batched.unsqueeze(-1)  # (B, n, 1)
+                v = torch.linalg.solve(
+                    jacobian.transpose(-2, -1), neg_grad
+                ).squeeze(-1)  # (B, n)
+            except RuntimeError:
+                # Fallback to pseudoinverse for singular Jacobian
+                J_pinv_T = torch.linalg.pinv(jacobian).transpose(-2, -1)
+                v = torch.einsum("bij,bj->bi", -J_pinv_T, grad_batched)
+
+            # Backpropagate v through f to get df/dtheta contribution
+            if fx.grad_fn is not None:
+                # Sum over batch and system dimensions with v as weights
+                torch.autograd.backward(fx, v)
+
+        return None, None, None
+
+
+def _attach_implicit_grad(
+    result: Tensor,
+    converged: Tensor,
+    f: Callable[[Tensor], Tensor],
+    was_unbatched: bool,
+) -> tuple[Tensor, Tensor]:
+    """Attach implicit differentiation gradient if needed.
+
+    Parameters
+    ----------
+    result : Tensor
+        The root found by Broyden's method. Shape (B, n) or (n,).
+    converged : Tensor
+        Boolean tensor indicating convergence. Shape (B,) or scalar.
+    f : Callable
+        The function whose root was found.
+    was_unbatched : bool
+        Whether the original input was unbatched (1D).
+
+    Returns
+    -------
+    tuple[Tensor, Tensor]
+        (result, converged) with implicit grad attached if needed.
+    """
+    # Check if any parameter of f requires gradients
+    try:
+        # Ensure we have batch dimension for the test
+        if was_unbatched:
+            test_input = result.unsqueeze(0).detach().requires_grad_(True)
+        else:
+            test_input = result.detach().requires_grad_(True)
+        with torch.enable_grad():
+            test_output = f(test_input)
+        needs_grad = test_output.requires_grad
+    except Exception:
+        needs_grad = False
+
+    if not needs_grad:
+        if was_unbatched:
+            return result.squeeze(0), converged.squeeze(0)
+        return result, converged
+
+    # Make sure result has requires_grad=True for the autograd function
+    if not result.requires_grad:
+        result = result.clone().requires_grad_(True)
+
+    result = _BroydenImplicitGrad.apply(result, f, was_unbatched)
+
+    if was_unbatched:
+        return result.squeeze(0), converged.squeeze(0)
+    return result, converged
+
+
 def broyden(
     f: Callable[[Tensor], Tensor],
     x0: Tensor,
@@ -162,9 +287,9 @@ def broyden(
         empty_converged = torch.ones(
             batch_size, dtype=torch.bool, device=x0.device
         )
-        if was_unbatched:
-            return x0.squeeze(0), empty_converged.squeeze(0)
-        return x0.clone(), empty_converged
+        return _attach_implicit_grad(
+            x0.clone(), empty_converged, f, was_unbatched
+        )
 
     x = x0.clone()
     dtype = x.dtype
@@ -243,9 +368,7 @@ def broyden(
         converged = converged | newly_converged
 
         if torch.all(converged):
-            if was_unbatched:
-                return result.squeeze(0), converged.squeeze(0)
-            return result, converged
+            return _attach_implicit_grad(result, converged, f, was_unbatched)
 
         # Evaluate f at new point
         fx_new = f(x_new)
@@ -324,6 +447,4 @@ def broyden(
     # Return best estimate for non-converged elements
     result = torch.where(converged.unsqueeze(-1).expand_as(x), result, x)
 
-    if was_unbatched:
-        return result.squeeze(0), converged.squeeze(0)
-    return result, converged
+    return _attach_implicit_grad(result, converged, f, was_unbatched)
