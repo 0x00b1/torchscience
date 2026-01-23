@@ -4,6 +4,10 @@ from torchscience.differentiation._advect import advect
 from torchscience.differentiation._apply import apply_stencil
 from torchscience.differentiation._biharmonic import biharmonic
 from torchscience.differentiation._biharmonic_stencil import biharmonic_stencil
+from torchscience.differentiation._chebyshev_derivative import (
+    chebyshev_derivative,
+    chebyshev_points,
+)
 from torchscience.differentiation._curl import curl
 from torchscience.differentiation._derivative import derivative
 from torchscience.differentiation._diffuse import diffuse
@@ -59,6 +63,8 @@ __all__ = [
     "apply_stencil",
     "biharmonic",
     "biharmonic_stencil",
+    "chebyshev_derivative",
+    "chebyshev_points",
     "circulation",
     "curl",
     "derivative",
