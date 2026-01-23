@@ -110,6 +110,9 @@ def firwin(
         )
     else:
         cutoff_tensor = cutoff.to(dtype=torch.float64, device=device)
+        # Handle 0-d tensors by converting to 1-d
+        if cutoff_tensor.ndim == 0:
+            cutoff_tensor = cutoff_tensor.unsqueeze(0)
 
     # Normalize by sampling frequency if provided
     if sampling_frequency is not None:
