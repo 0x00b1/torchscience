@@ -2,7 +2,7 @@
 
 import torch
 
-from torchscience.differentiation import IrregularMesh, RegularGrid
+from torchscience.differentiation import IrregularMesh, RegularGrid, gradient
 
 
 class TestRegularGrid:
@@ -99,3 +99,61 @@ class TestIrregularMesh:
         mesh = grid.to_mesh()
         assert isinstance(mesh, IrregularMesh)
         assert mesh.n_points == 9
+
+
+class TestGradientWithGrid:
+    """Tests for gradient with grid parameter."""
+
+    def test_gradient_with_regular_grid(self):
+        """Gradient uses grid spacing."""
+        grid = RegularGrid(
+            origin=torch.tensor([0.0, 0.0]),
+            spacing=torch.tensor([0.1, 0.1]),
+            shape=(21, 21),
+            boundary="replicate",
+        )
+
+        # Create linear field: f(x, y) = 3x + 2y
+        x = torch.linspace(0, 2, 21)
+        y = torch.linspace(0, 2, 21)
+        X, Y = torch.meshgrid(x, y, indexing="ij")
+        field = 3 * X + 2 * Y
+
+        grad = gradient(field, grid=grid)
+
+        # df/dx = 3, df/dy = 2
+        assert grad.shape == (2, 21, 21)
+        torch.testing.assert_close(
+            grad[0, 2:-2, 2:-2],
+            torch.full((17, 17), 3.0),
+            rtol=0.05,
+            atol=0.01,
+        )
+        torch.testing.assert_close(
+            grad[1, 2:-2, 2:-2],
+            torch.full((17, 17), 2.0),
+            rtol=0.05,
+            atol=0.01,
+        )
+
+    def test_gradient_grid_overrides_dx(self):
+        """Grid parameter takes precedence over dx."""
+        grid = RegularGrid(
+            origin=torch.tensor([0.0]),
+            spacing=torch.tensor([0.5]),  # dx=0.5
+            shape=(11,),
+            boundary="replicate",
+        )
+
+        field = torch.linspace(0, 5, 11)  # f = x, so df/dx = 1
+
+        # dx=1.0 should be ignored when grid is provided
+        grad = gradient(field, dx=1.0, grid=grid)
+
+        # With dx=0.5, gradient should be 1.0
+        torch.testing.assert_close(
+            grad[0, 2:-2],
+            torch.full((7,), 1.0),
+            rtol=0.05,
+            atol=0.01,
+        )
