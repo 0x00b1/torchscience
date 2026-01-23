@@ -38,6 +38,9 @@ from torchscience.graph._katz_centrality import katz_centrality
 from torchscience.graph._maximum_bipartite_matching import (
     maximum_bipartite_matching,
 )
+from torchscience.graph._minimum_cut import (
+    minimum_cut,
+)
 from torchscience.graph._minimum_spanning_tree import (
     minimum_spanning_tree,
 )
@@ -65,6 +68,7 @@ __all__ = [
     "graph_laplacian",
     "katz_centrality",
     "maximum_bipartite_matching",
+    "minimum_cut",
     "minimum_spanning_tree",
     "pagerank",
     "topological_sort",

@@ -110,6 +110,7 @@
 #include "cpu/graph_theory/depth_first_search.h"
 #include "cpu/graph_theory/dag_shortest_paths.h"
 #include "cpu/graph_theory/edmonds_karp.h"
+#include "cpu/graph_theory/minimum_cut.h"
 #include "cpu/information_theory/kullback_leibler_divergence.h"
 #include "cpu/information_theory/jensen_shannon_divergence.h"
 #include "cpu/information_theory/shannon_entropy.h"
@@ -475,6 +476,7 @@
 #include "meta/graph_theory/depth_first_search.h"
 #include "meta/graph_theory/dag_shortest_paths.h"
 #include "meta/graph_theory/edmonds_karp.h"
+#include "meta/graph_theory/minimum_cut.h"
 #include "meta/information_theory/kullback_leibler_divergence.h"
 #include "meta/information_theory/jensen_shannon_divergence.h"
 #include "meta/information_theory/shannon_entropy.h"
@@ -1190,6 +1192,7 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("depth_first_search(Tensor adjacency, int source, bool directed) -> (Tensor, Tensor, Tensor)");
   module.def("dag_shortest_paths(Tensor adjacency, int source) -> (Tensor, Tensor)");
   module.def("edmonds_karp(Tensor capacity, int source, int sink) -> (Tensor, Tensor)");
+  module.def("minimum_cut(Tensor capacity, int source, int sink) -> (Tensor, Tensor, Tensor)");
 
   // combinatorics
   module.def("binomial_coefficient(Tensor n, Tensor k) -> Tensor");
