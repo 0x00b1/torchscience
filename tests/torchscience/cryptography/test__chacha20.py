@@ -1,6 +1,5 @@
 import pytest
 import torch
-
 from torchscience.encryption import chacha20
 
 

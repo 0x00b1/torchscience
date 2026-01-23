@@ -1,5 +1,4 @@
 import torch
-
 from torchscience.encryption import ChaCha20Generator
 
 
