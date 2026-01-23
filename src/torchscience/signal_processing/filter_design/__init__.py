@@ -49,6 +49,7 @@ from ._sos_normalize import sos_normalize
 from ._sos_sections_count import sos_sections_count
 from ._sos_to_ba import sos_to_ba
 from ._sos_to_zpk import sos_to_zpk
+from ._yule_walker import yule_walker
 from ._zpk_to_ba import zpk_to_ba
 from ._zpk_to_sos import zpk_to_sos
 
@@ -73,6 +74,7 @@ __all__ = [
     "iirnotch",
     "iirpeak",
     "savgol_coeffs",
+    "yule_walker",
     # Transforms
     "bilinear_transform_ba",
     "bilinear_transform_zpk",
