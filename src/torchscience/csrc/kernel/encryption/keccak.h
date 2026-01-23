@@ -18,55 +18,57 @@ constexpr std::array<uint64_t, 24> KECCAK_RC = {
     0x8000000000008080ULL, 0x0000000080000001ULL, 0x8000000080008008ULL
 };
 
-// Rotation offsets for rho step
-constexpr std::array<int, 25> KECCAK_RHO = {
-    0, 1, 62, 28, 27, 36, 44, 6, 55, 20,
-    3, 10, 43, 25, 39, 41, 45, 15, 21, 8,
-    18, 2, 61, 56, 14
-};
-
-// Pi step permutation indices
-constexpr std::array<int, 25> KECCAK_PI = {
-    0, 6, 12, 18, 24, 3, 9, 10, 16, 22,
-    1, 7, 13, 19, 20, 4, 5, 11, 17, 23,
-    2, 8, 14, 15, 21
-};
-
 inline uint64_t keccak_rotl64(uint64_t x, int n) {
     return (x << n) | (x >> (64 - n));
 }
 
-inline void keccak_f1600(std::array<uint64_t, 25>& state) {
+inline void keccak_f1600(std::array<uint64_t, 25>& st) {
+    // Rotation offsets
+    constexpr int rotations[24] = {
+        1, 3, 6, 10, 15, 21, 28, 36, 45, 55, 2, 14,
+        27, 41, 56, 8, 25, 43, 62, 18, 39, 61, 20, 44
+    };
+    // Pi lane indices
+    constexpr int piln[24] = {
+        10, 7, 11, 17, 18, 3, 5, 16, 8, 21, 24, 4,
+        15, 23, 19, 13, 12, 2, 20, 14, 22, 9, 6, 1
+    };
+
     for (int round = 0; round < 24; round++) {
-        // Theta step
-        std::array<uint64_t, 5> c;
-        for (int x = 0; x < 5; x++) {
-            c[x] = state[x] ^ state[x + 5] ^ state[x + 10] ^ state[x + 15] ^ state[x + 20];
+        // Theta
+        uint64_t bc[5];
+        for (int i = 0; i < 5; i++) {
+            bc[i] = st[i] ^ st[i + 5] ^ st[i + 10] ^ st[i + 15] ^ st[i + 20];
         }
-        std::array<uint64_t, 5> d;
-        for (int x = 0; x < 5; x++) {
-            d[x] = c[(x + 4) % 5] ^ keccak_rotl64(c[(x + 1) % 5], 1);
-        }
-        for (int i = 0; i < 25; i++) {
-            state[i] ^= d[i % 5];
-        }
-
-        // Rho and Pi steps combined
-        std::array<uint64_t, 25> temp;
-        for (int i = 0; i < 25; i++) {
-            temp[KECCAK_PI[i]] = keccak_rotl64(state[i], KECCAK_RHO[i]);
-        }
-
-        // Chi step
-        for (int y = 0; y < 5; y++) {
-            for (int x = 0; x < 5; x++) {
-                int i = y * 5 + x;
-                state[i] = temp[i] ^ ((~temp[y * 5 + (x + 1) % 5]) & temp[y * 5 + (x + 2) % 5]);
+        for (int i = 0; i < 5; i++) {
+            uint64_t t = bc[(i + 4) % 5] ^ keccak_rotl64(bc[(i + 1) % 5], 1);
+            for (int j = 0; j < 25; j += 5) {
+                st[j + i] ^= t;
             }
         }
 
-        // Iota step
-        state[0] ^= KECCAK_RC[round];
+        // Rho Pi
+        uint64_t t = st[1];
+        for (int i = 0; i < 24; i++) {
+            int j = piln[i];
+            uint64_t tmp = st[j];
+            st[j] = keccak_rotl64(t, rotations[i]);
+            t = tmp;
+        }
+
+        // Chi
+        for (int j = 0; j < 25; j += 5) {
+            uint64_t tmp[5];
+            for (int i = 0; i < 5; i++) {
+                tmp[i] = st[j + i];
+            }
+            for (int i = 0; i < 5; i++) {
+                st[j + i] = tmp[i] ^ ((~tmp[(i + 1) % 5]) & tmp[(i + 2) % 5]);
+            }
+        }
+
+        // Iota
+        st[0] ^= KECCAK_RC[round];
     }
 }
 
