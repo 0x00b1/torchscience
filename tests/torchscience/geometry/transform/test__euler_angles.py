@@ -797,6 +797,50 @@ class TestEulerAnglesIntegration:
             atol=1e-5,
         )
 
+    def test_gimbal_lock_matrix_preservation_tait_bryan(self):
+        """At gimbal lock, extracted angles must reproduce the same rotation matrix.
+
+        At gimbal lock, the extracted angles may differ from the original, but
+        when converted back to a rotation matrix, they must produce the same
+        rotation.
+        """
+        for convention in TAIT_BRYAN_CONVENTIONS:
+            for middle_angle in [math.pi / 2, -math.pi / 2]:
+                angles = torch.tensor(
+                    [0.3, middle_angle, 0.5], dtype=torch.float64
+                )
+                ea = euler_angles(angles, convention=convention)
+                R = euler_angles_to_matrix(ea)
+
+                ea_back = matrix_to_euler_angles(R, convention=convention)
+                R_back = euler_angles_to_matrix(ea_back)
+
+                assert torch.allclose(R, R_back, atol=1e-5), (
+                    f"Rotation matrix not preserved for {convention} "
+                    f"at middle angle {middle_angle}"
+                )
+
+    def test_gimbal_lock_matrix_preservation_proper_euler(self):
+        """At gimbal lock, extracted angles must reproduce the same rotation matrix.
+
+        For proper Euler conventions, gimbal lock occurs at middle angle = 0 or pi.
+        """
+        for convention in PROPER_EULER_CONVENTIONS:
+            for middle_angle in [0.0, math.pi]:
+                angles = torch.tensor(
+                    [0.3, middle_angle, 0.5], dtype=torch.float64
+                )
+                ea = euler_angles(angles, convention=convention)
+                R = euler_angles_to_matrix(ea)
+
+                ea_back = matrix_to_euler_angles(R, convention=convention)
+                R_back = euler_angles_to_matrix(ea_back)
+
+                assert torch.allclose(R, R_back, atol=1e-5), (
+                    f"Rotation matrix not preserved for {convention} "
+                    f"at middle angle {middle_angle}"
+                )
+
     def test_negative_angles(self):
         """Negative angles should work correctly."""
         angles_pos = torch.tensor([0.3, 0.4, 0.5], dtype=torch.float64)

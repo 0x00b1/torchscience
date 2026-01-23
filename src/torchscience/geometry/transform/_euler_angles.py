@@ -265,6 +265,9 @@ def _matrix_to_euler_angles_tait_bryan(
     The extraction depends on the specific convention. We classify by:
     - Even permutation (cyclic): XYZ, YZX, ZXY  - where (j-i) % 3 == 1
     - Odd permutation: XZY, YXZ, ZYX - where (j-i) % 3 == 2
+
+    At gimbal lock (middle angle = +/- pi/2), we set angle3 = 0 and absorb
+    the full rotation into angle1, ensuring the rotation matrix is preserved.
     """
     # Determine if this is an even or odd permutation
     # Even (cyclic): XYZ (012), YZX (120), ZXY (201) - (j-i) % 3 == 1
@@ -272,24 +275,77 @@ def _matrix_to_euler_angles_tait_bryan(
     parity = (j - i) % 3
     is_even = parity == 1
 
+    # Threshold for detecting gimbal lock (cos(b) near zero)
+    gimbal_threshold = 1e-6
+
     if is_even:
         # Even permutation (XYZ, YZX, ZXY)
         # Matrix structure for intrinsic rotation (R = R_k @ R_j @ R_i):
         #   R[k,i] = -sin(b), so b = asin(-R[k,i])
         #   R[k,j] = sin(a)*cos(b), R[k,k] = cos(a)*cos(b), so a = atan2(R[k,j], R[k,k])
         #   R[j,i] = sin(c)*cos(b), R[i,i] = cos(c)*cos(b), so c = atan2(R[j,i], R[i,i])
-        angle2 = torch.asin(torch.clamp(-matrix[..., k, i], -1.0, 1.0))
-        angle1 = torch.atan2(matrix[..., k, j], matrix[..., k, k])
-        angle3 = torch.atan2(matrix[..., j, i], matrix[..., i, i])
+        sin_b = -matrix[..., k, i]
+        sin_b_clamped = torch.clamp(sin_b, -1.0, 1.0)
+        angle2 = torch.asin(sin_b_clamped)
+        cos_b = torch.cos(angle2)
+
+        # Check for gimbal lock
+        gimbal_lock = cos_b.abs() < gimbal_threshold
+
+        # Normal case
+        angle1_normal = torch.atan2(matrix[..., k, j], matrix[..., k, k])
+        angle3_normal = torch.atan2(matrix[..., j, i], matrix[..., i, i])
+
+        # Gimbal lock case: set angle3 = 0, compute angle1 from remaining matrix elements
+        # At gimbal lock (b = +/- pi/2), the matrix simplifies:
+        # For b = +pi/2 (sin_b = 1): R[j,j] = cos(a+c), R[i,j] = sin(a+c)
+        # For b = -pi/2 (sin_b = -1): R[j,j] = cos(a-c), R[i,j] = -sin(a-c)
+        # With c = 0: angle1 = atan2(sign * R[i,j], R[j,j])
+        sign = torch.where(
+            sin_b >= 0, torch.ones_like(sin_b), -torch.ones_like(sin_b)
+        )
+        angle1_gimbal = torch.atan2(
+            sign * matrix[..., i, j], matrix[..., j, j]
+        )
+        angle3_gimbal = torch.zeros_like(angle2)
+
+        angle1 = torch.where(gimbal_lock, angle1_gimbal, angle1_normal)
+        angle3 = torch.where(gimbal_lock, angle3_gimbal, angle3_normal)
     else:
         # Odd permutation (XZY, YXZ, ZYX)
         # Matrix structure for intrinsic rotation (R = R_k @ R_j @ R_i):
         #   R[k,i] = sin(b), so b = asin(R[k,i])
         #   R[k,j] = -sin(a)*cos(b), R[k,k] = cos(a)*cos(b), so a = atan2(-R[k,j], R[k,k])
         #   R[j,i] = -sin(c)*cos(b), R[i,i] = cos(c)*cos(b), so c = atan2(-R[j,i], R[i,i])
-        angle2 = torch.asin(torch.clamp(matrix[..., k, i], -1.0, 1.0))
-        angle1 = torch.atan2(-matrix[..., k, j], matrix[..., k, k])
-        angle3 = torch.atan2(-matrix[..., j, i], matrix[..., i, i])
+        sin_b = matrix[..., k, i]
+        sin_b_clamped = torch.clamp(sin_b, -1.0, 1.0)
+        angle2 = torch.asin(sin_b_clamped)
+        cos_b = torch.cos(angle2)
+
+        # Check for gimbal lock
+        gimbal_lock = cos_b.abs() < gimbal_threshold
+
+        # Normal case
+        angle1_normal = torch.atan2(-matrix[..., k, j], matrix[..., k, k])
+        angle3_normal = torch.atan2(-matrix[..., j, i], matrix[..., i, i])
+
+        # Gimbal lock case: set angle3 = 0, compute angle1 from remaining matrix elements
+        # At gimbal lock (b = +/- pi/2), the matrix simplifies:
+        # For b = +pi/2 (sin_b = 1): R[i,j] = sin(a+c), R[j,j] = cos(a+c)
+        # For b = -pi/2 (sin_b = -1): R[i,j] = -sin(a-c), R[j,j] = cos(a-c)
+        # With c = 0:
+        #   b = +pi/2: angle1 = atan2(R[i,j], R[j,j]) gives a+c = a
+        #   b = -pi/2: angle1 = atan2(-R[i,j], R[j,j]) gives a-c = a
+        sign = torch.where(
+            sin_b >= 0, torch.ones_like(sin_b), -torch.ones_like(sin_b)
+        )
+        angle1_gimbal = torch.atan2(
+            sign * matrix[..., i, j], matrix[..., j, j]
+        )
+        angle3_gimbal = torch.zeros_like(angle2)
+
+        angle1 = torch.where(gimbal_lock, angle1_gimbal, angle1_normal)
+        angle3 = torch.where(gimbal_lock, angle3_gimbal, angle3_normal)
 
     return torch.stack([angle1, angle2, angle3], dim=-1)
 
@@ -307,17 +363,28 @@ def _matrix_to_euler_angles_proper(
     The extraction formulas depend on the specific convention:
     - Even (cyclic): XYX, YZY, ZXZ - where (j-i) % 3 == 1
     - Odd (anti-cyclic): XZX, YXY, ZYZ - where (j-i) % 3 == 2
+
+    At gimbal lock (middle angle = 0 or pi), we set angle3 = 0 and absorb
+    the full rotation into angle1, ensuring the rotation matrix is preserved.
     """
     # For proper Euler, i == k
     # other is the third axis (not i or j)
     other = 3 - i - j
 
+    # Threshold for detecting gimbal lock (sin(b) near zero)
+    gimbal_threshold = 1e-6
+
     # R[i,i] = cos(b) for all proper Euler conventions
-    angle2 = torch.acos(torch.clamp(matrix[..., i, i], -1.0, 1.0))
+    cos_b = torch.clamp(matrix[..., i, i], -1.0, 1.0)
+    angle2 = torch.acos(cos_b)
+    sin_b = torch.sin(angle2)
 
     # Determine parity: (j-i) % 3 == 1 is even/cyclic, 2 is odd/anti-cyclic
     parity = (j - i) % 3
     is_even = parity == 1
+
+    # Check for gimbal lock (b near 0 or pi, i.e., sin(b) near 0)
+    gimbal_lock = sin_b.abs() < gimbal_threshold
 
     if is_even:
         # Even/cyclic: XYX (j=1 > i=0), YZY (j=2 > i=1), ZXZ (j=0, i=2 wraps)
@@ -326,8 +393,22 @@ def _matrix_to_euler_angles_proper(
         # R[i,other] = cos(a)*sin(b)  -> a = atan2(R[i,j], R[i,other])
         # R[j,i] = sin(c)*sin(b)
         # R[other,i] = -cos(c)*sin(b) -> c = atan2(R[j,i], -R[other,i])
-        angle1 = torch.atan2(matrix[..., i, j], matrix[..., i, other])
-        angle3 = torch.atan2(matrix[..., j, i], -matrix[..., other, i])
+        angle1_normal = torch.atan2(matrix[..., i, j], matrix[..., i, other])
+        angle3_normal = torch.atan2(matrix[..., j, i], -matrix[..., other, i])
+
+        # Gimbal lock case: set angle3 = 0, compute angle1 from remaining matrix elements
+        # At b = 0: R reduces to R_i(a+c), so:
+        #   R[j,other] = -sin(a+c), R[j,j] = cos(a+c)
+        #   angle1 = a+c = atan2(-R[j,other], R[j,j])
+        # At b = pi: R reduces to R_i(a-c), so:
+        #   R[j,other] = -sin(a-c), R[j,j] = cos(a-c)
+        #   angle1 = a-c = atan2(-R[j,other], R[j,j])
+        # In both cases: angle1 = atan2(-R[j,other], R[j,j])
+        angle1_gimbal = torch.atan2(-matrix[..., j, other], matrix[..., j, j])
+        angle3_gimbal = torch.zeros_like(angle2)
+
+        angle1 = torch.where(gimbal_lock, angle1_gimbal, angle1_normal)
+        angle3 = torch.where(gimbal_lock, angle3_gimbal, angle3_normal)
     else:
         # Odd/anti-cyclic: XZX (j=2, i=0), YXY (j=0, i=1), ZYZ (j=1, i=2)
         # Based on matrix analysis:
@@ -335,8 +416,22 @@ def _matrix_to_euler_angles_proper(
         # R[i,other] = -cos(a)*sin(b) -> a = atan2(R[i,j], -R[i,other])
         # R[j,i] = sin(c)*sin(b)
         # R[other,i] = cos(c)*sin(b)  -> c = atan2(R[j,i], R[other,i])
-        angle1 = torch.atan2(matrix[..., i, j], -matrix[..., i, other])
-        angle3 = torch.atan2(matrix[..., j, i], matrix[..., other, i])
+        angle1_normal = torch.atan2(matrix[..., i, j], -matrix[..., i, other])
+        angle3_normal = torch.atan2(matrix[..., j, i], matrix[..., other, i])
+
+        # Gimbal lock case: set angle3 = 0, compute angle1 from remaining matrix elements
+        # At b = 0: R reduces to R_i(a+c), so:
+        #   R[j,other] = sin(a+c), R[j,j] = cos(a+c)
+        #   angle1 = a+c = atan2(R[j,other], R[j,j])
+        # At b = pi: R reduces to R_i(a-c), so:
+        #   R[j,other] = sin(a-c), R[j,j] = cos(a-c)
+        #   angle1 = a-c = atan2(R[j,other], R[j,j])
+        # In both cases: angle1 = atan2(R[j,other], R[j,j])
+        angle1_gimbal = torch.atan2(matrix[..., j, other], matrix[..., j, j])
+        angle3_gimbal = torch.zeros_like(angle2)
+
+        angle1 = torch.where(gimbal_lock, angle1_gimbal, angle1_normal)
+        angle3 = torch.where(gimbal_lock, angle3_gimbal, angle3_normal)
 
     return torch.stack([angle1, angle2, angle3], dim=-1)
 
