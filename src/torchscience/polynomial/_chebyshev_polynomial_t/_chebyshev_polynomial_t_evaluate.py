@@ -87,5 +87,9 @@ def chebyshev_polynomial_t_evaluate(
     )
 
     # Reshape output to (...batch, ...x_shape)
+    # Ensure we return a plain Tensor, not a polynomial subclass
     output_shape = batch_shape + x_shape
-    return result_flat.reshape(output_shape)
+    result = result_flat.reshape(output_shape)
+    if isinstance(result, ChebyshevPolynomialT):
+        result = result.as_subclass(Tensor)
+    return result

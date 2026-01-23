@@ -153,7 +153,7 @@ class TestChebyshevPolynomialTFit:
 
         c = chebyshev_polynomial_t_fit(x, y, degree=2)
 
-        torch.testing.assert_close(c.coeffs, coeffs_true, atol=1e-5, rtol=1e-5)
+        torch.testing.assert_close(c, coeffs_true, atol=1e-5, rtol=1e-5)
 
     def test_fit_noisy_data(self):
         """Fit with noisy data."""
@@ -180,9 +180,7 @@ class TestChebyshevPolynomialTFit:
         )
         c_np = np_cheb.chebfit(x, y, deg)
 
-        np.testing.assert_allclose(
-            c_torch.coeffs.numpy(), c_np, rtol=1e-5, atol=1e-5
-        )
+        np.testing.assert_allclose(c_torch.numpy(), c_np, rtol=1e-5, atol=1e-5)
 
 
 class TestChebyshevPolynomialTInterpolate:
@@ -270,7 +268,7 @@ class TestChebyshevPolynomialTFittingAutograd:
         )
 
         def fn(y_):
-            return chebyshev_polynomial_t_fit(x, y_, degree=2).coeffs
+            return chebyshev_polynomial_t_fit(x, y_, degree=2)
 
         assert torch.autograd.gradcheck(fn, (y,), raise_exception=True)
 
@@ -282,6 +280,6 @@ class TestChebyshevPolynomialTFittingAutograd:
         )
 
         def fn(y_):
-            return chebyshev_polynomial_t_fit(x, y_, degree=2).coeffs.sum()
+            return chebyshev_polynomial_t_fit(x, y_, degree=2).sum()
 
         assert torch.autograd.gradgradcheck(fn, (y,), raise_exception=True)

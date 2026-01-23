@@ -50,7 +50,7 @@ class LaguerrePolynomialL(Tensor):
     @staticmethod
     def __new__(cls, data, *, dtype=None, device=None):
         if isinstance(data, Tensor):
-            tensor = data.detach().clone()
+            tensor = data.clone()
             if dtype is not None:
                 tensor = tensor.to(dtype=dtype)
             if device is not None:

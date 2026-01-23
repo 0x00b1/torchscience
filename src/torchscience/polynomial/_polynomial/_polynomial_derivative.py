@@ -44,7 +44,9 @@ def polynomial_derivative(p: Polynomial, order: int = 1) -> Polynomial:
         # = a_1 + 2*a_2*x + 3*a_3*x^2 + ... + n*a_n*x^(n-1)
         # new_coeffs[i] = (i+1) * old_coeffs[i+1]
         indices = torch.arange(1, n, device=coeffs.device, dtype=coeffs.dtype)
-        new_coeffs = coeffs[..., 1:] * indices
+        # Use torch.mul for element-wise coefficient multiplication
+        # (not polynomial multiplication)
+        new_coeffs = torch.mul(coeffs[..., 1:], indices)
 
         coeffs = new_coeffs
 

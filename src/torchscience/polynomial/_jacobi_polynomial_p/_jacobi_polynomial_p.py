@@ -69,7 +69,7 @@ class JacobiPolynomialP(Tensor):
         cls, data, alpha: Tensor, beta: Tensor, *, dtype=None, device=None
     ):
         if isinstance(data, Tensor):
-            tensor = data.detach().clone()
+            tensor = data.clone()
             if dtype is not None:
                 tensor = tensor.to(dtype=dtype)
             if device is not None:
