@@ -35,7 +35,7 @@ at::Tensor ed25519_verify(
         "ed25519_verify: message must be a 1D tensor");
     TORCH_CHECK(signature.dim() == 1 && signature.size(0) == 64,
         "ed25519_verify: signature must be a 1D tensor of 64 bytes");
-    return at::empty({}, at::TensorOptions().dtype(at::kBool).device(public_key.device()));
+    return at::empty({}, at::TensorOptions().dtype(at::kByte).device(public_key.device()));
 }
 
 TORCH_LIBRARY_IMPL(torchscience, Meta, m) {

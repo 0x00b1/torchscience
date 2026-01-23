@@ -92,7 +92,7 @@ at::Tensor ed25519_verify(
         public_key_contig.data_ptr<uint8_t>()
     );
 
-    return at::tensor(valid);
+    return at::tensor(valid ? 1 : 0, at::kByte);
 }
 
 TORCH_LIBRARY_IMPL(torchscience, CPU, m) {
