@@ -15,6 +15,7 @@ from ._interaction_information import interaction_information
 from ._jensen_shannon_divergence import jensen_shannon_divergence
 from ._joint_entropy import joint_entropy
 from ._kullback_leibler_divergence import kullback_leibler_divergence
+from ._miller_madow_correction import miller_madow_correction
 from ._mutual_information import mutual_information
 from ._o_information import o_information
 from ._partial_information_decomposition import (
@@ -43,6 +44,7 @@ __all__ = [
     "interaction_information",
     "jensen_shannon_divergence",
     "joint_entropy",
+    "miller_madow_correction",
     "kullback_leibler_divergence",
     "mutual_information",
     "o_information",
