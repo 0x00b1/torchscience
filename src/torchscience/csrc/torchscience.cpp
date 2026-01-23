@@ -112,6 +112,7 @@
 #include "cpu/graph_theory/edmonds_karp.h"
 #include "cpu/graph_theory/push_relabel.h"
 #include "cpu/graph_theory/minimum_cut.h"
+#include "cpu/graph_theory/min_cost_max_flow.h"
 #include "cpu/information_theory/kullback_leibler_divergence.h"
 #include "cpu/information_theory/jensen_shannon_divergence.h"
 #include "cpu/information_theory/shannon_entropy.h"
@@ -479,6 +480,7 @@
 #include "meta/graph_theory/edmonds_karp.h"
 #include "meta/graph_theory/push_relabel.h"
 #include "meta/graph_theory/minimum_cut.h"
+#include "meta/graph_theory/min_cost_max_flow.h"
 #include "meta/information_theory/kullback_leibler_divergence.h"
 #include "meta/information_theory/jensen_shannon_divergence.h"
 #include "meta/information_theory/shannon_entropy.h"
@@ -1196,6 +1198,7 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("edmonds_karp(Tensor capacity, int source, int sink) -> (Tensor, Tensor)");
   module.def("push_relabel(Tensor capacity, int source, int sink) -> (Tensor, Tensor)");
   module.def("minimum_cut(Tensor capacity, int source, int sink) -> (Tensor, Tensor, Tensor)");
+  module.def("min_cost_max_flow(Tensor capacity, Tensor cost, int source, int sink) -> (Tensor, Tensor, Tensor)");
 
   // combinatorics
   module.def("binomial_coefficient(Tensor n, Tensor k) -> Tensor");
