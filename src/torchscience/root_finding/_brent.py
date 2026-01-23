@@ -3,25 +3,7 @@ from typing import Callable
 import torch
 from torch import Tensor
 
-
-def _get_default_tol(dtype: torch.dtype) -> float:
-    """Get dtype-aware default tolerance.
-
-    Tolerances are chosen based on the number of significant digits
-    available in each dtype:
-    - bfloat16: ~3 digits (8-bit mantissa)
-    - float16: ~3-4 digits (10-bit mantissa)
-    - float32: ~7 digits (23-bit mantissa)
-    - float64: ~16 digits (52-bit mantissa)
-    """
-    if dtype == torch.bfloat16:
-        return 1e-2  # bfloat16 has less precision than float16
-    elif dtype == torch.float16:
-        return 1e-3
-    elif dtype == torch.float32:
-        return 1e-6
-    else:  # float64
-        return 1e-12
+from ._convergence import default_tolerances
 
 
 class _BrentImplicitGrad(torch.autograd.Function):
@@ -76,9 +58,18 @@ class _BrentImplicitGrad(torch.autograd.Function):
 
 
 def _attach_implicit_grad(
-    result: Tensor, f: Callable[[Tensor], Tensor], orig_shape: tuple
-) -> Tensor:
-    """Attach implicit differentiation gradient if needed."""
+    result: Tensor,
+    converged: Tensor,
+    f: Callable[[Tensor], Tensor],
+    orig_shape: tuple,
+) -> tuple[Tensor, Tensor]:
+    """Attach implicit differentiation gradient if needed.
+
+    Returns
+    -------
+    tuple[Tensor, Tensor]
+        (result, converged) both reshaped to orig_shape.
+    """
     # Check if any parameter of f requires gradients
     try:
         test_input = result.detach().requires_grad_(True)
@@ -89,7 +80,7 @@ def _attach_implicit_grad(
         needs_grad = False
 
     if not needs_grad:
-        return result.reshape(orig_shape)
+        return result.reshape(orig_shape), converged.reshape(orig_shape)
 
     # Make sure result has requires_grad=True for the autograd function
     # This is needed when result comes from endpoint detection (no iteration)
@@ -97,7 +88,7 @@ def _attach_implicit_grad(
         result = result.clone().requires_grad_(True)
 
     result = _BrentImplicitGrad.apply(result, f, orig_shape)
-    return result.reshape(orig_shape)
+    return result.reshape(orig_shape), converged.reshape(orig_shape)
 
 
 def brent(
@@ -106,9 +97,10 @@ def brent(
     b: Tensor,
     *,
     xtol: float | None = None,
+    rtol: float | None = None,
     ftol: float | None = None,
     maxiter: int = 100,
-) -> Tensor:
+) -> tuple[Tensor, Tensor]:
     """
     Find roots of f(x) = 0 using Brent's method.
 
@@ -126,19 +118,28 @@ def brent(
         Bracket endpoints. Must have the same shape and satisfy
         ``f(a) * f(b) < 0`` for each element (opposite signs).
     xtol : float, optional
-        Tolerance on interval width. Convergence requires ``|b - a| < xtol``.
+        Absolute tolerance on interval width. Convergence requires
+        ``|b - a| < xtol + rtol * |b|``.
         Default: dtype-aware (1e-3 for float16/bfloat16, 1e-6 for float32,
         1e-12 for float64).
+    rtol : float, optional
+        Relative tolerance on interval width. Combined with xtol for
+        convergence checking.
+        Default: dtype-aware (1e-2 for float16/bfloat16, 1e-5 for float32,
+        1e-9 for float64).
     ftol : float, optional
         Tolerance on residual. Convergence requires ``|f(x)| < ftol``.
         Default: dtype-aware (same as xtol).
     maxiter : int, default=100
-        Maximum iterations. Raises RuntimeError if exceeded.
+        Maximum iterations. Non-converged elements will have converged=False.
 
     Returns
     -------
-    Tensor
-        Roots with the same shape as input ``a`` and ``b``.
+    tuple[Tensor, Tensor]
+        - **root** -- Roots with the same shape as input ``a`` and ``b``.
+          For non-converged elements, this is the best estimate.
+        - **converged** -- Boolean tensor with the same shape indicating
+          which elements converged within maxiter iterations.
 
     Raises
     ------
@@ -146,8 +147,7 @@ def brent(
         If ``a`` and ``b`` have different shapes, contain NaN/Inf,
         or if ``f(a)`` and ``f(b)`` have the same sign.
     RuntimeError
-        If convergence is not achieved within maxiter iterations,
-        or if the function returns NaN during iteration.
+        If the function returns NaN during iteration.
 
     Examples
     --------
@@ -157,9 +157,11 @@ def brent(
     >>> from torchscience.root_finding import brent
     >>> f = lambda x: x**2 - 2
     >>> a, b = torch.tensor([1.0]), torch.tensor([2.0])
-    >>> root = brent(f, a, b)
+    >>> root, converged = brent(f, a, b)
     >>> float(root)  # doctest: +ELLIPSIS
     1.414...
+    >>> converged.all()
+    tensor(True)
 
     Batched root-finding (find sqrt(2), sqrt(3), sqrt(4)):
 
@@ -167,7 +169,7 @@ def brent(
     >>> f = lambda x: x**2 - c
     >>> a = torch.ones(3)
     >>> b = torch.full((3,), 10.0)
-    >>> roots = brent(f, a, b)
+    >>> roots, converged = brent(f, a, b)
     >>> [f"{v:.4f}" for v in roots.tolist()]
     ['1.4142', '1.7321', '2.0000']
 
@@ -175,14 +177,15 @@ def brent(
 
     >>> f = lambda x: torch.sin(x)
     >>> a, b = torch.tensor([2.0]), torch.tensor([4.0])
-    >>> float(brent(f, a, b))  # doctest: +ELLIPSIS
+    >>> root, _ = brent(f, a, b)
+    >>> float(root)  # doctest: +ELLIPSIS
     3.141...
 
     Notes
     -----
-    **Convergence Criterion**: Both ``xtol`` AND ``ftol`` must be satisfied
-    for convergence. This ensures the root is both well-localized and
-    the residual is small.
+    **Convergence Criterion**: Both the interval width (xtol + rtol * |b|)
+    AND ``ftol`` must be satisfied for convergence. This ensures the root
+    is both well-localized and the residual is small.
 
     **Autograd Support**: Gradients with respect to parameters in ``f``
     are computed via implicit differentiation using the implicit function
@@ -198,7 +201,7 @@ def brent(
     >>> theta = torch.tensor([2.0], requires_grad=True)
     >>> f = lambda x: x**2 - theta  # root is sqrt(theta)
     >>> a, b = torch.tensor([0.0]), torch.tensor([3.0])
-    >>> root = brent(f, a, b)
+    >>> root, _ = brent(f, a, b)
     >>> root.backward()
     >>> theta.grad  # d(sqrt(theta))/d(theta) = 1/(2*sqrt(theta))
     tensor([0.3536])
@@ -224,17 +227,23 @@ def brent(
     orig_shape = a.shape
 
     if a.numel() == 0:
-        return _attach_implicit_grad(a.clone(), f, orig_shape)
+        empty_converged = torch.ones(
+            a.shape, dtype=torch.bool, device=a.device
+        )
+        return _attach_implicit_grad(a.clone(), empty_converged, f, orig_shape)
 
     a = a.flatten()
     b = b.flatten()
 
     # Get tolerances
     dtype = a.dtype
+    defaults = default_tolerances(dtype)
     if xtol is None:
-        xtol = _get_default_tol(dtype)
+        xtol = defaults["xtol"]
+    if rtol is None:
+        rtol = defaults["rtol"]
     if ftol is None:
-        ftol = _get_default_tol(dtype)
+        ftol = defaults["ftol"]
 
     # Evaluate function at endpoints
     fa = f(a)
@@ -252,7 +261,10 @@ def brent(
     root = torch.where(fa == 0, a, torch.where(fb == 0, b, a))
     at_endpoint = (fa == 0) | (fb == 0)
     if torch.all(at_endpoint):
-        return _attach_implicit_grad(root, f, orig_shape)
+        endpoint_converged = torch.ones(
+            a.shape, dtype=torch.bool, device=a.device
+        )
+        return _attach_implicit_grad(root, endpoint_converged, f, orig_shape)
 
     # Check for valid brackets (only for non-endpoint cases)
     if torch.any(fa * fb >= 0):
@@ -280,15 +292,16 @@ def brent(
     result = root.clone()
 
     for iteration in range(maxiter):
-        # Check convergence: both xtol AND ftol must be satisfied
-        interval_small = torch.abs(b - a) < xtol
+        # Check convergence: both interval tolerance AND ftol must be satisfied
+        # Interval tolerance combines absolute (xtol) and relative (rtol) parts
+        interval_small = torch.abs(b - a) < xtol + rtol * torch.abs(b)
         residual_small = torch.abs(fb) < ftol
         newly_converged = interval_small & residual_small & ~converged
         converged = converged | newly_converged
         result = torch.where(newly_converged, b, result)
 
         if torch.all(converged):
-            return _attach_implicit_grad(result, f, orig_shape)
+            return _attach_implicit_grad(result, converged, f, orig_shape)
 
         # Only update unconverged elements
         active = ~converged
@@ -389,4 +402,7 @@ def brent(
         fa = fa_new
         fb = fb_new
 
-    raise RuntimeError(f"brent: failed to converge in {maxiter} iterations")
+    # Return best estimate for non-converged elements
+    # Use b as the best estimate (it has the smallest |f(b)|)
+    result = torch.where(converged, result, b)
+    return _attach_implicit_grad(result, converged, f, orig_shape)

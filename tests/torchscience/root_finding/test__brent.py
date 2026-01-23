@@ -24,12 +24,13 @@ class TestBrent:
         a = torch.tensor([1.0])
         b = torch.tensor([2.0])
 
-        root = brent(f, a, b)
+        root, converged = brent(f, a, b)
 
         expected = math.sqrt(2)
         torch.testing.assert_close(
             root, torch.tensor([expected]), rtol=1e-6, atol=1e-6
         )
+        assert converged.all()
 
     def test_batched_roots(self):
         """Find multiple roots in parallel."""
@@ -38,10 +39,11 @@ class TestBrent:
         a = torch.ones(4)
         b = torch.full((4,), 10.0)
 
-        roots = brent(f, a, b)
+        roots, converged = brent(f, a, b)
 
         expected = torch.sqrt(c)
         torch.testing.assert_close(roots, expected, rtol=1e-6, atol=1e-6)
+        assert converged.all()
 
     def test_trigonometric(self):
         """Find root of sin(x) = 0 in [2, 4] -> pi."""
@@ -49,11 +51,12 @@ class TestBrent:
         a = torch.tensor([2.0])
         b = torch.tensor([4.0])
 
-        root = brent(f, a, b)
+        root, converged = brent(f, a, b)
 
         torch.testing.assert_close(
             root, torch.tensor([math.pi]), rtol=1e-6, atol=1e-6
         )
+        assert converged.all()
 
     def test_root_at_endpoint_a(self):
         """Return a immediately if f(a) == 0."""
@@ -61,9 +64,10 @@ class TestBrent:
         a = torch.tensor([1.0])
         b = torch.tensor([2.0])
 
-        root = brent(f, a, b)
+        root, converged = brent(f, a, b)
 
         torch.testing.assert_close(root, torch.tensor([1.0]))
+        assert converged.all()
 
     def test_root_at_endpoint_b(self):
         """Return b immediately if f(b) == 0."""
@@ -71,9 +75,10 @@ class TestBrent:
         a = torch.tensor([1.0])
         b = torch.tensor([2.0])
 
-        root = brent(f, a, b)
+        root, converged = brent(f, a, b)
 
         torch.testing.assert_close(root, torch.tensor([2.0]))
+        assert converged.all()
 
     def test_invalid_bracket_raises(self):
         """Raise ValueError when f(a) and f(b) have same sign."""
@@ -122,14 +127,19 @@ class TestBrent:
         with pytest.raises(ValueError, match="Function returned NaN or Inf"):
             brent(f, a, b)
 
-    def test_maxiter_exceeded_raises(self):
-        """Raise RuntimeError when maxiter is exceeded."""
+    def test_maxiter_exceeded_returns_best_estimate(self):
+        """Return best estimate with converged=False when maxiter is exceeded."""
         f = lambda x: x**3 - x - 1
         a = torch.tensor([1.0])
         b = torch.tensor([2.0])
 
-        with pytest.raises(RuntimeError, match="failed to converge"):
-            brent(f, a, b, maxiter=1)
+        root, converged = brent(f, a, b, maxiter=1)
+
+        # Should not converge with only 1 iteration
+        assert not converged.all()
+        # But should still return a valid estimate within bounds
+        assert root.shape == a.shape
+        assert (root >= a).all() and (root <= b).all()
 
     def test_float32(self):
         """Works correctly with float32."""
@@ -137,7 +147,7 @@ class TestBrent:
         a = torch.tensor([1.0], dtype=torch.float32)
         b = torch.tensor([2.0], dtype=torch.float32)
 
-        root = brent(f, a, b)
+        root, converged = brent(f, a, b)
 
         assert root.dtype == torch.float32
         torch.testing.assert_close(
@@ -146,6 +156,7 @@ class TestBrent:
             rtol=1e-5,
             atol=1e-5,
         )
+        assert converged.all()
 
     def test_float64(self):
         """Works correctly with float64."""
@@ -153,7 +164,7 @@ class TestBrent:
         a = torch.tensor([1.0], dtype=torch.float64)
         b = torch.tensor([2.0], dtype=torch.float64)
 
-        root = brent(f, a, b)
+        root, converged = brent(f, a, b)
 
         assert root.dtype == torch.float64
         torch.testing.assert_close(
@@ -162,6 +173,7 @@ class TestBrent:
             rtol=1e-10,
             atol=1e-10,
         )
+        assert converged.all()
 
     def test_convergence_xtol(self):
         """Verify interval width is within xtol at convergence."""
@@ -170,10 +182,11 @@ class TestBrent:
         b = torch.tensor([2.0], dtype=torch.float64)
         xtol = 1e-10
 
-        root = brent(f, a, b, xtol=xtol)
+        root, converged = brent(f, a, b, xtol=xtol)
 
         expected = math.sqrt(2)
         assert abs(root.item() - expected) < xtol * 10
+        assert converged.all()
 
     def test_convergence_ftol(self):
         """Verify |f(x)| is within ftol at convergence."""
@@ -182,10 +195,11 @@ class TestBrent:
         b = torch.tensor([2.0], dtype=torch.float64)
         ftol = 1e-12
 
-        root = brent(f, a, b, ftol=ftol)
+        root, converged = brent(f, a, b, ftol=ftol)
 
         residual = abs(f(root).item())
         assert residual < ftol * 10
+        assert converged.all()
 
     def test_preserves_shape(self):
         """Output has same shape as input and correct values."""
@@ -193,11 +207,13 @@ class TestBrent:
         a = torch.ones(2, 3)
         b = torch.full((2, 3), 2.0)
 
-        root = brent(f, a, b)
+        root, converged = brent(f, a, b)
 
         assert root.shape == (2, 3)
+        assert converged.shape == (2, 3)
         expected = torch.full((2, 3), math.sqrt(2))
         torch.testing.assert_close(root, expected, rtol=1e-6, atol=1e-6)
+        assert converged.all()
 
     def test_empty_input(self):
         """Handle empty input gracefully."""
@@ -205,9 +221,10 @@ class TestBrent:
         a = torch.tensor([])
         b = torch.tensor([])
 
-        root = brent(f, a, b)
+        root, converged = brent(f, a, b)
 
         assert root.shape == (0,)
+        assert converged.shape == (0,)
 
     def test_float16(self):
         """Works correctly with float16 (reduced precision)."""
@@ -215,7 +232,7 @@ class TestBrent:
         a = torch.tensor([1.0], dtype=torch.float16)
         b = torch.tensor([2.0], dtype=torch.float16)
 
-        root = brent(f, a, b)
+        root, converged = brent(f, a, b)
 
         assert root.dtype == torch.float16
         # float16 has lower precision, use looser tolerance
@@ -225,6 +242,7 @@ class TestBrent:
             rtol=1e-2,
             atol=1e-2,
         )
+        assert converged.all()
 
     def test_bfloat16(self):
         """Works correctly with bfloat16 (reduced precision).
@@ -236,7 +254,7 @@ class TestBrent:
         a = torch.tensor([1.0], dtype=torch.bfloat16)
         b = torch.tensor([2.0], dtype=torch.bfloat16)
 
-        root = brent(f, a, b)
+        root, converged = brent(f, a, b)
 
         assert root.dtype == torch.bfloat16
         # bfloat16 has lower precision, use looser tolerance
@@ -246,6 +264,7 @@ class TestBrent:
             rtol=2e-2,
             atol=2e-2,
         )
+        assert converged.all()
 
     @pytest.mark.skipif(not scipy_available, reason="scipy not available")
     def test_matches_scipy_quadratic(self):
@@ -254,7 +273,7 @@ class TestBrent:
         f_scipy = lambda x: x**2 - 2
 
         scipy_root = brentq(f_scipy, 1.0, 2.0)
-        our_root = brent(
+        our_root, converged = brent(
             f_torch,
             torch.tensor([1.0], dtype=torch.float64),
             torch.tensor([2.0], dtype=torch.float64),
@@ -266,6 +285,7 @@ class TestBrent:
             rtol=1e-10,
             atol=1e-10,
         )
+        assert converged.all()
 
     @pytest.mark.skipif(not scipy_available, reason="scipy not available")
     def test_matches_scipy_cubic(self):
@@ -274,7 +294,7 @@ class TestBrent:
         f_scipy = lambda x: x**3 - x - 1
 
         scipy_root = brentq(f_scipy, 1.0, 2.0)
-        our_root = brent(
+        our_root, converged = brent(
             f_torch,
             torch.tensor([1.0], dtype=torch.float64),
             torch.tensor([2.0], dtype=torch.float64),
@@ -286,6 +306,7 @@ class TestBrent:
             rtol=1e-10,
             atol=1e-10,
         )
+        assert converged.all()
 
     @pytest.mark.skipif(not scipy_available, reason="scipy not available")
     def test_matches_scipy_transcendental(self):
@@ -294,7 +315,7 @@ class TestBrent:
         f_scipy = lambda x: math.exp(x) - 2
 
         scipy_root = brentq(f_scipy, 0.0, 1.0)
-        our_root = brent(
+        our_root, converged = brent(
             f_torch,
             torch.tensor([0.0], dtype=torch.float64),
             torch.tensor([1.0], dtype=torch.float64),
@@ -306,6 +327,7 @@ class TestBrent:
             rtol=1e-10,
             atol=1e-10,
         )
+        assert converged.all()
 
     @pytest.mark.skipif(not scipy_available, reason="scipy not available")
     def test_matches_scipy_trigonometric(self):
@@ -314,7 +336,7 @@ class TestBrent:
         f_scipy = lambda x: math.sin(x)
 
         scipy_root = brentq(f_scipy, 2.0, 4.0)
-        our_root = brent(
+        our_root, converged = brent(
             f_torch,
             torch.tensor([2.0], dtype=torch.float64),
             torch.tensor([4.0], dtype=torch.float64),
@@ -323,6 +345,62 @@ class TestBrent:
         torch.testing.assert_close(
             our_root,
             torch.tensor([scipy_root], dtype=torch.float64),
+            rtol=1e-10,
+            atol=1e-10,
+        )
+        assert converged.all()
+
+    def test_returns_tuple(self):
+        """brent returns (root, converged) tuple."""
+        f = lambda x: x**2 - 2
+        a = torch.tensor([1.0])
+        b = torch.tensor([2.0])
+
+        result = brent(f, a, b)
+
+        assert isinstance(result, tuple)
+        assert len(result) == 2
+        root, converged = result
+        assert root.shape == a.shape
+        assert converged.shape == a.shape
+        assert converged.dtype == torch.bool
+
+    def test_converged_all_true_on_success(self):
+        """converged is all True when all elements converge."""
+        f = lambda x: x**2 - 2
+        a = torch.tensor([1.0, 1.0])
+        b = torch.tensor([2.0, 2.0])
+
+        root, converged = brent(f, a, b)
+
+        assert converged.all()
+
+    def test_non_convergence_returns_false(self):
+        """Non-converged elements have converged=False."""
+        f = lambda x: x**3 - x - 1
+        a = torch.tensor([1.0])
+        b = torch.tensor([2.0])
+
+        # With maxiter=1, won't converge
+        root, converged = brent(f, a, b, maxiter=1)
+
+        assert not converged.all()
+        assert root.shape == a.shape  # Still returns best estimate
+
+    def test_rtol_parameter(self):
+        """Test that rtol parameter affects convergence."""
+        f = lambda x: x**2 - 2
+        a = torch.tensor([1.0], dtype=torch.float64)
+        b = torch.tensor([2.0], dtype=torch.float64)
+
+        # With very tight rtol, should still converge
+        root, converged = brent(f, a, b, rtol=1e-15)
+
+        assert converged.all()
+        expected = math.sqrt(2)
+        torch.testing.assert_close(
+            root,
+            torch.tensor([expected], dtype=torch.float64),
             rtol=1e-10,
             atol=1e-10,
         )
@@ -347,7 +425,7 @@ class TestBrentAutograd:
         a = torch.tensor([0.0], dtype=torch.float64)
         b = torch.tensor([2.0], dtype=torch.float64)
 
-        root = brent(f, a, b)
+        root, converged = brent(f, a, b)
         root.sum().backward()
 
         # Expected: 1/(2*sqrt(2)) = 0.3536
@@ -358,6 +436,7 @@ class TestBrentAutograd:
             rtol=1e-4,
             atol=1e-6,
         )
+        assert converged.all()
 
     def test_implicit_diff_batched(self):
         """Test gradient with batched inputs."""
@@ -371,13 +450,14 @@ class TestBrentAutograd:
         a = torch.zeros(3, dtype=torch.float64)
         b = torch.full((3,), 10.0, dtype=torch.float64)
 
-        roots = brent(f, a, b)
+        roots, converged = brent(f, a, b)
         loss = roots.sum()
         loss.backward()
 
         # Expected: 1/(2*sqrt(theta_i)) for each element
         expected = 1.0 / (2.0 * torch.sqrt(theta.detach()))
         torch.testing.assert_close(theta.grad, expected, rtol=1e-4, atol=1e-6)
+        assert converged.all()
 
     def test_implicit_diff_linear_param(self):
         """Test gradient with linear parameter dependence.
@@ -394,7 +474,7 @@ class TestBrentAutograd:
         a = torch.tensor([0.0], dtype=torch.float64)
         b = torch.tensor([10.0], dtype=torch.float64)
 
-        root = brent(f, a, b)
+        root, converged = brent(f, a, b)
         root.sum().backward()
 
         # Expected: dx*/dtheta = 1
@@ -404,6 +484,7 @@ class TestBrentAutograd:
             rtol=1e-4,
             atol=1e-6,
         )
+        assert converged.all()
 
     def test_implicit_diff_no_param_grad(self):
         """Test that no error occurs when function has no differentiable parameters."""
@@ -415,7 +496,7 @@ class TestBrentAutograd:
         a = torch.tensor([1.0], dtype=torch.float64)
         b = torch.tensor([2.0], dtype=torch.float64)
 
-        root = brent(f, a, b)
+        root, converged = brent(f, a, b)
 
         # Should just return the root without error
         torch.testing.assert_close(
@@ -424,6 +505,7 @@ class TestBrentAutograd:
             rtol=1e-6,
             atol=1e-6,
         )
+        assert converged.all()
 
     def test_implicit_diff_numerical_verification(self):
         """Verify gradient numerically (finite differences)."""
@@ -444,14 +526,14 @@ class TestBrentAutograd:
         def f1(x):
             return f(x, theta)
 
-        root1 = brent(f1, a, b)
+        root1, _ = brent(f1, a, b)
 
         theta_plus = torch.tensor([theta_val + eps], dtype=torch.float64)
 
         def f2(x):
             return f(x, theta_plus)
 
-        root2 = brent(f2, a, b)
+        root2, _ = brent(f2, a, b)
 
         # Numerical gradient
         numerical_grad = (root2 - root1) / eps
@@ -475,7 +557,7 @@ class TestBrentAutograd:
         a = torch.tensor([0.0], dtype=torch.float64)
         b = torch.tensor([10.0], dtype=torch.float64)
 
-        root = brent(f, a, b)
+        root, converged = brent(f, a, b)
         loss = (root - target) ** 2  # MSE loss
 
         loss.backward()
@@ -486,6 +568,7 @@ class TestBrentAutograd:
         # d(loss)/d(theta) = 1.0 * 0.25 = 0.25
         expected = torch.tensor([0.25], dtype=torch.float64)
         torch.testing.assert_close(theta.grad, expected, rtol=1e-4, atol=1e-6)
+        assert converged.all()
 
     def test_implicit_diff_small_derivative(self):
         """Test gradient computation when df/dx is very small at root.
@@ -503,13 +586,14 @@ class TestBrentAutograd:
         a = torch.tensor([0.0], dtype=torch.float64)
         b = torch.tensor([1.0], dtype=torch.float64)
 
-        root = brent(f, a, b)
+        root, converged = brent(f, a, b)
         root.sum().backward()
 
         # Gradient should be finite (not NaN or Inf)
         assert torch.isfinite(theta.grad).all(), (
             f"Expected finite gradient, got {theta.grad}"
         )
+        assert converged.all()
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
@@ -524,13 +608,15 @@ class TestBrentCUDA:
         a = torch.tensor([1.0], device=device)
         b = torch.tensor([2.0], device=device)
 
-        root = brent(f, a, b)
+        root, converged = brent(f, a, b)
 
         assert root.device.type == "cuda"
+        assert converged.device.type == "cuda"
         expected = math.sqrt(2)
         torch.testing.assert_close(
             root.cpu(), torch.tensor([expected]), rtol=1e-6, atol=1e-6
         )
+        assert converged.all()
 
     def test_cuda_batched(self):
         """Test batched operation on CUDA."""
@@ -540,11 +626,13 @@ class TestBrentCUDA:
         a = torch.ones(4, device=device)
         b = torch.full((4,), 10.0, device=device)
 
-        roots = brent(f, a, b)
+        roots, converged = brent(f, a, b)
 
         assert roots.device.type == "cuda"
+        assert converged.device.type == "cuda"
         expected = torch.sqrt(c)
         torch.testing.assert_close(roots, expected, rtol=1e-6, atol=1e-6)
+        assert converged.all()
 
     def test_cuda_autograd(self):
         """Test autograd on CUDA."""
@@ -559,7 +647,7 @@ class TestBrentCUDA:
         a = torch.tensor([0.0], dtype=torch.float64, device=device)
         b = torch.tensor([2.0], dtype=torch.float64, device=device)
 
-        root = brent(f, a, b)
+        root, converged = brent(f, a, b)
         root.sum().backward()
 
         expected = 1.0 / (2.0 * math.sqrt(2.0))
@@ -569,3 +657,4 @@ class TestBrentCUDA:
             rtol=1e-4,
             atol=1e-6,
         )
+        assert converged.all()
