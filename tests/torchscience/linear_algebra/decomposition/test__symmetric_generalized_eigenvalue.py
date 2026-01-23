@@ -192,3 +192,34 @@ class TestSymmetricGeneralizedEigenvalue:
 
         assert result.eigenvalues.dtype == torch.float32
         assert result.info.item() == 0
+
+    def test_meta_tensor(self):
+        """Test shape inference with meta tensors."""
+        a = torch.randn(3, 4, 4, device="meta")
+        b = torch.randn(3, 4, 4, device="meta")
+
+        result = symmetric_generalized_eigenvalue(a, b)
+
+        assert result.eigenvalues.shape == (3, 4)
+        assert result.eigenvectors.shape == (3, 4, 4)
+        assert result.info.shape == (3,)
+
+    def test_compile(self):
+        """Test torch.compile compatibility."""
+        a = torch.randn(4, 4, dtype=torch.float64)
+        a = a @ a.T  # Make symmetric
+        b = torch.eye(4, dtype=torch.float64)
+
+        compiled_fn = torch.compile(symmetric_generalized_eigenvalue)
+
+        eager_result = symmetric_generalized_eigenvalue(a, b)
+        compiled_result = compiled_fn(a, b)
+
+        assert torch.allclose(
+            eager_result.eigenvalues, compiled_result.eigenvalues, atol=1e-10
+        )
+        assert torch.allclose(
+            eager_result.eigenvectors.abs(),
+            compiled_result.eigenvectors.abs(),
+            atol=1e-10,
+        )
