@@ -20,6 +20,8 @@ from torchscience.geometry.transform._euler_angles import (
     quaternion_to_euler_angles,
 )
 from torchscience.geometry.transform._exponential_map import (
+    se3_exp,
+    se3_log,
     so3_exp,
     so3_log,
 )
@@ -68,6 +70,15 @@ from torchscience.geometry.transform._rotation_vector import (
     rotation_vector_to_matrix,
     rotation_vector_to_quaternion,
 )
+from torchscience.geometry.transform._twist import (
+    Twist,
+    matrix_to_twist,
+    twist,
+    twist_apply,
+    twist_from_vector,
+    twist_to_matrix,
+    twist_to_vector,
+)
 
 __all__ = [
     "AxisAngle",
@@ -77,6 +88,7 @@ __all__ = [
     "Rotation6D",
     "RotationMatrix",
     "RotationVector",
+    "Twist",
     "axis_angle",
     "axis_angle_to_matrix",
     "axis_angle_to_quaternion",
@@ -117,6 +129,14 @@ __all__ = [
     "rotation_vector",
     "rotation_vector_to_matrix",
     "rotation_vector_to_quaternion",
+    "se3_exp",
+    "se3_log",
     "so3_exp",
     "so3_log",
+    "twist",
+    "twist_apply",
+    "twist_from_vector",
+    "twist_to_matrix",
+    "twist_to_vector",
+    "matrix_to_twist",
 ]

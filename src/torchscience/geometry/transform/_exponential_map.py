@@ -1,19 +1,28 @@
-"""SO(3) exponential and logarithm maps.
+"""SO(3) and SE(3) exponential and logarithm maps.
 
 This module provides the Lie algebra exponential and logarithm maps for the
-rotation group SO(3):
+rotation group SO(3) and rigid body group SE(3):
 
 - so3_exp: Maps rotation vectors (Lie algebra so(3)) to rotation matrices (SO(3))
 - so3_log: Maps rotation matrices (SO(3)) to rotation vectors (so(3))
+- se3_exp: Maps twists (Lie algebra se(3)) to rigid transforms (SE(3))
+- se3_log: Maps rigid transforms (SE(3)) to twists (se(3))
 
 These are fundamental operations in robotics, computer vision, and physics
-for working with 3D rotations using their tangent space representation.
+for working with 3D rotations and rigid body transformations using their
+tangent space representation.
 """
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import torch
 from torch import Tensor
+
+if TYPE_CHECKING:
+    from torchscience.geometry.transform._rigid_transform import RigidTransform
+    from torchscience.geometry.transform._twist import Twist
 
 
 def _skew_symmetric(omega: Tensor) -> Tensor:
@@ -381,3 +390,262 @@ def so3_log(matrix: Tensor) -> Tensor:
     )
 
     return omega
+
+
+def se3_exp(twist: "Twist") -> "RigidTransform":
+    """Compute the SE(3) exponential map.
+
+    Maps a twist (se(3) Lie algebra element) to a rigid transform (SE(3)).
+
+    Parameters
+    ----------
+    twist : Twist
+        Twist with angular and linear components, shapes (..., 3).
+
+    Returns
+    -------
+    RigidTransform
+        Rigid transform corresponding to the twist.
+
+    Notes
+    -----
+    The SE(3) exponential map is computed as:
+
+    .. math::
+
+        \\exp(\\xi) = \\begin{bmatrix}
+            R & V v \\\\
+            0 & 1
+        \\end{bmatrix}
+
+    where:
+    - :math:`R = \\exp([\\omega]_\\times)` is the rotation from the SO(3) exp
+    - :math:`V = I + \\frac{1 - \\cos\\theta}{\\theta^2}[\\omega]_\\times +
+      \\frac{\\theta - \\sin\\theta}{\\theta^3}[\\omega]_\\times^2`
+    - :math:`\\theta = \\|\\omega\\|` is the rotation angle
+
+    For small angles, Taylor expansions are used for numerical stability.
+
+    See Also
+    --------
+    se3_log : Inverse operation (logarithm map).
+    so3_exp : SO(3) exponential map.
+
+    Examples
+    --------
+    Zero twist gives identity transform:
+
+    >>> from torchscience.geometry.transform import twist
+    >>> t = twist(torch.zeros(3), torch.zeros(3))
+    >>> transform = se3_exp(t)
+    >>> transform.rotation.wxyz
+    tensor([1., 0., 0., 0.])
+    """
+    # Import here to avoid circular imports
+    from torchscience.geometry.transform._quaternion import (
+        matrix_to_quaternion,
+    )
+    from torchscience.geometry.transform._rigid_transform import (
+        rigid_transform,
+    )
+
+    omega = twist.angular
+    v = twist.linear
+
+    batch_shape = omega.shape[:-1]
+    device = omega.device
+    dtype = omega.dtype
+
+    # Compute angle (norm of omega)
+    theta = torch.linalg.norm(omega, dim=-1)
+    theta_sq = theta * theta
+    theta_cu = theta_sq * theta
+
+    # Build the skew-symmetric matrix [omega]_x
+    omega_skew = _skew_symmetric(omega)
+    omega_skew_sq = torch.matmul(omega_skew, omega_skew)
+
+    # For numerical stability, use Taylor expansion for small angles
+    small_angle_threshold = 1e-6
+    is_small = theta < small_angle_threshold
+
+    # Compute coefficients for R (same as so3_exp)
+    theta_safe = torch.where(is_small, torch.ones_like(theta), theta)
+    theta_sq_safe = theta_safe * theta_safe
+    theta_cu_safe = theta_sq_safe * theta_safe
+
+    sin_theta = torch.sin(theta_safe)
+    cos_theta = torch.cos(theta_safe)
+
+    # Coefficient for [omega]_x in R: sin(theta)/theta
+    coeff_r1_normal = sin_theta / theta_safe
+    coeff_r1_taylor = 1.0 - theta_sq / 6.0 + theta_sq * theta_sq / 120.0
+    coeff_r1 = torch.where(is_small, coeff_r1_taylor, coeff_r1_normal)
+
+    # Coefficient for [omega]_x^2 in R: (1 - cos(theta))/theta^2
+    coeff_r2_normal = (1.0 - cos_theta) / theta_sq_safe
+    coeff_r2_taylor = 0.5 - theta_sq / 24.0 + theta_sq * theta_sq / 720.0
+    coeff_r2 = torch.where(is_small, coeff_r2_taylor, coeff_r2_normal)
+
+    # Compute V matrix coefficients:
+    # V = I + ((1-cos(theta))/theta^2) * [omega]_x + ((theta-sin(theta))/theta^3) * [omega]_x^2
+
+    # Coefficient for [omega]_x in V: (1 - cos(theta))/theta^2 = coeff_r2
+    coeff_v1 = coeff_r2
+
+    # Coefficient for [omega]_x^2 in V: (theta - sin(theta))/theta^3
+    # Taylor: 1/6 - theta^2/120 + theta^4/5040
+    coeff_v2_normal = (theta_safe - sin_theta) / theta_cu_safe
+    coeff_v2_taylor = (
+        1.0 / 6.0 - theta_sq / 120.0 + theta_sq * theta_sq / 5040.0
+    )
+    coeff_v2 = torch.where(is_small, coeff_v2_taylor, coeff_v2_normal)
+
+    # Expand coefficients for broadcasting
+    coeff_r1_exp = coeff_r1[..., None, None]
+    coeff_r2_exp = coeff_r2[..., None, None]
+    coeff_v1_exp = coeff_v1[..., None, None]
+    coeff_v2_exp = coeff_v2[..., None, None]
+
+    # Identity matrix with proper batch shape
+    eye = torch.eye(3, device=device, dtype=dtype)
+    if batch_shape:
+        eye = eye.expand(*batch_shape, 3, 3)
+
+    # Compute R = I + coeff_r1 * [omega]_x + coeff_r2 * [omega]_x^2
+    R = eye + coeff_r1_exp * omega_skew + coeff_r2_exp * omega_skew_sq
+
+    # Compute V = I + coeff_v1 * [omega]_x + coeff_v2 * [omega]_x^2
+    V = eye + coeff_v1_exp * omega_skew + coeff_v2_exp * omega_skew_sq
+
+    # Compute translation: t = V @ v
+    # V has shape (..., 3, 3), v has shape (..., 3)
+    # We need to compute t = V @ v for each batch element
+    translation = torch.einsum("...ij,...j->...i", V, v)
+
+    # Convert R to quaternion
+    rotation = matrix_to_quaternion(R)
+
+    return rigid_transform(rotation, translation)
+
+
+def se3_log(transform: "RigidTransform") -> "Twist":
+    """Compute the SE(3) logarithm map.
+
+    Maps a rigid transform (SE(3)) to a twist (se(3) Lie algebra element).
+
+    Parameters
+    ----------
+    transform : RigidTransform
+        Rigid transform to convert.
+
+    Returns
+    -------
+    Twist
+        Twist with angular and linear components.
+
+    Notes
+    -----
+    The SE(3) logarithm map is computed as:
+
+    .. math::
+
+        \\log(T) = \\begin{bmatrix}
+            \\omega \\\\
+            V^{-1} t
+        \\end{bmatrix}
+
+    where:
+    - :math:`\\omega = \\log(R)` is the rotation vector from SO(3) log
+    - :math:`V^{-1} = I - \\frac{1}{2}[\\omega]_\\times +
+      \\frac{1}{\\theta^2}(1 - \\frac{\\theta}{2}\\cot(\\frac{\\theta}{2}))
+      [\\omega]_\\times^2`
+    - :math:`\\theta = \\|\\omega\\|` is the rotation angle
+
+    For small angles, Taylor expansions are used for numerical stability.
+
+    See Also
+    --------
+    se3_exp : Inverse operation (exponential map).
+    so3_log : SO(3) logarithm map.
+
+    Examples
+    --------
+    Identity transform gives zero twist:
+
+    >>> from torchscience.geometry.transform import rigid_transform_identity
+    >>> transform = rigid_transform_identity()
+    >>> t = se3_log(transform)
+    >>> t.angular
+    tensor([0., 0., 0.])
+    """
+    # Import here to avoid circular imports
+    from torchscience.geometry.transform._quaternion import (
+        quaternion_to_matrix,
+    )
+    from torchscience.geometry.transform._twist import Twist
+
+    # Get rotation matrix and translation
+    R = quaternion_to_matrix(transform.rotation)
+    t = transform.translation
+
+    batch_shape = t.shape[:-1]
+    device = t.device
+    dtype = t.dtype
+
+    # Compute omega = so3_log(R)
+    omega = so3_log(R)
+
+    # Compute angle
+    theta = torch.linalg.norm(omega, dim=-1)
+    theta_sq = theta * theta
+
+    # Build the skew-symmetric matrix [omega]_x
+    omega_skew = _skew_symmetric(omega)
+    omega_skew_sq = torch.matmul(omega_skew, omega_skew)
+
+    # For numerical stability, use Taylor expansion for small angles
+    small_angle_threshold = 1e-6
+    is_small = theta < small_angle_threshold
+
+    theta_safe = torch.where(is_small, torch.ones_like(theta), theta)
+    theta_sq_safe = theta_safe * theta_safe
+    half_theta = theta_safe / 2.0
+
+    # Compute V^{-1} matrix:
+    # V^{-1} = I - (1/2) * [omega]_x + coeff * [omega]_x^2
+    # where coeff = (1/theta^2) * (1 - (theta/2) * cot(theta/2))
+    #             = (1/theta^2) * (1 - (theta/2) * cos(theta/2) / sin(theta/2))
+
+    # For small theta, use Taylor expansion:
+    # coeff = 1/12 + theta^2/720 + theta^4/30240 + ...
+
+    sin_half = torch.sin(half_theta)
+    cos_half = torch.cos(half_theta)
+
+    # Avoid division by zero in cot(theta/2)
+    sin_half_safe = torch.where(is_small, torch.ones_like(sin_half), sin_half)
+
+    coeff_normal = (
+        1.0 - half_theta * cos_half / sin_half_safe
+    ) / theta_sq_safe
+    coeff_taylor = (
+        1.0 / 12.0 + theta_sq / 720.0 + theta_sq * theta_sq / 30240.0
+    )
+    coeff = torch.where(is_small, coeff_taylor, coeff_normal)
+
+    # Expand coefficient for broadcasting
+    coeff_exp = coeff[..., None, None]
+
+    # Identity matrix with proper batch shape
+    eye = torch.eye(3, device=device, dtype=dtype)
+    if batch_shape:
+        eye = eye.expand(*batch_shape, 3, 3)
+
+    # Compute V^{-1} = I - 0.5 * [omega]_x + coeff * [omega]_x^2
+    V_inv = eye - 0.5 * omega_skew + coeff_exp * omega_skew_sq
+
+    # Compute linear velocity: v = V^{-1} @ t
+    linear = torch.einsum("...ij,...j->...i", V_inv, t)
+
+    return Twist(angular=omega, linear=linear)
