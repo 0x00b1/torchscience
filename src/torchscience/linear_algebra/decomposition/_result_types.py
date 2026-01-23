@@ -99,3 +99,56 @@ class JordanDecompositionResult(NamedTuple):
     info: (
         Tensor  # (...) - int, 0 indicates success, 1 indicates near-defective
     )
+
+
+class PivotedLUResult(NamedTuple):
+    """Result of pivoted LU decomposition PA = LU.
+
+    Factors a matrix with row pivoting for numerical stability.
+
+    The permutation matrix P is represented as pivot indices rather than
+    a full matrix for efficiency.
+    """
+
+    L: Tensor  # (..., m, k) - Unit lower triangular, k = min(m, n)
+    U: Tensor  # (..., k, n) - Upper triangular
+    pivots: Tensor  # (..., k) - Pivot indices
+    info: Tensor  # (...) - int, 0 indicates success
+
+
+class PivotedQRResult(NamedTuple):
+    """Result of pivoted QR decomposition A[:, pivots] = QR.
+
+    Computes QR decomposition with column pivoting for numerical stability
+    and rank revealing properties.
+
+    The permutation is represented as column pivot indices. To reconstruct
+    the original matrix: A[:, pivots] = Q @ R, or equivalently
+    A = Q @ R @ P.T where P is the permutation matrix.
+    """
+
+    Q: Tensor  # (..., m, k) - Orthogonal/unitary matrix, k = min(m, n)
+    R: Tensor  # (..., k, n) - Upper triangular
+    pivots: Tensor  # (..., n) - Column permutation indices
+    info: Tensor  # (...) - int, 0 indicates success
+
+
+class RankRevealingQRResult(NamedTuple):
+    """Result of rank-revealing QR decomposition.
+
+    Extends pivoted QR decomposition with automatic numerical rank detection.
+    The rank is determined by counting diagonal elements of R that exceed
+    tol * |R[0,0]|.
+
+    The permutation is represented as column pivot indices. To reconstruct
+    the original matrix: A[:, pivots] = Q @ R.
+
+    The numerical rank can be used to truncate Q and R for low-rank
+    approximations: Q[:, :rank] @ R[:rank, :] gives a rank-r approximation.
+    """
+
+    Q: Tensor  # (..., m, k) - Orthogonal/unitary matrix, k = min(m, n)
+    R: Tensor  # (..., k, n) - Upper triangular
+    pivots: Tensor  # (..., n) - Column permutation indices
+    rank: Tensor  # (...) - Numerical rank
+    info: Tensor  # (...) - int, 0 indicates success

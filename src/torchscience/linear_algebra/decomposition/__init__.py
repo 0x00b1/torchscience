@@ -34,6 +34,21 @@ jordan_decomposition
     Computes the Jordan decomposition A = PJP^{-1} where J is the Jordan
     normal form. Does not support gradients (discontinuous).
 
+pivoted_lu
+    Computes the pivoted LU decomposition PA = LU where P is a permutation
+    matrix, L is unit lower triangular, and U is upper triangular.
+
+pivoted_qr
+    Computes the pivoted QR decomposition A[:, pivots] = QR where Q is
+    orthogonal/unitary, R is upper triangular, and pivots are column
+    permutation indices. Column pivoting provides numerical stability
+    and rank-revealing properties.
+
+rank_revealing_qr
+    Computes the rank-revealing QR decomposition, which is pivoted QR with
+    automatic numerical rank detection. The rank is determined by counting
+    diagonal elements of R that exceed tol * |R[0,0]|.
+
 Result Types
 ------------
 GeneralizedEigenvalueResult
@@ -56,6 +71,15 @@ PolarDecompositionResult
 
 JordanDecompositionResult
     Named tuple with J, P, info.
+
+PivotedLUResult
+    Named tuple with L, U, pivots, info.
+
+PivotedQRResult
+    Named tuple with Q, R, pivots, info.
+
+RankRevealingQRResult
+    Named tuple with Q, R, pivots, rank, info.
 """
 
 from torchscience.linear_algebra.decomposition._generalized_eigenvalue import (
@@ -70,15 +94,27 @@ from torchscience.linear_algebra.decomposition._hessenberg import (
 from torchscience.linear_algebra.decomposition._jordan_decomposition import (
     jordan_decomposition,
 )
+from torchscience.linear_algebra.decomposition._pivoted_lu import (
+    pivoted_lu,
+)
+from torchscience.linear_algebra.decomposition._pivoted_qr import (
+    pivoted_qr,
+)
 from torchscience.linear_algebra.decomposition._polar_decomposition import (
     polar_decomposition,
+)
+from torchscience.linear_algebra.decomposition._rank_revealing_qr import (
+    rank_revealing_qr,
 )
 from torchscience.linear_algebra.decomposition._result_types import (
     GeneralizedEigenvalueResult,
     GeneralizedSchurResult,
     HessenbergResult,
     JordanDecompositionResult,
+    PivotedLUResult,
+    PivotedQRResult,
     PolarDecompositionResult,
+    RankRevealingQRResult,
     SchurDecompositionResult,
     SymmetricGeneralizedEigenvalueResult,
 )
@@ -94,14 +130,20 @@ __all__ = [
     "GeneralizedSchurResult",
     "HessenbergResult",
     "JordanDecompositionResult",
+    "PivotedLUResult",
+    "PivotedQRResult",
     "PolarDecompositionResult",
+    "RankRevealingQRResult",
     "SymmetricGeneralizedEigenvalueResult",
     "SchurDecompositionResult",
     "generalized_eigenvalue",
     "generalized_schur",
     "hessenberg",
     "jordan_decomposition",
+    "pivoted_lu",
+    "pivoted_qr",
     "polar_decomposition",
+    "rank_revealing_qr",
     "schur_decomposition",
     "symmetric_generalized_eigenvalue",
 ]
