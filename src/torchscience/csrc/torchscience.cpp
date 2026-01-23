@@ -1238,6 +1238,7 @@ TORCH_LIBRARY(torchscience, module) {
   // Renyi divergence
   module.def("renyi_divergence(Tensor p, Tensor q, float alpha, int dim, str input_type, str reduction, float? base, bool pairwise) -> Tensor");
   module.def("renyi_divergence_backward(Tensor grad_output, Tensor p, Tensor q, float alpha, int dim, str input_type, str reduction, float? base, bool pairwise) -> (Tensor, Tensor)");
+  module.def("renyi_divergence_backward_backward(Tensor gg_p, Tensor gg_q, Tensor grad_output, Tensor p, Tensor q, float alpha, int dim, str input_type, str reduction, float? base) -> (Tensor, Tensor, Tensor)");
 
   // Cross-entropy
   module.def("cross_entropy(Tensor p, Tensor q, int dim, str input_type, str reduction, float? base) -> Tensor");
