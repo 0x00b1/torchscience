@@ -27,3 +27,14 @@ class SchurDecompositionResult(NamedTuple):
     Q: Tensor
     eigenvalues: Tensor
     info: Tensor
+
+
+class HessenbergResult(NamedTuple):
+    """Result of Hessenberg decomposition A = QHQ*.
+
+    H is upper Hessenberg (zeros below the first subdiagonal) and Q is unitary.
+    """
+
+    H: Tensor
+    Q: Tensor
+    info: Tensor
