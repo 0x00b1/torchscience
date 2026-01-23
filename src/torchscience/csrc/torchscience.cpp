@@ -151,8 +151,12 @@
 #include "meta/encryption/chacha20_poly1305.h"
 #include "cpu/encryption/curve25519.h"
 #include "cpu/encryption/ed25519.h"
+#include "cpu/encryption/pbkdf2.h"
+#include "cpu/encryption/hkdf.h"
 #include "meta/encryption/curve25519.h"
 #include "meta/encryption/ed25519.h"
+#include "meta/encryption/pbkdf2.h"
+#include "meta/encryption/hkdf.h"
 #include "cpu/privacy/gaussian_mechanism.h"
 #include "cpu/privacy/laplace_mechanism.h"
 #include "meta/privacy/gaussian_mechanism.h"
@@ -1344,6 +1348,12 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("ed25519_keypair(Tensor seed) -> (Tensor, Tensor)");
   module.def("ed25519_sign(Tensor private_key, Tensor message) -> Tensor");
   module.def("ed25519_verify(Tensor public_key, Tensor message, Tensor signature) -> Tensor");
+
+  // Key derivation functions
+  module.def("pbkdf2_sha256(Tensor password, Tensor salt, int iterations, int output_len) -> Tensor");
+  module.def("hkdf_extract_sha256(Tensor salt, Tensor ikm) -> Tensor");
+  module.def("hkdf_expand_sha256(Tensor prk, Tensor info, int output_len) -> Tensor");
+  module.def("hkdf_sha256(Tensor ikm, Tensor salt, Tensor info, int output_len) -> Tensor");
 
   // Privacy operators
   module.def("gaussian_mechanism(Tensor x, Tensor noise, float sigma) -> Tensor");
