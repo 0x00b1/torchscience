@@ -1,5 +1,6 @@
 """Differentiation module: finite difference operators for numerical differentiation."""
 
+from torchscience.differentiation._advect import advect
 from torchscience.differentiation._apply import apply_stencil
 from torchscience.differentiation._biharmonic import biharmonic
 from torchscience.differentiation._biharmonic_stencil import biharmonic_stencil
@@ -49,6 +50,7 @@ __all__ = [
     "RegularGrid",
     "StencilError",
     "Surface",
+    "advect",
     "apply_stencil",
     "biharmonic",
     "biharmonic_stencil",
