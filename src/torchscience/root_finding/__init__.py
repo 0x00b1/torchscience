@@ -9,6 +9,7 @@ from ._differentiation import (
 from ._exceptions import BracketError, DerivativeError, RootFindingError
 from ._fixed_point import fixed_point
 from ._halley import halley
+from ._levenberg_marquardt import levenberg_marquardt
 from ._newton import newton
 from ._newton_system import newton_system
 from ._ridder import ridder
@@ -24,6 +25,7 @@ __all__ = [
     "default_tolerances",
     "fixed_point",
     "halley",
+    "levenberg_marquardt",
     "newton",
     "newton_system",
     "ridder",
