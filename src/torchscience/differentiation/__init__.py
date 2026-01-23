@@ -23,6 +23,9 @@ from torchscience.differentiation._jacobian import jacobian
 from torchscience.differentiation._laplacian import laplacian
 from torchscience.differentiation._laplacian_stencil import laplacian_stencil
 from torchscience.differentiation._richardson import richardson_extrapolation
+from torchscience.differentiation._spectral_derivative import (
+    spectral_derivative,
+)
 from torchscience.differentiation._stencil import FiniteDifferenceStencil
 
 __all__ = [
@@ -47,4 +50,5 @@ __all__ = [
     "laplacian",
     "laplacian_stencil",
     "richardson_extrapolation",
+    "spectral_derivative",
 ]
