@@ -81,6 +81,444 @@ def gauss_legendre_nodes_weights(
     return nodes, weights
 
 
+def gauss_hermite_nodes_weights(
+    n: int,
+    dtype: torch.dtype = torch.float64,
+    device: Optional[torch.device] = None,
+) -> Tuple[Tensor, Tensor]:
+    r"""
+    Compute Gauss-Hermite nodes and weights for the physicists' convention.
+
+    Integrates functions with weight w(x) = exp(-x^2) on (-infinity, infinity):
+
+    .. math::
+
+        \int_{-\infty}^{\infty} f(x) e^{-x^2} dx \approx \sum_{i=1}^{n} w_i f(x_i)
+
+    Uses the Golub-Welsch algorithm.
+
+    Parameters
+    ----------
+    n : int
+        Number of quadrature points.
+    dtype : torch.dtype
+        Data type for output tensors.
+    device : torch.device, optional
+        Device for output tensors.
+
+    Returns
+    -------
+    nodes : Tensor
+        Quadrature nodes, shape (n,), sorted ascending.
+    weights : Tensor
+        Quadrature weights, shape (n,).
+
+    Raises
+    ------
+    ValueError
+        If n < 1.
+
+    Notes
+    -----
+    Gauss-Hermite quadrature is exact for polynomials of degree <= 2n-1
+    multiplied by the weight function exp(-x^2).
+
+    The Jacobi matrix for Hermite (physicists') has:
+    - diagonal = 0
+    - off-diagonal[k] = sqrt(k/2)
+
+    The total weight integral is sqrt(pi).
+
+    Examples
+    --------
+    >>> nodes, weights = gauss_hermite_nodes_weights(5)
+    >>> # Integrate exp(-x^2) from -inf to inf (should be sqrt(pi))
+    >>> # integral = sum(weights) ≈ sqrt(pi)
+
+    References
+    ----------
+    Golub, G. H., & Welsch, J. H. (1969). Calculation of Gauss quadrature rules.
+    """
+    import math
+
+    if n < 1:
+        raise ValueError(f"n must be at least 1, got {n}")
+
+    if n == 1:
+        return (
+            torch.tensor([0.0], dtype=dtype, device=device),
+            torch.tensor([math.sqrt(math.pi)], dtype=dtype, device=device),
+        )
+
+    # Jacobi matrix for Hermite (physicists'):
+    # diagonal = 0, off-diagonal[k] = sqrt(k/2)
+    k = torch.arange(1, n, dtype=dtype, device=device)
+    off_diag = torch.sqrt(k / 2)
+
+    # Construct tridiagonal matrix
+    T = torch.diag(off_diag, diagonal=1) + torch.diag(off_diag, diagonal=-1)
+
+    # Eigenvalues are nodes, first components of eigenvectors give weights
+    eigenvalues, eigenvectors = torch.linalg.eigh(T)
+
+    nodes = eigenvalues
+    # Weight formula: w_i = sqrt(pi) * v_{i,0}^2 where v is eigenvector
+    weights = math.sqrt(math.pi) * eigenvectors[0, :] ** 2
+
+    # Sort by nodes
+    sorted_idx = torch.argsort(nodes)
+    nodes = nodes[sorted_idx]
+    weights = weights[sorted_idx]
+
+    return nodes, weights
+
+
+def gauss_laguerre_nodes_weights(
+    n: int,
+    alpha: float = 0.0,
+    dtype: torch.dtype = torch.float64,
+    device: Optional[torch.device] = None,
+) -> Tuple[Tensor, Tensor]:
+    r"""
+    Compute Gauss-Laguerre nodes and weights.
+
+    Integrates functions with weight w(x) = x^alpha * exp(-x) on [0, infinity):
+
+    .. math::
+
+        \int_{0}^{\infty} f(x) x^{\alpha} e^{-x} dx \approx \sum_{i=1}^{n} w_i f(x_i)
+
+    Uses the Golub-Welsch algorithm.
+
+    Parameters
+    ----------
+    n : int
+        Number of quadrature points.
+    alpha : float
+        Parameter for generalized Laguerre polynomials. Must be > -1.
+        Default is 0 (standard Laguerre).
+    dtype : torch.dtype
+        Data type for output tensors.
+    device : torch.device, optional
+        Device for output tensors.
+
+    Returns
+    -------
+    nodes : Tensor
+        Quadrature nodes, shape (n,), sorted ascending.
+    weights : Tensor
+        Quadrature weights, shape (n,).
+
+    Raises
+    ------
+    ValueError
+        If n < 1 or alpha <= -1.
+
+    Notes
+    -----
+    Gauss-Laguerre quadrature is exact for polynomials of degree <= 2n-1
+    multiplied by the weight function x^alpha * exp(-x).
+
+    The Jacobi matrix for generalized Laguerre L_n^{(alpha)} has:
+    - diagonal[k] = 2k + alpha + 1
+    - off-diagonal[k] = sqrt(k * (k + alpha))
+
+    The total weight integral is Gamma(alpha + 1).
+
+    Examples
+    --------
+    >>> nodes, weights = gauss_laguerre_nodes_weights(5)
+    >>> # Integrate exp(-x) from 0 to inf (should be 1 = Gamma(1))
+    >>> # integral = sum(weights) ≈ 1
+
+    References
+    ----------
+    Golub, G. H., & Welsch, J. H. (1969). Calculation of Gauss quadrature rules.
+    """
+    import math
+
+    if n < 1:
+        raise ValueError(f"n must be at least 1, got {n}")
+    if alpha <= -1:
+        raise ValueError(f"alpha must be > -1, got {alpha}")
+
+    if n == 1:
+        return (
+            torch.tensor([alpha + 1], dtype=dtype, device=device),
+            torch.tensor([math.gamma(alpha + 1)], dtype=dtype, device=device),
+        )
+
+    # Jacobi matrix for generalized Laguerre L_n^{(alpha)}:
+    # diagonal[k] = 2k + alpha + 1 (for k = 0, 1, ..., n-1)
+    # off-diagonal[k] = sqrt(k * (k + alpha)) (for k = 1, ..., n-1)
+    k = torch.arange(n, dtype=dtype, device=device)
+    diag = 2 * k + alpha + 1
+
+    k_off = torch.arange(1, n, dtype=dtype, device=device)
+    off_diag = torch.sqrt(k_off * (k_off + alpha))
+
+    # Construct tridiagonal matrix
+    T = (
+        torch.diag(diag)
+        + torch.diag(off_diag, diagonal=1)
+        + torch.diag(off_diag, diagonal=-1)
+    )
+
+    # Eigenvalues are nodes, first components of eigenvectors give weights
+    eigenvalues, eigenvectors = torch.linalg.eigh(T)
+
+    nodes = eigenvalues
+    # Weight formula: w_i = Gamma(alpha + 1) * v_{i,0}^2
+    weights = math.gamma(alpha + 1) * eigenvectors[0, :] ** 2
+
+    # Sort by nodes
+    sorted_idx = torch.argsort(nodes)
+    nodes = nodes[sorted_idx]
+    weights = weights[sorted_idx]
+
+    return nodes, weights
+
+
+def gauss_chebyshev_nodes_weights(
+    n: int,
+    kind: int = 1,
+    dtype: torch.dtype = torch.float64,
+    device: Optional[torch.device] = None,
+) -> Tuple[Tensor, Tensor]:
+    r"""
+    Compute Gauss-Chebyshev nodes and weights on [-1, 1].
+
+    For kind=1 (Chebyshev T), integrates with weight w(x) = 1/sqrt(1-x^2):
+
+    .. math::
+
+        \int_{-1}^{1} \frac{f(x)}{\sqrt{1-x^2}} dx \approx \sum_{i=1}^{n} w_i f(x_i)
+
+    For kind=2 (Chebyshev U), integrates with weight w(x) = sqrt(1-x^2):
+
+    .. math::
+
+        \int_{-1}^{1} f(x) \sqrt{1-x^2} dx \approx \sum_{i=1}^{n} w_i f(x_i)
+
+    Parameters
+    ----------
+    n : int
+        Number of quadrature points.
+    kind : int
+        1 for Chebyshev of the first kind (T), 2 for second kind (U).
+    dtype : torch.dtype
+        Data type for output tensors.
+    device : torch.device, optional
+        Device for output tensors.
+
+    Returns
+    -------
+    nodes : Tensor
+        Quadrature nodes, shape (n,), sorted ascending.
+    weights : Tensor
+        Quadrature weights, shape (n,).
+
+    Raises
+    ------
+    ValueError
+        If n < 1 or kind not in {1, 2}.
+
+    Notes
+    -----
+    Gauss-Chebyshev quadrature has explicit formulas (no eigenvalue computation needed):
+
+    For T (kind=1):
+        nodes: cos((2k-1)*pi / (2n)) for k = 1, ..., n
+        weights: pi / n (all equal)
+
+    For U (kind=2):
+        nodes: cos(k*pi / (n+1)) for k = 1, ..., n
+        weights: pi/(n+1) * sin^2(k*pi/(n+1))
+
+    Examples
+    --------
+    >>> nodes, weights = gauss_chebyshev_nodes_weights(5, kind=1)
+    >>> # Integrate 1/sqrt(1-x^2) from -1 to 1 (should be pi)
+    >>> # integral = sum(weights) ≈ pi
+
+    References
+    ----------
+    Abramowitz, M., & Stegun, I. A. (1964). Handbook of Mathematical Functions.
+    """
+    import math
+
+    if n < 1:
+        raise ValueError(f"n must be at least 1, got {n}")
+    if kind not in (1, 2):
+        raise ValueError(f"kind must be 1 or 2, got {kind}")
+
+    if kind == 1:
+        # Chebyshev T: nodes = cos((2k-1)*pi / (2n)), weights = pi/n
+        k = torch.arange(1, n + 1, dtype=dtype, device=device)
+        nodes = torch.cos((2 * k - 1) * math.pi / (2 * n))
+        weights = torch.full((n,), math.pi / n, dtype=dtype, device=device)
+    else:
+        # Chebyshev U: nodes = cos(k*pi / (n+1)), weights = pi/(n+1) * sin^2(k*pi/(n+1))
+        k = torch.arange(1, n + 1, dtype=dtype, device=device)
+        theta = k * math.pi / (n + 1)
+        nodes = torch.cos(theta)
+        weights = math.pi / (n + 1) * torch.sin(theta) ** 2
+
+    # Sort by nodes (already descending from cos, need ascending)
+    sorted_idx = torch.argsort(nodes)
+    nodes = nodes[sorted_idx]
+    weights = weights[sorted_idx]
+
+    return nodes, weights
+
+
+def gauss_jacobi_nodes_weights(
+    n: int,
+    alpha: float,
+    beta: float,
+    dtype: torch.dtype = torch.float64,
+    device: Optional[torch.device] = None,
+) -> Tuple[Tensor, Tensor]:
+    r"""
+    Compute Gauss-Jacobi nodes and weights on [-1, 1].
+
+    Integrates functions with weight w(x) = (1-x)^alpha * (1+x)^beta:
+
+    .. math::
+
+        \int_{-1}^{1} f(x) (1-x)^{\alpha} (1+x)^{\beta} dx \approx \sum_{i=1}^{n} w_i f(x_i)
+
+    Uses the Golub-Welsch algorithm.
+
+    Parameters
+    ----------
+    n : int
+        Number of quadrature points.
+    alpha : float
+        Exponent for (1-x). Must be > -1.
+    beta : float
+        Exponent for (1+x). Must be > -1.
+    dtype : torch.dtype
+        Data type for output tensors.
+    device : torch.device, optional
+        Device for output tensors.
+
+    Returns
+    -------
+    nodes : Tensor
+        Quadrature nodes, shape (n,), sorted ascending.
+    weights : Tensor
+        Quadrature weights, shape (n,).
+
+    Raises
+    ------
+    ValueError
+        If n < 1 or alpha <= -1 or beta <= -1.
+
+    Notes
+    -----
+    Gauss-Jacobi quadrature is exact for polynomials of degree <= 2n-1
+    multiplied by the weight function (1-x)^alpha * (1+x)^beta.
+
+    Special cases:
+    - alpha = beta = 0: Gauss-Legendre
+    - alpha = beta = -1/2: Gauss-Chebyshev T
+    - alpha = beta = 1/2: Gauss-Chebyshev U
+
+    The Jacobi matrix for Jacobi polynomials P_n^{(alpha,beta)} has:
+    - diagonal[k] = (beta^2 - alpha^2) / ((2k + alpha + beta)(2k + alpha + beta + 2))
+    - off-diagonal formulas are more complex
+
+    The total weight integral is:
+        2^{alpha+beta+1} * Beta(alpha+1, beta+1)
+
+    Examples
+    --------
+    >>> nodes, weights = gauss_jacobi_nodes_weights(5, 0.5, 0.5)
+
+    References
+    ----------
+    Golub, G. H., & Welsch, J. H. (1969). Calculation of Gauss quadrature rules.
+    """
+    import math
+
+    if n < 1:
+        raise ValueError(f"n must be at least 1, got {n}")
+    if alpha <= -1:
+        raise ValueError(f"alpha must be > -1, got {alpha}")
+    if beta <= -1:
+        raise ValueError(f"beta must be > -1, got {beta}")
+
+    # Total weight: 2^{alpha+beta+1} * B(alpha+1, beta+1)
+    total_weight = (
+        2 ** (alpha + beta + 1)
+        * math.gamma(alpha + 1)
+        * math.gamma(beta + 1)
+        / math.gamma(alpha + beta + 2)
+    )
+
+    if n == 1:
+        # Single node is at (beta - alpha) / (alpha + beta + 2)
+        node = (beta - alpha) / (alpha + beta + 2)
+        return (
+            torch.tensor([node], dtype=dtype, device=device),
+            torch.tensor([total_weight], dtype=dtype, device=device),
+        )
+
+    # Build Jacobi matrix for Jacobi polynomials
+    # Using the standard three-term recurrence formulas
+    k = torch.arange(n, dtype=dtype, device=device)
+
+    # Diagonal elements: a_k = (beta^2 - alpha^2) / ((2k + ab)(2k + ab + 2))
+    # where ab = alpha + beta
+    ab = alpha + beta
+    denom1 = 2 * k + ab
+    denom2 = 2 * k + ab + 2
+
+    # Avoid division by zero for k=0 when alpha+beta=0
+    with torch.no_grad():
+        safe_denom = denom1 * denom2
+        safe_denom = torch.where(
+            safe_denom == 0, torch.ones_like(safe_denom), safe_denom
+        )
+
+    diag = (beta**2 - alpha**2) / safe_denom
+
+    # Off-diagonal elements (more complex formula)
+    # b_k = 2 * sqrt(k*(k+alpha)*(k+beta)*(k+ab)) / ((2k+ab-1)*(2k+ab+1)) for k >= 1
+    k_off = torch.arange(1, n, dtype=dtype, device=device)
+    numerator = k_off * (k_off + alpha) * (k_off + beta) * (k_off + ab)
+    denom_off = (
+        (2 * k_off + ab - 1) * (2 * k_off + ab) ** 2 * (2 * k_off + ab + 1)
+    )
+
+    # Ensure positivity for sqrt
+    numerator = torch.clamp(numerator, min=0)
+    denom_off = torch.clamp(denom_off, min=1e-30)
+
+    off_diag = 2 * torch.sqrt(numerator / denom_off)
+
+    # Construct tridiagonal matrix
+    T = (
+        torch.diag(diag)
+        + torch.diag(off_diag, diagonal=1)
+        + torch.diag(off_diag, diagonal=-1)
+    )
+
+    # Eigenvalues are nodes, first components of eigenvectors give weights
+    eigenvalues, eigenvectors = torch.linalg.eigh(T)
+
+    nodes = eigenvalues
+    weights = total_weight * eigenvectors[0, :] ** 2
+
+    # Sort by nodes
+    sorted_idx = torch.argsort(nodes)
+    nodes = nodes[sorted_idx]
+    weights = weights[sorted_idx]
+
+    return nodes, weights
+
+
 # Pre-tabulated Gauss-Kronrod nodes and weights (high precision)
 # These are computed to extended precision and stored here.
 # Reference: QUADPACK (Piessens et al., 1983)

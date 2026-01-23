@@ -1,10 +1,32 @@
-import numpy as np
 import torch
 
 from ._legendre_polynomial_p import (
     LegendrePolynomialP,
-    legendre_polynomial_p,
 )
+from ._legendre_polynomial_p_to_polynomial import (
+    legendre_polynomial_p_to_polynomial,
+)
+from ._polynomial_to_legendre_polynomial_p import (
+    polynomial_to_legendre_polynomial_p,
+)
+
+
+def _polynomial_convolve(p: torch.Tensor, q: torch.Tensor) -> torch.Tensor:
+    """Multiply two polynomial coefficient tensors (convolution).
+
+    Pure PyTorch implementation of polynomial multiplication.
+    """
+    n_p = p.shape[-1]
+    n_q = q.shape[-1]
+    n_out = n_p + n_q - 1
+
+    result = torch.zeros(n_out, dtype=p.dtype, device=p.device)
+
+    for i in range(n_p):
+        for j in range(n_q):
+            result[i + j] = result[i + j] + p[i] * q[j]
+
+    return result
 
 
 def legendre_polynomial_p_multiply(
@@ -13,7 +35,7 @@ def legendre_polynomial_p_multiply(
 ) -> LegendrePolynomialP:
     """Multiply two Legendre series.
 
-    Uses NumPy's Legendre linearization for the product.
+    Converts to polynomial basis, multiplies, and converts back.
 
     Parameters
     ----------
@@ -30,12 +52,10 @@ def legendre_polynomial_p_multiply(
     Notes
     -----
     The product of two Legendre series of degrees m and n has degree m + n.
-    The linearization identity for Legendre polynomials ensures the product
-    remains in Legendre form:
+    The linearization identity ensures the product remains in Legendre form.
 
-        P_m(x) * P_n(x) = sum_k c_k P_k(x)
-
-    where the coefficients c_k are determined by the linearization formula.
+    This implementation is pure PyTorch and supports autograd, GPU tensors,
+    and torch.compile.
 
     Examples
     --------
@@ -45,18 +65,19 @@ def legendre_polynomial_p_multiply(
     >>> c  # P_1 * P_1 = (1/3)*P_0 + (2/3)*P_2
     LegendrePolynomialP(tensor([0.3333, 0.0000, 0.6667]))
     """
-    # Convert to plain tensors to avoid operator interception
-    a_coeffs = a.as_subclass(torch.Tensor)
-    b_coeffs = b.as_subclass(torch.Tensor)
+    # Convert to polynomial basis
+    p_a = legendre_polynomial_p_to_polynomial(a)
+    p_b = legendre_polynomial_p_to_polynomial(b)
 
-    # Use NumPy's legmul which implements the linearization formula
-    a_np = a_coeffs.detach().cpu().numpy()
-    b_np = b_coeffs.detach().cpu().numpy()
+    # Get coefficient tensors
+    p_a_coeffs = p_a.as_subclass(torch.Tensor)
+    p_b_coeffs = p_b.as_subclass(torch.Tensor)
 
-    result_np = np.polynomial.legendre.legmul(a_np, b_np)
+    # Multiply in polynomial basis (convolution)
+    from torchscience.polynomial._polynomial import Polynomial
 
-    result_coeffs = torch.from_numpy(result_np).to(
-        dtype=a_coeffs.dtype, device=a_coeffs.device
-    )
+    p_c_coeffs = _polynomial_convolve(p_a_coeffs, p_b_coeffs)
+    p_c = Polynomial(p_c_coeffs)
 
-    return legendre_polynomial_p(result_coeffs)
+    # Convert back to Legendre basis
+    return polynomial_to_legendre_polynomial_p(p_c)

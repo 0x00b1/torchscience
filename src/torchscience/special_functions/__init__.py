@@ -1,3 +1,7 @@
+from ._associated_legendre_polynomial_p import (
+    associated_legendre_polynomial_p,
+    associated_legendre_polynomial_p_all,
+)
 from ._bessel_j import bessel_j
 from ._bessel_j_0 import bessel_j_0
 from ._bessel_j_1 import bessel_j_1
@@ -75,6 +79,11 @@ from ._spherical_bessel_k_1 import spherical_bessel_k_1
 from ._spherical_bessel_y import spherical_bessel_y
 from ._spherical_bessel_y_0 import spherical_bessel_y_0
 from ._spherical_bessel_y_1 import spherical_bessel_y_1
+from ._spherical_harmonic_y import (
+    spherical_harmonic_y,
+    spherical_harmonic_y_all,
+    spherical_harmonic_y_cartesian,
+)
 from ._theta_1 import theta_1
 from ._theta_2 import theta_2
 from ._theta_3 import theta_3
@@ -82,6 +91,8 @@ from ._theta_4 import theta_4
 from ._trigamma import trigamma
 
 __all__ = [
+    "associated_legendre_polynomial_p",
+    "associated_legendre_polynomial_p_all",
     "bessel_j",
     "bessel_j_0",
     "bessel_j_1",
@@ -149,6 +160,9 @@ __all__ = [
     "spherical_bessel_y",
     "spherical_bessel_y_0",
     "spherical_bessel_y_1",
+    "spherical_harmonic_y",
+    "spherical_harmonic_y_all",
+    "spherical_harmonic_y_cartesian",
     "theta_1",
     "theta_2",
     "theta_3",

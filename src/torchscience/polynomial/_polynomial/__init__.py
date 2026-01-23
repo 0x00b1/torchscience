@@ -13,6 +13,10 @@ from ._polynomial_from_roots import polynomial_from_roots
 from ._polynomial_integral import polynomial_integral
 from ._polynomial_mod import polynomial_mod
 from ._polynomial_multiply import polynomial_multiply
+from ._polynomial_multiply_fft import (
+    polynomial_multiply_auto,
+    polynomial_multiply_fft,
+)
 from ._polynomial_negate import polynomial_negate
 from ._polynomial_pow import polynomial_pow
 from ._polynomial_roots import polynomial_roots
@@ -39,6 +43,8 @@ __all__ = [
     "polynomial_integral",
     "polynomial_mod",
     "polynomial_multiply",
+    "polynomial_multiply_auto",
+    "polynomial_multiply_fft",
     "polynomial_negate",
     "polynomial_pow",
     "polynomial_roots",
