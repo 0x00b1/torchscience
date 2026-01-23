@@ -2,17 +2,21 @@
 
 from ._ba_to_sos import ba_to_sos
 from ._ba_to_zpk import ba_to_zpk
+from ._bessel_analog import bessel_analog
 from ._bessel_design import bessel_design
 from ._bessel_prototype import bessel_prototype
 from ._bilinear_transform_ba import bilinear_transform_ba
 from ._bilinear_transform_zpk import bilinear_transform_zpk
+from ._butterworth_analog import butterworth_analog
 from ._butterworth_design import butterworth_design
 from ._butterworth_minimum_order import butterworth_minimum_order
 from ._butterworth_prototype import butterworth_prototype
 from ._cascade_sos import cascade_sos
+from ._chebyshev_type_1_analog import chebyshev_type_1_analog
 from ._chebyshev_type_1_design import chebyshev_type_1_design
 from ._chebyshev_type_1_minimum_order import chebyshev_type_1_minimum_order
 from ._chebyshev_type_1_prototype import chebyshev_type_1_prototype
+from ._chebyshev_type_2_analog import chebyshev_type_2_analog
 from ._chebyshev_type_2_design import chebyshev_type_2_design
 from ._chebyshev_type_2_minimum_order import chebyshev_type_2_minimum_order
 from ._chebyshev_type_2_prototype import chebyshev_type_2_prototype
@@ -22,6 +26,7 @@ from ._constants import (
     Q_NARROW,
     Q_WIDE,
 )
+from ._elliptic_analog import elliptic_analog
 from ._elliptic_design import elliptic_design
 from ._elliptic_minimum_order import elliptic_minimum_order
 from ._elliptic_prototype import elliptic_prototype
@@ -58,7 +63,7 @@ from ._zpk_to_ba import zpk_to_ba
 from ._zpk_to_sos import zpk_to_sos
 
 __all__ = [
-    # Design functions
+    # Design functions - Digital
     "bessel_design",
     "bessel_prototype",
     "butterworth_design",
@@ -73,6 +78,13 @@ __all__ = [
     "elliptic_design",
     "elliptic_minimum_order",
     "elliptic_prototype",
+    # Design functions - Analog
+    "bessel_analog",
+    "butterworth_analog",
+    "chebyshev_type_1_analog",
+    "chebyshev_type_2_analog",
+    "elliptic_analog",
+    # FIR design functions
     "firwin",
     "firwin2",
     "freqs_ba",
