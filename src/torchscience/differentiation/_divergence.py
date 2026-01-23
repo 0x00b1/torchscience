@@ -7,6 +7,7 @@ from torch import Tensor
 from torch.amp import custom_fwd
 
 from torchscience.differentiation._derivative import derivative
+from torchscience.differentiation._grid import IrregularMesh, RegularGrid
 
 
 def _divergence_impl(
@@ -15,6 +16,8 @@ def _divergence_impl(
     dim: Tuple[int, ...] | None = None,
     accuracy: int = 2,
     boundary: str = "replicate",
+    *,
+    grid: RegularGrid | IrregularMesh | None = None,
 ) -> Tensor:
     """Compute divergence of a vector field.
 
@@ -29,7 +32,7 @@ def _divergence_impl(
         are the spatial dimensions.
     dx : float or tuple of float, optional
         Grid spacing. Scalar applies to all dimensions, or provide per-dimension.
-        Default is 1.0.
+        Default is 1.0. Ignored if grid is provided.
     dim : tuple of int, optional
         Spatial dimensions over which to compute divergence. Default uses all
         dimensions after the component dimension.
@@ -37,7 +40,10 @@ def _divergence_impl(
         Accuracy order of the finite difference approximation. Default is 2.
     boundary : str, optional
         Boundary handling: "replicate", "zeros", "reflect", "circular", "valid".
-        Default is "replicate".
+        Default is "replicate". Ignored if grid is provided.
+    grid : RegularGrid or IrregularMesh, optional
+        Grid defining spacing and boundary conditions. When provided, overrides
+        dx and boundary parameters.
 
     Returns
     -------
@@ -53,6 +59,15 @@ def _divergence_impl(
     >>> V = torch.stack([X, Y], dim=0)  # Shape: (2, 21, 21)
     >>> div = divergence(V, dx=0.05)  # Shape: (21, 21)
     """
+    # If grid is provided, extract spacing and boundary from it
+    if grid is not None:
+        if isinstance(grid, RegularGrid):
+            dx = tuple(grid.spacing.tolist())
+            boundary = grid.boundary
+        else:
+            raise NotImplementedError(
+                "IrregularMesh support for divergence not yet implemented"
+            )
     ndim = vector_field.ndim
 
     # Assume first dimension is the component dimension (by default)
@@ -120,6 +135,8 @@ def divergence(
     dim: Tuple[int, ...] | None = None,
     accuracy: int = 2,
     boundary: str = "replicate",
+    *,
+    grid: RegularGrid | IrregularMesh | None = None,
 ) -> Tensor:
     """Compute divergence of a vector field.
 
@@ -134,7 +151,7 @@ def divergence(
         are the spatial dimensions.
     dx : float or tuple of float, optional
         Grid spacing. Scalar applies to all dimensions, or provide per-dimension.
-        Default is 1.0.
+        Default is 1.0. Ignored if grid is provided.
     dim : tuple of int, optional
         Spatial dimensions over which to compute divergence. Default uses all
         dimensions after the component dimension.
@@ -142,7 +159,10 @@ def divergence(
         Accuracy order of the finite difference approximation. Default is 2.
     boundary : str, optional
         Boundary handling: "replicate", "zeros", "reflect", "circular", "valid".
-        Default is "replicate".
+        Default is "replicate". Ignored if grid is provided.
+    grid : RegularGrid or IrregularMesh, optional
+        Grid defining spacing and boundary conditions. When provided, overrides
+        dx and boundary parameters.
 
     Returns
     -------
@@ -158,4 +178,6 @@ def divergence(
     >>> V = torch.stack([X, Y], dim=0)  # Shape: (2, 21, 21)
     >>> div = divergence(V, dx=0.05)  # Shape: (21, 21)
     """
-    return _divergence_impl(vector_field, dx, dim, accuracy, boundary)
+    return _divergence_impl(
+        vector_field, dx, dim, accuracy, boundary, grid=grid
+    )

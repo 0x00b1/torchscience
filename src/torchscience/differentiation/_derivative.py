@@ -8,6 +8,7 @@ from torchscience.differentiation._apply import apply_stencil
 from torchscience.differentiation._finite_difference_stencil import (
     finite_difference_stencil,
 )
+from torchscience.differentiation._grid import IrregularMesh, RegularGrid
 
 
 def _derivative_impl(
@@ -18,6 +19,8 @@ def _derivative_impl(
     accuracy: int = 2,
     kind: str = "central",
     boundary: str = "replicate",
+    *,
+    grid: RegularGrid | IrregularMesh | None = None,
 ) -> Tensor:
     """Compute derivative of a scalar field along a single dimension.
 
@@ -30,14 +33,17 @@ def _derivative_impl(
     order : int, optional
         Order of the derivative (1 for first, 2 for second, etc.). Default is 1.
     dx : float, optional
-        Grid spacing. Default is 1.0.
+        Grid spacing. Default is 1.0. Ignored if grid is provided.
     accuracy : int, optional
         Accuracy order of the finite difference approximation. Default is 2.
     kind : str, optional
         Stencil type: "central", "forward", or "backward". Default is "central".
     boundary : str, optional
         Boundary handling: "replicate", "zeros", "reflect", "circular", "valid".
-        Default is "replicate".
+        Default is "replicate". Ignored if grid is provided.
+    grid : RegularGrid or IrregularMesh, optional
+        Grid defining spacing and boundary conditions. When provided, overrides
+        dx and boundary parameters.
 
     Returns
     -------
@@ -51,6 +57,18 @@ def _derivative_impl(
     >>> df = derivative(f, dim=0, order=1, dx=0.05)  # df/dx = 2x
     >>> d2f = derivative(f, dim=0, order=2, dx=0.05)  # d^2f/dx^2 = 2
     """
+    # If grid is provided, extract spacing and boundary from it
+    if grid is not None:
+        if isinstance(grid, RegularGrid):
+            # Normalize dimension to positive index for grid lookup
+            ndim = field.ndim
+            norm_dim = dim if dim >= 0 else ndim + dim
+            dx = grid.spacing[norm_dim].item()
+            boundary = grid.boundary
+        else:
+            raise NotImplementedError(
+                "IrregularMesh support for derivative not yet implemented"
+            )
     # Normalize dimension to positive index
     ndim = field.ndim
     if dim < 0:
@@ -97,6 +115,8 @@ def derivative(
     accuracy: int = 2,
     kind: str = "central",
     boundary: str = "replicate",
+    *,
+    grid: RegularGrid | IrregularMesh | None = None,
 ) -> Tensor:
     """Compute derivative of a scalar field along a single dimension.
 
@@ -109,14 +129,17 @@ def derivative(
     order : int, optional
         Order of the derivative (1 for first, 2 for second, etc.). Default is 1.
     dx : float, optional
-        Grid spacing. Default is 1.0.
+        Grid spacing. Default is 1.0. Ignored if grid is provided.
     accuracy : int, optional
         Accuracy order of the finite difference approximation. Default is 2.
     kind : str, optional
         Stencil type: "central", "forward", or "backward". Default is "central".
     boundary : str, optional
         Boundary handling: "replicate", "zeros", "reflect", "circular", "valid".
-        Default is "replicate".
+        Default is "replicate". Ignored if grid is provided.
+    grid : RegularGrid or IrregularMesh, optional
+        Grid defining spacing and boundary conditions. When provided, overrides
+        dx and boundary parameters.
 
     Returns
     -------
@@ -130,4 +153,6 @@ def derivative(
     >>> df = derivative(f, dim=0, order=1, dx=0.05)  # df/dx = 2x
     >>> d2f = derivative(f, dim=0, order=2, dx=0.05)  # d^2f/dx^2 = 2
     """
-    return _derivative_impl(field, dim, order, dx, accuracy, kind, boundary)
+    return _derivative_impl(
+        field, dim, order, dx, accuracy, kind, boundary, grid=grid
+    )

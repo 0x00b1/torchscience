@@ -2,7 +2,18 @@
 
 import torch
 
-from torchscience.differentiation import IrregularMesh, RegularGrid, gradient
+from torchscience.differentiation import (
+    IrregularMesh,
+    RegularGrid,
+    biharmonic,
+    curl,
+    derivative,
+    divergence,
+    gradient,
+    hessian,
+    jacobian,
+    laplacian,
+)
 
 
 class TestRegularGrid:
@@ -157,3 +168,91 @@ class TestGradientWithGrid:
             rtol=0.05,
             atol=0.01,
         )
+
+
+class TestAllOperatorsWithGrid:
+    """Test grid parameter for all operators."""
+
+    def test_derivative_with_grid(self):
+        """Derivative uses grid spacing."""
+        grid = RegularGrid(
+            origin=torch.tensor([0.0, 0.0]),
+            spacing=torch.tensor([0.1, 0.1]),
+            shape=(21, 21),
+            boundary="replicate",
+        )
+        field = torch.randn(21, 21)
+        result = derivative(field, dim=-1, grid=grid)
+        assert result.shape == (21, 21)
+
+    def test_laplacian_with_grid(self):
+        """Laplacian uses grid spacing."""
+        grid = RegularGrid(
+            origin=torch.tensor([0.0, 0.0]),
+            spacing=torch.tensor([0.1, 0.1]),
+            shape=(21, 21),
+            boundary="replicate",
+        )
+        field = torch.randn(21, 21)
+        result = laplacian(field, grid=grid)
+        assert result.shape == (21, 21)
+
+    def test_hessian_with_grid(self):
+        """Hessian uses grid spacing."""
+        grid = RegularGrid(
+            origin=torch.tensor([0.0, 0.0]),
+            spacing=torch.tensor([0.1, 0.1]),
+            shape=(21, 21),
+            boundary="replicate",
+        )
+        field = torch.randn(21, 21)
+        result = hessian(field, grid=grid)
+        assert result.shape == (2, 2, 21, 21)
+
+    def test_biharmonic_with_grid(self):
+        """Biharmonic uses grid spacing."""
+        grid = RegularGrid(
+            origin=torch.tensor([0.0, 0.0]),
+            spacing=torch.tensor([0.1, 0.1]),
+            shape=(21, 21),
+            boundary="replicate",
+        )
+        field = torch.randn(21, 21)
+        result = biharmonic(field, grid=grid)
+        assert result.shape == (21, 21)
+
+    def test_divergence_with_grid(self):
+        """Divergence uses grid spacing."""
+        grid = RegularGrid(
+            origin=torch.tensor([0.0, 0.0]),
+            spacing=torch.tensor([0.1, 0.1]),
+            shape=(21, 21),
+            boundary="replicate",
+        )
+        field = torch.randn(2, 21, 21)
+        result = divergence(field, grid=grid)
+        assert result.shape == (21, 21)
+
+    def test_curl_with_grid(self):
+        """Curl uses grid spacing."""
+        grid = RegularGrid(
+            origin=torch.tensor([0.0, 0.0, 0.0]),
+            spacing=torch.tensor([0.1, 0.1, 0.1]),
+            shape=(8, 8, 8),
+            boundary="replicate",
+        )
+        field = torch.randn(3, 8, 8, 8)
+        result = curl(field, grid=grid)
+        assert result.shape == (3, 8, 8, 8)
+
+    def test_jacobian_with_grid(self):
+        """Jacobian uses grid spacing."""
+        grid = RegularGrid(
+            origin=torch.tensor([0.0, 0.0]),
+            spacing=torch.tensor([0.1, 0.1]),
+            shape=(21, 21),
+            boundary="replicate",
+        )
+        field = torch.randn(2, 21, 21)
+        result = jacobian(field, grid=grid)
+        assert result.shape == (2, 2, 21, 21)

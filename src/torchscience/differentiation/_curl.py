@@ -7,6 +7,7 @@ from torch import Tensor
 from torch.amp import custom_fwd
 
 from torchscience.differentiation._derivative import derivative
+from torchscience.differentiation._grid import IrregularMesh, RegularGrid
 
 
 def _curl_impl(
@@ -15,6 +16,8 @@ def _curl_impl(
     dim: Tuple[int, ...] | None = None,
     accuracy: int = 2,
     boundary: str = "replicate",
+    *,
+    grid: RegularGrid | IrregularMesh | None = None,
 ) -> Tensor:
     """Compute curl of a 3D vector field.
 
@@ -27,7 +30,7 @@ def _curl_impl(
         Input 3D vector field with shape (..., 3, nx, ny, nz).
     dx : float or tuple of float, optional
         Grid spacing. Scalar applies to all dimensions, or provide per-dimension.
-        Default is 1.0.
+        Default is 1.0. Ignored if grid is provided.
     dim : tuple of int, optional
         Spatial dimensions over which to compute curl. Must have length 3.
         Default uses dimensions 1, 2, 3 (after the component dimension).
@@ -35,7 +38,10 @@ def _curl_impl(
         Accuracy order of the finite difference approximation. Default is 2.
     boundary : str, optional
         Boundary handling: "replicate", "zeros", "reflect", "circular", "valid".
-        Default is "replicate".
+        Default is "replicate". Ignored if grid is provided.
+    grid : RegularGrid or IrregularMesh, optional
+        Grid defining spacing and boundary conditions. When provided, overrides
+        dx and boundary parameters.
 
     Returns
     -------
@@ -53,6 +59,15 @@ def _curl_impl(
     ValueError
         If the vector field is not 3D (does not have exactly 3 components).
     """
+    # If grid is provided, extract spacing and boundary from it
+    if grid is not None:
+        if isinstance(grid, RegularGrid):
+            dx = tuple(grid.spacing.tolist())
+            boundary = grid.boundary
+        else:
+            raise NotImplementedError(
+                "IrregularMesh support for curl not yet implemented"
+            )
     ndim = vector_field.ndim
     n_components = vector_field.shape[0]
 
@@ -132,6 +147,8 @@ def curl(
     dim: Tuple[int, ...] | None = None,
     accuracy: int = 2,
     boundary: str = "replicate",
+    *,
+    grid: RegularGrid | IrregularMesh | None = None,
 ) -> Tensor:
     """Compute curl of a 3D vector field.
 
@@ -144,7 +161,7 @@ def curl(
         Input 3D vector field with shape (..., 3, nx, ny, nz).
     dx : float or tuple of float, optional
         Grid spacing. Scalar applies to all dimensions, or provide per-dimension.
-        Default is 1.0.
+        Default is 1.0. Ignored if grid is provided.
     dim : tuple of int, optional
         Spatial dimensions over which to compute curl. Must have length 3.
         Default uses dimensions 1, 2, 3 (after the component dimension).
@@ -152,7 +169,10 @@ def curl(
         Accuracy order of the finite difference approximation. Default is 2.
     boundary : str, optional
         Boundary handling: "replicate", "zeros", "reflect", "circular", "valid".
-        Default is "replicate".
+        Default is "replicate". Ignored if grid is provided.
+    grid : RegularGrid or IrregularMesh, optional
+        Grid defining spacing and boundary conditions. When provided, overrides
+        dx and boundary parameters.
 
     Returns
     -------
@@ -170,4 +190,4 @@ def curl(
     ValueError
         If the vector field is not 3D (does not have exactly 3 components).
     """
-    return _curl_impl(vector_field, dx, dim, accuracy, boundary)
+    return _curl_impl(vector_field, dx, dim, accuracy, boundary, grid=grid)

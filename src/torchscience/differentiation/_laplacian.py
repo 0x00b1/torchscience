@@ -7,6 +7,7 @@ from torch import Tensor
 from torch.amp import custom_fwd
 
 from torchscience.differentiation._derivative import derivative
+from torchscience.differentiation._grid import IrregularMesh, RegularGrid
 
 
 def _laplacian_impl(
@@ -15,6 +16,8 @@ def _laplacian_impl(
     dim: Tuple[int, ...] | None = None,
     accuracy: int = 2,
     boundary: str = "replicate",
+    *,
+    grid: RegularGrid | IrregularMesh | None = None,
 ) -> Tensor:
     """Compute Laplacian of a scalar field.
 
@@ -26,14 +29,17 @@ def _laplacian_impl(
         Input scalar field with shape (..., *spatial_dims).
     dx : float or tuple of float, optional
         Grid spacing. Scalar applies to all dimensions, or provide per-dimension.
-        Default is 1.0.
+        Default is 1.0. Ignored if grid is provided.
     dim : tuple of int, optional
         Spatial dimensions over which to compute Laplacian. Default uses all dimensions.
     accuracy : int, optional
         Accuracy order of the finite difference approximation. Default is 2.
     boundary : str, optional
         Boundary handling: "replicate", "zeros", "reflect", "circular", "valid".
-        Default is "replicate".
+        Default is "replicate". Ignored if grid is provided.
+    grid : RegularGrid or IrregularMesh, optional
+        Grid defining spacing and boundary conditions. When provided, overrides
+        dx and boundary parameters.
 
     Returns
     -------
@@ -49,6 +55,15 @@ def _laplacian_impl(
     >>> f = X**2 + Y**2
     >>> lap = laplacian(f, dx=0.05)  # Should be ~4
     """
+    # If grid is provided, extract spacing and boundary from it
+    if grid is not None:
+        if isinstance(grid, RegularGrid):
+            dx = tuple(grid.spacing.tolist())
+            boundary = grid.boundary
+        else:
+            raise NotImplementedError(
+                "IrregularMesh support for laplacian not yet implemented"
+            )
     ndim = field.ndim
 
     # Determine which dimensions to differentiate
@@ -93,6 +108,8 @@ def laplacian(
     dim: Tuple[int, ...] | None = None,
     accuracy: int = 2,
     boundary: str = "replicate",
+    *,
+    grid: RegularGrid | IrregularMesh | None = None,
 ) -> Tensor:
     """Compute Laplacian of a scalar field.
 
@@ -104,14 +121,17 @@ def laplacian(
         Input scalar field with shape (..., *spatial_dims).
     dx : float or tuple of float, optional
         Grid spacing. Scalar applies to all dimensions, or provide per-dimension.
-        Default is 1.0.
+        Default is 1.0. Ignored if grid is provided.
     dim : tuple of int, optional
         Spatial dimensions over which to compute Laplacian. Default uses all dimensions.
     accuracy : int, optional
         Accuracy order of the finite difference approximation. Default is 2.
     boundary : str, optional
         Boundary handling: "replicate", "zeros", "reflect", "circular", "valid".
-        Default is "replicate".
+        Default is "replicate". Ignored if grid is provided.
+    grid : RegularGrid or IrregularMesh, optional
+        Grid defining spacing and boundary conditions. When provided, overrides
+        dx and boundary parameters.
 
     Returns
     -------
@@ -127,4 +147,4 @@ def laplacian(
     >>> f = X**2 + Y**2
     >>> lap = laplacian(f, dx=0.05)  # Should be ~4
     """
-    return _laplacian_impl(field, dx, dim, accuracy, boundary)
+    return _laplacian_impl(field, dx, dim, accuracy, boundary, grid=grid)
