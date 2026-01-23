@@ -23,6 +23,9 @@ from torchscience.graph._depth_first_search import (
     depth_first_search,
 )
 from torchscience.graph._dijkstra import dijkstra
+from torchscience.graph._edmonds_karp import (
+    edmonds_karp,
+)
 from torchscience.graph._eigenvector_centrality import (
     eigenvector_centrality,
 )
@@ -56,6 +59,7 @@ __all__ = [
     "closeness_centrality",
     "connected_components",
     "dijkstra",
+    "edmonds_karp",
     "eigenvector_centrality",
     "floyd_warshall",
     "graph_laplacian",
