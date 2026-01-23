@@ -245,29 +245,21 @@ inline void sha512_final(Sha512Context& ctx, uint8_t* output) {
 // ed d3 f5 5c 1a 63 12 58 d6 9c f7 a2 de f9 de 14
 // 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 10
 
-// Load 64-bit little-endian word
-inline uint64_t sc25519_load64_le(const uint8_t* b) {
+// Load 3 bytes as little-endian uint64 (for sc25519 operations)
+inline uint64_t sc25519_load3(const uint8_t* b) {
+    return static_cast<uint64_t>(b[0])
+         | (static_cast<uint64_t>(b[1]) << 8)
+         | (static_cast<uint64_t>(b[2]) << 16);
+}
+
+// Load 4 bytes as little-endian uint64 (for sc25519 operations)
+inline uint64_t sc25519_load4(const uint8_t* b) {
     return static_cast<uint64_t>(b[0])
          | (static_cast<uint64_t>(b[1]) << 8)
          | (static_cast<uint64_t>(b[2]) << 16)
-         | (static_cast<uint64_t>(b[3]) << 24)
-         | (static_cast<uint64_t>(b[4]) << 32)
-         | (static_cast<uint64_t>(b[5]) << 40)
-         | (static_cast<uint64_t>(b[6]) << 48)
-         | (static_cast<uint64_t>(b[7]) << 56);
+         | (static_cast<uint64_t>(b[3]) << 24);
 }
 
-// Store 64-bit word as little-endian bytes
-inline void sc25519_store64_le(uint8_t* b, uint64_t x) {
-    b[0] = static_cast<uint8_t>(x);
-    b[1] = static_cast<uint8_t>(x >> 8);
-    b[2] = static_cast<uint8_t>(x >> 16);
-    b[3] = static_cast<uint8_t>(x >> 24);
-    b[4] = static_cast<uint8_t>(x >> 32);
-    b[5] = static_cast<uint8_t>(x >> 40);
-    b[6] = static_cast<uint8_t>(x >> 48);
-    b[7] = static_cast<uint8_t>(x >> 56);
-}
 
 // Reduce a 64-byte (512-bit) value modulo L
 // Input: 64 bytes (little-endian)
@@ -278,31 +270,32 @@ inline void sc25519_store64_le(uint8_t* b, uint64_t x) {
 inline void sc25519_reduce(uint8_t* s) {
     // Load the 64-byte input as 24 21-bit limbs
     // This allows schoolbook multiplication without overflow in int64_t
+    // Uses load3/load4 to avoid reading beyond the 64-byte buffer
 
-    int64_t s0  = 0x1fffff & (sc25519_load64_le(s) >> 0);
-    int64_t s1  = 0x1fffff & (sc25519_load64_le(s + 2) >> 5);
-    int64_t s2  = 0x1fffff & (sc25519_load64_le(s + 5) >> 2);
-    int64_t s3  = 0x1fffff & (sc25519_load64_le(s + 7) >> 7);
-    int64_t s4  = 0x1fffff & (sc25519_load64_le(s + 10) >> 4);
-    int64_t s5  = 0x1fffff & (sc25519_load64_le(s + 13) >> 1);
-    int64_t s6  = 0x1fffff & (sc25519_load64_le(s + 15) >> 6);
-    int64_t s7  = 0x1fffff & (sc25519_load64_le(s + 18) >> 3);
-    int64_t s8  = 0x1fffff & (sc25519_load64_le(s + 21) >> 0);
-    int64_t s9  = 0x1fffff & (sc25519_load64_le(s + 23) >> 5);
-    int64_t s10 = 0x1fffff & (sc25519_load64_le(s + 26) >> 2);
-    int64_t s11 = 0x1fffff & (sc25519_load64_le(s + 28) >> 7);
-    int64_t s12 = 0x1fffff & (sc25519_load64_le(s + 31) >> 4);
-    int64_t s13 = 0x1fffff & (sc25519_load64_le(s + 34) >> 1);
-    int64_t s14 = 0x1fffff & (sc25519_load64_le(s + 36) >> 6);
-    int64_t s15 = 0x1fffff & (sc25519_load64_le(s + 39) >> 3);
-    int64_t s16 = 0x1fffff & (sc25519_load64_le(s + 42) >> 0);
-    int64_t s17 = 0x1fffff & (sc25519_load64_le(s + 44) >> 5);
-    int64_t s18 = 0x1fffff & (sc25519_load64_le(s + 47) >> 2);
-    int64_t s19 = 0x1fffff & (sc25519_load64_le(s + 49) >> 7);
-    int64_t s20 = 0x1fffff & (sc25519_load64_le(s + 52) >> 4);
-    int64_t s21 = 0x1fffff & (sc25519_load64_le(s + 55) >> 1);
-    int64_t s22 = 0x1fffff & (sc25519_load64_le(s + 57) >> 6);
-    int64_t s23 = (sc25519_load64_le(s + 60) >> 3);
+    int64_t s0  = 0x1fffff & sc25519_load3(s);
+    int64_t s1  = 0x1fffff & (sc25519_load4(s + 2) >> 5);
+    int64_t s2  = 0x1fffff & (sc25519_load3(s + 5) >> 2);
+    int64_t s3  = 0x1fffff & (sc25519_load4(s + 7) >> 7);
+    int64_t s4  = 0x1fffff & (sc25519_load4(s + 10) >> 4);
+    int64_t s5  = 0x1fffff & (sc25519_load3(s + 13) >> 1);
+    int64_t s6  = 0x1fffff & (sc25519_load4(s + 15) >> 6);
+    int64_t s7  = 0x1fffff & (sc25519_load3(s + 18) >> 3);
+    int64_t s8  = 0x1fffff & sc25519_load3(s + 21);
+    int64_t s9  = 0x1fffff & (sc25519_load4(s + 23) >> 5);
+    int64_t s10 = 0x1fffff & (sc25519_load3(s + 26) >> 2);
+    int64_t s11 = 0x1fffff & (sc25519_load4(s + 28) >> 7);
+    int64_t s12 = 0x1fffff & (sc25519_load4(s + 31) >> 4);
+    int64_t s13 = 0x1fffff & (sc25519_load3(s + 34) >> 1);
+    int64_t s14 = 0x1fffff & (sc25519_load4(s + 36) >> 6);
+    int64_t s15 = 0x1fffff & (sc25519_load3(s + 39) >> 3);
+    int64_t s16 = 0x1fffff & sc25519_load3(s + 42);
+    int64_t s17 = 0x1fffff & (sc25519_load4(s + 44) >> 5);
+    int64_t s18 = 0x1fffff & (sc25519_load3(s + 47) >> 2);
+    int64_t s19 = 0x1fffff & (sc25519_load4(s + 49) >> 7);
+    int64_t s20 = 0x1fffff & (sc25519_load4(s + 52) >> 4);
+    int64_t s21 = 0x1fffff & (sc25519_load3(s + 55) >> 1);
+    int64_t s22 = 0x1fffff & (sc25519_load4(s + 57) >> 6);
+    int64_t s23 = (sc25519_load4(s + 60) >> 3);
 
     int64_t carry;
 
@@ -443,19 +436,21 @@ inline void sc25519_reduce(uint8_t* s) {
     s5 -= s12 * 683901;
     s12 = 0;
 
-    carry = (s0 + (1 << 20)) >> 21; s1 += carry; s0 -= carry << 21;
-    carry = (s1 + (1 << 20)) >> 21; s2 += carry; s1 -= carry << 21;
-    carry = (s2 + (1 << 20)) >> 21; s3 += carry; s2 -= carry << 21;
-    carry = (s3 + (1 << 20)) >> 21; s4 += carry; s3 -= carry << 21;
-    carry = (s4 + (1 << 20)) >> 21; s5 += carry; s4 -= carry << 21;
-    carry = (s5 + (1 << 20)) >> 21; s6 += carry; s5 -= carry << 21;
-    carry = (s6 + (1 << 20)) >> 21; s7 += carry; s6 -= carry << 21;
-    carry = (s7 + (1 << 20)) >> 21; s8 += carry; s7 -= carry << 21;
-    carry = (s8 + (1 << 20)) >> 21; s9 += carry; s8 -= carry << 21;
-    carry = (s9 + (1 << 20)) >> 21; s10 += carry; s9 -= carry << 21;
-    carry = (s10 + (1 << 20)) >> 21; s11 += carry; s10 -= carry << 21;
-    carry = (s11 + (1 << 20)) >> 21; s12 += carry; s11 -= carry << 21;
+    // Unsigned carries after first s12 reduction
+    carry = s0 >> 21; s1 += carry; s0 -= carry << 21;
+    carry = s1 >> 21; s2 += carry; s1 -= carry << 21;
+    carry = s2 >> 21; s3 += carry; s2 -= carry << 21;
+    carry = s3 >> 21; s4 += carry; s3 -= carry << 21;
+    carry = s4 >> 21; s5 += carry; s4 -= carry << 21;
+    carry = s5 >> 21; s6 += carry; s5 -= carry << 21;
+    carry = s6 >> 21; s7 += carry; s6 -= carry << 21;
+    carry = s7 >> 21; s8 += carry; s7 -= carry << 21;
+    carry = s8 >> 21; s9 += carry; s8 -= carry << 21;
+    carry = s9 >> 21; s10 += carry; s9 -= carry << 21;
+    carry = s10 >> 21; s11 += carry; s10 -= carry << 21;
+    carry = s11 >> 21; s12 += carry; s11 -= carry << 21;
 
+    // Second s12 reduction
     s0 += s12 * 666643;
     s1 += s12 * 470296;
     s2 += s12 * 654183;
@@ -464,6 +459,7 @@ inline void sc25519_reduce(uint8_t* s) {
     s5 -= s12 * 683901;
     s12 = 0;
 
+    // Final unsigned carries
     carry = s0 >> 21; s1 += carry; s0 -= carry << 21;
     carry = s1 >> 21; s2 += carry; s1 -= carry << 21;
     carry = s2 >> 21; s3 += carry; s2 -= carry << 21;
@@ -515,45 +511,46 @@ inline void sc25519_reduce(uint8_t* s) {
 // All inputs are 32 bytes (256 bits), little-endian
 // Result is stored in s (32 bytes)
 inline void sc25519_muladd(uint8_t* s, const uint8_t* a, const uint8_t* b, const uint8_t* c) {
-    // Load a, b, c as 21-bit limbs
-    int64_t a0  = 0x1fffff & (sc25519_load64_le(a) >> 0);
-    int64_t a1  = 0x1fffff & (sc25519_load64_le(a + 2) >> 5);
-    int64_t a2  = 0x1fffff & (sc25519_load64_le(a + 5) >> 2);
-    int64_t a3  = 0x1fffff & (sc25519_load64_le(a + 7) >> 7);
-    int64_t a4  = 0x1fffff & (sc25519_load64_le(a + 10) >> 4);
-    int64_t a5  = 0x1fffff & (sc25519_load64_le(a + 13) >> 1);
-    int64_t a6  = 0x1fffff & (sc25519_load64_le(a + 15) >> 6);
-    int64_t a7  = 0x1fffff & (sc25519_load64_le(a + 18) >> 3);
-    int64_t a8  = 0x1fffff & (sc25519_load64_le(a + 21) >> 0);
-    int64_t a9  = 0x1fffff & (sc25519_load64_le(a + 23) >> 5);
-    int64_t a10 = 0x1fffff & (sc25519_load64_le(a + 26) >> 2);
-    int64_t a11 = (sc25519_load64_le(a + 28) >> 7);
+    // Load a, b, c as 21-bit limbs (12 limbs each for 32-byte inputs)
+    // Uses load3/load4 to avoid reading beyond the input buffers
+    int64_t a0  = 0x1fffff & sc25519_load3(a);
+    int64_t a1  = 0x1fffff & (sc25519_load4(a + 2) >> 5);
+    int64_t a2  = 0x1fffff & (sc25519_load3(a + 5) >> 2);
+    int64_t a3  = 0x1fffff & (sc25519_load4(a + 7) >> 7);
+    int64_t a4  = 0x1fffff & (sc25519_load4(a + 10) >> 4);
+    int64_t a5  = 0x1fffff & (sc25519_load3(a + 13) >> 1);
+    int64_t a6  = 0x1fffff & (sc25519_load4(a + 15) >> 6);
+    int64_t a7  = 0x1fffff & (sc25519_load3(a + 18) >> 3);
+    int64_t a8  = 0x1fffff & sc25519_load3(a + 21);
+    int64_t a9  = 0x1fffff & (sc25519_load4(a + 23) >> 5);
+    int64_t a10 = 0x1fffff & (sc25519_load3(a + 26) >> 2);
+    int64_t a11 = (sc25519_load4(a + 28) >> 7);
 
-    int64_t b0  = 0x1fffff & (sc25519_load64_le(b) >> 0);
-    int64_t b1  = 0x1fffff & (sc25519_load64_le(b + 2) >> 5);
-    int64_t b2  = 0x1fffff & (sc25519_load64_le(b + 5) >> 2);
-    int64_t b3  = 0x1fffff & (sc25519_load64_le(b + 7) >> 7);
-    int64_t b4  = 0x1fffff & (sc25519_load64_le(b + 10) >> 4);
-    int64_t b5  = 0x1fffff & (sc25519_load64_le(b + 13) >> 1);
-    int64_t b6  = 0x1fffff & (sc25519_load64_le(b + 15) >> 6);
-    int64_t b7  = 0x1fffff & (sc25519_load64_le(b + 18) >> 3);
-    int64_t b8  = 0x1fffff & (sc25519_load64_le(b + 21) >> 0);
-    int64_t b9  = 0x1fffff & (sc25519_load64_le(b + 23) >> 5);
-    int64_t b10 = 0x1fffff & (sc25519_load64_le(b + 26) >> 2);
-    int64_t b11 = (sc25519_load64_le(b + 28) >> 7);
+    int64_t b0  = 0x1fffff & sc25519_load3(b);
+    int64_t b1  = 0x1fffff & (sc25519_load4(b + 2) >> 5);
+    int64_t b2  = 0x1fffff & (sc25519_load3(b + 5) >> 2);
+    int64_t b3  = 0x1fffff & (sc25519_load4(b + 7) >> 7);
+    int64_t b4  = 0x1fffff & (sc25519_load4(b + 10) >> 4);
+    int64_t b5  = 0x1fffff & (sc25519_load3(b + 13) >> 1);
+    int64_t b6  = 0x1fffff & (sc25519_load4(b + 15) >> 6);
+    int64_t b7  = 0x1fffff & (sc25519_load3(b + 18) >> 3);
+    int64_t b8  = 0x1fffff & sc25519_load3(b + 21);
+    int64_t b9  = 0x1fffff & (sc25519_load4(b + 23) >> 5);
+    int64_t b10 = 0x1fffff & (sc25519_load3(b + 26) >> 2);
+    int64_t b11 = (sc25519_load4(b + 28) >> 7);
 
-    int64_t c0  = 0x1fffff & (sc25519_load64_le(c) >> 0);
-    int64_t c1  = 0x1fffff & (sc25519_load64_le(c + 2) >> 5);
-    int64_t c2  = 0x1fffff & (sc25519_load64_le(c + 5) >> 2);
-    int64_t c3  = 0x1fffff & (sc25519_load64_le(c + 7) >> 7);
-    int64_t c4  = 0x1fffff & (sc25519_load64_le(c + 10) >> 4);
-    int64_t c5  = 0x1fffff & (sc25519_load64_le(c + 13) >> 1);
-    int64_t c6  = 0x1fffff & (sc25519_load64_le(c + 15) >> 6);
-    int64_t c7  = 0x1fffff & (sc25519_load64_le(c + 18) >> 3);
-    int64_t c8  = 0x1fffff & (sc25519_load64_le(c + 21) >> 0);
-    int64_t c9  = 0x1fffff & (sc25519_load64_le(c + 23) >> 5);
-    int64_t c10 = 0x1fffff & (sc25519_load64_le(c + 26) >> 2);
-    int64_t c11 = (sc25519_load64_le(c + 28) >> 7);
+    int64_t c0  = 0x1fffff & sc25519_load3(c);
+    int64_t c1  = 0x1fffff & (sc25519_load4(c + 2) >> 5);
+    int64_t c2  = 0x1fffff & (sc25519_load3(c + 5) >> 2);
+    int64_t c3  = 0x1fffff & (sc25519_load4(c + 7) >> 7);
+    int64_t c4  = 0x1fffff & (sc25519_load4(c + 10) >> 4);
+    int64_t c5  = 0x1fffff & (sc25519_load3(c + 13) >> 1);
+    int64_t c6  = 0x1fffff & (sc25519_load4(c + 15) >> 6);
+    int64_t c7  = 0x1fffff & (sc25519_load3(c + 18) >> 3);
+    int64_t c8  = 0x1fffff & sc25519_load3(c + 21);
+    int64_t c9  = 0x1fffff & (sc25519_load4(c + 23) >> 5);
+    int64_t c10 = 0x1fffff & (sc25519_load3(c + 26) >> 2);
+    int64_t c11 = (sc25519_load4(c + 28) >> 7);
 
     // Compute s = a*b + c (schoolbook multiplication)
     int64_t s0  = c0  + a0*b0;
@@ -774,6 +771,29 @@ inline void sc25519_muladd(uint8_t* s, const uint8_t* a, const uint8_t* b, const
     carry = s8 >> 21; s9 += carry; s8 -= carry << 21;
     carry = s9 >> 21; s10 += carry; s9 -= carry << 21;
     carry = s10 >> 21; s11 += carry; s10 -= carry << 21;
+    carry = s11 >> 21; s12 += carry; s11 -= carry << 21;
+
+    // Third s12 reduction
+    s0 += s12 * 666643;
+    s1 += s12 * 470296;
+    s2 += s12 * 654183;
+    s3 -= s12 * 997805;
+    s4 += s12 * 136657;
+    s5 -= s12 * 683901;
+    s12 = 0;
+
+    // Final carry propagation
+    carry = s0 >> 21; s1 += carry; s0 -= carry << 21;
+    carry = s1 >> 21; s2 += carry; s1 -= carry << 21;
+    carry = s2 >> 21; s3 += carry; s2 -= carry << 21;
+    carry = s3 >> 21; s4 += carry; s3 -= carry << 21;
+    carry = s4 >> 21; s5 += carry; s4 -= carry << 21;
+    carry = s5 >> 21; s6 += carry; s5 -= carry << 21;
+    carry = s6 >> 21; s7 += carry; s6 -= carry << 21;
+    carry = s7 >> 21; s8 += carry; s7 -= carry << 21;
+    carry = s8 >> 21; s9 += carry; s8 -= carry << 21;
+    carry = s9 >> 21; s10 += carry; s9 -= carry << 21;
+    carry = s10 >> 21; s11 += carry; s10 -= carry << 21;
 
     // Pack result
     s[0] = static_cast<uint8_t>(s0);
@@ -866,7 +886,7 @@ inline const Fe25519& ge25519_d() {
 // Used in point addition formula
 inline const Fe25519& ge25519_2d() {
     static const Fe25519 d2(
-        1859910466990406LL,
+        1859910466990425LL,
         932731440258426LL,
         1072319116312658LL,
         1815898335770999LL,

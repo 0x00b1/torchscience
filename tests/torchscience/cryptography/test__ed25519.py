@@ -166,7 +166,7 @@ class TestEd25519:
 
         # Verify signature
         valid = ed25519_verify(public_key, message, signature)
-        assert valid.item() is True
+        assert valid.item() == 1
 
     def test_rfc8032_test_vector_2(self):
         """RFC 8032 Section 7.1 - Test Vector 2 (1-byte message)"""
@@ -285,7 +285,7 @@ class TestEd25519:
         torch.testing.assert_close(signature, expected_signature)
 
         valid = ed25519_verify(public_key, message, signature)
-        assert valid.item() is True
+        assert valid.item() == 1
 
     def test_sign_verify_roundtrip(self):
         """Test basic sign/verify roundtrip"""
@@ -298,7 +298,7 @@ class TestEd25519:
         assert signature.shape == (64,)
 
         valid = ed25519_verify(public_key, message, signature)
-        assert valid.item() is True
+        assert valid.item() == 1
 
     def test_invalid_signature(self):
         """Test that invalid signatures are rejected"""
@@ -313,7 +313,7 @@ class TestEd25519:
         bad_signature[0] ^= 0xFF
 
         valid = ed25519_verify(public_key, message, bad_signature)
-        assert valid.item() is False
+        assert valid.item() == 0
 
     def test_wrong_message(self):
         """Test that wrong message is rejected"""
@@ -325,7 +325,7 @@ class TestEd25519:
 
         wrong_message = torch.tensor(list(b"Modified"), dtype=torch.uint8)
         valid = ed25519_verify(public_key, wrong_message, signature)
-        assert valid.item() is False
+        assert valid.item() == 0
 
     def test_meta_tensor(self):
         """Test shape inference with meta tensors"""
