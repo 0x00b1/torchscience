@@ -137,8 +137,10 @@
 #include "cpu/geometry/convex_hull.h"
 #include "cpu/encryption/chacha20.h"
 #include "cpu/encryption/sha256.h"
+#include "cpu/encryption/sha3.h"
 #include "meta/encryption/chacha20.h"
 #include "meta/encryption/sha256.h"
+#include "meta/encryption/sha3.h"
 #include "cpu/privacy/gaussian_mechanism.h"
 #include "cpu/privacy/laplace_mechanism.h"
 #include "meta/privacy/gaussian_mechanism.h"
@@ -1309,6 +1311,9 @@ TORCH_LIBRARY(torchscience, module) {
   // encryption
   module.def("chacha20(Tensor key, Tensor nonce, int num_bytes, int counter=0) -> Tensor");
   module.def("sha256(Tensor data) -> Tensor");
+  module.def("sha3_256(Tensor data) -> Tensor");
+  module.def("sha3_512(Tensor data) -> Tensor");
+  module.def("keccak256(Tensor data) -> Tensor");
 
   // Privacy operators
   module.def("gaussian_mechanism(Tensor x, Tensor noise, float sigma) -> Tensor");
