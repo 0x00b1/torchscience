@@ -1,6 +1,7 @@
 """Information theory operators."""
 
 from ._chi_squared_divergence import chi_squared_divergence
+from ._coinformation import coinformation
 from ._conditional_entropy import conditional_entropy
 from ._conditional_mutual_information import conditional_mutual_information
 from ._cross_entropy import cross_entropy
@@ -21,6 +22,7 @@ from ._tsallis_entropy import tsallis_entropy
 
 __all__ = [
     "chi_squared_divergence",
+    "coinformation",
     "conditional_entropy",
     "conditional_mutual_information",
     "cross_entropy",
