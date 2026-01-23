@@ -52,6 +52,7 @@ from torchscience.differentiation._spectral_laplacian import (
 from torchscience.differentiation._stencil import FiniteDifferenceStencil
 from torchscience.differentiation._strain_tensor import strain_tensor
 from torchscience.differentiation._vorticity import vorticity
+from torchscience.differentiation._wave_operator import wave_operator
 
 __all__ = [
     "BoundaryError",
@@ -92,4 +93,5 @@ __all__ = [
     "spectral_laplacian",
     "strain_tensor",
     "vorticity",
+    "wave_operator",
 ]
