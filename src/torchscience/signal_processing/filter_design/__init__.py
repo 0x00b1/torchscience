@@ -49,6 +49,7 @@ from ._freqs_ba import freqs_ba
 from ._freqs_zpk import freqs_zpk
 from ._iirnotch import iirnotch
 from ._iirpeak import iirpeak
+from ._kalman_filter import kalman_filter
 from ._leaky_lms import leaky_lms
 from ._lfilter import lfilter
 from ._lfilter_zi import lfilter_zi
@@ -105,6 +106,7 @@ __all__ = [
     "remez",
     "iirnotch",
     "iirpeak",
+    "kalman_filter",
     "leaky_lms",
     "lfilter",
     "lfilter_zi",
