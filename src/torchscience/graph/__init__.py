@@ -45,6 +45,9 @@ from torchscience.graph._minimum_spanning_tree import (
     minimum_spanning_tree,
 )
 from torchscience.graph._pagerank import pagerank
+from torchscience.graph._push_relabel import (
+    push_relabel,
+)
 from torchscience.graph._topological_sort import (
     CycleError,
     topological_sort,
@@ -71,5 +74,6 @@ __all__ = [
     "minimum_cut",
     "minimum_spanning_tree",
     "pagerank",
+    "push_relabel",
     "topological_sort",
 ]
