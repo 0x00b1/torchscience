@@ -38,6 +38,8 @@ from ._exceptions import (
 )
 from ._firwin import firwin
 from ._firwin2 import firwin2
+from ._freqs_ba import freqs_ba
+from ._freqs_zpk import freqs_zpk
 from ._iirnotch import iirnotch
 from ._iirpeak import iirpeak
 from ._lowpass_to_bandpass_zpk import lowpass_to_bandpass_zpk
@@ -73,6 +75,8 @@ __all__ = [
     "elliptic_prototype",
     "firwin",
     "firwin2",
+    "freqs_ba",
+    "freqs_zpk",
     "remez",
     "iirnotch",
     "iirpeak",
