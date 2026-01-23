@@ -81,12 +81,12 @@ void pad_1d_kernel(
 
 inline at::Tensor pad(
     const at::Tensor& input,
-    const std::vector<int64_t>& padding,
-    const std::string& mode_str,
+    std::vector<int64_t> padding,
+    std::string mode_str,
     double value,
-    const c10::optional<std::vector<int64_t>>& dim,
+    c10::optional<std::vector<int64_t>> dim,
     int64_t order,
-    const c10::optional<at::Tensor>& out
+    c10::optional<at::Tensor> out
 ) {
     TORCH_CHECK(input.numel() > 0, "pad: input tensor must be non-empty");
     TORCH_CHECK(order >= 1 && order <= MAX_EXTRAPOLATION_ORDER,
@@ -180,10 +180,10 @@ inline at::Tensor pad(
 
 inline at::Tensor pad_backward(
     const at::Tensor& grad_output,
-    const std::vector<int64_t>& input_shape,
-    const std::vector<int64_t>& padding,
-    const std::string& mode_str,
-    const c10::optional<std::vector<int64_t>>& dim,
+    std::vector<int64_t> input_shape,
+    std::vector<int64_t> padding,
+    std::string mode_str,
+    c10::optional<std::vector<int64_t>> dim,
     int64_t order
 ) {
     PaddingMode mode = parse_mode(mode_str);
@@ -307,9 +307,9 @@ inline at::Tensor pad_backward(
 
 inline at::Tensor pad_backward_backward(
     const at::Tensor& grad_grad_input,
-    const std::vector<int64_t>& padding,
-    const std::string& mode_str,
-    const c10::optional<std::vector<int64_t>>& dim,
+    std::vector<int64_t> padding,
+    std::string mode_str,
+    c10::optional<std::vector<int64_t>> dim,
     int64_t order
 ) {
     return pad(grad_grad_input, padding, mode_str, 0.0, dim, order, c10::nullopt);
