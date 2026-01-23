@@ -34,6 +34,7 @@ from torchscience.differentiation._spectral_laplacian import (
     spectral_laplacian,
 )
 from torchscience.differentiation._stencil import FiniteDifferenceStencil
+from torchscience.differentiation._vorticity import vorticity
 
 __all__ = [
     "BoundaryError",
@@ -62,4 +63,5 @@ __all__ = [
     "spectral_derivative",
     "spectral_gradient",
     "spectral_laplacian",
+    "vorticity",
 ]
