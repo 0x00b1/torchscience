@@ -1232,6 +1232,7 @@ TORCH_LIBRARY(torchscience, module) {
   // Tsallis entropy
   module.def("tsallis_entropy(Tensor p, float q, int dim, str input_type, str reduction) -> Tensor");
   module.def("tsallis_entropy_backward(Tensor grad_output, Tensor p, float q, int dim, str input_type, str reduction) -> Tensor");
+  module.def("tsallis_entropy_backward_backward(Tensor gg_p, Tensor grad_output, Tensor p, float q, int dim, str input_type, str reduction) -> (Tensor, Tensor)");
 
   // Renyi divergence
   module.def("renyi_divergence(Tensor p, Tensor q, float alpha, int dim, str input_type, str reduction, float? base, bool pairwise) -> Tensor");
