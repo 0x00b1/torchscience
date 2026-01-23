@@ -1,3 +1,5 @@
+"""Ridder's bracketed root-finding method."""
+
 from typing import Callable
 
 import torch
@@ -6,7 +8,7 @@ from torch import Tensor
 from ._convergence import default_tolerances
 
 
-class _BrentImplicitGrad(torch.autograd.Function):
+class _RidderImplicitGrad(torch.autograd.Function):
     """Custom autograd for implicit differentiation through root-finding."""
 
     @staticmethod
@@ -34,15 +36,10 @@ class _BrentImplicitGrad(torch.autograd.Function):
             )[0]
 
             # Compute df/dtheta (gradient w.r.t. parameters)
-            # This is done by computing the gradient of f w.r.t. its inputs
-            # when evaluated at the root
+            # Using implicit function theorem: dx*/dtheta = -[df/dx]^{-1} * df/dtheta
+            # So: dL/dtheta = dL/dx* * dx*/dtheta = -dL/dx* * [df/dx]^{-1} * df/dtheta
             if fx.grad_fn is not None:
-                # grad_output is dL/dx*, we need dL/dtheta
-                # Using implicit function theorem: dx*/dtheta = -[df/dx]^{-1} * df/dtheta
-                # So: dL/dtheta = dL/dx* * dx*/dtheta = -dL/dx* * [df/dx]^{-1} * df/dtheta
-                #
-                # We compute this by backpropagating through f with modified gradient
-                # Safeguard against division by very small df/dx (near-horizontal tangent)
+                # Safeguard against division by very small df/dx
                 eps = torch.finfo(df_dx.dtype).eps * 10
                 safe_df_dx = torch.where(
                     torch.abs(df_dx) < eps,
@@ -83,15 +80,14 @@ def _attach_implicit_grad(
         return result.reshape(orig_shape), converged.reshape(orig_shape)
 
     # Make sure result has requires_grad=True for the autograd function
-    # This is needed when result comes from endpoint detection (no iteration)
     if not result.requires_grad:
         result = result.clone().requires_grad_(True)
 
-    result = _BrentImplicitGrad.apply(result, f, orig_shape)
+    result = _RidderImplicitGrad.apply(result, f, orig_shape)
     return result.reshape(orig_shape), converged.reshape(orig_shape)
 
 
-def brent(
+def ridder(
     f: Callable[[Tensor], Tensor],
     a: Tensor,
     b: Tensor,
@@ -102,12 +98,12 @@ def brent(
     maxiter: int = 100,
 ) -> tuple[Tensor, Tensor]:
     """
-    Find roots of f(x) = 0 using Brent's method.
+    Find roots of f(x) = 0 using Ridder's method.
 
-    Brent's method combines bisection, secant, and inverse quadratic
-    interpolation for robust and fast root-finding. It guarantees
-    convergence like bisection but achieves superlinear convergence
-    when possible.
+    Ridder's method is a bracketed root-finding algorithm that achieves
+    quadratic convergence by using an exponential interpolation. It is
+    more robust than the secant method while achieving faster convergence
+    than bisection.
 
     Parameters
     ----------
@@ -154,10 +150,10 @@ def brent(
     Find the square root of 2 (solve x^2 - 2 = 0):
 
     >>> import torch
-    >>> from torchscience.root_finding import brent
+    >>> from torchscience.root_finding import ridder
     >>> f = lambda x: x**2 - 2
     >>> a, b = torch.tensor([1.0]), torch.tensor([2.0])
-    >>> root, converged = brent(f, a, b)
+    >>> root, converged = ridder(f, a, b)
     >>> float(root)  # doctest: +ELLIPSIS
     1.414...
     >>> converged.all()
@@ -169,7 +165,7 @@ def brent(
     >>> f = lambda x: x**2 - c
     >>> a = torch.ones(3)
     >>> b = torch.full((3,), 10.0)
-    >>> roots, converged = brent(f, a, b)
+    >>> roots, converged = ridder(f, a, b)
     >>> [f"{v:.4f}" for v in roots.tolist()]
     ['1.4142', '1.7321', '2.0000']
 
@@ -177,12 +173,22 @@ def brent(
 
     >>> f = lambda x: torch.sin(x)
     >>> a, b = torch.tensor([2.0]), torch.tensor([4.0])
-    >>> root, _ = brent(f, a, b)
+    >>> root, _ = ridder(f, a, b)
     >>> float(root)  # doctest: +ELLIPSIS
     3.141...
 
     Notes
     -----
+    **Algorithm**: Ridder's method works by computing a midpoint m = (a + b) / 2
+    and then finding an improved estimate using exponential interpolation:
+
+    .. math::
+
+        x_{new} = m + \\text{sign}(f(a) - f(b)) \\cdot \\frac{(m - a) \\cdot f(m)}{s}
+
+    where :math:`s = \\sqrt{f(m)^2 - f(a) \\cdot f(b)}`. This formula guarantees
+    that the new point lies within the bracket [a, b].
+
     **Convergence Criterion**: Both the interval width (xtol + rtol * |b|)
     AND ``ftol`` must be satisfied for convergence. This ensures the root
     is both well-localized and the residual is small.
@@ -201,7 +207,7 @@ def brent(
     >>> theta = torch.tensor([2.0], requires_grad=True)
     >>> f = lambda x: x**2 - theta  # root is sqrt(theta)
     >>> a, b = torch.tensor([0.0]), torch.tensor([3.0])
-    >>> root, _ = brent(f, a, b)
+    >>> root, _ = ridder(f, a, b)
     >>> root.backward()
     >>> theta.grad  # d(sqrt(theta))/d(theta) = 1/(2*sqrt(theta))
     tensor([0.3536])
@@ -215,7 +221,8 @@ def brent(
 
     See Also
     --------
-    scipy.optimize.brentq : SciPy's scalar Brent implementation
+    scipy.optimize.ridder : SciPy's scalar Ridder implementation
+    brent : Brent's method (typically faster for smooth functions)
     """
     # Input validation
     if a.shape != b.shape:
@@ -276,29 +283,21 @@ def brent(
             f"at indices {invalid_indices}."
         )
 
-    # Ensure |f(a)| >= |f(b)| by swapping if needed
-    swap_mask = torch.abs(fa) < torch.abs(fb)
-    a, b = torch.where(swap_mask, b, a), torch.where(swap_mask, a, b)
-    fa, fb = torch.where(swap_mask, fb, fa), torch.where(swap_mask, fa, fb)
-
-    # Initialize state
-    c = a.clone()
-    fc = fa.clone()
-    d = torch.zeros_like(a)
-    mflag = torch.ones(a.shape, dtype=torch.bool)
-
     # Track which elements have converged
     converged = at_endpoint.clone()
     result = root.clone()
 
+    # Track the best x_new for each element (for returning)
+    best_x = (a + b) / 2
+
     for iteration in range(maxiter):
         # Check convergence: both interval tolerance AND ftol must be satisfied
-        # Interval tolerance combines absolute (xtol) and relative (rtol) parts
         interval_small = torch.abs(b - a) < xtol + rtol * torch.abs(b)
-        residual_small = torch.abs(fb) < ftol
+        f_best = f(best_x)
+        residual_small = torch.abs(f_best) < ftol
         newly_converged = interval_small & residual_small & ~converged
         converged = converged | newly_converged
-        result = torch.where(newly_converged, b, result)
+        result = torch.where(newly_converged, best_x, result)
 
         if torch.all(converged):
             return _attach_implicit_grad(result, converged, f, orig_shape)
@@ -306,103 +305,122 @@ def brent(
         # Only update unconverged elements
         active = ~converged
 
-        # Compute s using inverse quadratic interpolation or secant method
-        # Inverse quadratic interpolation
-        use_iqp = (fa != fc) & (fb != fc) & active
-        s_iqp = torch.where(
-            use_iqp,
-            (a * fb * fc) / ((fa - fb) * (fa - fc))
-            + (b * fa * fc) / ((fb - fa) * (fb - fc))
-            + (c * fa * fb) / ((fc - fa) * (fc - fb)),
-            torch.zeros_like(a),
-        )
-
-        # Secant method
-        use_secant = ~use_iqp & active
-        s_secant = torch.where(
-            use_secant & (fb != fa),
-            b - fb * (b - a) / (fb - fa),
-            torch.zeros_like(a),
-        )
-
-        s = torch.where(use_iqp, s_iqp, s_secant)
-
-        # Brent's method uses 5 conditions to decide when to fall back to bisection.
-        # These conditions ensure that the interpolation step makes sufficient
-        # progress; otherwise, bisection provides guaranteed convergence.
-
-        # Condition 1: s must lie in the interval ((3a+b)/4, b).
-        # This ensures the new estimate is within a reasonable range and not
-        # outside the bracket or too close to endpoint a.
-        min_range = torch.minimum((3 * a + b) / 4, b)
-        max_range = torch.maximum((3 * a + b) / 4, b)
-        cond1 = ~((min_range < s) & (s < max_range))
-
-        # Condition 2: If bisection was used in the previous step (mflag=True),
-        # and the new step |s - b| is at least half of |b - c|, then bisection
-        # would have made at least as much progress. Use bisection instead.
-        cond2 = mflag & (torch.abs(s - b) >= torch.abs(b - c) / 2)
-
-        # Condition 3: If interpolation was used previously (mflag=False),
-        # and the new step |s - b| is at least half of |c - d|, the interpolation
-        # is not converging fast enough. Fall back to bisection.
-        cond3 = ~mflag & (torch.abs(s - b) >= torch.abs(c - d) / 2)
-
-        # Condition 4: If bisection was used previously and the interval |b - c|
-        # is already smaller than xtol, further bisection won't help.
-        # This prevents infinite loops when the interval is very small.
-        cond4 = mflag & (torch.abs(b - c) < xtol)
-
-        # Condition 5: If interpolation was used previously and |c - d| < xtol,
-        # the previous interpolation step was too small to be useful.
-        # Fall back to bisection for guaranteed progress.
-        cond5 = ~mflag & (torch.abs(c - d) < xtol)
-
-        use_bisection = (cond1 | cond2 | cond3 | cond4 | cond5) & active
-
-        # Bisection
-        s = torch.where(use_bisection, (a + b) / 2, s)
-        mflag = torch.where(active, use_bisection, mflag)
-
-        # Evaluate function at s
-        fs = f(s)
+        # Ridder's method:
+        # 1. Compute midpoint m = (a + b) / 2
+        m = (a + b) / 2
+        fm = f(m)
 
         # Check for NaN in function evaluation
-        if torch.any(torch.isnan(fs) & active):
+        if torch.any(torch.isnan(fm) & active):
             raise RuntimeError("Function returned NaN during iteration")
 
-        # d is now the value of c from the previous iteration
-        d = torch.where(active, c, d)
+        # 2. Compute s = sqrt(f(m)^2 - f(a)*f(b))
+        # This discriminant is always non-negative when the bracket is valid
+        discriminant = fm**2 - fa * fb
+        # Clamp to avoid numerical issues with sqrt of small negative numbers
+        discriminant = torch.clamp(discriminant, min=0.0)
+        s = torch.sqrt(discriminant)
 
-        # c takes the value of b
-        c = torch.where(active, b, c)
-        fc = torch.where(active, fb, fc)
+        # 3. Compute x_new = m + sign(f(a) - f(b)) * (m - a) * f(m) / s
+        # Handle case where s is zero (degenerate case)
+        sign_term = torch.sign(fa - fb)
+        # When s is zero, fall back to midpoint
+        s_safe = torch.where(s == 0, torch.ones_like(s), s)
+        x_new = torch.where(
+            (s == 0) | ~active,
+            m,
+            m + sign_term * (m - a) * fm / s_safe,
+        )
 
-        # Update the bracket
-        update_b = (fa * fs < 0) & active
-        update_a = ~update_b & active
+        # Clamp x_new to bracket [a, b] to ensure we stay within bounds
+        x_new = torch.clamp(x_new, torch.minimum(a, b), torch.maximum(a, b))
 
-        # Update b
-        b = torch.where(update_b, s, b)
-        fb = torch.where(update_b, fs, fb)
+        # Update best_x for active elements
+        best_x = torch.where(active, x_new, best_x)
 
-        # Update a
-        a = torch.where(update_a, s, a)
-        fa = torch.where(update_a, fs, fa)
+        # Evaluate function at new point
+        f_new = f(x_new)
 
-        # Ensure |f(a)| >= |f(b)| by swapping if needed
-        swap = (torch.abs(fa) < torch.abs(fb)) & active
-        a_new = torch.where(swap, b, a)
-        b_new = torch.where(swap, a, b)
-        fa_new = torch.where(swap, fb, fa)
-        fb_new = torch.where(swap, fa, fb)
+        # Check for NaN in function evaluation
+        if torch.any(torch.isnan(f_new) & active):
+            raise RuntimeError("Function returned NaN during iteration")
 
+        # Check if we found an exact root (or within ftol)
+        found_root = (torch.abs(f_new) < ftol) & active
+        newly_converged = found_root & ~converged
+        converged = converged | newly_converged
+        result = torch.where(newly_converged, x_new, result)
+        active = ~converged
+
+        if torch.all(converged):
+            return _attach_implicit_grad(result, converged, f, orig_shape)
+
+        # 4. Update bracket based on sign of f(x_new)
+        # The new bracket should contain the root and have opposite signs at endpoints
+        #
+        # We need to pick two points from {a, m, x_new, b} such that f has opposite signs
+        # Ridder's method produces x_new between a and b, and we need to form the
+        # tightest bracket around the root.
+
+        # Check if f(m) and f(x_new) have opposite signs
+        m_xnew_bracket = fm * f_new < 0
+
+        # Check if f(a) and f(x_new) have opposite signs
+        a_xnew_bracket = fa * f_new < 0
+
+        # Case 1: Use [m, x_new] or [x_new, m] as new bracket
+        # Case 2: Use [a, x_new] as new bracket
+        # Case 3: Use [x_new, b] as new bracket
+
+        # For case 1: bracket is [min(m, x_new), max(m, x_new)]
+        case1 = m_xnew_bracket & active
+        # For case 2: bracket is [a, x_new] (f(a) and f(x_new) have opposite signs)
+        case2 = a_xnew_bracket & ~case1 & active
+        # For case 3: bracket is [x_new, b] (f(x_new) and f(b) have opposite signs)
+        case3 = ~case1 & ~case2 & active
+
+        # Initialize new values to current values
+        a_new = a.clone()
+        fa_new = fa.clone()
+        b_new = b.clone()
+        fb_new = fb.clone()
+
+        # Case 1: bracket is [min(m, x_new), max(m, x_new)]
+        left_is_m = m < x_new
+        a_new = torch.where(case1 & left_is_m, m, a_new)
+        fa_new = torch.where(case1 & left_is_m, fm, fa_new)
+        b_new = torch.where(case1 & left_is_m, x_new, b_new)
+        fb_new = torch.where(case1 & left_is_m, f_new, fb_new)
+
+        a_new = torch.where(case1 & ~left_is_m, x_new, a_new)
+        fa_new = torch.where(case1 & ~left_is_m, f_new, fa_new)
+        b_new = torch.where(case1 & ~left_is_m, m, b_new)
+        fb_new = torch.where(case1 & ~left_is_m, fm, fb_new)
+
+        # Case 2: bracket is [a, x_new]
+        # a stays the same, b becomes x_new
+        b_new = torch.where(case2, x_new, b_new)
+        fb_new = torch.where(case2, f_new, fb_new)
+
+        # Case 3: bracket is [x_new, b]
+        # a becomes x_new, b stays the same
+        a_new = torch.where(case3, x_new, a_new)
+        fa_new = torch.where(case3, f_new, fa_new)
+
+        # Apply updates
         a = a_new
-        b = b_new
         fa = fa_new
+        b = b_new
         fb = fb_new
 
+    # Final convergence check after all iterations
+    interval_small = torch.abs(b - a) < xtol + rtol * torch.abs(b)
+    f_best = f(best_x)
+    residual_small = torch.abs(f_best) < ftol
+    newly_converged = interval_small & residual_small & ~converged
+    converged = converged | newly_converged
+    result = torch.where(newly_converged, best_x, result)
+
     # Return best estimate for non-converged elements
-    # Use b as the best estimate (it has the smallest |f(b)|)
-    result = torch.where(converged, result, b)
+    result = torch.where(converged, result, best_x)
     return _attach_implicit_grad(result, converged, f, orig_shape)
