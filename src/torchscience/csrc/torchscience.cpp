@@ -139,10 +139,16 @@
 #include "cpu/encryption/sha256.h"
 #include "cpu/encryption/sha3.h"
 #include "cpu/encryption/blake2.h"
+#include "cpu/encryption/aes.h"
+#include "cpu/encryption/poly1305.h"
+#include "cpu/encryption/chacha20_poly1305.h"
 #include "meta/encryption/chacha20.h"
 #include "meta/encryption/sha256.h"
 #include "meta/encryption/sha3.h"
 #include "meta/encryption/blake2.h"
+#include "meta/encryption/aes.h"
+#include "meta/encryption/poly1305.h"
+#include "meta/encryption/chacha20_poly1305.h"
 #include "cpu/privacy/gaussian_mechanism.h"
 #include "cpu/privacy/laplace_mechanism.h"
 #include "meta/privacy/gaussian_mechanism.h"
@@ -1318,6 +1324,12 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("keccak256(Tensor data) -> Tensor");
   module.def("blake2b(Tensor data, Tensor key, int digest_size=64) -> Tensor");
   module.def("blake2s(Tensor data, Tensor key, int digest_size=32) -> Tensor");
+  module.def("aes_encrypt_block(Tensor plaintext, Tensor key) -> Tensor");
+  module.def("aes_decrypt_block(Tensor ciphertext, Tensor key) -> Tensor");
+  module.def("aes_ctr(Tensor data, Tensor key, Tensor nonce, int counter=0) -> Tensor");
+  module.def("poly1305(Tensor data, Tensor key) -> Tensor");
+  module.def("chacha20_poly1305_encrypt(Tensor plaintext, Tensor key, Tensor nonce, Tensor aad) -> (Tensor, Tensor)");
+  module.def("chacha20_poly1305_decrypt(Tensor ciphertext, Tensor key, Tensor nonce, Tensor aad, Tensor tag) -> Tensor");
 
   // Privacy operators
   module.def("gaussian_mechanism(Tensor x, Tensor noise, float sigma) -> Tensor");
