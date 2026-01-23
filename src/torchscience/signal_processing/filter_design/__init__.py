@@ -2,6 +2,13 @@
 
 from ._ba_to_sos import ba_to_sos
 from ._ba_to_zpk import ba_to_zpk
+from ._batched import (
+    batched_butterworth_design,
+    batched_chebyshev_type_1_design,
+    batched_chebyshev_type_2_design,
+    batched_filter_apply,
+    batched_firwin,
+)
 from ._bessel_analog import bessel_analog
 from ._bessel_design import bessel_design
 from ._bessel_prototype import bessel_prototype
@@ -79,6 +86,12 @@ __all__ = [
     # High-level interface
     "Filter",
     "FilterDesigner",
+    # Batched design functions
+    "batched_butterworth_design",
+    "batched_chebyshev_type_1_design",
+    "batched_chebyshev_type_2_design",
+    "batched_filter_apply",
+    "batched_firwin",
     # Design functions - Digital
     "bessel_design",
     "bessel_prototype",
