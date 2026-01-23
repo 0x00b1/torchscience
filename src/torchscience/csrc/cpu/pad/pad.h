@@ -159,7 +159,7 @@ inline at::Tensor pad(
 
         int64_t batch_size = current_t.numel() / in_size;
 
-        AT_DISPATCH_FLOATING_TYPES_AND2(
+        AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(
             at::kHalf, at::kBFloat16,
             current.scalar_type(),
             "pad_cpu",
@@ -240,7 +240,7 @@ inline at::Tensor pad_backward(
 
         int64_t batch_size = grad_t.numel() / out_size;
 
-        AT_DISPATCH_FLOATING_TYPES_AND2(
+        AT_DISPATCH_FLOATING_AND_COMPLEX_TYPES_AND2(
             at::kHalf, at::kBFloat16,
             current_grad.scalar_type(),
             "pad_backward_cpu",

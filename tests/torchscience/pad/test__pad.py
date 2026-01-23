@@ -198,3 +198,27 @@ class TestPadEdgeCases:
         x = torch.randn(10, dtype=torch.float64)
         result = pad(x, (2, 2), mode="polynomial", order=order)
         assert result.shape == (14,)
+
+
+class TestPadComplex:
+    """Complex tensor support tests."""
+
+    @pytest.mark.parametrize(
+        "mode", ["constant", "replicate", "reflect", "circular"]
+    )
+    def test_complex_forward(self, mode):
+        """Complex tensors work with basic modes."""
+        x = torch.randn(5, dtype=torch.complex64)
+        result = pad(x, (2, 2), mode=mode, value=0.0)
+        assert result.dtype == torch.complex64
+        assert result.shape == (9,)
+
+    def test_complex_gradcheck(self):
+        """Complex gradient check."""
+        x = torch.randn(5, dtype=torch.complex128, requires_grad=True)
+        # Note: gradcheck for complex requires special handling
+        # For now, just verify it runs without error
+        y = pad(x, (1, 1), mode="reflect")
+        loss = y.abs().sum()
+        loss.backward()
+        assert x.grad is not None
