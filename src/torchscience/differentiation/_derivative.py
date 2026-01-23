@@ -82,13 +82,14 @@ def _derivative_impl(
             f"dim {dim} out of range for tensor with {ndim} dimensions"
         )
 
-    # Create 1D stencil
+    # Create 1D stencil on CPU (stencils are small parameter tensors)
+    # The kernel will be moved to the field's device later in apply_stencil
     stencil = finite_difference_stencil(
         derivative=order,
         accuracy=accuracy,
         kind=kind,
         dtype=field.dtype,
-        device=field.device,
+        device=torch.device("cpu"),
     )
 
     # Move the target dimension to the end, apply stencil, then move back
