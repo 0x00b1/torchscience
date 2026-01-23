@@ -16,9 +16,6 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> hessenberg(
         "a must be floating-point or complex");
 
     auto dtype = a.scalar_type();
-    if (!at::isFloatingType(dtype) && !at::isComplexType(dtype)) {
-        dtype = at::kDouble;
-    }
 
     at::Tensor a_work = a.to(dtype).contiguous();
 
@@ -45,6 +42,9 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> hessenberg(
     for (int64_t batch = 0; batch < batch_size; ++batch) {
         at::Tensor a_slice = a_flat[batch].clone();
 
+        // Use dtype-aware tolerance: float32/complex64 have ~7 digits precision
+        double tol = (dtype == at::kFloat || dtype == at::kComplexFloat) ? 1e-6 : 1e-14;
+
         try {
             // Compute Hessenberg form using Householder reflections
             // H = Q^H A Q, where Q is the product of Householder reflectors
@@ -60,7 +60,7 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> hessenberg(
 
                 // Compute Householder vector v such that Hx = ||x|| e_1
                 at::Scalar x_norm = x.norm();
-                if (x_norm.toDouble() < 1e-15) {
+                if (x_norm.toDouble() < tol) {
                     continue;  // Skip if column is already zero
                 }
 
@@ -71,14 +71,14 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> hessenberg(
                 if (at::isComplexType(x.scalar_type())) {
                     // For complex, use phase of x0
                     at::Tensor abs_x0 = at::abs(x0);
-                    sign_x0 = at::where(abs_x0 > 1e-15, x0 / abs_x0, at::ones({}, x.options()));
+                    sign_x0 = at::where(abs_x0 > tol, x0 / abs_x0, at::ones({}, x.options()));
                 } else {
                     sign_x0 = at::where(x0 >= 0, at::ones({}, x.options()), -at::ones({}, x.options()));
                 }
                 v[0] = v[0] + sign_x0 * x_norm;
 
                 at::Scalar v_norm = v.norm();
-                if (v_norm.toDouble() < 1e-15) {
+                if (v_norm.toDouble() < tol) {
                     continue;
                 }
                 v = v / v_norm;

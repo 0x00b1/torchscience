@@ -11,6 +11,8 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> hessenberg(
 ) {
     TORCH_CHECK(a.dim() >= 2, "a must be at least 2D");
     TORCH_CHECK(a.size(-1) == a.size(-2), "a must be square");
+    TORCH_CHECK(at::isFloatingType(a.scalar_type()) || at::isComplexType(a.scalar_type()),
+        "hessenberg: a must be floating-point or complex");
 
     auto batch_shape = a.sizes().slice(0, a.dim() - 2);
     std::vector<int64_t> batch_vec(batch_shape.begin(), batch_shape.end());
@@ -18,9 +20,6 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> hessenberg(
     int64_t n = a.size(-1);
 
     auto dtype = a.scalar_type();
-    if (!at::isFloatingType(dtype) && !at::isComplexType(dtype)) {
-        dtype = at::kDouble;
-    }
 
     std::vector<int64_t> mat_shape = batch_vec;
     mat_shape.push_back(n);

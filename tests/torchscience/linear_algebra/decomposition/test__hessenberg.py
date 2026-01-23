@@ -88,10 +88,9 @@ class TestHessenberg:
         eig_H = torch.linalg.eigvals(result.H)
         eig_scipy = torch.linalg.eigvals(torch.from_numpy(H_scipy))
 
-        # Sort by real part then imaginary part for comparison
+        # Sort by real part for comparison
         def sort_complex(t):
-            idx = torch.argsort(t.real + 1j * t.imag, stable=True)
-            return t[idx]
+            return t[torch.argsort(t.real)]
 
         torch.testing.assert_close(
             sort_complex(eig_H),
@@ -324,11 +323,9 @@ class TestHessenberg:
         eig_a = torch.linalg.eigvals(a)
         eig_h = torch.linalg.eigvals(result.H)
 
-        # Sort for comparison
+        # Sort by real part for comparison
         def sort_complex(t):
-            # Sort by real part, then by imaginary part
-            indices = torch.argsort(t.real * 1e10 + t.imag)
-            return t[indices]
+            return t[torch.argsort(t.real)]
 
         torch.testing.assert_close(
             sort_complex(eig_a),
