@@ -37,6 +37,7 @@ from torchscience.differentiation._spectral_laplacian import (
     spectral_laplacian,
 )
 from torchscience.differentiation._stencil import FiniteDifferenceStencil
+from torchscience.differentiation._strain_tensor import strain_tensor
 from torchscience.differentiation._vorticity import vorticity
 
 __all__ = [
@@ -69,5 +70,6 @@ __all__ = [
     "spectral_derivative",
     "spectral_gradient",
     "spectral_laplacian",
+    "strain_tensor",
     "vorticity",
 ]
