@@ -16,6 +16,9 @@ from ._joint_entropy import joint_entropy
 from ._kullback_leibler_divergence import kullback_leibler_divergence
 from ._mutual_information import mutual_information
 from ._o_information import o_information
+from ._partial_information_decomposition import (
+    partial_information_decomposition,
+)
 from ._pointwise_mutual_information import pointwise_mutual_information
 from ._renyi_divergence import renyi_divergence
 from ._renyi_entropy import renyi_entropy
@@ -41,6 +44,7 @@ __all__ = [
     "kullback_leibler_divergence",
     "mutual_information",
     "o_information",
+    "partial_information_decomposition",
     "pointwise_mutual_information",
     "renyi_divergence",
     "renyi_entropy",

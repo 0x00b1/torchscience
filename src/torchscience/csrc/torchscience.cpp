@@ -146,6 +146,7 @@
 #include "cpu/information_theory/directed_information.h"
 #include "cpu/information_theory/active_information_storage.h"
 #include "cpu/information_theory/causally_conditioned_entropy.h"
+#include "cpu/information_theory/partial_information_decomposition.h"
 #include "cpu/space_partitioning/kd_tree.h"
 #include "cpu/space_partitioning/k_nearest_neighbors.h"
 #include "cpu/space_partitioning/range_search.h"
@@ -513,6 +514,7 @@
 #include "autograd/information_theory/directed_information.h"
 #include "autograd/information_theory/active_information_storage.h"
 #include "autograd/information_theory/causally_conditioned_entropy.h"
+#include "autograd/information_theory/partial_information_decomposition.h"
 #include "autograd/geometry/transform/reflect.h"
 #include "autograd/geometry/transform/refract.h"
 #include "autograd/geometry/transform/quaternion_multiply.h"
@@ -606,6 +608,7 @@
 #include "meta/information_theory/directed_information.h"
 #include "meta/information_theory/active_information_storage.h"
 #include "meta/information_theory/causally_conditioned_entropy.h"
+#include "meta/information_theory/partial_information_decomposition.h"
 #include "meta/space_partitioning/kd_tree.h"
 #include "meta/space_partitioning/k_nearest_neighbors.h"
 #include "meta/space_partitioning/range_search.h"
@@ -1451,6 +1454,10 @@ TORCH_LIBRARY(torchscience, module) {
   // Causally conditioned entropy
   module.def("causally_conditioned_entropy(Tensor joint, str input_type, str reduction, float? base) -> Tensor");
   module.def("causally_conditioned_entropy_backward(Tensor grad_output, Tensor joint, str input_type, str reduction, float? base) -> Tensor");
+
+  // Partial information decomposition
+  module.def("partial_information_decomposition(Tensor joint, str method, str input_type, float? base) -> Tensor[]");
+  module.def("partial_information_decomposition_backward(Tensor grad_redundancy, Tensor grad_unique_x, Tensor grad_unique_y, Tensor grad_synergy, Tensor grad_mutual_info, Tensor joint, str method, str input_type, float? base) -> Tensor[]");
 
   // Renyi entropy
   module.def("renyi_entropy(Tensor p, float alpha, int dim, str input_type, str reduction, float? base) -> Tensor");
