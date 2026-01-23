@@ -6,6 +6,7 @@ from ._differentiation import (
     compute_second_derivative,
 )
 from ._exceptions import BracketError, DerivativeError, RootFindingError
+from ._newton import newton
 
 __all__ = [
     "brent",
@@ -14,6 +15,7 @@ __all__ = [
     "compute_jacobian",
     "compute_second_derivative",
     "default_tolerances",
+    "newton",
     "BracketError",
     "DerivativeError",
     "RootFindingError",
