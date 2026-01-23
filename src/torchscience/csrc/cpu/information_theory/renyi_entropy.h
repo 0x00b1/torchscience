@@ -199,9 +199,92 @@ inline at::Tensor renyi_entropy_backward(
     return grad_p_t.transpose(dim, -1).contiguous();
 }
 
+inline std::tuple<at::Tensor, at::Tensor> renyi_entropy_backward_backward(
+    const at::Tensor& gg_p,
+    const at::Tensor& grad_output,
+    const at::Tensor& p,
+    double alpha,
+    int64_t dim,
+    const std::string& input_type,
+    const std::string& reduction,
+    c10::optional<double> base
+) {
+    at::Tensor p_prob = renyi_preprocess_input(p, dim, input_type);
+    double log_base_scale = renyi_get_log_base_scale(base);
+
+    int64_t ndim = p_prob.dim();
+    if (dim < 0) {
+        dim = ndim + dim;
+    }
+
+    at::Tensor p_t = p_prob.transpose(dim, -1).contiguous();
+    int64_t feature_size = p_t.size(-1);
+    int64_t batch_size = p_t.numel() / feature_size;
+
+    at::Tensor gg_p_t = gg_p.defined() ? gg_p.transpose(dim, -1).contiguous() : at::Tensor();
+    at::Tensor grad_p_t = at::zeros_like(p_t);
+    at::Tensor grad_grad_output = at::zeros({1}, p_prob.options());
+
+    double scale = 1.0;
+    if (reduction == "mean") {
+        scale = 1.0 / static_cast<double>(batch_size);
+    }
+
+    at::Tensor grad_flat = grad_output.contiguous().view({-1});
+
+    AT_DISPATCH_FLOATING_TYPES_AND2(
+        at::kBFloat16, at::kHalf,
+        p_prob.scalar_type(),
+        "renyi_entropy_backward_backward_cpu",
+        [&]() {
+            const scalar_t* p_ptr = p_t.data_ptr<scalar_t>();
+            const scalar_t* gg_p_ptr = gg_p_t.defined() ? gg_p_t.data_ptr<scalar_t>() : nullptr;
+            const scalar_t* grad_ptr = grad_flat.data_ptr<scalar_t>();
+            scalar_t* grad_p_ptr = grad_p_t.data_ptr<scalar_t>();
+            scalar_t* grad_grad_out_ptr = grad_grad_output.data_ptr<scalar_t>();
+            scalar_t alpha_t = static_cast<scalar_t>(alpha);
+            scalar_t log_scale = static_cast<scalar_t>(log_base_scale);
+            scalar_t reduction_scale = static_cast<scalar_t>(scale);
+
+            scalar_t total_grad_grad_out = scalar_t(0);
+
+            for (int64_t idx = 0; idx < batch_size; ++idx) {
+                scalar_t grad_val;
+                if (reduction == "none") {
+                    grad_val = grad_ptr[idx];
+                } else {
+                    grad_val = grad_ptr[0] * reduction_scale;
+                }
+
+                scalar_t local_grad_grad_out = scalar_t(0);
+
+                torchscience::kernel::information_theory::renyi_entropy_backward_backward_kernel<scalar_t>(
+                    gg_p_ptr ? gg_p_ptr + idx * feature_size : nullptr,
+                    grad_val,
+                    p_ptr + idx * feature_size,
+                    feature_size,
+                    alpha_t,
+                    log_scale,
+                    local_grad_grad_out,
+                    grad_p_ptr + idx * feature_size
+                );
+
+                total_grad_grad_out += local_grad_grad_out;
+            }
+
+            grad_grad_out_ptr[0] = total_grad_grad_out;
+        }
+    );
+
+    at::Tensor grad_p = grad_p_t.transpose(dim, -1).contiguous();
+
+    return std::make_tuple(grad_grad_output.squeeze(), grad_p);
+}
+
 }  // namespace torchscience::cpu::information_theory
 
 TORCH_LIBRARY_IMPL(torchscience, CPU, m) {
     m.impl("renyi_entropy", &torchscience::cpu::information_theory::renyi_entropy);
     m.impl("renyi_entropy_backward", &torchscience::cpu::information_theory::renyi_entropy_backward);
+    m.impl("renyi_entropy_backward_backward", &torchscience::cpu::information_theory::renyi_entropy_backward_backward);
 }

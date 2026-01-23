@@ -1392,6 +1392,7 @@ TORCH_LIBRARY(torchscience, module) {
   // Renyi entropy
   module.def("renyi_entropy(Tensor p, float alpha, int dim, str input_type, str reduction, float? base) -> Tensor");
   module.def("renyi_entropy_backward(Tensor grad_output, Tensor p, float alpha, int dim, str input_type, str reduction, float? base) -> Tensor");
+  module.def("renyi_entropy_backward_backward(Tensor gg_p, Tensor grad_output, Tensor p, float alpha, int dim, str input_type, str reduction, float? base) -> (Tensor, Tensor)");
 
   // Tsallis entropy
   module.def("tsallis_entropy(Tensor p, float q, int dim, str input_type, str reduction) -> Tensor");

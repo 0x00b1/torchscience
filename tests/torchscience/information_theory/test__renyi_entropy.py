@@ -4,9 +4,9 @@ import math
 
 import pytest
 import torch
-from torch.autograd import gradcheck
+from torch.autograd import gradcheck, gradgradcheck
 
-from torchscience.information_theory import renyi_entropy, shannon_entropy
+from torchscience.information import renyi_entropy, shannon_entropy
 
 
 class TestRenyiEntropyBasic:
@@ -130,6 +130,39 @@ class TestRenyiEntropyGradients:
             return renyi_entropy(p_in, alpha=2.0, reduction="sum")
 
         assert gradcheck(func, (p,), eps=1e-6, atol=1e-4, rtol=1e-3)
+
+    def test_gradgradcheck_alpha2(self):
+        """Second-order gradients are correct for alpha=2."""
+        p = torch.softmax(torch.randn(5, dtype=torch.float64), dim=-1)
+        p.requires_grad_(True)
+
+        def func(p_in):
+            return renyi_entropy(p_in, alpha=2.0, input_type="probability")
+
+        assert gradgradcheck(func, (p,), eps=1e-6, atol=1e-4, rtol=1e-3)
+
+    def test_gradgradcheck_batched(self):
+        """Second-order gradients work with batched inputs."""
+        p = torch.softmax(torch.randn(3, 5, dtype=torch.float64), dim=-1)
+        p.requires_grad_(True)
+
+        def func(p_in):
+            return renyi_entropy(
+                p_in, alpha=2.0, input_type="probability", reduction="sum"
+            )
+
+        assert gradgradcheck(func, (p,), eps=1e-6, atol=1e-4, rtol=1e-3)
+
+    @pytest.mark.parametrize("alpha", [0.5, 1.5, 2.0, 3.0, 5.0])
+    def test_gradgradcheck_various_alpha(self, alpha):
+        """Second-order gradients work for various alpha values."""
+        p = torch.softmax(torch.randn(5, dtype=torch.float64), dim=-1)
+        p.requires_grad_(True)
+
+        def func(p_in):
+            return renyi_entropy(p_in, alpha=alpha, input_type="probability")
+
+        assert gradgradcheck(func, (p,), eps=1e-6, atol=1e-4, rtol=1e-3)
 
 
 class TestRenyiEntropyInputTypes:

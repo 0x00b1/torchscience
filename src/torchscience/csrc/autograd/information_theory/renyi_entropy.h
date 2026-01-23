@@ -54,11 +54,51 @@ public:
         torch::autograd::AutogradContext* ctx,
         const torch::autograd::variable_list& grad_outputs
     ) {
-        // Second-order gradients not implemented for renyi_entropy
-        // Return undefined tensors
+        const torch::autograd::variable_list saved = ctx->get_saved_variables();
+        at::Tensor grad_output = saved[0];
+        at::Tensor p = saved[1];
+
+        double alpha = ctx->saved_data["alpha"].toDouble();
+        int64_t dim = ctx->saved_data["dim"].toInt();
+        std::string input_type = ctx->saved_data["input_type"].toStringRef();
+        std::string reduction = ctx->saved_data["reduction"].toStringRef();
+        c10::optional<double> base = ctx->saved_data["base"].toOptional<double>();
+        bool p_requires_grad = ctx->saved_data["p_requires_grad"].toBool();
+
+        at::Tensor gg_p = grad_outputs[0];
+
+        if (!gg_p.defined() || !p_requires_grad) {
+            return {
+                at::Tensor(),  // grad_grad_output
+                at::Tensor(),  // grad_p
+                at::Tensor(),  // grad_alpha
+                at::Tensor(),  // grad_dim
+                at::Tensor(),  // grad_input_type
+                at::Tensor(),  // grad_reduction
+                at::Tensor(),  // grad_base
+                at::Tensor()   // grad_p_requires_grad
+            };
+        }
+
+        at::AutoDispatchBelowAutograd guard;
+
+        auto [grad_grad_output, grad_p] = c10::Dispatcher::singleton()
+            .findSchemaOrThrow("torchscience::renyi_entropy_backward_backward", "")
+            .typed<std::tuple<at::Tensor, at::Tensor>(
+                const at::Tensor&,
+                const at::Tensor&,
+                const at::Tensor&,
+                double,
+                int64_t,
+                const std::string&,
+                const std::string&,
+                c10::optional<double>
+            )>()
+            .call(gg_p, grad_output, p, alpha, dim, input_type, reduction, base);
+
         return {
-            at::Tensor(),  // grad_grad_output
-            at::Tensor(),  // grad_p
+            grad_grad_output,
+            grad_p,
             at::Tensor(),  // grad_alpha
             at::Tensor(),  // grad_dim
             at::Tensor(),  // grad_input_type
