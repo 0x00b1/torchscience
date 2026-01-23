@@ -54,37 +54,78 @@ class _BellmanFordFunction(torch.autograd.Function):
         N = adjacency.size(-1)
         grad_adj = torch.zeros_like(adjacency)
 
-        # Get nodes sorted by distance (excluding source and unreachable)
-        reachable_mask = ~torch.isinf(distances) & (
-            torch.arange(N, device=distances.device) != source
-        )
-        reachable_indices = torch.where(reachable_mask)[0]
+        # Handle batched input
+        if adjacency.dim() > 2:
+            # Process each graph in the batch
+            batch_shape = adjacency.shape[:-2]
+            flat_adj = adjacency.reshape(-1, N, N)
+            flat_dist = distances.reshape(-1, N)
+            flat_pred = predecessors.reshape(-1, N)
+            flat_grad_dist = grad_distances.reshape(-1, N)
+            flat_grad_adj = grad_adj.reshape(-1, N, N)
 
-        if reachable_indices.numel() == 0:
+            batch_size = flat_adj.shape[0]
+            for b in range(batch_size):
+                _compute_backward_single(
+                    flat_grad_adj[b],
+                    flat_grad_dist[b].clone(),
+                    flat_dist[b],
+                    flat_pred[b],
+                    source,
+                    ctx.directed,
+                )
+
             return grad_adj, None, None
 
-        # Sort by decreasing distance (process furthest first)
-        sorted_idx = torch.argsort(
-            distances[reachable_indices], descending=True
+        # Single graph case
+        _compute_backward_single(
+            grad_adj,
+            grad_distances.clone(),
+            distances,
+            predecessors,
+            source,
+            ctx.directed,
         )
-        sorted_nodes = reachable_indices[sorted_idx]
-
-        # Accumulate gradients
-        grad_d = grad_distances.clone()
-
-        for node in sorted_nodes:
-            pred = predecessors[node].item()
-            if pred >= 0:
-                # Gradient flows through the edge (pred -> node)
-                grad_adj[pred, node] += grad_d[node]
-                # Gradient accumulates to predecessor's distance
-                grad_d[pred] += grad_d[node]
-
-        # For undirected graphs, symmetrize gradient
-        if not ctx.directed:
-            grad_adj = grad_adj + grad_adj.T
 
         return grad_adj, None, None
+
+
+def _compute_backward_single(
+    grad_adj: Tensor,
+    grad_d: Tensor,
+    distances: Tensor,
+    predecessors: Tensor,
+    source: int,
+    directed: bool,
+) -> None:
+    """Compute gradient for a single graph (in-place into grad_adj)."""
+    N = distances.size(-1)
+
+    # Get nodes sorted by distance (excluding source and unreachable)
+    reachable_mask = ~torch.isinf(distances) & (
+        torch.arange(N, device=distances.device) != source
+    )
+    reachable_indices = torch.where(reachable_mask)[0]
+
+    if reachable_indices.numel() == 0:
+        return
+
+    # Sort by decreasing distance (process furthest first)
+    sorted_idx = torch.argsort(distances[reachable_indices], descending=True)
+    sorted_nodes = reachable_indices[sorted_idx]
+
+    # Accumulate gradients
+    for node in sorted_nodes:
+        pred = predecessors[node].item()
+        if pred >= 0:
+            # Gradient flows through the edge (pred -> node)
+            grad_adj[pred, node] += grad_d[node]
+            # Gradient accumulates to predecessor's distance
+            grad_d[pred] += grad_d[node]
+
+    # For undirected graphs, symmetrize gradient
+    if not directed:
+        grad_adj += grad_adj.T.clone()
 
 
 def bellman_ford(
@@ -106,9 +147,10 @@ def bellman_ford(
     Parameters
     ----------
     adjacency : Tensor
-        Adjacency matrix of shape ``(N, N)`` where ``adjacency[i, j]``
+        Adjacency matrix of shape ``(..., N, N)`` where ``adjacency[..., i, j]``
         is the edge weight from node ``i`` to node ``j``. Use ``float('inf')``
-        for missing edges.
+        for missing edges. Supports batched input with arbitrary leading
+        batch dimensions.
     source : int
         Index of the source vertex (0 to N-1).
     directed : bool, default=True
@@ -118,21 +160,22 @@ def bellman_ford(
     Returns
     -------
     distances : Tensor
-        Tensor of shape ``(N,)`` with shortest path distances from source.
-        ``distances[i]`` is the length of the shortest path from source to
+        Tensor of shape ``(..., N)`` with shortest path distances from source.
+        ``distances[..., i]`` is the length of the shortest path from source to
         node ``i``, or ``inf`` if no path exists.
     predecessors : Tensor
-        Tensor of shape ``(N,)`` with dtype ``int64``.
-        ``predecessors[i]`` is the node immediately before ``i`` on the
+        Tensor of shape ``(..., N)`` with dtype ``int64``.
+        ``predecessors[..., i]`` is the node immediately before ``i`` on the
         shortest path from source to ``i``, or ``-1`` if no path exists
         or if ``i`` is the source.
 
     Raises
     ------
     NegativeCycleError
-        If the graph contains a negative cycle reachable from source.
+        If any graph in the batch contains a negative cycle reachable from source.
     ValueError
-        If input is not 2D, not square, or source is out of range.
+        If input is not at least 2D, not square in the last two dimensions,
+        or source is out of range.
 
     Examples
     --------
@@ -202,16 +245,16 @@ def bellman_ford(
     scipy.sparse.csgraph.bellman_ford : SciPy implementation
     """
     # Input validation
-    if adjacency.dim() != 2:
+    if adjacency.dim() < 2:
         raise ValueError(
-            f"bellman_ford: adjacency must be 2D, got {adjacency.dim()}D"
+            f"bellman_ford: adjacency must be at least 2D, got {adjacency.dim()}D"
         )
-    if adjacency.size(0) != adjacency.size(1):
+    if adjacency.size(-2) != adjacency.size(-1):
         raise ValueError(
             f"bellman_ford: adjacency must be square, "
-            f"got {adjacency.size(0)} x {adjacency.size(1)}"
+            f"got {adjacency.size(-2)} x {adjacency.size(-1)}"
         )
-    N = adjacency.size(0)
+    N = adjacency.size(-1)
     if source < 0 or source >= N:
         raise ValueError(
             f"bellman_ford: source must be in [0, {N - 1}], got {source}"
