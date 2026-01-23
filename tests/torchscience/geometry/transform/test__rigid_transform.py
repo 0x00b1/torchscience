@@ -1103,6 +1103,168 @@ class TestDualQuaternionRoundtrip:
             ), f"Failed for angle {angle}"
 
 
+class TestRigidTransformAdjoint:
+    """Tests for rigid_transform_adjoint."""
+
+    def test_identity_adjoint_is_6x6_identity(self):
+        """Identity transform adjoint is 6x6 identity matrix."""
+        from torchscience.geometry.transform._rigid_transform import (
+            rigid_transform_adjoint,
+        )
+
+        identity = rigid_transform_identity()
+        adjoint = rigid_transform_adjoint(identity)
+
+        expected = torch.eye(6)
+        assert adjoint.shape == (6, 6)
+        assert torch.allclose(adjoint, expected, atol=1e-5)
+
+    def test_pure_rotation_adjoint_structure(self):
+        """For pure rotation, [t]x R block is zero."""
+        from torchscience.geometry.transform._rigid_transform import (
+            rigid_transform_adjoint,
+        )
+
+        # 90 degrees around z-axis, no translation
+        q = quaternion(
+            torch.tensor(
+                [math.cos(math.pi / 4), 0.0, 0.0, math.sin(math.pi / 4)]
+            )
+        )
+        transform = rigid_transform(q, torch.zeros(3))
+        adjoint = rigid_transform_adjoint(transform)
+
+        # For pure rotation with zero translation:
+        # Ad_T = [R 0; 0 R] where [t]x R = 0
+        R = adjoint[:3, :3]  # Top-left rotation
+        R_bottom = adjoint[3:, 3:]  # Bottom-right rotation
+
+        # Both R blocks should be the same rotation matrix
+        assert torch.allclose(R, R_bottom, atol=1e-5)
+
+        # Off-diagonal blocks
+        assert torch.allclose(adjoint[:3, 3:], torch.zeros(3, 3), atol=1e-5)
+        assert torch.allclose(adjoint[3:, :3], torch.zeros(3, 3), atol=1e-5)
+
+    def test_pure_translation_adjoint_structure(self):
+        """For pure translation, diagonal blocks are identity."""
+        from torchscience.geometry.transform._rigid_transform import (
+            rigid_transform_adjoint,
+        )
+
+        identity_rot = quaternion(torch.tensor([1.0, 0.0, 0.0, 0.0]))
+        translation = torch.tensor([1.0, 2.0, 3.0])
+        transform = rigid_transform(identity_rot, translation)
+        adjoint = rigid_transform_adjoint(transform)
+
+        # For pure translation with identity rotation:
+        # Ad_T = [I 0; [t]x I]
+        # Top-left and bottom-right are identity
+        assert torch.allclose(adjoint[:3, :3], torch.eye(3), atol=1e-5)
+        assert torch.allclose(adjoint[3:, 3:], torch.eye(3), atol=1e-5)
+
+        # Top-right is zero
+        assert torch.allclose(adjoint[:3, 3:], torch.zeros(3, 3), atol=1e-5)
+
+        # Bottom-left is skew-symmetric of translation
+        t_skew = adjoint[3:, :3]
+        expected_skew = torch.tensor(
+            [
+                [0.0, -3.0, 2.0],
+                [3.0, 0.0, -1.0],
+                [-2.0, 1.0, 0.0],
+            ]
+        )
+        assert torch.allclose(t_skew, expected_skew, atol=1e-5)
+
+    def test_adjoint_composition_property(self):
+        """Ad_{T1 T2} = Ad_T1 @ Ad_T2."""
+        from torchscience.geometry.transform._rigid_transform import (
+            rigid_transform_adjoint,
+        )
+
+        q1 = quaternion_normalize(quaternion(torch.randn(4)))
+        t1 = torch.randn(3)
+        transform1 = rigid_transform(q1, t1)
+
+        q2 = quaternion_normalize(quaternion(torch.randn(4)))
+        t2 = torch.randn(3)
+        transform2 = rigid_transform(q2, t2)
+
+        # Compose transforms
+        composed = rigid_transform_compose(transform1, transform2)
+
+        # Get adjoints
+        adjoint1 = rigid_transform_adjoint(transform1)
+        adjoint2 = rigid_transform_adjoint(transform2)
+        adjoint_composed = rigid_transform_adjoint(composed)
+
+        # Ad_{T1 T2} = Ad_T1 @ Ad_T2
+        expected = adjoint1 @ adjoint2
+        assert torch.allclose(adjoint_composed, expected, atol=1e-5)
+
+    def test_adjoint_batch(self):
+        """Batched adjoint computation."""
+        from torchscience.geometry.transform._rigid_transform import (
+            rigid_transform_adjoint,
+        )
+
+        q = quaternion_normalize(quaternion(torch.randn(10, 4)))
+        t = torch.randn(10, 3)
+        transform = rigid_transform(q, t)
+
+        adjoint = rigid_transform_adjoint(transform)
+        assert adjoint.shape == (10, 6, 6)
+
+    def test_adjoint_multi_batch(self):
+        """Multi-dimensional batch adjoint computation."""
+        from torchscience.geometry.transform._rigid_transform import (
+            rigid_transform_adjoint,
+        )
+
+        q = quaternion_normalize(quaternion(torch.randn(5, 3, 4)))
+        t = torch.randn(5, 3, 3)
+        transform = rigid_transform(q, t)
+
+        adjoint = rigid_transform_adjoint(transform)
+        assert adjoint.shape == (5, 3, 6, 6)
+
+    def test_adjoint_inverse_property(self):
+        """Ad_{T^{-1}} = Ad_T^{-1}."""
+        from torchscience.geometry.transform._rigid_transform import (
+            rigid_transform_adjoint,
+        )
+
+        q = quaternion_normalize(quaternion(torch.randn(4)))
+        t = torch.randn(3)
+        transform = rigid_transform(q, t)
+        transform_inv = rigid_transform_inverse(transform)
+
+        adjoint = rigid_transform_adjoint(transform)
+        adjoint_inv = rigid_transform_adjoint(transform_inv)
+
+        # Ad_{T^{-1}} should be the inverse of Ad_T
+        assert torch.allclose(adjoint @ adjoint_inv, torch.eye(6), atol=1e-5)
+        assert torch.allclose(adjoint_inv @ adjoint, torch.eye(6), atol=1e-5)
+
+    def test_adjoint_gradcheck(self):
+        """Gradient check for rigid_transform_adjoint."""
+        from torchscience.geometry.transform._rigid_transform import (
+            rigid_transform_adjoint,
+        )
+
+        q = torch.randn(4, dtype=torch.float64)
+        q = q / torch.linalg.norm(q)
+        q = q.clone().detach().requires_grad_(True)
+        t = torch.randn(3, dtype=torch.float64, requires_grad=True)
+
+        def adjoint_fn(q_val, t_val):
+            transform = rigid_transform(Quaternion(wxyz=q_val), t_val)
+            return rigid_transform_adjoint(transform)
+
+        assert gradcheck(adjoint_fn, (q, t), eps=1e-6, atol=1e-4)
+
+
 class TestDualQuaternionGradients:
     """Tests for dual quaternion gradient computation."""
 

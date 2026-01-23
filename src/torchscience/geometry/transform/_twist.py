@@ -307,6 +307,88 @@ def matrix_to_twist(matrix: Tensor) -> Twist:
     return Twist(angular=angular, linear=linear)
 
 
+def twist_transform(twist: Twist, t: "RigidTransform") -> Twist:
+    """Transform a twist by a rigid transform using the adjoint.
+
+    If a twist describes a velocity in frame A, and t is a transform from
+    frame A to frame B, then the result is the same velocity expressed in
+    frame B.
+
+    The transformation is computed as:
+
+    .. math::
+
+        \\xi' = Ad_T \\cdot \\xi
+
+    Which expands to:
+    - angular' = R @ angular
+    - linear' = R @ linear + t x (R @ angular)
+
+    where R is the rotation matrix and t is the translation vector.
+
+    Parameters
+    ----------
+    twist : Twist
+        Twist to transform (angular and linear velocity).
+    t : RigidTransform
+        Rigid transform defining the change of reference frame.
+
+    Returns
+    -------
+    Twist
+        Transformed twist in the new reference frame.
+
+    Notes
+    -----
+    - This is the adjoint action of SE(3) on its Lie algebra se(3).
+    - Equivalent to: twist_from_vector(rigid_transform_adjoint(t) @ twist_to_vector(twist))
+    - Used in robotics for:
+      - Changing velocity reference frames
+      - Jacobian computation
+      - Velocity propagation in kinematic chains
+
+    Examples
+    --------
+    Identity transform returns same twist:
+
+    >>> from torchscience.geometry.transform import rigid_transform_identity, twist
+    >>> t = twist(torch.tensor([0.1, 0.2, 0.3]), torch.tensor([1.0, 2.0, 3.0]))
+    >>> identity = rigid_transform_identity()
+    >>> transformed = twist_transform(t, identity)
+    >>> torch.allclose(transformed.angular, t.angular, atol=1e-5)
+    True
+
+    Pure rotation rotates both components:
+
+    >>> from torchscience.geometry.transform import quaternion, rigid_transform, twist
+    >>> import math
+    >>> q = quaternion(torch.tensor([math.cos(math.pi/4), 0.0, 0.0, math.sin(math.pi/4)]))
+    >>> transform = rigid_transform(q, torch.zeros(3))
+    >>> t = twist(torch.tensor([1.0, 0.0, 0.0]), torch.tensor([1.0, 0.0, 0.0]))
+    >>> result = twist_transform(t, transform)
+    >>> # Angular (1,0,0) rotated 90 deg around z -> (0,1,0)
+    >>> torch.allclose(result.angular, torch.tensor([0.0, 1.0, 0.0]), atol=1e-5)
+    True
+    """
+    # Import here to avoid circular imports
+    from torchscience.geometry.transform._quaternion import quaternion_apply
+
+    # Get rotation: angular' = R @ angular
+    rotated_angular = quaternion_apply(t.rotation, twist.angular)
+
+    # Get rotated linear: R @ linear
+    rotated_linear = quaternion_apply(t.rotation, twist.linear)
+
+    # Compute cross product: t x (R @ angular)
+    # cross_term = translation x rotated_angular
+    cross_term = torch.linalg.cross(t.translation, rotated_angular)
+
+    # Final linear: R @ linear + t x (R @ angular)
+    transformed_linear = rotated_linear + cross_term
+
+    return Twist(angular=rotated_angular, linear=transformed_linear)
+
+
 def twist_apply(t: Twist, point: Tensor, dt: Tensor) -> Tensor:
     """Apply a twist to a point for a given time duration.
 

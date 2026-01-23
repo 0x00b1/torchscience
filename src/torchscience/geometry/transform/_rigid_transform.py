@@ -611,6 +611,112 @@ def rigid_transform_to_dual_quaternion(t: RigidTransform) -> Tensor:
     return torch.cat([q_r, q_d], dim=-1)
 
 
+def _skew_symmetric_3x3(v: Tensor) -> Tensor:
+    """Compute the skew-symmetric matrix [v]_x from a 3-vector.
+
+    Parameters
+    ----------
+    v : Tensor
+        3-vector, shape (..., 3).
+
+    Returns
+    -------
+    Tensor
+        Skew-symmetric matrix, shape (..., 3, 3).
+    """
+    v_x = v[..., 0]
+    v_y = v[..., 1]
+    v_z = v[..., 2]
+
+    zeros = torch.zeros_like(v_x)
+
+    row0 = torch.stack([zeros, -v_z, v_y], dim=-1)
+    row1 = torch.stack([v_z, zeros, -v_x], dim=-1)
+    row2 = torch.stack([-v_y, v_x, zeros], dim=-1)
+
+    return torch.stack([row0, row1, row2], dim=-2)
+
+
+def rigid_transform_adjoint(t: RigidTransform) -> Tensor:
+    """Compute the 6x6 adjoint matrix for a rigid transform.
+
+    The adjoint representation transforms twists between reference frames.
+    If xi is a twist in frame A, and T transforms from A to B, then
+    Ad_T @ xi gives the twist in frame B.
+
+    The adjoint matrix has the structure:
+
+    .. math::
+
+        Ad_T = \\begin{bmatrix}
+            R & 0 \\\\
+            [t]_\\times R & R
+        \\end{bmatrix}
+
+    where R is the 3x3 rotation matrix, [t]_x is the skew-symmetric matrix
+    of the translation vector, and 0 is a 3x3 zero matrix.
+
+    Parameters
+    ----------
+    t : RigidTransform
+        Rigid transform (rotation and translation).
+
+    Returns
+    -------
+    Tensor
+        6x6 adjoint matrix, shape (..., 6, 6).
+
+    Notes
+    -----
+    - The adjoint satisfies: Ad_{T1 T2} = Ad_T1 @ Ad_T2
+    - The inverse relation: Ad_{T^{-1}} = (Ad_T)^{-1}
+    - Used for changing reference frames for twists and wrenches
+    - Fundamental in robotics for Jacobian computation and velocity propagation
+
+    Examples
+    --------
+    Identity transform gives identity adjoint:
+
+    >>> identity = rigid_transform_identity()
+    >>> adjoint = rigid_transform_adjoint(identity)
+    >>> torch.allclose(adjoint, torch.eye(6), atol=1e-5)
+    True
+
+    Pure rotation (no translation):
+
+    >>> from torchscience.geometry.transform import quaternion
+    >>> import math
+    >>> q = quaternion(torch.tensor([math.cos(math.pi/4), 0.0, 0.0, math.sin(math.pi/4)]))
+    >>> transform = rigid_transform(q, torch.zeros(3))
+    >>> adjoint = rigid_transform_adjoint(transform)
+    >>> # [t]_x R = 0 for zero translation
+    >>> torch.allclose(adjoint[3:, :3], torch.zeros(3, 3), atol=1e-5)
+    True
+    """
+    # Get rotation matrix from quaternion
+    R = quaternion_to_matrix(t.rotation)  # (..., 3, 3)
+
+    # Get batch shape
+    batch_shape = R.shape[:-2]
+
+    # Create 6x6 adjoint matrix
+    adjoint = torch.zeros((*batch_shape, 6, 6), device=R.device, dtype=R.dtype)
+
+    # Top-left block: R
+    adjoint[..., :3, :3] = R
+
+    # Top-right block: 0 (already initialized to zero)
+
+    # Bottom-right block: R
+    adjoint[..., 3:, 3:] = R
+
+    # Bottom-left block: [t]_x @ R
+    t_skew = _skew_symmetric_3x3(t.translation)  # (..., 3, 3)
+    adjoint[..., 3:, :3] = torch.matmul(t_skew, R)
+
+    return adjoint
+
+
 def dual_quaternion_to_rigid_transform(dq: Tensor) -> RigidTransform:
     """Convert dual quaternion to rigid transform.
 

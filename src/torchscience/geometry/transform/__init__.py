@@ -42,6 +42,7 @@ from torchscience.geometry.transform._rigid_transform import (
     RigidTransform,
     dual_quaternion_to_rigid_transform,
     rigid_transform,
+    rigid_transform_adjoint,
     rigid_transform_apply,
     rigid_transform_apply_vector,
     rigid_transform_compose,
@@ -80,6 +81,7 @@ from torchscience.geometry.transform._twist import (
     twist_from_vector,
     twist_to_matrix,
     twist_to_vector,
+    twist_transform,
 )
 
 __all__ = [
@@ -116,6 +118,7 @@ __all__ = [
     "reflect",
     "refract",
     "rigid_transform",
+    "rigid_transform_adjoint",
     "rigid_transform_apply",
     "rigid_transform_apply_vector",
     "rigid_transform_compose",
@@ -142,5 +145,6 @@ __all__ = [
     "twist_from_vector",
     "twist_to_matrix",
     "twist_to_vector",
+    "twist_transform",
     "matrix_to_twist",
 ]

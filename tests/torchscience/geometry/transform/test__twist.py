@@ -756,6 +756,246 @@ class TestSE3NumericalStability:
         assert torch.allclose(M1, M2, atol=1e-8)
 
 
+class TestTwistTransform:
+    """Tests for twist_transform (adjoint action on twists)."""
+
+    def test_identity_transform_returns_same_twist(self):
+        """Transforming a twist by identity returns the same twist."""
+        from torchscience.geometry.transform import (
+            rigid_transform_identity,
+            twist,
+        )
+        from torchscience.geometry.transform._twist import twist_transform
+
+        angular = torch.tensor([0.1, 0.2, 0.3])
+        linear = torch.tensor([1.0, 2.0, 3.0])
+        t = twist(angular, linear)
+
+        identity = rigid_transform_identity()
+        transformed = twist_transform(t, identity)
+
+        assert torch.allclose(transformed.angular, angular, atol=1e-5)
+        assert torch.allclose(transformed.linear, linear, atol=1e-5)
+
+    def test_pure_rotation_transform(self):
+        """Pure rotation rotates both angular and linear components."""
+        from torchscience.geometry.transform import (
+            quaternion,
+            rigid_transform,
+            twist,
+        )
+        from torchscience.geometry.transform._twist import twist_transform
+
+        # 90 degrees around z-axis
+        q = quaternion(
+            torch.tensor(
+                [math.cos(math.pi / 4), 0.0, 0.0, math.sin(math.pi / 4)]
+            )
+        )
+        transform = rigid_transform(q, torch.zeros(3))
+
+        # Twist in x direction
+        angular = torch.tensor([1.0, 0.0, 0.0])
+        linear = torch.tensor([1.0, 0.0, 0.0])
+        t = twist(angular, linear)
+
+        transformed = twist_transform(t, transform)
+
+        # After 90 deg rotation around z:
+        # angular' = R @ angular = (0, 1, 0)
+        # linear' = R @ linear + [t]x @ R @ angular = (0, 1, 0) + 0 = (0, 1, 0)
+        expected_angular = torch.tensor([0.0, 1.0, 0.0])
+        expected_linear = torch.tensor([0.0, 1.0, 0.0])
+
+        assert torch.allclose(transformed.angular, expected_angular, atol=1e-5)
+        assert torch.allclose(transformed.linear, expected_linear, atol=1e-5)
+
+    def test_pure_translation_transform(self):
+        """Pure translation only affects linear component via cross product."""
+        from torchscience.geometry.transform import (
+            quaternion,
+            rigid_transform,
+            twist,
+        )
+        from torchscience.geometry.transform._twist import twist_transform
+
+        identity_rot = quaternion(torch.tensor([1.0, 0.0, 0.0, 0.0]))
+        translation = torch.tensor([0.0, 0.0, 1.0])  # z-translation
+        transform = rigid_transform(identity_rot, translation)
+
+        # Twist with angular velocity around z
+        angular = torch.tensor([0.0, 0.0, 1.0])
+        linear = torch.tensor([0.0, 0.0, 0.0])
+        t = twist(angular, linear)
+
+        transformed = twist_transform(t, transform)
+
+        # angular' = R @ angular = angular (identity rotation)
+        # linear' = R @ linear + t x (R @ angular) = 0 + (0,0,1) x (0,0,1) = 0
+        assert torch.allclose(transformed.angular, angular, atol=1e-5)
+        assert torch.allclose(transformed.linear, torch.zeros(3), atol=1e-5)
+
+    def test_translation_with_non_parallel_angular(self):
+        """Translation produces cross product when angular is non-parallel."""
+        from torchscience.geometry.transform import (
+            quaternion,
+            rigid_transform,
+            twist,
+        )
+        from torchscience.geometry.transform._twist import twist_transform
+
+        identity_rot = quaternion(torch.tensor([1.0, 0.0, 0.0, 0.0]))
+        translation = torch.tensor([1.0, 0.0, 0.0])  # x-translation
+        transform = rigid_transform(identity_rot, translation)
+
+        # Twist with angular velocity around z
+        angular = torch.tensor([0.0, 0.0, 1.0])
+        linear = torch.tensor([0.0, 0.0, 0.0])
+        t = twist(angular, linear)
+
+        transformed = twist_transform(t, transform)
+
+        # angular' = angular (identity rotation)
+        # linear' = 0 + (1,0,0) x (0,0,1) = (0, -1, 0)
+        expected_linear = torch.tensor([0.0, -1.0, 0.0])
+        assert torch.allclose(transformed.angular, angular, atol=1e-5)
+        assert torch.allclose(transformed.linear, expected_linear, atol=1e-5)
+
+    def test_consistency_with_adjoint_matrix(self):
+        """twist_transform should match Ad_T @ twist_vector."""
+        from torchscience.geometry.transform import (
+            quaternion,
+            quaternion_normalize,
+            rigid_transform,
+            twist,
+            twist_from_vector,
+            twist_to_vector,
+        )
+        from torchscience.geometry.transform._rigid_transform import (
+            rigid_transform_adjoint,
+        )
+        from torchscience.geometry.transform._twist import twist_transform
+
+        q = quaternion_normalize(quaternion(torch.randn(4)))
+        translation = torch.randn(3)
+        transform = rigid_transform(q, translation)
+
+        angular = torch.randn(3)
+        linear = torch.randn(3)
+        t = twist(angular, linear)
+
+        # Method 1: twist_transform
+        transformed1 = twist_transform(t, transform)
+
+        # Method 2: adjoint matrix multiplication
+        adjoint = rigid_transform_adjoint(transform)
+        vector = twist_to_vector(t)
+        transformed_vector = adjoint @ vector
+        transformed2 = twist_from_vector(transformed_vector)
+
+        assert torch.allclose(
+            transformed1.angular, transformed2.angular, atol=1e-5
+        )
+        assert torch.allclose(
+            transformed1.linear, transformed2.linear, atol=1e-5
+        )
+
+    def test_twist_transform_batch(self):
+        """Batched twist transform."""
+        from torchscience.geometry.transform import (
+            quaternion,
+            quaternion_normalize,
+            rigid_transform,
+            twist,
+        )
+        from torchscience.geometry.transform._twist import twist_transform
+
+        q = quaternion_normalize(quaternion(torch.randn(10, 4)))
+        translation = torch.randn(10, 3)
+        transform = rigid_transform(q, translation)
+
+        angular = torch.randn(10, 3)
+        linear = torch.randn(10, 3)
+        t = twist(angular, linear)
+
+        transformed = twist_transform(t, transform)
+
+        assert transformed.angular.shape == (10, 3)
+        assert transformed.linear.shape == (10, 3)
+
+    def test_twist_transform_composition(self):
+        """twist_transform(twist_transform(t, T1), T2) = twist_transform(t, compose(T2, T1))."""
+        from torchscience.geometry.transform import (
+            quaternion,
+            quaternion_normalize,
+            rigid_transform,
+            rigid_transform_compose,
+            twist,
+        )
+        from torchscience.geometry.transform._twist import twist_transform
+
+        q1 = quaternion_normalize(quaternion(torch.randn(4)))
+        t1 = torch.randn(3)
+        transform1 = rigid_transform(q1, t1)
+
+        q2 = quaternion_normalize(quaternion(torch.randn(4)))
+        t2 = torch.randn(3)
+        transform2 = rigid_transform(q2, t2)
+
+        angular = torch.randn(3)
+        linear = torch.randn(3)
+        tw = twist(angular, linear)
+
+        # Method 1: Sequential application
+        temp = twist_transform(tw, transform1)
+        result1 = twist_transform(temp, transform2)
+
+        # Method 2: Compose and apply
+        # Note: compose(T2, T1) applies T1 first, then T2
+        composed = rigid_transform_compose(transform2, transform1)
+        result2 = twist_transform(tw, composed)
+
+        assert torch.allclose(result1.angular, result2.angular, atol=1e-5)
+        assert torch.allclose(result1.linear, result2.linear, atol=1e-5)
+
+    def test_twist_transform_gradcheck(self):
+        """Gradient check for twist_transform."""
+        from torchscience.geometry.transform._twist import twist_transform
+
+        q = torch.randn(4, dtype=torch.float64)
+        q = q / torch.linalg.norm(q)
+        q = q.clone().detach().requires_grad_(True)
+        t_trans = torch.randn(3, dtype=torch.float64, requires_grad=True)
+
+        angular = torch.randn(3, dtype=torch.float64, requires_grad=True)
+        linear = torch.randn(3, dtype=torch.float64, requires_grad=True)
+
+        def transform_fn(q_val, t_val, ang, lin):
+            from torchscience.geometry.transform import (
+                Quaternion,
+                rigid_transform,
+                twist,
+            )
+
+            transform = rigid_transform(Quaternion(wxyz=q_val), t_val)
+            tw = twist(ang, lin)
+            result = twist_transform(tw, transform)
+            return result.angular, result.linear
+
+        assert gradcheck(
+            lambda q, t, a, l: transform_fn(q, t, a, l)[0],
+            (q, t_trans, angular, linear),
+            eps=1e-6,
+            atol=1e-4,
+        )
+        assert gradcheck(
+            lambda q, t, a, l: transform_fn(q, t, a, l)[1],
+            (q, t_trans, angular, linear),
+            eps=1e-6,
+            atol=1e-4,
+        )
+
+
 class TestTwistIntegration:
     """Integration tests for twist operations."""
 
