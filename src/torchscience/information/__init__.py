@@ -10,6 +10,7 @@ from ._cross_entropy import cross_entropy
 from ._directed_information import directed_information
 from ._dual_total_correlation import dual_total_correlation
 from ._f_divergence import f_divergence
+from ._histogram_entropy import histogram_entropy
 from ._interaction_information import interaction_information
 from ._jensen_shannon_divergence import jensen_shannon_divergence
 from ._joint_entropy import joint_entropy
@@ -38,6 +39,7 @@ __all__ = [
     "directed_information",
     "dual_total_correlation",
     "f_divergence",
+    "histogram_entropy",
     "interaction_information",
     "jensen_shannon_divergence",
     "joint_entropy",
