@@ -36,24 +36,73 @@ class _MinimumSpanningTreeFunction(torch.autograd.Function):
         # If equal: split gradient 0.5 to each (subgradient)
         grad_adj = torch.zeros_like(adjacency)
 
-        # edges has shape (N-1, 2) containing (u, v) pairs
-        if edges.numel() > 0:
-            for i in range(edges.size(0)):
-                u, v = edges[i, 0].item(), edges[i, 1].item()
-                if u < 0 or v < 0:  # Skip invalid edges (disconnected graph)
-                    continue
+        # Handle batched case
+        if adjacency.dim() > 2:
+            # Flatten batch dimensions for processing
+            batch_shape = adjacency.shape[:-2]
+            batch_numel = 1
+            for s in batch_shape:
+                batch_numel *= s
 
-                w_uv = adjacency[u, v]
-                w_vu = adjacency[v, u]
+            flat_adj = adjacency.reshape(
+                batch_numel, adjacency.size(-2), adjacency.size(-1)
+            )
+            flat_edges = edges.reshape(batch_numel, edges.size(-2), 2)
+            flat_grad_adj = grad_adj.reshape(
+                batch_numel, adjacency.size(-2), adjacency.size(-1)
+            )
 
-                if w_uv < w_vu:
-                    grad_adj[u, v] += grad_total_weight
-                elif w_vu < w_uv:
-                    grad_adj[v, u] += grad_total_weight
-                else:
-                    # Equal weights: split gradient
-                    grad_adj[u, v] += 0.5 * grad_total_weight
-                    grad_adj[v, u] += 0.5 * grad_total_weight
+            # grad_total_weight has shape (...), flatten to (batch_numel,)
+            flat_grad_weight = grad_total_weight.reshape(batch_numel)
+
+            for b in range(batch_numel):
+                batch_edges = flat_edges[b]
+                batch_adj = flat_adj[b]
+                g = flat_grad_weight[b]
+
+                if batch_edges.numel() > 0:
+                    for i in range(batch_edges.size(0)):
+                        u, v = (
+                            batch_edges[i, 0].item(),
+                            batch_edges[i, 1].item(),
+                        )
+                        if u < 0 or v < 0:  # Skip invalid edges
+                            continue
+
+                        w_uv = batch_adj[u, v]
+                        w_vu = batch_adj[v, u]
+
+                        if w_uv < w_vu:
+                            flat_grad_adj[b, u, v] += g
+                        elif w_vu < w_uv:
+                            flat_grad_adj[b, v, u] += g
+                        else:
+                            # Equal weights: split gradient
+                            flat_grad_adj[b, u, v] += 0.5 * g
+                            flat_grad_adj[b, v, u] += 0.5 * g
+
+            grad_adj = flat_grad_adj.reshape(adjacency.shape)
+        else:
+            # edges has shape (N-1, 2) containing (u, v) pairs
+            if edges.numel() > 0:
+                for i in range(edges.size(0)):
+                    u, v = edges[i, 0].item(), edges[i, 1].item()
+                    if (
+                        u < 0 or v < 0
+                    ):  # Skip invalid edges (disconnected graph)
+                        continue
+
+                    w_uv = adjacency[u, v]
+                    w_vu = adjacency[v, u]
+
+                    if w_uv < w_vu:
+                        grad_adj[u, v] += grad_total_weight
+                    elif w_vu < w_uv:
+                        grad_adj[v, u] += grad_total_weight
+                    else:
+                        # Equal weights: split gradient
+                        grad_adj[u, v] += 0.5 * grad_total_weight
+                        grad_adj[v, u] += 0.5 * grad_total_weight
 
         return grad_adj
 
@@ -74,18 +123,19 @@ def minimum_spanning_tree(
     Parameters
     ----------
     adjacency : Tensor
-        Adjacency matrix of shape ``(N, N)`` where ``adjacency[i, j]``
+        Adjacency matrix of shape ``(..., N, N)`` where ``adjacency[..., i, j]``
         is the edge weight between node ``i`` and node ``j``. Use ``float('inf')``
         for missing edges. The graph is treated as undirected (uses minimum of
-        ``adjacency[i, j]`` and ``adjacency[j, i]``).
+        ``adjacency[..., i, j]`` and ``adjacency[..., j, i]``).
+        Supports batched input with arbitrary leading batch dimensions.
 
     Returns
     -------
     total_weight : Tensor
-        Scalar tensor with the total weight of the MST. Returns ``inf`` if the
-        graph is not connected.
+        Tensor with the total weight of the MST. Has shape ``(...)`` matching
+        the batch dimensions. Returns ``inf`` if the graph is not connected.
     edges : Tensor
-        Tensor of shape ``(N-1, 2)`` with dtype ``int64`` containing the edges
+        Tensor of shape ``(..., N-1, 2)`` with dtype ``int64`` containing the edges
         in the MST. Each row ``[u, v]`` represents an edge from node ``u`` to
         node ``v``. If graph is disconnected, returns edges of the spanning
         forest (fewer than N-1 edges, padded with -1).
@@ -93,7 +143,7 @@ def minimum_spanning_tree(
     Raises
     ------
     ValueError
-        If input is not 2D, not square, or has fewer than 1 node.
+        If input is not at least 2D, not square, or has fewer than 1 node.
 
     Examples
     --------
@@ -166,16 +216,16 @@ def minimum_spanning_tree(
     scipy.sparse.csgraph.minimum_spanning_tree : SciPy implementation
     """
     # Input validation
-    if adjacency.dim() != 2:
+    if adjacency.dim() < 2:
         raise ValueError(
-            f"minimum_spanning_tree: adjacency must be 2D, got {adjacency.dim()}D"
+            f"minimum_spanning_tree: adjacency must be at least 2D, got {adjacency.dim()}D"
         )
-    if adjacency.size(0) != adjacency.size(1):
+    if adjacency.size(-2) != adjacency.size(-1):
         raise ValueError(
             f"minimum_spanning_tree: adjacency must be square, "
-            f"got {adjacency.size(0)} x {adjacency.size(1)}"
+            f"got {adjacency.size(-2)} x {adjacency.size(-1)}"
         )
-    N = adjacency.size(0)
+    N = adjacency.size(-1)
     if N < 1:
         raise ValueError(
             "minimum_spanning_tree: graph must have at least 1 node"

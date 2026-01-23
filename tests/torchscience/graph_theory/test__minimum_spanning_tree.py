@@ -149,13 +149,8 @@ class TestMinimumSpanningTreeValidation:
 
     def test_rejects_1d_input(self):
         """Should reject 1D input."""
-        with pytest.raises(ValueError, match="2D"):
+        with pytest.raises(ValueError, match="at least 2D"):
             minimum_spanning_tree(torch.tensor([1.0, 2.0, 3.0]))
-
-    def test_rejects_3d_input(self):
-        """Should reject 3D input."""
-        with pytest.raises(ValueError, match="2D"):
-            minimum_spanning_tree(torch.rand(2, 3, 3))
 
     def test_rejects_non_square(self):
         """Should reject non-square adjacency."""
@@ -341,3 +336,90 @@ class TestMinimumSpanningTreeEdgeCases:
 
         # MST uses edges (1,2) with weight 1 and (0,1) with weight 1e10
         assert weight.item() == pytest.approx(1e10 + 1.0, rel=1e-9)
+
+
+class TestMinimumSpanningTreeBatched:
+    """Tests for batched input."""
+
+    def test_batch_2d(self):
+        """Batched with single batch dimension."""
+        torch.manual_seed(42)
+        adj = torch.rand(3, 5, 5)
+        adj = adj + adj.transpose(-1, -2)  # Symmetrize
+        adj.diagonal(dim1=-2, dim2=-1).fill_(0)
+
+        weight, edges = minimum_spanning_tree(adj)
+        assert weight.shape == (3,)
+        assert edges.shape == (3, 4, 2)  # Each graph has N-1 edges
+
+    def test_batch_consistency(self):
+        """Batched result matches individual computations."""
+        adj1 = torch.tensor(
+            [
+                [0.0, 1.0, 3.0],
+                [1.0, 0.0, 2.0],
+                [3.0, 2.0, 0.0],
+            ]
+        )
+        adj2 = torch.tensor(
+            [
+                [0.0, 5.0, 2.0],
+                [5.0, 0.0, 1.0],
+                [2.0, 1.0, 0.0],
+            ]
+        )
+
+        w1, e1 = minimum_spanning_tree(adj1)
+        w2, e2 = minimum_spanning_tree(adj2)
+
+        batch_adj = torch.stack([adj1, adj2])
+        w_batch, e_batch = minimum_spanning_tree(batch_adj)
+
+        assert w_batch[0].item() == w1.item()
+        assert w_batch[1].item() == w2.item()
+
+    def test_batch_multi_dimensional(self):
+        """Batched with multiple batch dimensions."""
+        torch.manual_seed(42)
+        adj = torch.rand(2, 3, 4, 4)
+        adj = adj + adj.transpose(-1, -2)  # Symmetrize
+        adj.diagonal(dim1=-2, dim2=-1).fill_(0)
+
+        weight, edges = minimum_spanning_tree(adj)
+        assert weight.shape == (2, 3)
+        assert edges.shape == (2, 3, 3, 2)  # Each graph has N-1 = 3 edges
+
+    def test_batch_gradient(self):
+        """Gradient through batched MST."""
+        adj = torch.tensor(
+            [
+                [
+                    [0.0, 1.0, 3.0],
+                    [1.0, 0.0, 2.0],
+                    [3.0, 2.0, 0.0],
+                ],
+                [
+                    [0.0, 5.0, 2.0],
+                    [5.0, 0.0, 1.0],
+                    [2.0, 1.0, 0.0],
+                ],
+            ],
+            requires_grad=True,
+        )
+
+        weight, _ = minimum_spanning_tree(adj)
+        loss = weight.sum()
+        loss.backward()
+
+        assert adj.grad is not None
+        assert adj.grad.shape == (2, 3, 3)
+
+    def test_batch_meta(self):
+        """Meta tensor with batched input."""
+        adj = torch.rand(2, 3, 5, 5, device="meta")
+        weight, edges = minimum_spanning_tree(adj)
+
+        assert weight.shape == (2, 3)
+        assert edges.shape == (2, 3, 4, 2)
+        assert weight.device.type == "meta"
+        assert edges.device.type == "meta"

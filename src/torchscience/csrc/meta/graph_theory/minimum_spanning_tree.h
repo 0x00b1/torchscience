@@ -9,23 +9,30 @@ inline std::tuple<at::Tensor, at::Tensor> minimum_spanning_tree(
     const at::Tensor& adjacency
 ) {
   TORCH_CHECK(
-      adjacency.dim() == 2,
-      "minimum_spanning_tree: adjacency must be 2D, got ", adjacency.dim(), "D"
+      adjacency.dim() >= 2,
+      "minimum_spanning_tree: adjacency must be at least 2D, got ", adjacency.dim(), "D"
   );
   TORCH_CHECK(
-      adjacency.size(0) == adjacency.size(1),
+      adjacency.size(-2) == adjacency.size(-1),
       "minimum_spanning_tree: adjacency must be square, got ",
-      adjacency.size(0), " x ", adjacency.size(1)
+      adjacency.size(-2), " x ", adjacency.size(-1)
   );
 
-  int64_t N = adjacency.size(0);
+  int64_t N = adjacency.size(-1);
 
-  // total_weight is a scalar
-  at::Tensor total_weight = at::empty({}, adjacency.options());
+  // Get batch dimensions
+  auto batch_sizes = adjacency.sizes().slice(0, adjacency.dim() - 2);
 
-  // edges has shape (N-1, 2) for N >= 1, or (0, 2) for N == 0
+  // total_weight has shape (...) for batched input, () for single input
+  std::vector<int64_t> weight_sizes(batch_sizes.begin(), batch_sizes.end());
+  at::Tensor total_weight = at::empty(weight_sizes, adjacency.options());
+
+  // edges has shape (..., N-1, 2) for N >= 1, or (..., 0, 2) for N == 0
   int64_t num_edges = N > 1 ? N - 1 : 0;
-  at::Tensor edges = at::empty({num_edges, 2}, adjacency.options().dtype(at::kLong));
+  std::vector<int64_t> edge_sizes(batch_sizes.begin(), batch_sizes.end());
+  edge_sizes.push_back(num_edges);
+  edge_sizes.push_back(2);
+  at::Tensor edges = at::empty(edge_sizes, adjacency.options().dtype(at::kLong));
 
   return std::make_tuple(total_weight, edges);
 }
