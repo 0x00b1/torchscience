@@ -32,6 +32,16 @@ adjoint
     memory-efficient gradients. Uses O(1) memory for the autograd
     graph instead of O(n_steps).
 
+Stiff Solvers
+-------------
+bdf
+    Variable-order BDF method (orders 1-5). Industry standard for
+    stiff problems. Automatically adapts order based on local error.
+
+radau
+    Radau IIA method (3-stage, order 5, L-stable). Excellent for
+    very stiff problems with high-frequency oscillations.
+
 Exceptions
 ----------
 ODESolverError
@@ -105,6 +115,24 @@ Stiff problems with implicit solver:
 >>> y_final, _ = backward_euler(
 ...     stiff_decay, y0, t_span=(0.0, 1.0), dt=0.1
 ... )
+
+Stiff chemical kinetics (Robertson's problem):
+
+>>> def robertson(t, y):
+...     y1, y2, y3 = y[0], y[1], y[2]
+...     dy1 = -0.04 * y1 + 1e4 * y2 * y3
+...     dy2 = 0.04 * y1 - 1e4 * y2 * y3 - 3e7 * y2**2
+...     dy3 = 3e7 * y2**2
+...     return torch.stack([dy1, dy2, dy3])
+>>>
+>>> y0 = torch.tensor([1.0, 0.0, 0.0], dtype=torch.float64)
+>>> y_final, interp = bdf(robertson, y0, t_span=(0.0, 1e5))
+
+Choosing between stiff solvers:
+
+- Use ``bdf`` for most stiff problems (good general choice)
+- Use ``radau`` for very stiff problems or when L-stability is important
+- Use ``backward_euler`` for simple problems or when speed matters more than accuracy
 """
 
 from torchscience.integration.initial_value_problem._adjoint import adjoint
