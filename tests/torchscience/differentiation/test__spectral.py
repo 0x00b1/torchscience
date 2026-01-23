@@ -3,6 +3,7 @@
 import math
 
 import torch
+from torch.autograd import gradcheck, gradgradcheck
 
 from torchscience.differentiation import (
     spectral_derivative,
@@ -243,3 +244,70 @@ class TestSpectralLaplacian:
         field = torch.randn(32, 32, dtype=torch.float64)
         lap = spectral_laplacian(field)
         assert lap.dtype == torch.float64
+
+
+class TestSpectralAutograd:
+    """Autograd tests for spectral operators."""
+
+    def test_spectral_derivative_gradcheck(self):
+        """Verify gradients for spectral_derivative."""
+        n = 16
+        x = torch.randn(n, dtype=torch.float64, requires_grad=True)
+
+        def func(field):
+            return spectral_derivative(field, dim=0)
+
+        assert gradcheck(func, (x,), raise_exception=True)
+
+    def test_spectral_derivative_gradgradcheck(self):
+        """Verify second-order gradients for spectral_derivative."""
+        n = 16
+        x = torch.randn(n, dtype=torch.float64, requires_grad=True)
+
+        def func(field):
+            return spectral_derivative(field, dim=0)
+
+        assert gradgradcheck(func, (x,), raise_exception=True)
+
+    def test_spectral_gradient_gradcheck(self):
+        """Verify gradients for spectral_gradient."""
+        n = 8
+        field = torch.randn(n, n, dtype=torch.float64, requires_grad=True)
+
+        def func(f):
+            # spectral_gradient returns stacked tensor, sum for scalar output
+            grad = spectral_gradient(f)
+            return grad.sum(dim=0)
+
+        assert gradcheck(func, (field,), raise_exception=True)
+
+    def test_spectral_gradient_gradgradcheck(self):
+        """Verify second-order gradients for spectral_gradient."""
+        n = 8
+        field = torch.randn(n, n, dtype=torch.float64, requires_grad=True)
+
+        def func(f):
+            grad = spectral_gradient(f)
+            return grad.sum(dim=0)
+
+        assert gradgradcheck(func, (field,), raise_exception=True)
+
+    def test_spectral_laplacian_gradcheck(self):
+        """Verify gradients for spectral_laplacian."""
+        n = 8
+        field = torch.randn(n, n, dtype=torch.float64, requires_grad=True)
+
+        def func(f):
+            return spectral_laplacian(f)
+
+        assert gradcheck(func, (field,), raise_exception=True)
+
+    def test_spectral_laplacian_gradgradcheck(self):
+        """Verify second-order gradients for spectral_laplacian."""
+        n = 8
+        field = torch.randn(n, n, dtype=torch.float64, requires_grad=True)
+
+        def func(f):
+            return spectral_laplacian(f)
+
+        assert gradgradcheck(func, (field,), raise_exception=True)
