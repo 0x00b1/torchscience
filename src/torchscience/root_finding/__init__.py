@@ -9,6 +9,7 @@ from ._exceptions import BracketError, DerivativeError, RootFindingError
 from ._fixed_point import fixed_point
 from ._halley import halley
 from ._newton import newton
+from ._newton_system import newton_system
 from ._ridder import ridder
 from ._secant import secant
 
@@ -22,6 +23,7 @@ __all__ = [
     "fixed_point",
     "halley",
     "newton",
+    "newton_system",
     "ridder",
     "secant",
     "BracketError",
