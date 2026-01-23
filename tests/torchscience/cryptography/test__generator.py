@@ -1,5 +1,6 @@
 import torch
-from torchscience.encryption import ChaCha20Generator
+
+from torchscience.cryptography import ChaCha20Generator
 
 
 class TestChaCha20Generator:
