@@ -51,6 +51,10 @@ from torchscience.differentiation._spectral_laplacian import (
 )
 from torchscience.differentiation._stencil import FiniteDifferenceStencil
 from torchscience.differentiation._strain_tensor import strain_tensor
+from torchscience.differentiation._surface_integral import (
+    flux,
+    surface_integral,
+)
 from torchscience.differentiation._vorticity import vorticity
 from torchscience.differentiation._wave_operator import wave_operator
 
@@ -76,6 +80,7 @@ __all__ = [
     "divergence",
     "enstrophy",
     "finite_difference_stencil",
+    "flux",
     "fornberg_weights",
     "gradient",
     "gradient_stencils",
@@ -92,6 +97,7 @@ __all__ = [
     "spectral_gradient",
     "spectral_laplacian",
     "strain_tensor",
+    "surface_integral",
     "vorticity",
     "wave_operator",
 ]
