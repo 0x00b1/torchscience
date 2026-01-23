@@ -6,7 +6,7 @@ import pytest
 import torch
 from torch.autograd import gradcheck
 
-from torchscience.information_theory import jensen_shannon_divergence
+from torchscience.information import jensen_shannon_divergence
 
 
 class TestJSDivergenceBasic:

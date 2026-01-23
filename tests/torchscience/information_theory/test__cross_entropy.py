@@ -5,7 +5,7 @@ import scipy.stats
 import torch
 from torch.autograd import gradcheck, gradgradcheck
 
-from torchscience.information_theory import (
+from torchscience.information import (
     cross_entropy,
     kullback_leibler_divergence,
     shannon_entropy,

@@ -13,7 +13,7 @@ from information theory:
 
 import torch
 
-from torchscience.information_theory import (
+from torchscience.information import (
     conditional_entropy,
     joint_entropy,
     mutual_information,
