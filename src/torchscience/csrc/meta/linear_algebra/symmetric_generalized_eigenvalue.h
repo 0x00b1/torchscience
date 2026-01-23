@@ -43,7 +43,24 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> symmetric_generalized_eige
     vec_shape.push_back(n);
 
     at::Tensor eigenvalues = at::empty(eig_shape, a.options().dtype(common_dtype));
-    at::Tensor eigenvectors = at::empty(vec_shape, a.options().dtype(common_dtype));
+    // Eigenvectors must be in Fortran order to match CPU/LAPACK output
+    // For a 2D tensor (n, n), Fortran order has strides (1, n)
+    std::vector<int64_t> vec_strides;
+    int64_t stride = 1;
+    // Compute Fortran-order strides: first two dimensions are the matrix dimensions
+    // For batch dimensions, we use standard row-major ordering
+    // For a shape like (..., n, n), strides should be (..., 1, n)
+    vec_strides.resize(vec_shape.size());
+    // Matrix dimensions (last two) in Fortran order
+    vec_strides[vec_shape.size() - 2] = 1;  // rows stride = 1
+    vec_strides[vec_shape.size() - 1] = n;  // cols stride = n
+    stride = n * n;
+    // Batch dimensions in row-major order (from right to left)
+    for (int64_t i = static_cast<int64_t>(vec_shape.size()) - 3; i >= 0; --i) {
+        vec_strides[i] = stride;
+        stride *= vec_shape[i];
+    }
+    at::Tensor eigenvectors = at::empty_strided(vec_shape, vec_strides, a.options().dtype(common_dtype));
     at::Tensor info = at::empty(broadcast_shape, a.options().dtype(at::kInt));
 
     return std::make_tuple(eigenvalues, eigenvectors, info);
