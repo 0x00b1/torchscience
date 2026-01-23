@@ -7,6 +7,7 @@ from ._differentiation import (
 )
 from ._exceptions import BracketError, DerivativeError, RootFindingError
 from ._newton import newton
+from ._secant import secant
 
 __all__ = [
     "brent",
@@ -16,6 +17,7 @@ __all__ = [
     "compute_second_derivative",
     "default_tolerances",
     "newton",
+    "secant",
     "BracketError",
     "DerivativeError",
     "RootFindingError",
