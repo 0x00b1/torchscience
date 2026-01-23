@@ -152,12 +152,35 @@ def chebyshev_type_2_design(
         z_transformed, p_transformed, k_transformed, sampling_frequency=2.0
     )
 
-    # Return in requested format
+    # Return in requested format, applying dtype/device only if explicitly requested
     if output == "zpk":
-        return z_digital, p_digital, k_digital
+        z_out, p_out, k_out = z_digital, p_digital, k_digital
+        if dtype is not None or device is not None:
+            output_dtype = dtype if dtype is not None else k_out.dtype
+            output_device = device if device is not None else k_out.device
+            complex_dtype = (
+                torch.complex64
+                if output_dtype == torch.float32
+                else torch.complex128
+            )
+            z_out = z_out.to(dtype=complex_dtype, device=output_device)
+            p_out = p_out.to(dtype=complex_dtype, device=output_device)
+            k_out = k_out.to(dtype=output_dtype, device=output_device)
+        return z_out, p_out, k_out
     elif output == "sos":
-        return zpk_to_sos(z_digital, p_digital, k_digital)
+        sos = zpk_to_sos(z_digital, p_digital, k_digital)
+        if dtype is not None or device is not None:
+            output_dtype = dtype if dtype is not None else sos.dtype
+            output_device = device if device is not None else sos.device
+            sos = sos.to(dtype=output_dtype, device=output_device)
+        return sos
     elif output == "ba":
-        return zpk_to_ba(z_digital, p_digital, k_digital)
+        b, a = zpk_to_ba(z_digital, p_digital, k_digital)
+        if dtype is not None or device is not None:
+            output_dtype = dtype if dtype is not None else b.dtype
+            output_device = device if device is not None else b.device
+            b = b.to(dtype=output_dtype, device=output_device)
+            a = a.to(dtype=output_dtype, device=output_device)
+        return b, a
     else:
         raise ValueError(f"Invalid output format: {output}")
