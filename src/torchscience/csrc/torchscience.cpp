@@ -342,6 +342,9 @@
 #include "autograd/polynomial/jacobi_polynomial_p/jacobi_polynomial_p_mulx.h"
 #include "autocast/polynomial/jacobi_polynomial_p/jacobi_polynomial_p_mulx.h"
 
+// pad
+#include "cpu/pad/pad.h"
+
 // probability
 #include "cpu/probability/normal.h"
 #include "cpu/probability/chi2.h"
