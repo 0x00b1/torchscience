@@ -42,6 +42,7 @@ from ._exceptions import (
     SpecificationError,
 )
 from ._fftfilt import fftfilt
+from ._filtfilt import filtfilt
 from ._firwin import firwin
 from ._firwin2 import firwin2
 from ._freqs_ba import freqs_ba
@@ -63,6 +64,7 @@ from ._sos_to_ba import sos_to_ba
 from ._sos_to_zpk import sos_to_zpk
 from ._sosfilt import sosfilt
 from ._sosfilt_zi import sosfilt_zi
+from ._sosfiltfilt import sosfiltfilt
 from ._yule_walker import yule_walker
 from ._zpk_to_ba import zpk_to_ba
 from ._zpk_to_sos import zpk_to_sos
@@ -91,6 +93,7 @@ __all__ = [
     "elliptic_analog",
     # FIR design functions
     "fftfilt",
+    "filtfilt",
     "firwin",
     "firwin2",
     "freqs_ba",
@@ -123,6 +126,7 @@ __all__ = [
     "sos_sections_count",
     "sosfilt",
     "sosfilt_zi",
+    "sosfiltfilt",
     # Constants
     "Q_BUTTERWORTH",
     "Q_MEDIUM",
