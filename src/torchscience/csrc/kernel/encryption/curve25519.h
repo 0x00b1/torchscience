@@ -151,22 +151,22 @@ inline void fe25519_add(Fe25519& h, const Fe25519& f, const Fe25519& g) {
 }
 
 // Subtraction: h = f - g
-// Add 2*p to ensure result is positive before potential reduction
+// Add a large multiple of p to ensure result is positive
 inline void fe25519_sub(Fe25519& h, const Fe25519& f, const Fe25519& g) {
-    // Add 2*p = 2*(2^255 - 19) to avoid negative intermediate values
-    // 2*p in radix 2^51: each limb gets 2*2^51, except limb 0 gets -2*19
-    // But simpler: add a large multiple of p that ensures positivity
+    // Add 8*p to avoid negative intermediate values
+    // Using the same constants as curve25519-donna:
+    // 8*p contribution: 2^54 - 152 for limb 0, 2^54 - 8 for other limbs
+    // These values are chosen so that after carry propagation, the excess
+    // reduces to 0 mod p. The larger constants (2^54 vs 2^52) ensure we have
+    // enough headroom for subsequent operations before reduction.
+    constexpr int64_t EIGHT_P0 = (1LL << 54) - 152;  // 8*p contribution to limb 0
+    constexpr int64_t EIGHT_P = (1LL << 54) - 8;     // 8*p contribution to other limbs
 
-    // 2p in limb form: we add (2^52 - 38, 2^52, 2^52, 2^52, 2^52)
-    // which is 2*p with all limbs slightly above 2^51
-    constexpr int64_t TWO_P0 = (1LL << 52) - 38;  // 2*p contribution to limb 0
-    constexpr int64_t TWO_P = (1LL << 52);        // 2*p contribution to other limbs
-
-    h.v[0] = f.v[0] + TWO_P0 - g.v[0];
-    h.v[1] = f.v[1] + TWO_P - g.v[1];
-    h.v[2] = f.v[2] + TWO_P - g.v[2];
-    h.v[3] = f.v[3] + TWO_P - g.v[3];
-    h.v[4] = f.v[4] + TWO_P - g.v[4];
+    h.v[0] = f.v[0] + EIGHT_P0 - g.v[0];
+    h.v[1] = f.v[1] + EIGHT_P - g.v[1];
+    h.v[2] = f.v[2] + EIGHT_P - g.v[2];
+    h.v[3] = f.v[3] + EIGHT_P - g.v[3];
+    h.v[4] = f.v[4] + EIGHT_P - g.v[4];
 }
 
 // Internal carry function for multiplication results
@@ -570,9 +570,10 @@ inline void fe25519_abs(Fe25519& h, const Fe25519& f) {
 // X25519 (RFC 7748) Scalar Multiplication
 // ============================================================================
 
-// Constant a24 = (A + 2) / 4 = (486662 + 2) / 4 = 121666 for Curve25519
+// Constant a24 = (A - 2) / 4 = (486662 - 2) / 4 = 121665 for Curve25519
 // where A is the Montgomery coefficient in y^2 = x^3 + Ax^2 + x
-constexpr int64_t X25519_A24 = 121666;
+// Note: Some sources incorrectly state (A+2)/4, but RFC 7748 specifies (A-2)/4
+constexpr int64_t X25519_A24 = 121665;
 
 // Scalar clamping for X25519 (RFC 7748, Section 5)
 // Clamps the scalar to ensure it is a valid X25519 private key:
