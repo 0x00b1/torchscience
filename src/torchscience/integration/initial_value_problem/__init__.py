@@ -42,6 +42,23 @@ radau
     Radau IIA method (3-stage, order 5, L-stable). Excellent for
     very stiff problems with high-frequency oscillations.
 
+Symplectic Integrators
+----------------------
+stormer_verlet
+    Störmer-Verlet (velocity Verlet) method. 2nd-order symplectic for
+    separable Hamiltonians H = T(p) + V(q). Preserves energy over long
+    integrations. Standard choice for molecular dynamics.
+
+yoshida4
+    Yoshida 4th-order symplectic integrator. Higher accuracy than Verlet
+    with similar structure. Best for separable Hamiltonians requiring
+    precision.
+
+implicit_midpoint
+    Implicit midpoint method. 2nd-order, both symplectic AND A-stable.
+    Unique choice for stiff Hamiltonian systems or non-separable
+    Hamiltonians.
+
 Exceptions
 ----------
 ODESolverError
@@ -127,6 +144,21 @@ Stiff chemical kinetics (Robertson's problem):
 >>>
 >>> y0 = torch.tensor([1.0, 0.0, 0.0], dtype=torch.float64)
 >>> y_final, interp = bdf(robertson, y0, t_span=(0.0, 1e5))
+
+Molecular dynamics (Lennard-Jones potential):
+
+>>> def grad_V(t, q):  # Forces from potential
+...     # Compute forces between particles
+...     return forces
+>>> def grad_T(t, p):  # Velocities
+...     return p / mass
+>>> q, p, interp = stormer_verlet(grad_V, grad_T, q0, p0, t_span, dt=0.001)
+
+Choosing between symplectic integrators:
+
+- Use ``stormer_verlet`` for most molecular dynamics and celestial mechanics
+- Use ``yoshida4`` when higher accuracy is needed at same step size
+- Use ``implicit_midpoint`` for stiff or non-separable Hamiltonians
 
 Choosing between stiff solvers:
 
