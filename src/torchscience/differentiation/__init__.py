@@ -51,6 +51,7 @@ from torchscience.differentiation._spectral_laplacian import (
 )
 from torchscience.differentiation._stencil import FiniteDifferenceStencil
 from torchscience.differentiation._strain_tensor import strain_tensor
+from torchscience.differentiation._stress_tensor import stress_tensor
 from torchscience.differentiation._surface_integral import (
     flux,
     surface_integral,
@@ -98,6 +99,7 @@ __all__ = [
     "spectral_gradient",
     "spectral_laplacian",
     "strain_tensor",
+    "stress_tensor",
     "surface_integral",
     "volume_integral",
     "vorticity",
