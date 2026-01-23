@@ -60,3 +60,23 @@ class GeneralizedSchurResult(NamedTuple):
     Q: Tensor  # (..., n, n) - Left unitary matrix
     Z: Tensor  # (..., n, n) - Right unitary matrix
     info: Tensor  # (...) - int, convergence info
+
+
+class PolarDecompositionResult(NamedTuple):
+    """Result of polar decomposition A = UP (right) or A = PU (left).
+
+    Factors a matrix into the product of a unitary matrix U and a positive
+    semidefinite Hermitian matrix P.
+
+    For right polar (A = UP):
+    - U has shape (..., m, n)
+    - P has shape (..., n, n) and is positive semidefinite Hermitian
+
+    For left polar (A = PU):
+    - U has shape (..., m, n)
+    - P has shape (..., m, m) and is positive semidefinite Hermitian
+    """
+
+    U: Tensor  # (..., m, n) - Unitary factor
+    P: Tensor  # (..., n, n) or (..., m, m) - Positive semidefinite factor
+    info: Tensor  # (...) - int, convergence info

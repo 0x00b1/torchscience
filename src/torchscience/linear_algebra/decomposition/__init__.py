@@ -26,6 +26,10 @@ hessenberg
     Computes the Hessenberg decomposition A = QHQ* where Q is unitary and H
     is upper Hessenberg (zeros below the first subdiagonal).
 
+polar_decomposition
+    Computes the polar decomposition A = UP (right) or A = PU (left) where
+    U is unitary and P is positive semidefinite Hermitian.
+
 Result Types
 ------------
 GeneralizedEigenvalueResult
@@ -42,6 +46,9 @@ GeneralizedSchurResult
 
 HessenbergResult
     Named tuple with H, Q, info.
+
+PolarDecompositionResult
+    Named tuple with U, P, info.
 """
 
 from torchscience.linear_algebra.decomposition._generalized_eigenvalue import (
@@ -53,10 +60,14 @@ from torchscience.linear_algebra.decomposition._generalized_schur import (
 from torchscience.linear_algebra.decomposition._hessenberg import (
     hessenberg,
 )
+from torchscience.linear_algebra.decomposition._polar_decomposition import (
+    polar_decomposition,
+)
 from torchscience.linear_algebra.decomposition._result_types import (
     GeneralizedEigenvalueResult,
     GeneralizedSchurResult,
     HessenbergResult,
+    PolarDecompositionResult,
     SchurDecompositionResult,
     SymmetricGeneralizedEigenvalueResult,
 )
@@ -71,11 +82,13 @@ __all__ = [
     "GeneralizedEigenvalueResult",
     "GeneralizedSchurResult",
     "HessenbergResult",
+    "PolarDecompositionResult",
     "SymmetricGeneralizedEigenvalueResult",
     "SchurDecompositionResult",
     "generalized_eigenvalue",
     "generalized_schur",
     "hessenberg",
+    "polar_decomposition",
     "schur_decomposition",
     "symmetric_generalized_eigenvalue",
 ]
