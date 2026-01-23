@@ -51,6 +51,7 @@ from ._iirnotch import iirnotch
 from ._iirpeak import iirpeak
 from ._lfilter import lfilter
 from ._lfilter_zi import lfilter_zi
+from ._lms import lms
 from ._lowpass_to_bandpass_zpk import lowpass_to_bandpass_zpk
 from ._lowpass_to_bandstop_zpk import lowpass_to_bandstop_zpk
 from ._lowpass_to_highpass_zpk import lowpass_to_highpass_zpk
@@ -103,6 +104,7 @@ __all__ = [
     "iirpeak",
     "lfilter",
     "lfilter_zi",
+    "lms",
     "minimum_phase",
     "savgol_coeffs",
     "yule_walker",
