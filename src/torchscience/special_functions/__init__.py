@@ -30,6 +30,9 @@ from ._complete_legendre_elliptic_integral_pi import (
 from ._digamma import digamma
 from ._gamma import gamma
 from ._hypergeometric_2_f_1 import hypergeometric_2_f_1
+from ._hypergeometric_0_f_1 import hypergeometric_0_f_1
+from ._hypergeometric_1_f_1 import hypergeometric_1_f_1
+from ._hypergeometric_u import hypergeometric_u
 from ._incomplete_beta import incomplete_beta
 from ._incomplete_legendre_elliptic_integral_e import (
     incomplete_legendre_elliptic_integral_e,
@@ -37,6 +40,10 @@ from ._incomplete_legendre_elliptic_integral_e import (
 from ._incomplete_legendre_elliptic_integral_pi import (
     incomplete_legendre_elliptic_integral_pi,
 )
+from ._airy_ai import airy_ai
+from ._airy_bi import airy_bi
+from ._airy_ai_prime import airy_ai_prime
+from ._airy_bi_prime import airy_bi_prime
 from ._inverse_jacobi_elliptic_cd import inverse_jacobi_elliptic_cd
 from ._inverse_jacobi_elliptic_cn import inverse_jacobi_elliptic_cn
 from ._inverse_jacobi_elliptic_dn import inverse_jacobi_elliptic_dn
@@ -89,6 +96,8 @@ from ._theta_2 import theta_2
 from ._theta_3 import theta_3
 from ._theta_4 import theta_4
 from ._trigamma import trigamma
+from ._struve_hv import struve_hv
+from ._struve_lv import struve_lv
 
 __all__ = [
     "associated_legendre_polynomial_p",
@@ -112,6 +121,10 @@ __all__ = [
     "complete_legendre_elliptic_integral_e",
     "complete_legendre_elliptic_integral_k",
     "complete_legendre_elliptic_integral_pi",
+    "airy_ai",
+    "airy_bi",
+    "airy_ai_prime",
+    "airy_bi_prime",
     "incomplete_legendre_elliptic_integral_e",
     "incomplete_legendre_elliptic_integral_pi",
     "jacobi_amplitude_am",
@@ -136,6 +149,9 @@ __all__ = [
     "digamma",
     "gamma",
     "hypergeometric_2_f_1",
+    "hypergeometric_0_f_1",
+    "hypergeometric_1_f_1",
+    "hypergeometric_u",
     "incomplete_beta",
     "log_beta",
     "log_gamma",
@@ -168,4 +184,6 @@ __all__ = [
     "theta_3",
     "theta_4",
     "trigamma",
+    "struve_hv",
+    "struve_lv",
 ]
