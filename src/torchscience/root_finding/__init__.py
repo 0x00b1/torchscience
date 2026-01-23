@@ -14,6 +14,7 @@ from ._newton import newton
 from ._newton_system import newton_system
 from ._ridder import ridder
 from ._secant import secant
+from ._trust_region import trust_region
 
 __all__ = [
     "brent",
@@ -30,6 +31,7 @@ __all__ = [
     "newton_system",
     "ridder",
     "secant",
+    "trust_region",
     "BracketError",
     "DerivativeError",
     "RootFindingError",
