@@ -134,9 +134,9 @@ inline void blake2b_hash(
         blake2b_compress(h, block.data(), t0, t1, input_len == 0);
     }
 
-    // Process input in 128-byte blocks
+    // Process input in 128-byte blocks (all but last block)
     int64_t offset = 0;
-    while (offset + 128 <= input_len) {
+    while (offset + 128 < input_len) {
         t0 += 128;
         if (t0 < 128) t1++;  // Handle overflow
         blake2b_compress(h, input + offset, t0, t1, false);
@@ -265,9 +265,9 @@ inline void blake2s_hash(
         blake2s_compress(h, block.data(), t0, t1, input_len == 0);
     }
 
-    // Process input in 64-byte blocks
+    // Process input in 64-byte blocks (all but last block)
     int64_t offset = 0;
-    while (offset + 64 <= input_len) {
+    while (offset + 64 < input_len) {
         t0 += 64;
         if (t0 < 64) t1++;  // Handle overflow
         blake2s_compress(h, input + offset, t0, t1, false);
