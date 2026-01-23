@@ -19,6 +19,9 @@ from torchscience.integration.initial_value_problem._event_handling import (
     EventTracker,
     parse_events,
 )
+from torchscience.integration.initial_value_problem._implicit_midpoint import (
+    implicit_midpoint,
+)
 from torchscience.integration.initial_value_problem._midpoint import midpoint
 from torchscience.integration.initial_value_problem._radau import radau
 from torchscience.integration.initial_value_problem._runge_kutta_4 import (
@@ -43,6 +46,8 @@ _METHOD_MAP: Dict[str, Callable] = {
     "bdf": bdf,
     # Radau IIA method (implicit, 5th order, stiff)
     "radau": radau,
+    # Implicit midpoint (symplectic, 2nd order)
+    "implicit_midpoint": implicit_midpoint,
 }
 
 

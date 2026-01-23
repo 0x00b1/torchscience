@@ -158,6 +158,9 @@ from torchscience.integration.initial_value_problem._exceptions import (
     ODESolverError,
     StepSizeError,
 )
+from torchscience.integration.initial_value_problem._implicit_midpoint import (
+    implicit_midpoint,
+)
 from torchscience.integration.initial_value_problem._midpoint import midpoint
 from torchscience.integration.initial_value_problem._radau import radau
 from torchscience.integration.initial_value_problem._runge_kutta_4 import (
@@ -173,6 +176,10 @@ from torchscience.integration.initial_value_problem._solve_ivp import (
     ODESolution,
     solve_ivp,
 )
+from torchscience.integration.initial_value_problem._stormer_verlet import (
+    stormer_verlet,
+)
+from torchscience.integration.initial_value_problem._yoshida import yoshida4
 
 __all__ = [
     # Exceptions
@@ -190,6 +197,10 @@ __all__ = [
     # Implicit stiff solvers
     "bdf",
     "radau",
+    # Symplectic integrators
+    "stormer_verlet",
+    "yoshida4",
+    "implicit_midpoint",
     # Wrappers
     "adjoint",
     # Unified API
