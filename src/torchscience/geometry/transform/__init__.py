@@ -19,6 +19,10 @@ from torchscience.geometry.transform._euler_angles import (
     matrix_to_euler_angles,
     quaternion_to_euler_angles,
 )
+from torchscience.geometry.transform._exponential_map import (
+    so3_exp,
+    so3_log,
+)
 from torchscience.geometry.transform._quaternion import (
     Quaternion,
     matrix_to_quaternion,
@@ -113,4 +117,6 @@ __all__ = [
     "rotation_vector",
     "rotation_vector_to_matrix",
     "rotation_vector_to_quaternion",
+    "so3_exp",
+    "so3_log",
 ]
