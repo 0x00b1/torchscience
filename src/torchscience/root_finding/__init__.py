@@ -1,3 +1,4 @@
+from ._aberth_ehrlich import aberth_ehrlich
 from ._brent import brent
 from ._broyden import broyden
 from ._convergence import check_convergence, default_tolerances
@@ -17,6 +18,7 @@ from ._secant import secant
 from ._trust_region import trust_region
 
 __all__ = [
+    "aberth_ehrlich",
     "brent",
     "broyden",
     "check_convergence",

@@ -48,25 +48,25 @@ class TestChebyshevPolynomialTTrim:
         """Trim doesn't change non-zero trailing."""
         c = chebyshev_polynomial_t(torch.tensor([1.0, 2.0, 3.0]))
         t = chebyshev_polynomial_t_trim(c)
-        torch.testing.assert_close(t.coeffs, c.coeffs)
+        torch.testing.assert_close(t, c)
 
     def test_trim_trailing_zeros(self):
         """Trim removes trailing zeros."""
         c = chebyshev_polynomial_t(torch.tensor([1.0, 2.0, 0.0, 0.0]))
         t = chebyshev_polynomial_t_trim(c)
-        torch.testing.assert_close(t.coeffs, torch.tensor([1.0, 2.0]))
+        torch.testing.assert_close(t, torch.tensor([1.0, 2.0]))
 
     def test_trim_near_zero(self):
         """Trim removes near-zero trailing coefficients."""
         c = chebyshev_polynomial_t(torch.tensor([1.0, 2.0, 1e-15, 1e-16]))
         t = chebyshev_polynomial_t_trim(c, tol=1e-10)
-        torch.testing.assert_close(t.coeffs, torch.tensor([1.0, 2.0]))
+        torch.testing.assert_close(t, torch.tensor([1.0, 2.0]))
 
     def test_trim_preserves_constant(self):
         """Trim preserves at least one coefficient."""
         c = chebyshev_polynomial_t(torch.tensor([0.0, 0.0, 0.0]))
         t = chebyshev_polynomial_t_trim(c)
-        assert t.coeffs.shape[-1] >= 1
+        assert t.shape[-1] >= 1
 
     def test_trim_vs_numpy(self):
         """Compare with numpy.polynomial.chebyshev.chebtrim."""
@@ -77,7 +77,7 @@ class TestChebyshevPolynomialTTrim:
 
         t_np = np_cheb.chebtrim(coeffs, tol=1e-10)
 
-        np.testing.assert_allclose(t.coeffs.numpy(), t_np, rtol=1e-6)
+        np.testing.assert_allclose(t.numpy(), t_np, rtol=1e-6)
 
 
 class TestChebyshevPolynomialTEqual:
@@ -156,11 +156,11 @@ class TestChebyshevPolynomialTDivision:
 
         # Quotient should be (1 + T_1)
         torch.testing.assert_close(
-            q.coeffs, torch.tensor([1.0, 1.0]), atol=1e-5, rtol=1e-5
+            q, torch.tensor([1.0, 1.0]), atol=1e-5, rtol=1e-5
         )
 
         # Remainder should be ~0
-        assert torch.abs(r.coeffs).max() < 1e-5
+        assert torch.abs(r).max() < 1e-5
 
     def test_divmod_with_remainder(self):
         """Division with non-zero remainder."""
@@ -177,11 +177,11 @@ class TestChebyshevPolynomialTDivision:
         )
 
         # Pad for comparison
-        n_max = max(a.coeffs.shape[-1], reconstructed.coeffs.shape[-1])
+        n_max = max(a.shape[-1], reconstructed.shape[-1])
         a_padded = torch.zeros(n_max)
-        a_padded[: a.coeffs.shape[-1]] = a.coeffs
+        a_padded[: a.shape[-1]] = a
         r_padded = torch.zeros(n_max)
-        r_padded[: reconstructed.coeffs.shape[-1]] = reconstructed.coeffs
+        r_padded[: reconstructed.shape[-1]] = reconstructed
 
         torch.testing.assert_close(a_padded, r_padded, atol=1e-5, rtol=1e-5)
 

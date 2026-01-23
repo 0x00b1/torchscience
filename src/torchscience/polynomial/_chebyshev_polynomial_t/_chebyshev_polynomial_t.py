@@ -49,7 +49,7 @@ class ChebyshevPolynomialT(Tensor):
     @staticmethod
     def __new__(cls, data, *, dtype=None, device=None):
         if isinstance(data, Tensor):
-            tensor = data.detach().clone()
+            tensor = data.clone()
             if dtype is not None:
                 tensor = tensor.to(dtype=dtype)
             if device is not None:
@@ -76,33 +76,94 @@ class ChebyshevPolynomialT(Tensor):
 
         return chebyshev_polynomial_t_evaluate(self, x)
 
-    def __add__(self, other: "ChebyshevPolynomialT") -> "ChebyshevPolynomialT":
+    def __add__(
+        self, other: Union["ChebyshevPolynomialT", Tensor]
+    ) -> "ChebyshevPolynomialT":
         from ._chebyshev_polynomial_t_add import chebyshev_polynomial_t_add
 
-        return chebyshev_polynomial_t_add(self, other)
+        # Check if both are proper polynomials (at least 1D with coefficients)
+        if (
+            self.dim() >= 1
+            and isinstance(other, ChebyshevPolynomialT)
+            and other.dim() >= 1
+        ):
+            return chebyshev_polynomial_t_add(self, other)
+        # Handle scalar cases: if self is 0-dim, just do tensor add
+        if self.dim() == 0:
+            return self.as_subclass(Tensor) + other
+        # Scalar addition to polynomial: add to constant term only
+        result = self.clone()
+        result[..., 0] = result[..., 0].as_subclass(Tensor) + other
+        return result
 
     def __radd__(
-        self, other: "ChebyshevPolynomialT"
+        self, other: Union["ChebyshevPolynomialT", Tensor]
     ) -> "ChebyshevPolynomialT":
         from ._chebyshev_polynomial_t_add import chebyshev_polynomial_t_add
 
-        return chebyshev_polynomial_t_add(other, self)
+        # Check if both are proper polynomials (at least 1D with coefficients)
+        if (
+            self.dim() >= 1
+            and isinstance(other, ChebyshevPolynomialT)
+            and other.dim() >= 1
+        ):
+            return chebyshev_polynomial_t_add(other, self)
+        # Handle scalar cases: if self is 0-dim, just do tensor add
+        if self.dim() == 0:
+            return self.as_subclass(Tensor) + other
+        # Scalar addition to polynomial: add to constant term only
+        result = self.clone()
+        result[..., 0] = result[..., 0].as_subclass(Tensor) + other
+        return result
 
-    def __sub__(self, other: "ChebyshevPolynomialT") -> "ChebyshevPolynomialT":
-        from ._chebyshev_polynomial_t_subtract import (
-            chebyshev_polynomial_t_subtract,
-        )
-
-        return chebyshev_polynomial_t_subtract(self, other)
-
-    def __rsub__(
-        self, other: "ChebyshevPolynomialT"
+    def __sub__(
+        self, other: Union["ChebyshevPolynomialT", Tensor]
     ) -> "ChebyshevPolynomialT":
         from ._chebyshev_polynomial_t_subtract import (
             chebyshev_polynomial_t_subtract,
         )
 
-        return chebyshev_polynomial_t_subtract(other, self)
+        # Check if both are proper polynomials (at least 1D with coefficients)
+        if (
+            self.dim() >= 1
+            and isinstance(other, ChebyshevPolynomialT)
+            and other.dim() >= 1
+        ):
+            return chebyshev_polynomial_t_subtract(self, other)
+        # Handle scalar cases: if self is 0-dim, just do tensor sub
+        if self.dim() == 0:
+            return self.as_subclass(Tensor) - other
+        # Scalar subtraction from polynomial: subtract from constant term only
+        result = self.clone()
+        result[..., 0] = result[..., 0].as_subclass(Tensor) - other
+        return result
+
+    def __rsub__(
+        self, other: Union["ChebyshevPolynomialT", Tensor]
+    ) -> "ChebyshevPolynomialT":
+        from ._chebyshev_polynomial_t_subtract import (
+            chebyshev_polynomial_t_subtract,
+        )
+
+        # Check if both are proper polynomials (at least 1D with coefficients)
+        if (
+            self.dim() >= 1
+            and isinstance(other, ChebyshevPolynomialT)
+            and other.dim() >= 1
+        ):
+            return chebyshev_polynomial_t_subtract(other, self)
+        # Handle scalar cases: if self is 0-dim, just do tensor sub
+        if self.dim() == 0:
+            # Convert Python scalar to tensor if needed
+            if not isinstance(other, Tensor):
+                other = torch.as_tensor(
+                    other, dtype=self.dtype, device=self.device
+                )
+            return other - self.as_subclass(Tensor)
+        # Scalar - polynomial: negate self and add scalar to constant term
+        result = -self
+        result[..., 0] = result[..., 0].as_subclass(Tensor) + other
+        return result
 
     def __neg__(self) -> "ChebyshevPolynomialT":
         from ._chebyshev_polynomial_t_negate import (
@@ -121,8 +182,16 @@ class ChebyshevPolynomialT(Tensor):
             chebyshev_polynomial_t_scale,
         )
 
-        if isinstance(other, ChebyshevPolynomialT):
+        # Check if both are proper polynomials (at least 1D with coefficients)
+        if (
+            self.dim() >= 1
+            and isinstance(other, ChebyshevPolynomialT)
+            and other.dim() >= 1
+        ):
             return chebyshev_polynomial_t_multiply(self, other)
+        # Handle scalar cases: if self is 0-dim, just do tensor mul
+        if self.dim() == 0:
+            return self.as_subclass(Tensor) * other
         return chebyshev_polynomial_t_scale(self, other)
 
     def __rmul__(
@@ -135,8 +204,16 @@ class ChebyshevPolynomialT(Tensor):
             chebyshev_polynomial_t_scale,
         )
 
-        if isinstance(other, ChebyshevPolynomialT):
+        # Check if both are proper polynomials (at least 1D with coefficients)
+        if (
+            self.dim() >= 1
+            and isinstance(other, ChebyshevPolynomialT)
+            and other.dim() >= 1
+        ):
             return chebyshev_polynomial_t_multiply(other, self)
+        # Handle scalar cases: if self is 0-dim, just do tensor mul
+        if self.dim() == 0:
+            return self.as_subclass(Tensor) * other
         return chebyshev_polynomial_t_scale(self, other)
 
     def __pow__(self, n: int) -> "ChebyshevPolynomialT":

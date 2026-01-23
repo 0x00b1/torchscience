@@ -181,4 +181,4 @@ class TestChebyshevPolynomialTFromRoots:
         )
         c_np = np_cheb.chebfromroots(roots)
 
-        np.testing.assert_allclose(c_torch.coeffs.numpy(), c_np, rtol=1e-10)
+        np.testing.assert_allclose(c_torch.numpy(), c_np, rtol=1e-10)

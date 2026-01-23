@@ -59,7 +59,8 @@ class Polynomial(Tensor):
     @staticmethod
     def __new__(cls, data, *, dtype=None, device=None):
         if isinstance(data, Tensor):
-            tensor = data.detach().clone()
+            # Clone but preserve gradient tracking for autograd
+            tensor = data.clone()
             if dtype is not None:
                 tensor = tensor.to(dtype=dtype)
             if device is not None:
@@ -79,40 +80,108 @@ class Polynomial(Tensor):
 
         return result
 
-    def __add__(self, other: "Polynomial") -> "Polynomial":
+    def __add__(self, other: Union["Polynomial", Tensor]) -> "Polynomial":
         from ._polynomial_add import polynomial_add
 
-        return polynomial_add(self, other)
+        # Check if both are proper polynomials (at least 1D with coefficients)
+        if (
+            self.dim() >= 1
+            and isinstance(other, Polynomial)
+            and other.dim() >= 1
+        ):
+            return polynomial_add(self, other)
+        # Handle non-polynomial tensor: element-wise operation
+        if self.dim() == 0 or (isinstance(other, Tensor) and other.dim() >= 1):
+            return self.as_subclass(Tensor) + other
+        # Scalar addition to polynomial: add to constant term only
+        result = self.clone()
+        result[..., 0] = result[..., 0].as_subclass(Tensor) + other
+        return result
 
-    def __radd__(self, other: "Polynomial") -> "Polynomial":
+    def __radd__(self, other: Union["Polynomial", Tensor]) -> "Polynomial":
         from ._polynomial_add import polynomial_add
 
-        return polynomial_add(other, self)
+        # Check if both are proper polynomials (at least 1D with coefficients)
+        if (
+            self.dim() >= 1
+            and isinstance(other, Polynomial)
+            and other.dim() >= 1
+        ):
+            return polynomial_add(other, self)
+        # Handle non-polynomial tensor: element-wise operation
+        if self.dim() == 0 or (isinstance(other, Tensor) and other.dim() >= 1):
+            return self.as_subclass(Tensor) + other
+        # Scalar addition to polynomial: add to constant term only
+        result = self.clone()
+        result[..., 0] = result[..., 0].as_subclass(Tensor) + other
+        return result
 
-    def __sub__(self, other: "Polynomial") -> "Polynomial":
+    def __sub__(self, other: Union["Polynomial", Tensor]) -> "Polynomial":
         from ._polynomial_subtract import polynomial_subtract
 
-        return polynomial_subtract(self, other)
+        # Check if both are proper polynomials (at least 1D with coefficients)
+        if (
+            self.dim() >= 1
+            and isinstance(other, Polynomial)
+            and other.dim() >= 1
+        ):
+            return polynomial_subtract(self, other)
+        # Handle non-polynomial tensor: element-wise operation
+        if self.dim() == 0 or (isinstance(other, Tensor) and other.dim() >= 1):
+            return self.as_subclass(Tensor) - other
+        # Scalar subtraction from polynomial: subtract from constant term only
+        result = self.clone()
+        result[..., 0] = result[..., 0].as_subclass(Tensor) - other
+        return result
 
-    def __rsub__(self, other: "Polynomial") -> "Polynomial":
+    def __rsub__(self, other: Union["Polynomial", Tensor]) -> "Polynomial":
         from ._polynomial_subtract import polynomial_subtract
 
-        return polynomial_subtract(other, self)
+        # Check if both are proper polynomials (at least 1D with coefficients)
+        if (
+            self.dim() >= 1
+            and isinstance(other, Polynomial)
+            and other.dim() >= 1
+        ):
+            return polynomial_subtract(other, self)
+        # Handle non-polynomial tensor: element-wise operation
+        if self.dim() == 0 or (isinstance(other, Tensor) and other.dim() >= 1):
+            return other - self.as_subclass(Tensor)
+        # Scalar - polynomial: negate self and add scalar to constant term
+        result = -self
+        result[..., 0] = result[..., 0].as_subclass(Tensor) + other
+        return result
 
     def __mul__(self, other: Union["Polynomial", Tensor]) -> "Polynomial":
         from ._polynomial_multiply import polynomial_multiply
         from ._polynomial_scale import polynomial_scale
 
-        if isinstance(other, Polynomial):
+        # Check if both are proper polynomials (at least 1D with coefficients)
+        if (
+            self.dim() >= 1
+            and isinstance(other, Polynomial)
+            and other.dim() >= 1
+        ):
             return polynomial_multiply(self, other)
+        # Handle scalar cases: if self is 0-dim, just do tensor mul
+        if self.dim() == 0:
+            return Tensor.__mul__(self, other)
         return polynomial_scale(self, other)
 
     def __rmul__(self, other: Union["Polynomial", Tensor]) -> "Polynomial":
         from ._polynomial_multiply import polynomial_multiply
         from ._polynomial_scale import polynomial_scale
 
-        if isinstance(other, Polynomial):
+        # Check if both are proper polynomials (at least 1D with coefficients)
+        if (
+            self.dim() >= 1
+            and isinstance(other, Polynomial)
+            and other.dim() >= 1
+        ):
             return polynomial_multiply(other, self)
+        # Handle scalar cases: if self is 0-dim, just do tensor mul
+        if self.dim() == 0:
+            return Tensor.__mul__(other, self)
         return polynomial_scale(self, other)
 
     def __neg__(self) -> "Polynomial":
