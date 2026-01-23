@@ -2,9 +2,9 @@
 
 import pytest
 import torch
-from torch.autograd import gradcheck
+from torch.autograd import gradcheck, gradgradcheck
 
-from torchscience.information_theory import shannon_entropy, tsallis_entropy
+from torchscience.information import shannon_entropy, tsallis_entropy
 
 
 class TestTsallisEntropyBasic:
@@ -78,7 +78,7 @@ class TestTsallisEntropyCorrectness:
 
     def test_relationship_to_renyi(self):
         """S_q = (1 - exp((1-q) H_q)) / (q-1) for Renyi entropy H_q."""
-        from torchscience.information_theory import renyi_entropy
+        from torchscience.information import renyi_entropy
 
         p = torch.softmax(torch.randn(10), dim=-1)
 
@@ -124,6 +124,39 @@ class TestTsallisEntropyGradients:
             return tsallis_entropy(p_in, q=2.0, reduction="sum")
 
         assert gradcheck(func, (p,), eps=1e-6, atol=1e-4, rtol=1e-3)
+
+    def test_gradgradcheck_q2(self):
+        """Second-order gradients are correct for q=2."""
+        p = torch.softmax(torch.randn(5, dtype=torch.float64), dim=-1)
+        p.requires_grad_(True)
+
+        def func(p_in):
+            return tsallis_entropy(p_in, q=2.0, input_type="probability")
+
+        assert gradgradcheck(func, (p,), eps=1e-6, atol=1e-4, rtol=1e-3)
+
+    def test_gradgradcheck_batched(self):
+        """Second-order gradients work with batched inputs."""
+        p = torch.softmax(torch.randn(3, 5, dtype=torch.float64), dim=-1)
+        p.requires_grad_(True)
+
+        def func(p_in):
+            return tsallis_entropy(
+                p_in, q=2.0, input_type="probability", reduction="sum"
+            )
+
+        assert gradgradcheck(func, (p,), eps=1e-6, atol=1e-4, rtol=1e-3)
+
+    @pytest.mark.parametrize("q", [0.5, 1.5, 2.0, 3.0])
+    def test_gradgradcheck_various_q(self, q):
+        """Second-order gradients work for various q values."""
+        p = torch.softmax(torch.randn(5, dtype=torch.float64), dim=-1)
+        p.requires_grad_(True)
+
+        def func(p_in):
+            return tsallis_entropy(p_in, q=q, input_type="probability")
+
+        assert gradgradcheck(func, (p,), eps=1e-6, atol=1e-4, rtol=1e-3)
 
 
 class TestTsallisEntropyInputTypes:
