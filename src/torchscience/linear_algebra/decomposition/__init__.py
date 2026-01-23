@@ -49,6 +49,10 @@ rank_revealing_qr
     automatic numerical rank detection. The rank is determined by counting
     diagonal elements of R that exceed tol * |R[0,0]|.
 
+ldl_decomposition
+    Computes the LDL decomposition A = LDL* for symmetric/Hermitian matrices
+    where L is unit lower triangular and D is diagonal.
+
 Result Types
 ------------
 GeneralizedEigenvalueResult
@@ -80,6 +84,9 @@ PivotedQRResult
 
 RankRevealingQRResult
     Named tuple with Q, R, pivots, rank, info.
+
+LDLDecompositionResult
+    Named tuple with L, D, pivots, info.
 """
 
 from torchscience.linear_algebra.decomposition._generalized_eigenvalue import (
@@ -93,6 +100,9 @@ from torchscience.linear_algebra.decomposition._hessenberg import (
 )
 from torchscience.linear_algebra.decomposition._jordan_decomposition import (
     jordan_decomposition,
+)
+from torchscience.linear_algebra.decomposition._ldl_decomposition import (
+    ldl_decomposition,
 )
 from torchscience.linear_algebra.decomposition._pivoted_lu import (
     pivoted_lu,
@@ -111,6 +121,7 @@ from torchscience.linear_algebra.decomposition._result_types import (
     GeneralizedSchurResult,
     HessenbergResult,
     JordanDecompositionResult,
+    LDLDecompositionResult,
     PivotedLUResult,
     PivotedQRResult,
     PolarDecompositionResult,
@@ -130,6 +141,7 @@ __all__ = [
     "GeneralizedSchurResult",
     "HessenbergResult",
     "JordanDecompositionResult",
+    "LDLDecompositionResult",
     "PivotedLUResult",
     "PivotedQRResult",
     "PolarDecompositionResult",
@@ -140,6 +152,7 @@ __all__ = [
     "generalized_schur",
     "hessenberg",
     "jordan_decomposition",
+    "ldl_decomposition",
     "pivoted_lu",
     "pivoted_qr",
     "polar_decomposition",

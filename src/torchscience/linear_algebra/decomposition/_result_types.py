@@ -152,3 +152,20 @@ class RankRevealingQRResult(NamedTuple):
     pivots: Tensor  # (..., n) - Column permutation indices
     rank: Tensor  # (...) - Numerical rank
     info: Tensor  # (...) - int, 0 indicates success
+
+
+class LDLDecompositionResult(NamedTuple):
+    """Result of LDL decomposition A = LDL*.
+
+    Factors a symmetric (real) or Hermitian (complex) matrix into the product
+    of a unit lower triangular matrix L, a diagonal matrix D, and the conjugate
+    transpose of L.
+
+    This decomposition is a variant of Cholesky that works for indefinite
+    matrices (not just positive definite).
+    """
+
+    L: Tensor  # (..., n, n) - Unit lower triangular
+    D: Tensor  # (..., n, n) - Diagonal matrix
+    pivots: Tensor  # (..., n) - Pivot indices from Bunch-Kaufman pivoting
+    info: Tensor  # (...) - int, 0 indicates success
