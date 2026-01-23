@@ -32,6 +32,18 @@ from torchscience.geometry.transform._quaternion import (
 )
 from torchscience.geometry.transform._reflect import reflect
 from torchscience.geometry.transform._refract import refract
+from torchscience.geometry.transform._rigid_transform import (
+    RigidTransform,
+    rigid_transform,
+    rigid_transform_apply,
+    rigid_transform_apply_vector,
+    rigid_transform_compose,
+    rigid_transform_from_matrix,
+    rigid_transform_identity,
+    rigid_transform_inverse,
+    rigid_transform_slerp,
+    rigid_transform_to_matrix,
+)
 from torchscience.geometry.transform._rotation_6d import (
     Rotation6D,
     matrix_to_rotation_6d,
@@ -57,6 +69,7 @@ __all__ = [
     "AxisAngle",
     "EulerAngles",
     "Quaternion",
+    "RigidTransform",
     "Rotation6D",
     "RotationMatrix",
     "RotationVector",
@@ -84,6 +97,15 @@ __all__ = [
     "quaternion_to_rotation_vector",
     "reflect",
     "refract",
+    "rigid_transform",
+    "rigid_transform_apply",
+    "rigid_transform_apply_vector",
+    "rigid_transform_compose",
+    "rigid_transform_from_matrix",
+    "rigid_transform_identity",
+    "rigid_transform_inverse",
+    "rigid_transform_slerp",
+    "rigid_transform_to_matrix",
     "rotation_6d",
     "rotation_6d_to_matrix",
     "rotation_6d_to_quaternion",
