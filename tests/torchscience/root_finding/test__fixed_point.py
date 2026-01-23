@@ -384,6 +384,124 @@ class TestFixedPointVmap:
         assert converged.all()
 
 
+class TestFixedPointCompile:
+    """Tests for torch.compile compatibility.
+
+    Note: torch.compile may have issues with data-dependent loops used in
+    iterative root-finding algorithms. These tests verify compatibility
+    and document any limitations.
+    """
+
+    @pytest.mark.skipif(
+        not hasattr(torch, "compile"), reason="torch.compile not available"
+    )
+    def test_compile_eager_backend(self):
+        """torch.compile with eager backend works with fixed_point."""
+        c = torch.tensor([2.0, 3.0, 4.0])
+
+        def solve(x0, c_val):
+            g = lambda x: (x + c_val / x) / 2  # Babylonian method
+            fp, converged = fixed_point(g, x0)
+            return fp
+
+        # Compile with eager backend (more forgiving)
+        solve_compiled = torch.compile(solve, backend="eager")
+
+        x0 = torch.tensor([1.5, 1.5, 1.5])
+        fps = solve_compiled(x0, c)
+
+        expected = torch.sqrt(c)
+        torch.testing.assert_close(fps, expected, rtol=1e-5, atol=1e-5)
+
+    @pytest.mark.skipif(
+        not hasattr(torch, "compile"), reason="torch.compile not available"
+    )
+    @pytest.mark.xfail(
+        reason="torch.compile with inductor may not support data-dependent loops"
+    )
+    def test_compile_inductor_backend(self):
+        """torch.compile with inductor backend works with fixed_point."""
+        c = torch.tensor([2.0, 3.0, 4.0])
+
+        def solve(x0, c_val):
+            g = lambda x: (x + c_val / x) / 2  # Babylonian method
+            fp, converged = fixed_point(g, x0)
+            return fp
+
+        # Compile with default inductor backend
+        solve_compiled = torch.compile(solve)
+
+        x0 = torch.tensor([1.5, 1.5, 1.5])
+        fps = solve_compiled(x0, c)
+
+        expected = torch.sqrt(c)
+        torch.testing.assert_close(fps, expected, rtol=1e-5, atol=1e-5)
+
+    @pytest.mark.skipif(
+        not hasattr(torch, "compile"), reason="torch.compile not available"
+    )
+    def test_compile_dottie_number(self):
+        """torch.compile works for finding the Dottie number."""
+
+        def solve(x0):
+            g = lambda x: torch.cos(x)
+            fp, converged = fixed_point(g, x0)
+            return fp
+
+        solve_compiled = torch.compile(solve, backend="eager")
+
+        x0 = torch.tensor([1.0])
+        fp = solve_compiled(x0)
+
+        # Dottie number is approximately 0.739085
+        expected = torch.tensor([0.7390851332151607])
+        torch.testing.assert_close(fp, expected, rtol=1e-5, atol=1e-5)
+
+    @pytest.mark.skipif(
+        not hasattr(torch, "compile"), reason="torch.compile not available"
+    )
+    def test_compile_system(self):
+        """torch.compile works with fixed-point systems."""
+
+        def solve(x0):
+            def g(x):
+                x1, x2 = x[..., 0], x[..., 1]
+                return torch.stack([0.5 * x2, 0.5 * x1 + 0.2], dim=-1)
+
+            fp, converged = fixed_point(g, x0)
+            return fp
+
+        solve_compiled = torch.compile(solve, backend="eager")
+
+        x0 = torch.tensor([[1.0, 1.0]])
+        fp = solve_compiled(x0)
+
+        expected_x1 = 2 / 15
+        expected_x2 = 4 / 15
+        expected = torch.tensor([[expected_x1, expected_x2]])
+        torch.testing.assert_close(fp, expected, rtol=1e-5, atol=1e-5)
+
+    @pytest.mark.skipif(
+        not hasattr(torch, "compile"), reason="torch.compile not available"
+    )
+    def test_compile_batched(self):
+        """torch.compile works with batched inputs."""
+
+        def solve(x0):
+            g = lambda x: 0.5 * x + 0.25
+            fp, converged = fixed_point(g, x0)
+            return fp
+
+        solve_compiled = torch.compile(solve, backend="eager")
+
+        x0 = torch.tensor([[1.0, 2.0], [0.0, 1.0], [2.0, 0.0]])
+        fps = solve_compiled(x0)
+
+        # Fixed point: x = 0.5 * x + 0.25 => x = 0.5
+        expected = torch.full((3, 2), 0.5)
+        torch.testing.assert_close(fps, expected, rtol=1e-5, atol=1e-5)
+
+
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 class TestFixedPointCUDA:
     """Tests for CUDA device support."""

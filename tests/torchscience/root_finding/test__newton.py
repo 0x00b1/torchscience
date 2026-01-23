@@ -567,6 +567,104 @@ class TestNewtonVmap:
         assert converged.all()
 
 
+class TestNewtonCompile:
+    """Tests for torch.compile compatibility.
+
+    Note: torch.compile may have issues with data-dependent loops used in
+    iterative root-finding algorithms. These tests verify compatibility
+    and document any limitations.
+    """
+
+    @pytest.mark.skipif(
+        not hasattr(torch, "compile"), reason="torch.compile not available"
+    )
+    def test_compile_eager_backend(self):
+        """torch.compile with eager backend works with newton."""
+        c = torch.tensor([2.0, 3.0, 4.0])
+
+        def solve(x0, c_val):
+            f = lambda x: x**2 - c_val
+            root, converged = newton(f, x0)
+            return root
+
+        # Compile with eager backend (more forgiving)
+        solve_compiled = torch.compile(solve, backend="eager")
+
+        x0 = torch.tensor([1.5, 1.5, 1.5])
+        roots = solve_compiled(x0, c)
+
+        expected = torch.sqrt(c)
+        torch.testing.assert_close(roots, expected, rtol=1e-5, atol=1e-5)
+
+    @pytest.mark.skipif(
+        not hasattr(torch, "compile"), reason="torch.compile not available"
+    )
+    @pytest.mark.xfail(
+        reason="torch.compile with inductor may not support data-dependent loops"
+    )
+    def test_compile_inductor_backend(self):
+        """torch.compile with inductor backend works with newton."""
+        c = torch.tensor([2.0, 3.0, 4.0])
+
+        def solve(x0, c_val):
+            f = lambda x: x**2 - c_val
+            root, converged = newton(f, x0)
+            return root
+
+        # Compile with default inductor backend
+        solve_compiled = torch.compile(solve)
+
+        x0 = torch.tensor([1.5, 1.5, 1.5])
+        roots = solve_compiled(x0, c)
+
+        expected = torch.sqrt(c)
+        torch.testing.assert_close(roots, expected, rtol=1e-5, atol=1e-5)
+
+    @pytest.mark.skipif(
+        not hasattr(torch, "compile"), reason="torch.compile not available"
+    )
+    def test_compile_with_grad_eager(self):
+        """Compiled method with eager backend supports autograd."""
+        theta = torch.tensor([2.0], dtype=torch.float64, requires_grad=True)
+
+        @torch.compile(backend="eager")
+        def solve_and_sum(t):
+            f = lambda x: x**2 - t
+            x0 = torch.tensor([1.5], dtype=torch.float64)
+            root, _ = newton(f, x0)
+            return root.sum()
+
+        result = solve_and_sum(theta)
+        result.backward()
+
+        # d(sqrt(theta))/dtheta = 1/(2*sqrt(theta))
+        expected_grad = 1.0 / (2.0 * torch.sqrt(theta.detach()))
+        torch.testing.assert_close(
+            theta.grad, expected_grad, rtol=1e-4, atol=1e-6
+        )
+
+    @pytest.mark.skipif(
+        not hasattr(torch, "compile"), reason="torch.compile not available"
+    )
+    def test_compile_explicit_derivative(self):
+        """torch.compile works with explicit derivative function."""
+        c = torch.tensor([2.0, 3.0, 4.0])
+
+        def solve(x0, c_val):
+            f = lambda x: x**2 - c_val
+            df = lambda x: 2 * x
+            root, converged = newton(f, x0, df=df)
+            return root
+
+        solve_compiled = torch.compile(solve, backend="eager")
+
+        x0 = torch.tensor([1.5, 1.5, 1.5])
+        roots = solve_compiled(x0, c)
+
+        expected = torch.sqrt(c)
+        torch.testing.assert_close(roots, expected, rtol=1e-5, atol=1e-5)
+
+
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 class TestNewtonCUDA:
     """Tests for CUDA device support."""

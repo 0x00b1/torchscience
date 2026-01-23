@@ -569,6 +569,107 @@ class TestRidderVmap:
         assert converged.all()
 
 
+class TestRidderCompile:
+    """Tests for torch.compile compatibility.
+
+    Note: torch.compile may have issues with data-dependent loops used in
+    iterative root-finding algorithms. These tests verify compatibility
+    and document any limitations.
+    """
+
+    @pytest.mark.skipif(
+        not hasattr(torch, "compile"), reason="torch.compile not available"
+    )
+    def test_compile_eager_backend(self):
+        """torch.compile with eager backend works with ridder."""
+        c = torch.tensor([2.0, 3.0, 4.0])
+
+        def solve(a, b, c_val):
+            f = lambda x: x**2 - c_val
+            root, converged = ridder(f, a, b)
+            return root
+
+        # Compile with eager backend (more forgiving)
+        solve_compiled = torch.compile(solve, backend="eager")
+
+        a = torch.ones(3)
+        b = torch.full((3,), 10.0)
+        roots = solve_compiled(a, b, c)
+
+        expected = torch.sqrt(c)
+        torch.testing.assert_close(roots, expected, rtol=1e-5, atol=1e-5)
+
+    @pytest.mark.skipif(
+        not hasattr(torch, "compile"), reason="torch.compile not available"
+    )
+    @pytest.mark.xfail(
+        reason="torch.compile with inductor may not support data-dependent loops"
+    )
+    def test_compile_inductor_backend(self):
+        """torch.compile with inductor backend works with ridder."""
+        c = torch.tensor([2.0, 3.0, 4.0])
+
+        def solve(a, b, c_val):
+            f = lambda x: x**2 - c_val
+            root, converged = ridder(f, a, b)
+            return root
+
+        # Compile with default inductor backend
+        solve_compiled = torch.compile(solve)
+
+        a = torch.ones(3)
+        b = torch.full((3,), 10.0)
+        roots = solve_compiled(a, b, c)
+
+        expected = torch.sqrt(c)
+        torch.testing.assert_close(roots, expected, rtol=1e-5, atol=1e-5)
+
+    @pytest.mark.skipif(
+        not hasattr(torch, "compile"), reason="torch.compile not available"
+    )
+    def test_compile_with_grad_eager(self):
+        """Compiled method with eager backend supports autograd."""
+        theta = torch.tensor([2.0], dtype=torch.float64, requires_grad=True)
+
+        @torch.compile(backend="eager")
+        def solve_and_sum(t):
+            f = lambda x: x**2 - t
+            a = torch.tensor([0.0], dtype=torch.float64)
+            b = torch.tensor([2.0], dtype=torch.float64)
+            root, _ = ridder(f, a, b)
+            return root.sum()
+
+        result = solve_and_sum(theta)
+        result.backward()
+
+        # d(sqrt(theta))/dtheta = 1/(2*sqrt(theta))
+        expected_grad = 1.0 / (2.0 * torch.sqrt(theta.detach()))
+        torch.testing.assert_close(
+            theta.grad, expected_grad, rtol=1e-4, atol=1e-6
+        )
+
+    @pytest.mark.skipif(
+        not hasattr(torch, "compile"), reason="torch.compile not available"
+    )
+    def test_compile_trigonometric(self):
+        """torch.compile works with trigonometric function."""
+
+        def solve(a, b):
+            f = lambda x: torch.sin(x)
+            root, converged = ridder(f, a, b)
+            return root
+
+        solve_compiled = torch.compile(solve, backend="eager")
+
+        a = torch.tensor([2.0])
+        b = torch.tensor([4.0])
+        root = solve_compiled(a, b)
+
+        torch.testing.assert_close(
+            root, torch.tensor([math.pi]), rtol=1e-5, atol=1e-5
+        )
+
+
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 class TestRidderCUDA:
     """Tests for CUDA device support."""

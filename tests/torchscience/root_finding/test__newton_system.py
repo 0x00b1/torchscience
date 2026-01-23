@@ -439,6 +439,142 @@ class TestNewtonSystemVmap:
         assert converged.all()
 
 
+class TestNewtonSystemCompile:
+    """Tests for torch.compile compatibility.
+
+    Note: torch.compile may have issues with data-dependent loops used in
+    iterative root-finding algorithms. These tests verify compatibility
+    and document any limitations.
+    """
+
+    @pytest.mark.skipif(
+        not hasattr(torch, "compile"), reason="torch.compile not available"
+    )
+    def test_compile_eager_backend(self):
+        """torch.compile with eager backend works with newton_system."""
+
+        def solve(x0):
+            def f(x):
+                x1, x2 = x[..., 0], x[..., 1]
+                f1 = x1**2 + x2**2 - 1
+                f2 = x1 - x2
+                return torch.stack([f1, f2], dim=-1)
+
+            root, converged = newton_system(f, x0)
+            return root
+
+        # Compile with eager backend (more forgiving)
+        solve_compiled = torch.compile(solve, backend="eager")
+
+        x0 = torch.tensor([0.5, 0.5], dtype=torch.float64)
+        root = solve_compiled(x0)
+
+        expected_val = 1.0 / math.sqrt(2)
+        expected = torch.tensor(
+            [expected_val, expected_val], dtype=torch.float64
+        )
+        torch.testing.assert_close(root, expected, rtol=1e-6, atol=1e-6)
+
+    @pytest.mark.skipif(
+        not hasattr(torch, "compile"), reason="torch.compile not available"
+    )
+    @pytest.mark.xfail(
+        reason="torch.compile with inductor may not support data-dependent loops"
+    )
+    def test_compile_inductor_backend(self):
+        """torch.compile with inductor backend works with newton_system."""
+
+        def solve(x0):
+            def f(x):
+                x1, x2 = x[..., 0], x[..., 1]
+                f1 = x1**2 + x2**2 - 1
+                f2 = x1 - x2
+                return torch.stack([f1, f2], dim=-1)
+
+            root, converged = newton_system(f, x0)
+            return root
+
+        # Compile with default inductor backend
+        solve_compiled = torch.compile(solve)
+
+        x0 = torch.tensor([0.5, 0.5], dtype=torch.float64)
+        root = solve_compiled(x0)
+
+        expected_val = 1.0 / math.sqrt(2)
+        expected = torch.tensor(
+            [expected_val, expected_val], dtype=torch.float64
+        )
+        torch.testing.assert_close(root, expected, rtol=1e-6, atol=1e-6)
+
+    @pytest.mark.skipif(
+        not hasattr(torch, "compile"), reason="torch.compile not available"
+    )
+    def test_compile_with_explicit_jacobian(self):
+        """torch.compile works with explicit Jacobian."""
+
+        def solve(x0):
+            def f(x):
+                x1, x2 = x[..., 0], x[..., 1]
+                f1 = x1**2 + x2**2 - 1
+                f2 = x1 - x2
+                return torch.stack([f1, f2], dim=-1)
+
+            def jacobian(x):
+                batch_size = x.shape[0]
+                x1, x2 = x[..., 0], x[..., 1]
+                J = torch.zeros(
+                    batch_size, 2, 2, dtype=x.dtype, device=x.device
+                )
+                J[..., 0, 0] = 2 * x1
+                J[..., 0, 1] = 2 * x2
+                J[..., 1, 0] = 1
+                J[..., 1, 1] = -1
+                return J
+
+            root, converged = newton_system(f, x0, jacobian=jacobian)
+            return root
+
+        solve_compiled = torch.compile(solve, backend="eager")
+
+        x0 = torch.tensor([[0.5, 0.5]], dtype=torch.float64)
+        root = solve_compiled(x0)
+
+        expected_val = 1.0 / math.sqrt(2)
+        expected = torch.tensor(
+            [[expected_val, expected_val]], dtype=torch.float64
+        )
+        torch.testing.assert_close(root, expected, rtol=1e-6, atol=1e-6)
+
+    @pytest.mark.skipif(
+        not hasattr(torch, "compile"), reason="torch.compile not available"
+    )
+    def test_compile_batched(self):
+        """torch.compile works with batched inputs."""
+
+        def solve(x0):
+            def f(x):
+                x1, x2 = x[..., 0], x[..., 1]
+                f1 = x1**2 + x2**2 - 1
+                f2 = x1 - x2
+                return torch.stack([f1, f2], dim=-1)
+
+            root, converged = newton_system(f, x0)
+            return root
+
+        solve_compiled = torch.compile(solve, backend="eager")
+
+        x0 = torch.tensor(
+            [[0.5, 0.5], [0.6, 0.6], [0.7, 0.7]], dtype=torch.float64
+        )
+        roots = solve_compiled(x0)
+
+        expected_val = 1.0 / math.sqrt(2)
+        expected = torch.tensor(
+            [[expected_val, expected_val]] * 3, dtype=torch.float64
+        )
+        torch.testing.assert_close(roots, expected, rtol=1e-6, atol=1e-6)
+
+
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 class TestNewtonSystemCUDA:
     """Tests for CUDA device support."""

@@ -719,6 +719,157 @@ class TestBroydenVmap:
         assert converged.all()
 
 
+class TestBroydenCompile:
+    """Tests for torch.compile compatibility.
+
+    Note: torch.compile may have issues with data-dependent loops used in
+    iterative root-finding algorithms. These tests verify compatibility
+    and document any limitations.
+    """
+
+    @pytest.mark.skipif(
+        not hasattr(torch, "compile"), reason="torch.compile not available"
+    )
+    def test_compile_eager_backend(self):
+        """torch.compile with eager backend works with broyden."""
+
+        def solve(x0):
+            def f(x):
+                x1, x2 = x[..., 0], x[..., 1]
+                f1 = x1**2 + x2**2 - 1
+                f2 = x1 - x2
+                return torch.stack([f1, f2], dim=-1)
+
+            root, converged = broyden(f, x0)
+            return root
+
+        # Compile with eager backend (more forgiving)
+        solve_compiled = torch.compile(solve, backend="eager")
+
+        x0 = torch.tensor([0.5, 0.5], dtype=torch.float64)
+        root = solve_compiled(x0)
+
+        expected_val = 1.0 / math.sqrt(2)
+        expected = torch.tensor(
+            [expected_val, expected_val], dtype=torch.float64
+        )
+        torch.testing.assert_close(root, expected, rtol=1e-6, atol=1e-6)
+
+    @pytest.mark.skipif(
+        not hasattr(torch, "compile"), reason="torch.compile not available"
+    )
+    @pytest.mark.xfail(
+        reason="torch.compile with inductor may not support data-dependent loops"
+    )
+    def test_compile_inductor_backend(self):
+        """torch.compile with inductor backend works with broyden."""
+
+        def solve(x0):
+            def f(x):
+                x1, x2 = x[..., 0], x[..., 1]
+                f1 = x1**2 + x2**2 - 1
+                f2 = x1 - x2
+                return torch.stack([f1, f2], dim=-1)
+
+            root, converged = broyden(f, x0)
+            return root
+
+        # Compile with default inductor backend
+        solve_compiled = torch.compile(solve)
+
+        x0 = torch.tensor([0.5, 0.5], dtype=torch.float64)
+        root = solve_compiled(x0)
+
+        expected_val = 1.0 / math.sqrt(2)
+        expected = torch.tensor(
+            [expected_val, expected_val], dtype=torch.float64
+        )
+        torch.testing.assert_close(root, expected, rtol=1e-6, atol=1e-6)
+
+    @pytest.mark.skipif(
+        not hasattr(torch, "compile"), reason="torch.compile not available"
+    )
+    def test_compile_good_method(self):
+        """torch.compile works with Broyden's good method."""
+
+        def solve(x0):
+            def f(x):
+                x1, x2 = x[..., 0], x[..., 1]
+                f1 = x1**2 + x2**2 - 1
+                f2 = x1 - x2
+                return torch.stack([f1, f2], dim=-1)
+
+            root, converged = broyden(f, x0, method="good")
+            return root
+
+        solve_compiled = torch.compile(solve, backend="eager")
+
+        x0 = torch.tensor([0.5, 0.5], dtype=torch.float64)
+        root = solve_compiled(x0)
+
+        expected_val = 1.0 / math.sqrt(2)
+        expected = torch.tensor(
+            [expected_val, expected_val], dtype=torch.float64
+        )
+        torch.testing.assert_close(root, expected, rtol=1e-6, atol=1e-6)
+
+    @pytest.mark.skipif(
+        not hasattr(torch, "compile"), reason="torch.compile not available"
+    )
+    def test_compile_bad_method(self):
+        """torch.compile works with Broyden's bad method."""
+
+        def solve(x0):
+            def f(x):
+                x1, x2 = x[..., 0], x[..., 1]
+                f1 = x1**2 + x2**2 - 1
+                f2 = x1 - x2
+                return torch.stack([f1, f2], dim=-1)
+
+            root, converged = broyden(f, x0, method="bad")
+            return root
+
+        solve_compiled = torch.compile(solve, backend="eager")
+
+        x0 = torch.tensor([0.5, 0.5], dtype=torch.float64)
+        root = solve_compiled(x0)
+
+        expected_val = 1.0 / math.sqrt(2)
+        expected = torch.tensor(
+            [expected_val, expected_val], dtype=torch.float64
+        )
+        torch.testing.assert_close(root, expected, rtol=1e-6, atol=1e-6)
+
+    @pytest.mark.skipif(
+        not hasattr(torch, "compile"), reason="torch.compile not available"
+    )
+    def test_compile_batched(self):
+        """torch.compile works with batched inputs."""
+
+        def solve(x0):
+            def f(x):
+                x1, x2 = x[..., 0], x[..., 1]
+                f1 = x1**2 + x2**2 - 1
+                f2 = x1 - x2
+                return torch.stack([f1, f2], dim=-1)
+
+            root, converged = broyden(f, x0)
+            return root
+
+        solve_compiled = torch.compile(solve, backend="eager")
+
+        x0 = torch.tensor(
+            [[0.5, 0.5], [0.6, 0.6], [0.7, 0.7]], dtype=torch.float64
+        )
+        roots = solve_compiled(x0)
+
+        expected_val = 1.0 / math.sqrt(2)
+        expected = torch.tensor(
+            [[expected_val, expected_val]] * 3, dtype=torch.float64
+        )
+        torch.testing.assert_close(roots, expected, rtol=1e-6, atol=1e-6)
+
+
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 class TestBroydenCUDA:
     """Tests for CUDA device support."""
