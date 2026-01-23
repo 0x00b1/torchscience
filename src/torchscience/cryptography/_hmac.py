@@ -1,7 +1,7 @@
 import torch
 from torch import Tensor
 
-from torchscience.encryption._sha256 import sha256
+from torchscience.cryptography._sha256 import sha256
 
 
 def hmac_sha256(key: Tensor, data: Tensor) -> Tensor:
