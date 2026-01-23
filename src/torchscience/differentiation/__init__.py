@@ -55,6 +55,7 @@ from torchscience.differentiation._surface_integral import (
     flux,
     surface_integral,
 )
+from torchscience.differentiation._volume_integral import volume_integral
 from torchscience.differentiation._vorticity import vorticity
 from torchscience.differentiation._wave_operator import wave_operator
 
@@ -98,6 +99,7 @@ __all__ = [
     "spectral_laplacian",
     "strain_tensor",
     "surface_integral",
+    "volume_integral",
     "vorticity",
     "wave_operator",
 ]
