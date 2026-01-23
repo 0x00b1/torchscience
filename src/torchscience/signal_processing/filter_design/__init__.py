@@ -42,6 +42,7 @@ from ._exceptions import (
     SpecificationError,
 )
 from ._fftfilt import fftfilt
+from ._filter_designer import Filter, FilterDesigner
 from ._filtfilt import filtfilt
 from ._firwin import firwin
 from ._firwin2 import firwin2
@@ -75,6 +76,9 @@ from ._zpk_to_ba import zpk_to_ba
 from ._zpk_to_sos import zpk_to_sos
 
 __all__ = [
+    # High-level interface
+    "Filter",
+    "FilterDesigner",
     # Design functions - Digital
     "bessel_design",
     "bessel_prototype",
