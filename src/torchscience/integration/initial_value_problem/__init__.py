@@ -114,6 +114,7 @@ from torchscience.integration.initial_value_problem._backward_euler import (
 from torchscience.integration.initial_value_problem._batched import (
     solve_ivp_batched,
 )
+from torchscience.integration.initial_value_problem._bdf import bdf
 from torchscience.integration.initial_value_problem._cnf import (
     cnf_dynamics,
     exact_trace,
@@ -130,6 +131,7 @@ from torchscience.integration.initial_value_problem._exceptions import (
     StepSizeError,
 )
 from torchscience.integration.initial_value_problem._midpoint import midpoint
+from torchscience.integration.initial_value_problem._radau import radau
 from torchscience.integration.initial_value_problem._runge_kutta_4 import (
     runge_kutta_4,
 )
@@ -157,6 +159,9 @@ __all__ = [
     "dormand_prince_5",
     # Implicit solvers
     "backward_euler",
+    # Implicit stiff solvers
+    "bdf",
+    "radau",
     # Wrappers
     "adjoint",
     # Unified API

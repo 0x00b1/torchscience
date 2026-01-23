@@ -10,6 +10,7 @@ from torchscience.integration.initial_value_problem._adjoint import adjoint
 from torchscience.integration.initial_value_problem._backward_euler import (
     backward_euler,
 )
+from torchscience.integration.initial_value_problem._bdf import bdf
 from torchscience.integration.initial_value_problem._dormand_prince_5 import (
     dormand_prince_5,
 )
@@ -19,6 +20,7 @@ from torchscience.integration.initial_value_problem._event_handling import (
     parse_events,
 )
 from torchscience.integration.initial_value_problem._midpoint import midpoint
+from torchscience.integration.initial_value_problem._radau import radau
 from torchscience.integration.initial_value_problem._runge_kutta_4 import (
     runge_kutta_4,
 )
@@ -37,6 +39,10 @@ _METHOD_MAP: Dict[str, Callable] = {
     "midpoint": midpoint,
     # Backward Euler (implicit, 1st order)
     "backward_euler": backward_euler,
+    # BDF multi-step method (implicit, variable order 1-5, stiff)
+    "bdf": bdf,
+    # Radau IIA method (implicit, 5th order, stiff)
+    "radau": radau,
 }
 
 
