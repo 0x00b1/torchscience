@@ -16,6 +16,9 @@ from torchscience.graph._closeness_centrality import (
 from torchscience.graph._connected_components import (
     connected_components,
 )
+from torchscience.graph._dag_shortest_paths import (
+    dag_shortest_paths,
+)
 from torchscience.graph._depth_first_search import (
     depth_first_search,
 )
@@ -48,6 +51,7 @@ __all__ = [
     "bellman_ford",
     "betweenness_centrality",
     "breadth_first_search",
+    "dag_shortest_paths",
     "depth_first_search",
     "closeness_centrality",
     "connected_components",
