@@ -6,6 +6,7 @@ from ._differentiation import (
     compute_second_derivative,
 )
 from ._exceptions import BracketError, DerivativeError, RootFindingError
+from ._halley import halley
 from ._newton import newton
 from ._secant import secant
 
@@ -16,6 +17,7 @@ __all__ = [
     "compute_jacobian",
     "compute_second_derivative",
     "default_tolerances",
+    "halley",
     "newton",
     "secant",
     "BracketError",
