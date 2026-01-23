@@ -566,4 +566,200 @@ inline void fe25519_abs(Fe25519& h, const Fe25519& f) {
     fe25519_cmov(h, neg_f, fe25519_isnegative(f));
 }
 
+// ============================================================================
+// X25519 (RFC 7748) Scalar Multiplication
+// ============================================================================
+
+// Constant a24 = (A + 2) / 4 = (486662 + 2) / 4 = 121666 for Curve25519
+// where A is the Montgomery coefficient in y^2 = x^3 + Ax^2 + x
+constexpr int64_t X25519_A24 = 121666;
+
+// Scalar clamping for X25519 (RFC 7748, Section 5)
+// Clamps the scalar to ensure it is a valid X25519 private key:
+// - Clear bits 0, 1, 2 (make it a multiple of 8, for cofactor)
+// - Clear bit 255 (ensure scalar < 2^255)
+// - Set bit 254 (ensure constant-time ladder execution)
+inline void x25519_clamp(uint8_t* k) {
+    k[0] &= 248;   // Clear bits 0, 1, 2 (248 = 0xF8)
+    k[31] &= 127;  // Clear bit 255 (127 = 0x7F)
+    k[31] |= 64;   // Set bit 254 (64 = 0x40)
+}
+
+// Multiply field element by the constant a24 = 121666
+// h = a24 * f
+inline void fe25519_mul_a24(Fe25519& h, const Fe25519& f) {
+    __int128 h0 = static_cast<__int128>(X25519_A24) * f.v[0];
+    __int128 h1 = static_cast<__int128>(X25519_A24) * f.v[1];
+    __int128 h2 = static_cast<__int128>(X25519_A24) * f.v[2];
+    __int128 h3 = static_cast<__int128>(X25519_A24) * f.v[3];
+    __int128 h4 = static_cast<__int128>(X25519_A24) * f.v[4];
+
+    // Carry and reduce
+    __int128 c;
+    c = h0 >> 51; h1 += c; h0 &= FE25519_MASK51;
+    c = h1 >> 51; h2 += c; h1 &= FE25519_MASK51;
+    c = h2 >> 51; h3 += c; h2 &= FE25519_MASK51;
+    c = h3 >> 51; h4 += c; h3 &= FE25519_MASK51;
+    c = h4 >> 51; h0 += c * 19; h4 &= FE25519_MASK51;
+
+    // One more carry round
+    c = h0 >> 51; h1 += c; h0 &= FE25519_MASK51;
+
+    h.v[0] = static_cast<int64_t>(h0);
+    h.v[1] = static_cast<int64_t>(h1);
+    h.v[2] = static_cast<int64_t>(h2);
+    h.v[3] = static_cast<int64_t>(h3);
+    h.v[4] = static_cast<int64_t>(h4);
+}
+
+// Montgomery ladder step - differential addition
+// Given points P = (x2 : z2) and Q = (x3 : z3) = P + base, computes:
+//   P' = 2P and Q' = P + Q (differential addition)
+// using only the x-coordinate of the base point
+//
+// Montgomery ladder formulas (x-coordinate only):
+//   A = x2 + z2
+//   AA = A^2
+//   B = x2 - z2
+//   BB = B^2
+//   E = AA - BB
+//   C = x3 + z3
+//   D = x3 - z3
+//   DA = D * A
+//   CB = C * B
+//   x3 = (DA + CB)^2
+//   z3 = x1 * (DA - CB)^2
+//   x2 = AA * BB
+//   z2 = E * (AA + a24 * E)
+//
+// where a24 = (A + 2) / 4 = 121666 for Curve25519
+inline void x25519_ladder_step(
+    Fe25519& x2, Fe25519& z2,  // Point P (updated to 2P)
+    Fe25519& x3, Fe25519& z3,  // Point Q = P + base (updated to P + Q)
+    const Fe25519& x1          // x-coordinate of base point
+) {
+    Fe25519 A, AA, B, BB, E, C, D, DA, CB, t0, t1;
+
+    // A = x2 + z2
+    fe25519_add(A, x2, z2);
+    // AA = A^2
+    fe25519_sq(AA, A);
+    // B = x2 - z2
+    fe25519_sub(B, x2, z2);
+    // BB = B^2
+    fe25519_sq(BB, B);
+    // E = AA - BB
+    fe25519_sub(E, AA, BB);
+    // C = x3 + z3
+    fe25519_add(C, x3, z3);
+    // D = x3 - z3
+    fe25519_sub(D, x3, z3);
+    // DA = D * A
+    fe25519_mul(DA, D, A);
+    // CB = C * B
+    fe25519_mul(CB, C, B);
+
+    // x3 = (DA + CB)^2
+    fe25519_add(t0, DA, CB);
+    fe25519_sq(x3, t0);
+
+    // z3 = x1 * (DA - CB)^2
+    fe25519_sub(t0, DA, CB);
+    fe25519_sq(t1, t0);
+    fe25519_mul(z3, x1, t1);
+
+    // x2 = AA * BB
+    fe25519_mul(x2, AA, BB);
+
+    // z2 = E * (AA + a24 * E)
+    fe25519_mul_a24(t0, E);      // t0 = a24 * E
+    fe25519_add(t0, AA, t0);     // t0 = AA + a24 * E
+    fe25519_mul(z2, E, t0);      // z2 = E * (AA + a24 * E)
+}
+
+// Full X25519 scalar multiplication: q = n * p
+// Computes the x-coordinate of n*P where P has x-coordinate p
+// Uses the Montgomery ladder for constant-time execution
+//
+// Input:
+//   n: 32-byte scalar (will be clamped internally)
+//   p: 32-byte x-coordinate of input point
+// Output:
+//   q: 32-byte x-coordinate of result point
+inline void x25519_scalarmult(
+    uint8_t* q,        // 32-byte output
+    const uint8_t* n,  // 32-byte scalar
+    const uint8_t* p   // 32-byte point (x-coordinate)
+) {
+    // Copy and clamp the scalar
+    uint8_t e[32];
+    for (int i = 0; i < 32; i++) {
+        e[i] = n[i];
+    }
+    x25519_clamp(e);
+
+    // Load the base point x-coordinate
+    Fe25519 x1;
+    fe25519_frombytes(x1, p);
+
+    // Initialize ladder state:
+    // (x2 : z2) = (1 : 0) = point at infinity
+    // (x3 : z3) = (x1 : 1) = base point
+    Fe25519 x2, z2, x3, z3;
+    fe25519_one(x2);
+    fe25519_zero(z2);
+    fe25519_copy(x3, x1);
+    fe25519_one(z3);
+
+    // Montgomery ladder: process bits from 254 down to 0
+    // (bit 255 is cleared by clamping, bit 254 is set)
+    int64_t swap = 0;
+    for (int i = 254; i >= 0; i--) {
+        // Extract bit i of the scalar
+        int64_t bit = (e[i >> 3] >> (i & 7)) & 1;
+
+        // Conditional swap based on bit XOR previous swap state
+        swap ^= bit;
+        fe25519_cswap(x2, x3, swap);
+        fe25519_cswap(z2, z3, swap);
+        swap = bit;
+
+        // Ladder step: (x2, z2) = 2*(x2, z2), (x3, z3) = (x2, z2) + (x3, z3)
+        x25519_ladder_step(x2, z2, x3, z3, x1);
+    }
+
+    // Final conditional swap
+    fe25519_cswap(x2, x3, swap);
+    fe25519_cswap(z2, z3, swap);
+
+    // Compute result: x = x2 * z2^(-1)
+    Fe25519 z2_inv, result;
+    fe25519_invert(z2_inv, z2);
+    fe25519_mul(result, x2, z2_inv);
+
+    // Store result
+    fe25519_tobytes(q, result);
+}
+
+// X25519 base point multiplication: q = n * G
+// Computes the x-coordinate of n*G where G is the standard base point
+// with x-coordinate 9
+//
+// Input:
+//   n: 32-byte scalar
+// Output:
+//   q: 32-byte x-coordinate of result point
+inline void x25519_scalarmult_base(
+    uint8_t* q,        // 32-byte output
+    const uint8_t* n   // 32-byte scalar
+) {
+    // Standard base point for Curve25519 has x-coordinate = 9
+    static const uint8_t basepoint[32] = {
+        9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    };
+
+    x25519_scalarmult(q, n, basepoint);
+}
+
 }  // namespace torchscience::kernel::encryption
