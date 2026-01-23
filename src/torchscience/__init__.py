@@ -2,6 +2,7 @@
 
 from . import (
     _csrc,
+    cryptography,
     distance,
     graphics,
     morphology,
@@ -15,6 +16,7 @@ from . import (
 
 __all__ = [
     "_csrc",
+    "cryptography",
     "distance",
     "graphics",
     "morphology",
