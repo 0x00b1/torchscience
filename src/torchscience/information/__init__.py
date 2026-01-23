@@ -7,6 +7,7 @@ from ._coinformation import coinformation
 from ._conditional_entropy import conditional_entropy
 from ._conditional_mutual_information import conditional_mutual_information
 from ._cross_entropy import cross_entropy
+from ._directed_information import directed_information
 from ._dual_total_correlation import dual_total_correlation
 from ._f_divergence import f_divergence
 from ._interaction_information import interaction_information
@@ -31,6 +32,7 @@ __all__ = [
     "conditional_entropy",
     "conditional_mutual_information",
     "cross_entropy",
+    "directed_information",
     "dual_total_correlation",
     "f_divergence",
     "interaction_information",
