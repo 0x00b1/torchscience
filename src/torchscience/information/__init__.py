@@ -32,6 +32,7 @@ from ._pointwise_mutual_information import pointwise_mutual_information
 from ._renyi_divergence import renyi_divergence
 from ._renyi_entropy import renyi_entropy
 from ._shannon_entropy import shannon_entropy
+from ._source_coding_bound import source_coding_bound
 from ._total_correlation import total_correlation
 from ._transfer_entropy import transfer_entropy
 from ._tsallis_entropy import tsallis_entropy
@@ -67,6 +68,7 @@ __all__ = [
     "renyi_divergence",
     "renyi_entropy",
     "shannon_entropy",
+    "source_coding_bound",
     "total_correlation",
     "transfer_entropy",
     "tsallis_entropy",
