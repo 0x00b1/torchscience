@@ -1,10 +1,5 @@
-"""Inverse Hilbert transform implementation.
+"""Inverse Hilbert transform implementation."""
 
-.. deprecated::
-    This module is deprecated. Use ``torchscience.transform.inverse_hilbert_transform`` instead.
-"""
-
-import warnings
 from typing import Literal, Optional
 
 import torch
@@ -82,8 +77,8 @@ def inverse_hilbert_transform(
     Verify that inverse undoes forward transform:
 
     >>> x = torch.randn(100)
-    >>> h = torchscience.signal_processing.transforms.hilbert_transform(x)
-    >>> x_recovered = torchscience.signal_processing.transforms.inverse_hilbert_transform(h)
+    >>> h = torchscience.transform.hilbert_transform(x)
+    >>> x_recovered = torchscience.transform.inverse_hilbert_transform(h)
     >>> torch.allclose(x, x_recovered, atol=1e-5)
     True
 
@@ -131,13 +126,6 @@ def inverse_hilbert_transform(
     --------
     hilbert_transform : The forward Hilbert transform.
     """
-    warnings.warn(
-        "torchscience.signal_processing.transform.inverse_hilbert_transform is deprecated. "
-        "Use torchscience.transform.inverse_hilbert_transform instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-
     if padding_mode not in _PADDING_MODES:
         raise ValueError(
             f"padding_mode must be one of {list(_PADDING_MODES.keys())}, "

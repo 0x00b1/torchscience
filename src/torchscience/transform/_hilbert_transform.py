@@ -1,10 +1,5 @@
-"""Hilbert transform implementation.
+"""Hilbert transform implementation."""
 
-.. deprecated::
-    This module is deprecated. Use ``torchscience.transform.hilbert_transform`` instead.
-"""
-
-import warnings
 from typing import Literal, Optional
 
 import torch
@@ -201,13 +196,6 @@ def hilbert_transform(
     inverse_hilbert_transform : The inverse Hilbert transform.
     scipy.signal.hilbert : SciPy's Hilbert transform (returns analytic signal).
     """
-    warnings.warn(
-        "torchscience.signal_processing.transform.hilbert_transform is deprecated. "
-        "Use torchscience.transform.hilbert_transform instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-
     if padding_mode not in _PADDING_MODES:
         raise ValueError(
             f"padding_mode must be one of {list(_PADDING_MODES.keys())}, "

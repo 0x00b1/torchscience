@@ -10,6 +10,7 @@ from . import (
     root_finding,
     signal_processing,
     statistics,
+    transform,
 )
 
 __all__ = [
@@ -22,6 +23,7 @@ __all__ = [
     "root_finding",
     "signal_processing",
     "statistics",
+    "transform",
 ]
 
 __version__ = "0.1.0"
