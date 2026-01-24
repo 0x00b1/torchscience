@@ -16,6 +16,7 @@ from ._jensen_shannon_divergence import jensen_shannon_divergence
 from ._joint_entropy import joint_entropy
 from ._kozachenko_leonenko_entropy import kozachenko_leonenko_entropy
 from ._kraskov_entropy import kraskov_entropy
+from ._kraskov_mutual_information import kraskov_mutual_information
 from ._kullback_leibler_divergence import kullback_leibler_divergence
 from ._miller_madow_correction import miller_madow_correction
 from ._mutual_information import mutual_information
@@ -48,6 +49,7 @@ __all__ = [
     "joint_entropy",
     "kozachenko_leonenko_entropy",
     "kraskov_entropy",
+    "kraskov_mutual_information",
     "kullback_leibler_divergence",
     "miller_madow_correction",
     "mutual_information",
