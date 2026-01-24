@@ -5,6 +5,7 @@ from ._distortion_measure import distortion_measure
 from ._dithered_quantize import dithered_quantize
 from ._huffman import huffman_decode, huffman_encode
 from ._lz77 import lz77_decode, lz77_encode
+from ._optimal_quantizer import optimal_quantizer
 from ._range import range_decode, range_encode
 from ._rans import rans_decode, rans_encode
 from ._rate_distortion_lagrangian import (
@@ -25,6 +26,7 @@ __all__ = [
     "huffman_encode",
     "lz77_decode",
     "lz77_encode",
+    "optimal_quantizer",
     "range_decode",
     "range_encode",
     "rans_decode",
