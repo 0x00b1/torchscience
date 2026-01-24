@@ -1,6 +1,7 @@
 """Lossless and lossy compression operators."""
 
 from ._arithmetic import arithmetic_decode, arithmetic_encode
+from ._distortion_measure import distortion_measure
 from ._huffman import huffman_decode, huffman_encode
 from ._lz77 import lz77_decode, lz77_encode
 from ._range import range_decode, range_encode
@@ -12,6 +13,7 @@ from ._vector_quantize import vector_quantize
 __all__ = [
     "arithmetic_decode",
     "arithmetic_encode",
+    "distortion_measure",
     "huffman_decode",
     "huffman_encode",
     "lz77_decode",
