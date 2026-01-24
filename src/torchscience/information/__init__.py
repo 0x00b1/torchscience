@@ -12,6 +12,7 @@ from ._dual_total_correlation import dual_total_correlation
 from ._f_divergence import f_divergence
 from ._histogram_entropy import histogram_entropy
 from ._interaction_information import interaction_information
+from ._jackknife_entropy import jackknife_entropy
 from ._jensen_shannon_divergence import jensen_shannon_divergence
 from ._joint_entropy import joint_entropy
 from ._kernel_density_entropy import kernel_density_entropy
@@ -46,6 +47,7 @@ __all__ = [
     "f_divergence",
     "histogram_entropy",
     "interaction_information",
+    "jackknife_entropy",
     "jensen_shannon_divergence",
     "joint_entropy",
     "kernel_density_entropy",
