@@ -1,7 +1,8 @@
 import pytest
 import torch
 import torch.testing
-from torchscience.signal_processing.noise import violet_noise
+
+from torchscience.noise import violet_noise
 
 
 class TestVioletNoiseShape:

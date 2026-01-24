@@ -1,7 +1,8 @@
 import pytest
 import torch
 import torch.testing
-from torchscience.signal_processing.noise import shot_noise
+
+from torchscience.noise import shot_noise
 
 
 class TestShotNoiseShape:

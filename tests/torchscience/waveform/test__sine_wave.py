@@ -3,8 +3,8 @@ import math
 import pytest
 import torch
 import torch.testing
-import torchscience.signal_processing.waveform
 
+import torchscience.waveform
 import torchscience.window_function
 from torchscience.testing import (
     CreationOpDescriptor,
@@ -65,7 +65,7 @@ class TestSineWave(CreationOpTestCase):
     def descriptor(self) -> CreationOpDescriptor:
         return CreationOpDescriptor(
             name="sine_wave",
-            func=torchscience.signal_processing.waveform.sine_wave,
+            func=torchscience.waveform.sine_wave,
             expected_values=[
                 ExpectedValue(
                     n=1,
@@ -121,7 +121,7 @@ class TestSineWave(CreationOpTestCase):
     def test_starts_at_zero(self):
         """Test that sine wave starts at zero with default phase."""
         for n in [1, 10, 100]:
-            result = torchscience.signal_processing.waveform.sine_wave(n)
+            result = torchscience.waveform.sine_wave(n)
             torch.testing.assert_close(
                 result[0],
                 torch.tensor(0.0, dtype=torch.float32),
@@ -135,13 +135,13 @@ class TestSineWave(CreationOpTestCase):
         sample_rate = 100.0
         frequency = 1.0
 
-        sine = torchscience.signal_processing.waveform.sine_wave(
+        sine = torchscience.waveform.sine_wave(
             n,
             frequency=frequency,
             sample_rate=sample_rate,
             dtype=torch.float64,
         )
-        cosine = torchscience.signal_processing.waveform.sine_wave(
+        cosine = torchscience.waveform.sine_wave(
             n,
             frequency=frequency,
             sample_rate=sample_rate,
@@ -169,7 +169,7 @@ class TestSineWave(CreationOpTestCase):
         n = 100
         amplitude = 2.5
 
-        result = torchscience.signal_processing.waveform.sine_wave(
+        result = torchscience.waveform.sine_wave(
             n, amplitude=amplitude, dtype=torch.float64
         )
 
@@ -183,7 +183,7 @@ class TestSineWave(CreationOpTestCase):
         frequency = 1.0
         n = int(sample_rate)  # One second = one cycle
 
-        result = torchscience.signal_processing.waveform.sine_wave(
+        result = torchscience.waveform.sine_wave(
             n,
             frequency=frequency,
             sample_rate=sample_rate,
@@ -213,7 +213,7 @@ class TestSineWave(CreationOpTestCase):
         frequency = 5.0  # 5 cycles per second
         n = int(sample_rate)
 
-        result = torchscience.signal_processing.waveform.sine_wave(
+        result = torchscience.waveform.sine_wave(
             n,
             frequency=frequency,
             sample_rate=sample_rate,
@@ -240,7 +240,7 @@ class TestSineWave(CreationOpTestCase):
         sample_rate_2 = 200.0
 
         # At sample_rate_1, we get 10/100 = 0.1 cycles per sample
-        result_1 = torchscience.signal_processing.waveform.sine_wave(
+        result_1 = torchscience.waveform.sine_wave(
             n,
             frequency=frequency,
             sample_rate=sample_rate_1,
@@ -248,7 +248,7 @@ class TestSineWave(CreationOpTestCase):
         )
 
         # At sample_rate_2, same frequency means slower oscillation
-        result_2 = torchscience.signal_processing.waveform.sine_wave(
+        result_2 = torchscience.waveform.sine_wave(
             n,
             frequency=frequency,
             sample_rate=sample_rate_2,
@@ -271,7 +271,7 @@ class TestSineWave(CreationOpTestCase):
         sample_rate = 100.0
         frequency = 1.0
 
-        result = torchscience.signal_processing.waveform.sine_wave(
+        result = torchscience.waveform.sine_wave(
             n,
             frequency=frequency,
             sample_rate=sample_rate,
@@ -300,7 +300,7 @@ class TestSineWave(CreationOpTestCase):
         frequency = 10.0
         amplitude = 1.0
 
-        result = torchscience.signal_processing.waveform.sine_wave(
+        result = torchscience.waveform.sine_wave(
             n,
             frequency=frequency,
             sample_rate=sample_rate,
@@ -318,10 +318,10 @@ class TestSineWave(CreationOpTestCase):
         amplitude_1 = 1.0
         amplitude_2 = 2.0
 
-        result_1 = torchscience.signal_processing.waveform.sine_wave(
+        result_1 = torchscience.waveform.sine_wave(
             n, amplitude=amplitude_1, dtype=torch.float64
         )
-        result_2 = torchscience.signal_processing.waveform.sine_wave(
+        result_2 = torchscience.waveform.sine_wave(
             n, amplitude=amplitude_2, dtype=torch.float64
         )
 
@@ -342,7 +342,7 @@ class TestSineWave(CreationOpTestCase):
         amplitude = 1.5
         phase = 0.3
 
-        result = torchscience.signal_processing.waveform.sine_wave(
+        result = torchscience.waveform.sine_wave(
             n,
             frequency=frequency,
             sample_rate=sample_rate,
@@ -368,13 +368,13 @@ class TestSineWave(CreationOpTestCase):
 
     def test_n_equals_zero(self):
         """Test that n=0 returns empty tensor."""
-        result = torchscience.signal_processing.waveform.sine_wave(0)
+        result = torchscience.waveform.sine_wave(0)
         assert result.shape == (0,)
         assert result.numel() == 0
 
     def test_n_equals_one(self):
         """Test n=1 returns sin(phase)."""
-        result = torchscience.signal_processing.waveform.sine_wave(1)
+        result = torchscience.waveform.sine_wave(1)
         torch.testing.assert_close(
             result,
             torch.tensor([0.0], dtype=torch.float32),
@@ -385,7 +385,7 @@ class TestSineWave(CreationOpTestCase):
     def test_n_equals_one_with_phase(self):
         """Test n=1 with phase returns sin(phase)."""
         phase = math.pi / 4
-        result = torchscience.signal_processing.waveform.sine_wave(
+        result = torchscience.waveform.sine_wave(
             1, phase=phase, dtype=torch.float64
         )
         expected = math.sin(phase)
@@ -399,7 +399,7 @@ class TestSineWave(CreationOpTestCase):
     def test_large_n(self):
         """Test with large number of samples."""
         n = 100000
-        result = torchscience.signal_processing.waveform.sine_wave(n)
+        result = torchscience.waveform.sine_wave(n)
         assert result.shape == (n,)
 
     def test_very_high_frequency(self):
@@ -408,7 +408,7 @@ class TestSineWave(CreationOpTestCase):
         sample_rate = 100.0
         frequency = sample_rate / 2  # Nyquist frequency
 
-        result = torchscience.signal_processing.waveform.sine_wave(
+        result = torchscience.waveform.sine_wave(
             n,
             frequency=frequency,
             sample_rate=sample_rate,
@@ -433,7 +433,7 @@ class TestSineWave(CreationOpTestCase):
         sample_rate = 1000.0
         frequency = 0.001  # Very slow oscillation
 
-        result = torchscience.signal_processing.waveform.sine_wave(
+        result = torchscience.waveform.sine_wave(
             n,
             frequency=frequency,
             sample_rate=sample_rate,
@@ -449,7 +449,7 @@ class TestSineWave(CreationOpTestCase):
     def test_zero_amplitude(self):
         """Test with zero amplitude gives all zeros."""
         n = 100
-        result = torchscience.signal_processing.waveform.sine_wave(
+        result = torchscience.waveform.sine_wave(
             n, amplitude=0.0, dtype=torch.float64
         )
         torch.testing.assert_close(
@@ -461,10 +461,10 @@ class TestSineWave(CreationOpTestCase):
         n = 100
         amplitude = -1.0
 
-        result_pos = torchscience.signal_processing.waveform.sine_wave(
+        result_pos = torchscience.waveform.sine_wave(
             n, amplitude=1.0, dtype=torch.float64
         )
-        result_neg = torchscience.signal_processing.waveform.sine_wave(
+        result_neg = torchscience.waveform.sine_wave(
             n, amplitude=amplitude, dtype=torch.float64
         )
 
@@ -479,9 +479,7 @@ class TestSineWave(CreationOpTestCase):
     def test_float64_precision(self):
         """Test float64 maintains precision."""
         n = 100
-        result = torchscience.signal_processing.waveform.sine_wave(
-            n, dtype=torch.float64
-        )
+        result = torchscience.waveform.sine_wave(n, dtype=torch.float64)
         assert result.dtype == torch.float64
 
         # Check specific values with high precision
@@ -505,18 +503,14 @@ class TestSineWave(CreationOpTestCase):
     def test_float16_dtype(self):
         """Test float16 works but with reduced precision."""
         n = 100
-        result = torchscience.signal_processing.waveform.sine_wave(
-            n, dtype=torch.float16
-        )
+        result = torchscience.waveform.sine_wave(n, dtype=torch.float16)
         assert result.dtype == torch.float16
 
     @pytest.mark.xfail(reason="BFloat16 dtype not implemented in C++ kernel")
     def test_bfloat16_dtype(self):
         """Test bfloat16 works."""
         n = 100
-        result = torchscience.signal_processing.waveform.sine_wave(
-            n, dtype=torch.bfloat16
-        )
+        result = torchscience.waveform.sine_wave(n, dtype=torch.bfloat16)
         assert result.dtype == torch.bfloat16
 
     # =========================================================================
@@ -526,7 +520,7 @@ class TestSineWave(CreationOpTestCase):
     def test_gradient_flow(self):
         """Test that gradients flow when requires_grad=True."""
         n = 100
-        result = torchscience.signal_processing.waveform.sine_wave(
+        result = torchscience.waveform.sine_wave(
             n, dtype=torch.float64, requires_grad=True
         )
         assert result.requires_grad
@@ -544,7 +538,7 @@ class TestSineWave(CreationOpTestCase):
         sample_rate = 256.0
         frequency = 10.0
 
-        result = torchscience.signal_processing.waveform.sine_wave(
+        result = torchscience.waveform.sine_wave(
             n,
             frequency=frequency,
             sample_rate=sample_rate,
@@ -567,7 +561,7 @@ class TestSineWave(CreationOpTestCase):
         n = 256
         amplitude = 2.0
 
-        result = torchscience.signal_processing.waveform.sine_wave(
+        result = torchscience.waveform.sine_wave(
             n, amplitude=amplitude, dtype=torch.float64
         )
 
@@ -591,11 +585,9 @@ class TestSineWave(CreationOpTestCase):
     )
     def test_torch_compile_basic(self):
         """Test basic torch.compile compatibility."""
-        compiled_func = torch.compile(
-            torchscience.signal_processing.waveform.sine_wave
-        )
+        compiled_func = torch.compile(torchscience.waveform.sine_wave)
         result = compiled_func(100)
-        expected = torchscience.signal_processing.waveform.sine_wave(100)
+        expected = torchscience.waveform.sine_wave(100)
         torch.testing.assert_close(result, expected)
 
     @pytest.mark.xfail(
@@ -603,9 +595,7 @@ class TestSineWave(CreationOpTestCase):
     )
     def test_torch_compile_with_parameters(self):
         """Test torch.compile with various parameters."""
-        compiled_func = torch.compile(
-            torchscience.signal_processing.waveform.sine_wave
-        )
+        compiled_func = torch.compile(torchscience.waveform.sine_wave)
 
         result = compiled_func(
             100,
@@ -615,7 +605,7 @@ class TestSineWave(CreationOpTestCase):
             phase=0.5,
             dtype=torch.float64,
         )
-        expected = torchscience.signal_processing.waveform.sine_wave(
+        expected = torchscience.waveform.sine_wave(
             100,
             frequency=5.0,
             sample_rate=100.0,
@@ -632,7 +622,7 @@ class TestSineWave(CreationOpTestCase):
         """Test torch.compile when sine_wave is used in a processing chain."""
 
         def process_signal(n: int, freq: float) -> torch.Tensor:
-            signal = torchscience.signal_processing.waveform.sine_wave(
+            signal = torchscience.waveform.sine_wave(
                 n, frequency=freq, sample_rate=float(n)
             )
             return torch.fft.fft(signal)
@@ -655,7 +645,7 @@ class TestSineWave(CreationOpTestCase):
         frequency = 440.0  # A4 note
         n = int(sample_rate * duration)
 
-        result = torchscience.signal_processing.waveform.sine_wave(
+        result = torchscience.waveform.sine_wave(
             n,
             frequency=frequency,
             sample_rate=sample_rate,
@@ -669,9 +659,7 @@ class TestSineWave(CreationOpTestCase):
         """Test applying a window function to sine wave."""
         n = 256
 
-        sine = torchscience.signal_processing.waveform.sine_wave(
-            n, dtype=torch.float64
-        )
+        sine = torchscience.waveform.sine_wave(n, dtype=torch.float64)
         window = torchscience.window_function.rectangular_window(
             n, dtype=torch.float64
         )
@@ -686,10 +674,10 @@ class TestSineWave(CreationOpTestCase):
         n = 1000
         sample_rate = 1000.0
 
-        wave1 = torchscience.signal_processing.waveform.sine_wave(
+        wave1 = torchscience.waveform.sine_wave(
             n, frequency=10.0, sample_rate=sample_rate, dtype=torch.float64
         )
-        wave2 = torchscience.signal_processing.waveform.sine_wave(
+        wave2 = torchscience.waveform.sine_wave(
             n, frequency=20.0, sample_rate=sample_rate, dtype=torch.float64
         )
 
@@ -720,7 +708,7 @@ class TestSineWave(CreationOpTestCase):
 
         waves = []
         for freq in frequencies:
-            wave = torchscience.signal_processing.waveform.sine_wave(
+            wave = torchscience.waveform.sine_wave(
                 n, frequency=freq, dtype=torch.float64
             )
             waves.append(wave)
@@ -730,7 +718,7 @@ class TestSineWave(CreationOpTestCase):
 
     def test_contiguous_output(self):
         """Test that output tensor is contiguous."""
-        result = torchscience.signal_processing.waveform.sine_wave(100)
+        result = torchscience.waveform.sine_wave(100)
         assert result.is_contiguous()
 
 
@@ -741,7 +729,7 @@ class TestSineWaveTensorParameters:
         """Test 1D frequency tensor produces batched output."""
         n = 100
         freqs = torch.tensor([1.0, 2.0, 5.0])
-        result = torchscience.signal_processing.waveform.sine_wave(
+        result = torchscience.waveform.sine_wave(
             n, frequency=freqs, sample_rate=100.0
         )
         assert result.shape == (3, 100)
@@ -750,7 +738,7 @@ class TestSineWaveTensorParameters:
         """Test 1D amplitude tensor produces batched output."""
         n = 100
         amps = torch.tensor([0.5, 1.0, 2.0])
-        result = torchscience.signal_processing.waveform.sine_wave(
+        result = torchscience.waveform.sine_wave(
             n, amplitude=amps, sample_rate=100.0
         )
         assert result.shape == (3, 100)
@@ -759,7 +747,7 @@ class TestSineWaveTensorParameters:
         """Test 1D phase tensor produces batched output."""
         n = 100
         phases = torch.tensor([0.0, math.pi / 2, math.pi])
-        result = torchscience.signal_processing.waveform.sine_wave(
+        result = torchscience.waveform.sine_wave(
             n, phase=phases, sample_rate=100.0
         )
         assert result.shape == (3, 100)
@@ -769,7 +757,7 @@ class TestSineWaveTensorParameters:
         n = 100
         freqs = torch.tensor([[100.0], [200.0]])  # shape (2, 1)
         amps = torch.tensor([0.5, 1.0, 1.5])  # shape (3,)
-        result = torchscience.signal_processing.waveform.sine_wave(
+        result = torchscience.waveform.sine_wave(
             n, frequency=freqs, amplitude=amps, sample_rate=1000.0
         )
         assert result.shape == (2, 3, 100)
@@ -778,7 +766,7 @@ class TestSineWaveTensorParameters:
         """Test gradients flow through frequency tensor."""
         n = 100
         freq = torch.tensor([1.0], requires_grad=True)
-        result = torchscience.signal_processing.waveform.sine_wave(
+        result = torchscience.waveform.sine_wave(
             n, frequency=freq, sample_rate=100.0
         )
         loss = result.sum()
@@ -789,7 +777,7 @@ class TestSineWaveTensorParameters:
         """Test gradients flow through amplitude tensor."""
         n = 100
         amp = torch.tensor([1.0], requires_grad=True)
-        result = torchscience.signal_processing.waveform.sine_wave(
+        result = torchscience.waveform.sine_wave(
             n, amplitude=amp, sample_rate=100.0
         )
         loss = result.sum()
@@ -800,7 +788,7 @@ class TestSineWaveTensorParameters:
         """Test gradients flow through phase tensor."""
         n = 100
         phase = torch.tensor([0.0], requires_grad=True)
-        result = torchscience.signal_processing.waveform.sine_wave(
+        result = torchscience.waveform.sine_wave(
             n, phase=phase, sample_rate=100.0
         )
         loss = result.sum()
@@ -814,9 +802,7 @@ class TestSineWaveExplicitTime:
     def test_explicit_time_basic(self):
         """Test explicit time tensor produces correct output."""
         t = torch.linspace(0, 1, 100)
-        result = torchscience.signal_processing.waveform.sine_wave(
-            t=t, frequency=1.0
-        )
+        result = torchscience.waveform.sine_wave(t=t, frequency=1.0)
         assert result.shape == (100,)
         # First sample at t=0 should be sin(0) = 0
         torch.testing.assert_close(
@@ -827,29 +813,27 @@ class TestSineWaveExplicitTime:
         """Test explicit time with batched frequency."""
         t = torch.linspace(0, 1, 100)
         freqs = torch.tensor([1.0, 2.0, 5.0])
-        result = torchscience.signal_processing.waveform.sine_wave(
-            t=t, frequency=freqs
-        )
+        result = torchscience.waveform.sine_wave(t=t, frequency=freqs)
         assert result.shape == (3, 100)
 
     def test_n_and_t_mutually_exclusive(self):
         """Test that providing both n and t raises error."""
         t = torch.linspace(0, 1, 100)
         with pytest.raises(ValueError, match="mutually exclusive"):
-            torchscience.signal_processing.waveform.sine_wave(n=100, t=t)
+            torchscience.waveform.sine_wave(n=100, t=t)
 
     def test_neither_n_nor_t_raises(self):
         """Test that providing neither n nor t raises error."""
         with pytest.raises(ValueError, match="Either n or t"):
-            torchscience.signal_processing.waveform.sine_wave()
+            torchscience.waveform.sine_wave()
 
     def test_sample_rate_ignored_with_t(self):
         """Test that sample_rate is ignored when t is provided."""
         t = torch.linspace(0, 1, 100)
-        result1 = torchscience.signal_processing.waveform.sine_wave(
+        result1 = torchscience.waveform.sine_wave(
             t=t, frequency=1.0, sample_rate=1.0
         )
-        result2 = torchscience.signal_processing.waveform.sine_wave(
+        result2 = torchscience.waveform.sine_wave(
             t=t, frequency=1.0, sample_rate=44100.0
         )
         torch.testing.assert_close(result1, result2)
@@ -857,9 +841,7 @@ class TestSineWaveExplicitTime:
     def test_gradient_through_t(self):
         """Test gradients flow through explicit time tensor."""
         t = torch.linspace(0, 1, 100, requires_grad=True)
-        result = torchscience.signal_processing.waveform.sine_wave(
-            t=t, frequency=1.0
-        )
+        result = torchscience.waveform.sine_wave(t=t, frequency=1.0)
         loss = result.sum()
         loss.backward()
         assert t.grad is not None
@@ -872,7 +854,7 @@ class TestSineWaveGradcheck:
         """Verify gradients w.r.t. frequency using gradcheck."""
 
         def func(freq):
-            return torchscience.signal_processing.waveform.sine_wave(
+            return torchscience.waveform.sine_wave(
                 n=50, frequency=freq, sample_rate=100.0
             )
 
@@ -885,7 +867,7 @@ class TestSineWaveGradcheck:
         """Verify gradients w.r.t. amplitude using gradcheck."""
 
         def func(amp):
-            return torchscience.signal_processing.waveform.sine_wave(
+            return torchscience.waveform.sine_wave(
                 n=50, amplitude=amp, sample_rate=100.0
             )
 
@@ -898,7 +880,7 @@ class TestSineWaveGradcheck:
         """Verify gradients w.r.t. phase using gradcheck."""
 
         def func(ph):
-            return torchscience.signal_processing.waveform.sine_wave(
+            return torchscience.waveform.sine_wave(
                 n=50, phase=ph, sample_rate=100.0
             )
 
@@ -911,9 +893,7 @@ class TestSineWaveGradcheck:
         """Verify gradients w.r.t. explicit time tensor."""
 
         def func(t):
-            return torchscience.signal_processing.waveform.sine_wave(
-                t=t, frequency=1.0
-            )
+            return torchscience.waveform.sine_wave(t=t, frequency=1.0)
 
         t = torch.linspace(0, 1, 50, dtype=torch.float64, requires_grad=True)
         assert torch.autograd.gradcheck(
@@ -927,7 +907,7 @@ class TestSineWaveGradcheck:
         """Verify second-order gradients w.r.t. amplitude."""
 
         def func(amp):
-            return torchscience.signal_processing.waveform.sine_wave(
+            return torchscience.waveform.sine_wave(
                 n=50, amplitude=amp, sample_rate=100.0
             )
 

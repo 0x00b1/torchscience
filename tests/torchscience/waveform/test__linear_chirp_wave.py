@@ -2,12 +2,13 @@ import math
 
 import scipy.signal
 import torch
-import torchscience.signal_processing.waveform
+
+import torchscience.waveform
 
 
 class TestLinearChirpWave:
     def test_basic_shape(self):
-        result = torchscience.signal_processing.waveform.linear_chirp_wave(
+        result = torchscience.waveform.linear_chirp_wave(
             n=1000, f0=1.0, f1=10.0, sample_rate=1000.0
         )
         assert result.shape == (1000,)
@@ -17,7 +18,7 @@ class TestLinearChirpWave:
         sample_rate = 1000.0
         f0, f1 = 1.0, 50.0
         t = torch.linspace(0, 1, n, dtype=torch.float64)
-        result = torchscience.signal_processing.waveform.linear_chirp_wave(
+        result = torchscience.waveform.linear_chirp_wave(
             t=t, f0=f0, f1=f1, dtype=torch.float64
         )
         scipy_result = scipy.signal.chirp(
@@ -30,16 +31,14 @@ class TestLinearChirpWave:
 
     def test_batched_frequencies(self):
         f0 = torch.tensor([1.0, 5.0, 10.0])
-        result = torchscience.signal_processing.waveform.linear_chirp_wave(
+        result = torchscience.waveform.linear_chirp_wave(
             n=1000, f0=f0, f1=100.0, sample_rate=1000.0
         )
         assert result.shape == (3, 1000)
 
     def test_n_equals_zero(self):
         """Test that n=0 returns empty tensor."""
-        result = torchscience.signal_processing.waveform.linear_chirp_wave(
-            n=0, f0=1.0, f1=10.0
-        )
+        result = torchscience.waveform.linear_chirp_wave(n=0, f0=1.0, f1=10.0)
         assert result.shape == (0,)
         assert result.numel() == 0
 
@@ -48,7 +47,7 @@ class TestLinearChirpWave:
         n = 1000
         sample_rate = 1000.0
         f0, f1 = 1.0, 50.0
-        result = torchscience.signal_processing.waveform.linear_chirp_wave(
+        result = torchscience.waveform.linear_chirp_wave(
             n=n, f0=f0, f1=f1, sample_rate=sample_rate, dtype=torch.float64
         )
 
@@ -71,7 +70,7 @@ class TestLinearChirpWave:
         n = 1000
         amplitude = 2.5
 
-        result = torchscience.signal_processing.waveform.linear_chirp_wave(
+        result = torchscience.waveform.linear_chirp_wave(
             n=n, f0=1.0, f1=10.0, amplitude=amplitude, dtype=torch.float64
         )
 
@@ -81,7 +80,7 @@ class TestLinearChirpWave:
 
     def test_starts_with_cosine(self):
         """Test that chirp starts at amplitude (cos(0) = 1) with default phase."""
-        result = torchscience.signal_processing.waveform.linear_chirp_wave(
+        result = torchscience.waveform.linear_chirp_wave(
             n=100,
             f0=1.0,
             f1=10.0,
@@ -101,7 +100,7 @@ class TestLinearChirpWave:
         """Test that phase offset works correctly."""
         n = 100
         # With phase=pi/2, cos(pi/2) = 0
-        result = torchscience.signal_processing.waveform.linear_chirp_wave(
+        result = torchscience.waveform.linear_chirp_wave(
             n=n,
             f0=1.0,
             f1=10.0,
@@ -119,7 +118,7 @@ class TestLinearChirpWave:
     def test_explicit_time_tensor(self):
         """Test with explicit time tensor."""
         t = torch.linspace(0, 1, 100, dtype=torch.float64)
-        result = torchscience.signal_processing.waveform.linear_chirp_wave(
+        result = torchscience.waveform.linear_chirp_wave(
             t=t, f0=1.0, f1=10.0, dtype=torch.float64
         )
         assert result.shape == (100,)
@@ -128,7 +127,7 @@ class TestLinearChirpWave:
         """Test that providing both n and t raises error."""
         t = torch.linspace(0, 1, 100)
         try:
-            torchscience.signal_processing.waveform.linear_chirp_wave(
+            torchscience.waveform.linear_chirp_wave(
                 n=100, t=t, f0=1.0, f1=10.0
             )
             assert False, "Should have raised ValueError"
@@ -138,9 +137,7 @@ class TestLinearChirpWave:
     def test_neither_n_nor_t_raises(self):
         """Test that providing neither n nor t raises error."""
         try:
-            torchscience.signal_processing.waveform.linear_chirp_wave(
-                f0=1.0, f1=10.0
-            )
+            torchscience.waveform.linear_chirp_wave(f0=1.0, f1=10.0)
             assert False, "Should have raised ValueError"
         except ValueError as e:
             assert "Either n or t" in str(e)
@@ -148,7 +145,7 @@ class TestLinearChirpWave:
     def test_batched_f1(self):
         """Test batched f1 produces correct shape."""
         f1 = torch.tensor([10.0, 50.0, 100.0])
-        result = torchscience.signal_processing.waveform.linear_chirp_wave(
+        result = torchscience.waveform.linear_chirp_wave(
             n=500, f0=1.0, f1=f1, sample_rate=1000.0
         )
         assert result.shape == (3, 500)
@@ -156,7 +153,7 @@ class TestLinearChirpWave:
     def test_batched_amplitude(self):
         """Test batched amplitude produces correct shape."""
         amplitude = torch.tensor([0.5, 1.0, 2.0])
-        result = torchscience.signal_processing.waveform.linear_chirp_wave(
+        result = torchscience.waveform.linear_chirp_wave(
             n=500, f0=1.0, f1=10.0, amplitude=amplitude, sample_rate=1000.0
         )
         assert result.shape == (3, 500)
@@ -164,7 +161,7 @@ class TestLinearChirpWave:
     def test_batched_phase(self):
         """Test batched phase produces correct shape."""
         phase = torch.tensor([0.0, math.pi / 2, math.pi])
-        result = torchscience.signal_processing.waveform.linear_chirp_wave(
+        result = torchscience.waveform.linear_chirp_wave(
             n=500, f0=1.0, f1=10.0, phase=phase, sample_rate=1000.0
         )
         assert result.shape == (3, 500)
@@ -173,28 +170,28 @@ class TestLinearChirpWave:
         """Test 2D broadcasting of parameters."""
         f0 = torch.tensor([[1.0], [5.0]])  # shape (2, 1)
         f1 = torch.tensor([10.0, 50.0, 100.0])  # shape (3,)
-        result = torchscience.signal_processing.waveform.linear_chirp_wave(
+        result = torchscience.waveform.linear_chirp_wave(
             n=100, f0=f0, f1=f1, sample_rate=1000.0
         )
         assert result.shape == (2, 3, 100)
 
     def test_float64_precision(self):
         """Test float64 maintains precision."""
-        result = torchscience.signal_processing.waveform.linear_chirp_wave(
+        result = torchscience.waveform.linear_chirp_wave(
             n=100, f0=1.0, f1=10.0, dtype=torch.float64
         )
         assert result.dtype == torch.float64
 
     def test_requires_grad(self):
         """Test requires_grad flag."""
-        result = torchscience.signal_processing.waveform.linear_chirp_wave(
+        result = torchscience.waveform.linear_chirp_wave(
             n=100, f0=1.0, f1=10.0, requires_grad=True
         )
         assert result.requires_grad
 
     def test_contiguous_output(self):
         """Test that output tensor is contiguous."""
-        result = torchscience.signal_processing.waveform.linear_chirp_wave(
+        result = torchscience.waveform.linear_chirp_wave(
             n=100, f0=1.0, f1=10.0
         )
         assert result.is_contiguous()
@@ -206,27 +203,23 @@ class TestLinearChirpWave:
         f0, f1 = 1.0, 50.0
 
         # With t1=1, frequency reaches f1 at t=1
-        result_t1_1 = (
-            torchscience.signal_processing.waveform.linear_chirp_wave(
-                n=n,
-                f0=f0,
-                f1=f1,
-                t1=1.0,
-                sample_rate=sample_rate,
-                dtype=torch.float64,
-            )
+        result_t1_1 = torchscience.waveform.linear_chirp_wave(
+            n=n,
+            f0=f0,
+            f1=f1,
+            t1=1.0,
+            sample_rate=sample_rate,
+            dtype=torch.float64,
         )
 
         # With t1=2, frequency reaches f1 at t=2 (slower sweep)
-        result_t1_2 = (
-            torchscience.signal_processing.waveform.linear_chirp_wave(
-                n=n,
-                f0=f0,
-                f1=f1,
-                t1=2.0,
-                sample_rate=sample_rate,
-                dtype=torch.float64,
-            )
+        result_t1_2 = torchscience.waveform.linear_chirp_wave(
+            n=n,
+            f0=f0,
+            f1=f1,
+            t1=2.0,
+            sample_rate=sample_rate,
+            dtype=torch.float64,
         )
 
         # The slower sweep should have fewer oscillations overall
@@ -246,7 +239,7 @@ class TestLinearChirpWave:
         sample_rate = 1000.0
         f0, f1 = 50.0, 1.0  # Decreasing frequency
 
-        result = torchscience.signal_processing.waveform.linear_chirp_wave(
+        result = torchscience.waveform.linear_chirp_wave(
             n=n, f0=f0, f1=f1, sample_rate=sample_rate, dtype=torch.float64
         )
 
@@ -269,10 +262,10 @@ class TestLinearChirpWave:
         n = 100
         f0, f1 = 1.0, 10.0
 
-        result_sr1 = torchscience.signal_processing.waveform.linear_chirp_wave(
+        result_sr1 = torchscience.waveform.linear_chirp_wave(
             n=n, f0=f0, f1=f1, sample_rate=100.0, dtype=torch.float64
         )
-        result_sr2 = torchscience.signal_processing.waveform.linear_chirp_wave(
+        result_sr2 = torchscience.waveform.linear_chirp_wave(
             n=n, f0=f0, f1=f1, sample_rate=200.0, dtype=torch.float64
         )
 

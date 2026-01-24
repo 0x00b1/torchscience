@@ -214,7 +214,7 @@ class Filter:
         >>> w, H = filt.frequency_response()
         >>> magnitude_db = 20 * torch.log10(torch.abs(H))
         """
-        from ..filter_analysis import (
+        from torchscience.signal_processing.filter_analysis import (
             frequency_response,
             frequency_response_fir,
             frequency_response_sos,
@@ -244,7 +244,9 @@ class Filter:
                 sampling_frequency=sampling_frequency,
             )
         elif self.zpk is not None:
-            from ..filter_analysis import frequency_response_zpk
+            from torchscience.signal_processing.filter_analysis import (
+                frequency_response_zpk,
+            )
 
             z, p, k = self.zpk
             return frequency_response_zpk(
@@ -295,7 +297,10 @@ class Filter:
         >>> w, gd = filt.group_delay()
         >>> # Linear phase FIR has constant group delay of (num_taps - 1) / 2
         """
-        from ..filter_analysis import group_delay, group_delay_sos
+        from torchscience.signal_processing.filter_analysis import (
+            group_delay,
+            group_delay_sos,
+        )
 
         if self.fir is not None:
             return group_delay(
