@@ -2,6 +2,7 @@ from torchscience.cryptography._additive import (
     additive_reconstruct,
     additive_split,
 )
+from torchscience.cryptography._aead import decrypt, encrypt
 from torchscience.cryptography._aes import (
     aes_ctr,
     aes_decrypt_block,
@@ -48,9 +49,11 @@ __all__ = [
     "chacha20_poly1305_decrypt",
     "chacha20_poly1305_encrypt",
     "ChaCha20Generator",
+    "decrypt",
     "ed25519_keypair",
     "ed25519_sign",
     "ed25519_verify",
+    "encrypt",
     "hkdf_expand_sha256",
     "hkdf_extract_sha256",
     "hkdf_sha256",
