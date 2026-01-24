@@ -17,6 +17,8 @@ fourier_sine_transform, inverse_fourier_sine_transform
     Aliases for sine_transform/inverse_sine_transform (backward compatible).
 hilbert_transform, inverse_hilbert_transform
     Hilbert transform for analytic signal computation.
+hartley_transform
+    Hartley transform (real-to-real, self-inverse).
 laplace_transform, inverse_laplace_transform
     Numerical Laplace transform using quadrature.
 two_sided_laplace_transform, inverse_two_sided_laplace_transform
@@ -35,6 +37,7 @@ from ._convolution import convolution
 from ._cosine_transform import cosine_transform, fourier_cosine_transform
 from ._fourier_transform import fourier_transform
 from ._hankel_transform import hankel_transform
+from ._hartley_transform import hartley_transform
 from ._hilbert_transform import hilbert_transform
 from ._inverse_cosine_transform import (
     inverse_cosine_transform,
@@ -71,6 +74,8 @@ __all__ = [
     # Hilbert
     "hilbert_transform",
     "inverse_hilbert_transform",
+    # Hartley
+    "hartley_transform",
     # Laplace
     "laplace_transform",
     # Two-sided Laplace
