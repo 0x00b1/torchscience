@@ -21,7 +21,9 @@ from torchscience.color._srgb_to_srgb_linear import (
     srgb_to_srgb_linear,
 )
 from torchscience.color._srgb_to_xyz import srgb_to_xyz
+from torchscience.color._srgb_to_ycbcr import srgb_to_ycbcr
 from torchscience.color._xyz_to_srgb import xyz_to_srgb
+from torchscience.color._ycbcr_to_srgb import ycbcr_to_srgb
 
 __all__ = [
     "hsv_to_srgb",
@@ -41,5 +43,7 @@ __all__ = [
     "srgb_to_oklch",
     "srgb_to_srgb_linear",
     "srgb_to_xyz",
+    "srgb_to_ycbcr",
     "xyz_to_srgb",
+    "ycbcr_to_srgb",
 ]
