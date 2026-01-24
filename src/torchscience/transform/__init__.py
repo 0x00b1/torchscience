@@ -29,7 +29,7 @@ hankel_transform, inverse_hankel_transform
     Hankel transform using Ogata's quasi-discrete algorithm.
 radon_transform, inverse_radon_transform
     Radon transform for CT reconstruction.
-short_time_fourier_transform
+short_time_fourier_transform, inverse_short_time_fourier_transform
     Short-time Fourier transform for time-frequency analysis.
 convolution
     FFT-based convolution with various modes.
@@ -47,6 +47,9 @@ from ._inverse_cosine_transform import (
 )
 from ._inverse_fourier_transform import inverse_fourier_transform
 from ._inverse_hilbert_transform import inverse_hilbert_transform
+from ._inverse_short_time_fourier_transform import (
+    inverse_short_time_fourier_transform,
+)
 from ._inverse_sine_transform import (
     inverse_fourier_sine_transform,
     inverse_sine_transform,
@@ -91,6 +94,7 @@ __all__ = [
     "radon_transform",
     # STFT
     "short_time_fourier_transform",
+    "inverse_short_time_fourier_transform",
     # Convolution
     "convolution",
 ]
