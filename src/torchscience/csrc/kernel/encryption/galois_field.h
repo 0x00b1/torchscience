@@ -45,15 +45,21 @@ constexpr uint8_t gf256_mul_slow(uint8_t a, uint8_t b) {
 }
 
 // Compile-time generation of exp table
-// exp_table[i] = g^i where g = 0x03 (generator)
-// exp_table[255] = exp_table[0] = 1 for wraparound convenience
-constexpr std::array<uint8_t, 512> generate_exp_table() {
-    std::array<uint8_t, 512> table{};
+// exp_table[i] = g^(i mod 255) where g = 0x03 (generator)
+// The multiplicative group has order 255, so 3^255 = 1
+// We need 510 entries to handle sums of two logs (max 254+254=508)
+constexpr std::array<uint8_t, 510> generate_exp_table() {
+    std::array<uint8_t, 510> table{};
     uint8_t val = 1;
-    for (int i = 0; i < 256; i++) {
+    // Fill first 255 entries: exp_table[i] = 3^i for i in [0, 254]
+    for (int i = 0; i < 255; i++) {
         table[i] = val;
-        table[i + 256] = val;  // Duplicate for easy modular arithmetic
         val = gf256_mul_slow(val, GF256_GENERATOR);
+    }
+    // Duplicate for easy modular arithmetic: exp_table[i+255] = exp_table[i]
+    // This handles the case when log(a) + log(b) >= 255
+    for (int i = 0; i < 255; i++) {
+        table[i + 255] = table[i];
     }
     return table;
 }
@@ -75,8 +81,9 @@ constexpr std::array<uint8_t, 256> generate_log_table() {
 }  // namespace detail
 
 // Pre-computed lookup tables for efficient GF(2^8) arithmetic
-// exp_table[i] = 3^i mod P(x), duplicated for easy modular reduction
-constexpr std::array<uint8_t, 512> GF256_EXP_TABLE = detail::generate_exp_table();
+// exp_table[i] = 3^(i mod 255), duplicated for easy modular reduction
+// Size is 510 to handle max log sum of 254+254=508
+constexpr std::array<uint8_t, 510> GF256_EXP_TABLE = detail::generate_exp_table();
 
 // log_table[x] = i such that 3^i = x, undefined for x = 0
 constexpr std::array<uint8_t, 256> GF256_LOG_TABLE = detail::generate_log_table();
