@@ -11,8 +11,10 @@ cosine_transform, inverse_cosine_transform
     Discrete Cosine Transform (DCT) types I-IV with padding and windowing.
 fourier_cosine_transform, inverse_fourier_cosine_transform
     Aliases for cosine_transform/inverse_cosine_transform (backward compatible).
+sine_transform, inverse_sine_transform
+    Discrete Sine Transform (DST) types I-IV with padding and windowing.
 fourier_sine_transform, inverse_fourier_sine_transform
-    Discrete Sine Transform (DST) types I-IV.
+    Aliases for sine_transform/inverse_sine_transform (backward compatible).
 hilbert_transform, inverse_hilbert_transform
     Hilbert transform for analytic signal computation.
 laplace_transform, inverse_laplace_transform
@@ -31,7 +33,6 @@ convolution
 
 from ._convolution import convolution
 from ._cosine_transform import cosine_transform, fourier_cosine_transform
-from ._fourier_sine_transform import fourier_sine_transform
 from ._fourier_transform import fourier_transform
 from ._hankel_transform import hankel_transform
 from ._hilbert_transform import hilbert_transform
@@ -39,12 +40,16 @@ from ._inverse_cosine_transform import (
     inverse_cosine_transform,
     inverse_fourier_cosine_transform,
 )
-from ._inverse_fourier_sine_transform import inverse_fourier_sine_transform
 from ._inverse_fourier_transform import inverse_fourier_transform
 from ._inverse_hilbert_transform import inverse_hilbert_transform
+from ._inverse_sine_transform import (
+    inverse_fourier_sine_transform,
+    inverse_sine_transform,
+)
 from ._laplace_transform import laplace_transform
 from ._mellin_transform import mellin_transform
 from ._radon_transform import radon_transform
+from ._sine_transform import fourier_sine_transform, sine_transform
 from ._two_sided_laplace_transform import two_sided_laplace_transform
 
 __all__ = [
@@ -57,7 +62,10 @@ __all__ = [
     # DCT (backward-compatible aliases)
     "fourier_cosine_transform",
     "inverse_fourier_cosine_transform",
-    # DST
+    # DST (new names)
+    "sine_transform",
+    "inverse_sine_transform",
+    # DST (backward-compatible aliases)
     "fourier_sine_transform",
     "inverse_fourier_sine_transform",
     # Hilbert
