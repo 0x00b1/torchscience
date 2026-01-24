@@ -370,6 +370,14 @@
 #include "meta/linear_algebra/generalized_schur.h"
 #include "cpu/linear_algebra/jordan_decomposition.h"
 #include "meta/linear_algebra/jordan_decomposition.h"
+#include "cpu/linear_algebra/pivoted_lu.h"
+#include "meta/linear_algebra/pivoted_lu.h"
+#include "cpu/linear_algebra/pivoted_qr.h"
+#include "meta/linear_algebra/pivoted_qr.h"
+#include "cpu/linear_algebra/rank_revealing_qr.h"
+#include "meta/linear_algebra/rank_revealing_qr.h"
+#include "cpu/linear_algebra/ldl_decomposition.h"
+#include "meta/linear_algebra/ldl_decomposition.h"
 
 // pad
 #include "cpu/pad/pad.h"
@@ -1712,6 +1720,10 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("hessenberg(Tensor a) -> (Tensor, Tensor, Tensor)");
   module.def("generalized_schur(Tensor a, Tensor b, str output='real') -> (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor)");
   module.def("jordan_decomposition(Tensor a) -> (Tensor, Tensor, Tensor)");
+  module.def("pivoted_lu(Tensor a) -> (Tensor, Tensor, Tensor, Tensor)");
+  module.def("pivoted_qr(Tensor a) -> (Tensor, Tensor, Tensor, Tensor)");
+  module.def("rank_revealing_qr(Tensor a, float tol=1e-10) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
+  module.def("ldl_decomposition(Tensor a) -> (Tensor, Tensor, Tensor, Tensor)");
 
   // morphology
   module.def("erosion(Tensor input, Tensor structuring_element, int[]? origin, int padding_mode) -> Tensor");

@@ -4,6 +4,7 @@
 #include <ATen/ATen.h>
 #include <ATen/Dispatch.h>
 #include <torch/library.h>
+#include "pivoted_qr.h"
 
 namespace torchscience::cpu::linear_algebra {
 
@@ -17,8 +18,8 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor, at::Tensor> ra
         "rank_revealing_qr: a must be floating-point or complex");
     TORCH_CHECK(tol >= 0, "rank_revealing_qr: tolerance must be non-negative");
 
-    // Use pivoted_qr internally (call the dispatcher)
-    auto pivoted_result = at::_ops::torchscience_pivoted_qr::call(a);
+    // Use pivoted_qr internally (call directly from same namespace)
+    auto pivoted_result = pivoted_qr(a);
     at::Tensor Q = std::get<0>(pivoted_result);
     at::Tensor R = std::get<1>(pivoted_result);
     at::Tensor pivots = std::get<2>(pivoted_result);

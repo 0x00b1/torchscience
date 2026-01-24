@@ -54,9 +54,13 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> ldl_decomposit
         at::Tensor a_slice = a_flat[batch];
 
         try {
-            // Use torch.linalg.ldl_factor to compute LDL decomposition
+            // Use torch.linalg.ldl_factor_ex to compute LDL decomposition
+            // hermitian=true handles both real symmetric and complex Hermitian
             // Returns (LD, pivots, info) where LD is packed format
-            auto [LD, pivots_raw, info_raw] = at::linalg_ldl_factor(a_slice);
+            auto result = at::linalg_ldl_factor_ex(a_slice, /*hermitian=*/true);
+            at::Tensor LD = std::get<0>(result);
+            at::Tensor pivots_raw = std::get<1>(result);
+            at::Tensor info_raw = std::get<2>(result);
 
             // Extract L from packed LD format
             // L is unit lower triangular (stored below diagonal of LD)
@@ -71,10 +75,8 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> ldl_decomposit
             D_flat[batch].copy_(D_extracted);
             pivots_flat[batch].copy_(pivots_raw);
 
-            // info from ldl_factor is per-matrix
-            if (info_raw.numel() > 0) {
-                info_flat[batch].fill_(info_raw.item<int>());
-            }
+            // Copy info from factor result
+            info_flat[batch].fill_(info_raw.item<int>());
         } catch (const std::exception&) {
             info_flat[batch].fill_(1);
             // Initialize outputs to zeros on failure
