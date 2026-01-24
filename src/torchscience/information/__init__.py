@@ -14,6 +14,7 @@ from ._histogram_entropy import histogram_entropy
 from ._interaction_information import interaction_information
 from ._jensen_shannon_divergence import jensen_shannon_divergence
 from ._joint_entropy import joint_entropy
+from ._kernel_density_entropy import kernel_density_entropy
 from ._kozachenko_leonenko_entropy import kozachenko_leonenko_entropy
 from ._kraskov_entropy import kraskov_entropy
 from ._kraskov_mutual_information import kraskov_mutual_information
@@ -47,6 +48,7 @@ __all__ = [
     "interaction_information",
     "jensen_shannon_divergence",
     "joint_entropy",
+    "kernel_density_entropy",
     "kozachenko_leonenko_entropy",
     "kraskov_entropy",
     "kraskov_mutual_information",
