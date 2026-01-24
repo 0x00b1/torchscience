@@ -3,6 +3,7 @@
 from ._arithmetic import arithmetic_decode, arithmetic_encode
 from ._distortion_measure import distortion_measure
 from ._dithered_quantize import dithered_quantize
+from ._entropy_bottleneck import EntropyBottleneck, entropy_bottleneck
 from ._huffman import huffman_decode, huffman_encode
 from ._lattice_quantize import lattice_quantize
 from ._lz77 import lz77_decode, lz77_encode
@@ -23,6 +24,8 @@ __all__ = [
     "arithmetic_encode",
     "distortion_measure",
     "dithered_quantize",
+    "EntropyBottleneck",
+    "entropy_bottleneck",
     "estimate_bitrate",
     "huffman_decode",
     "huffman_encode",
