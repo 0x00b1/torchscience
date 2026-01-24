@@ -32,6 +32,7 @@ from ._partial_information_decomposition import (
     partial_information_decomposition,
 )
 from ._pointwise_mutual_information import pointwise_mutual_information
+from ._rate_distortion_function import rate_distortion_function
 from ._renyi_divergence import renyi_divergence
 from ._renyi_entropy import renyi_entropy
 from ._shannon_entropy import shannon_entropy
@@ -72,6 +73,7 @@ __all__ = [
     "o_information",
     "partial_information_decomposition",
     "pointwise_mutual_information",
+    "rate_distortion_function",
     "renyi_divergence",
     "renyi_entropy",
     "shannon_entropy",
