@@ -6,7 +6,7 @@ from typing import Optional, Tuple, Union
 import torch
 from torch import Tensor
 
-from ..filter_design._exceptions import SOSNormalizationError
+from torchscience.filter_design._exceptions import SOSNormalizationError
 
 
 def frequency_response_sos(

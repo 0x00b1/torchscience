@@ -4,7 +4,8 @@ import pytest
 import scipy.signal
 import torch
 import torch.testing
-import torchscience.signal_processing.waveform
+
+import torchscience.waveform
 
 
 class TestSquareWave:
@@ -12,9 +13,7 @@ class TestSquareWave:
 
     def test_basic_shape(self):
         """Square wave returns correct shape."""
-        result = torchscience.signal_processing.waveform.square_wave(
-            n=100, sample_rate=100.0
-        )
+        result = torchscience.waveform.square_wave(n=100, sample_rate=100.0)
         assert result.shape == (100,)
 
     def test_alternates_between_plus_minus_amplitude(self):
@@ -23,7 +22,7 @@ class TestSquareWave:
         Note: Implementation uses differentiable approximation with smooth
         transitions, so we check that max/min approach target amplitude.
         """
-        result = torchscience.signal_processing.waveform.square_wave(
+        result = torchscience.waveform.square_wave(
             n=100,
             frequency=1.0,
             sample_rate=100.0,
@@ -37,7 +36,7 @@ class TestSquareWave:
     def test_duty_cycle_50_percent(self):
         """50% duty cycle spends equal time high and low."""
         n = 1000
-        result = torchscience.signal_processing.waveform.square_wave(
+        result = torchscience.waveform.square_wave(
             n=n,
             frequency=10.0,
             sample_rate=1000.0,
@@ -50,7 +49,7 @@ class TestSquareWave:
     def test_duty_cycle_75_percent(self):
         """75% duty cycle spends 75% of time high."""
         n = 1000
-        result = torchscience.signal_processing.waveform.square_wave(
+        result = torchscience.waveform.square_wave(
             n=n,
             frequency=10.0,
             sample_rate=1000.0,
@@ -64,7 +63,7 @@ class TestSquareWave:
     def test_gradient_through_duty(self):
         """Gradients flow through duty cycle parameter."""
         duty = torch.tensor([0.5], requires_grad=True)
-        result = torchscience.signal_processing.waveform.square_wave(
+        result = torchscience.waveform.square_wave(
             n=100, duty=duty, sample_rate=100.0
         )
         loss = result.sum()
@@ -82,7 +81,7 @@ class TestSquareWave:
         frequency = 5.0
 
         t = torch.linspace(0, 1, n, dtype=torch.float64)
-        result = torchscience.signal_processing.waveform.square_wave(
+        result = torchscience.waveform.square_wave(
             t=t, frequency=frequency, dtype=torch.float64
         )
 

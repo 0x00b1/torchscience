@@ -1,17 +1,16 @@
 import torch
-import torchscience.signal_processing.waveform
+
+import torchscience.waveform
 
 
 class TestPulseWave:
     def test_basic_shape(self):
-        result = torchscience.signal_processing.waveform.pulse_wave(
-            n=100, sample_rate=100.0
-        )
+        result = torchscience.waveform.pulse_wave(n=100, sample_rate=100.0)
         assert result.shape == (100,)
 
     def test_duty_cycle_25_percent(self):
         n = 1000
-        result = torchscience.signal_processing.waveform.pulse_wave(
+        result = torchscience.waveform.pulse_wave(
             n=n,
             frequency=10.0,
             sample_rate=1000.0,
@@ -23,7 +22,7 @@ class TestPulseWave:
 
     def test_duty_cycle_75_percent(self):
         n = 1000
-        result = torchscience.signal_processing.waveform.pulse_wave(
+        result = torchscience.waveform.pulse_wave(
             n=n,
             frequency=10.0,
             sample_rate=1000.0,
@@ -35,7 +34,7 @@ class TestPulseWave:
 
     def test_batched_duty_cycles(self):
         duty_cycles = torch.tensor([0.25, 0.5, 0.75])
-        result = torchscience.signal_processing.waveform.pulse_wave(
+        result = torchscience.waveform.pulse_wave(
             n=1000,
             frequency=10.0,
             sample_rate=1000.0,

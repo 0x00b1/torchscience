@@ -1,7 +1,8 @@
 import pytest
 import torch
 import torch.testing
-from torchscience.signal_processing.noise import impulse_noise
+
+from torchscience.noise import impulse_noise
 
 
 class TestImpulseNoiseShape:

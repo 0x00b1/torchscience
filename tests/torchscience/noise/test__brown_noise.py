@@ -1,7 +1,8 @@
 import pytest
 import torch
 import torch.testing
-from torchscience.signal_processing.noise import brownian_noise
+
+from torchscience.noise import brownian_noise
 
 
 class TestBrownNoiseShape:

@@ -1,7 +1,8 @@
 import pytest
 import torch
 import torch.testing
-from torchscience.signal_processing.noise import blue_noise
+
+from torchscience.noise import blue_noise
 
 
 class TestBlueNoiseShape:
