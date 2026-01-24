@@ -192,6 +192,22 @@ Choosing between neural ODE solvers:
 - Use ``reversible_heun`` for faster training on moderate integrations
 - Use ``asynchronous_leapfrog`` when reversible_heun is unstable
 - Use ``compile_solver(runge_kutta_4)`` for fastest fixed-step GPU training
+
+High-Order Adaptive
+-------------------
+dop853
+    Dormand-Prince 8(7) adaptive method. 8th-order accuracy for smooth
+    problems requiring high precision. More efficient than dormand_prince_5
+    when rtol < 1e-8.
+
+Utilities
+---------
+recommend_solver
+    Analyze a problem and recommend an appropriate solver based on
+    stiffness, structure, and accuracy requirements.
+
+analyze_problem
+    Analyze ODE problem characteristics (stiffness ratio, structure).
 """
 
 from torchscience.integration.initial_value_problem._adjoint import adjoint
@@ -216,6 +232,7 @@ from torchscience.integration.initial_value_problem._compile_utils import (
     compile_solver,
     is_compile_compatible,
 )
+from torchscience.integration.initial_value_problem._dop853 import dop853
 from torchscience.integration.initial_value_problem._dormand_prince_5 import (
     dormand_prince_5,
 )
@@ -231,6 +248,10 @@ from torchscience.integration.initial_value_problem._implicit_midpoint import (
 )
 from torchscience.integration.initial_value_problem._midpoint import midpoint
 from torchscience.integration.initial_value_problem._radau import radau
+from torchscience.integration.initial_value_problem._recommend import (
+    analyze_problem,
+    recommend_solver,
+)
 from torchscience.integration.initial_value_problem._reversible_heun import (
     reversible_heun,
 )
@@ -289,4 +310,9 @@ __all__ = [
     "asynchronous_leapfrog",
     "compile_solver",
     "is_compile_compatible",
+    # High-order adaptive
+    "dop853",
+    # Utilities
+    "recommend_solver",
+    "analyze_problem",
 ]
