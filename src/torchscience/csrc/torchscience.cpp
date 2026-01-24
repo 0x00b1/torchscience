@@ -66,6 +66,7 @@
 #include "cpu/graphics/color/hsv_to_srgb.h"
 #include "cpu/graphics/color/srgb_to_srgb_linear.h"
 #include "cpu/graphics/color/srgb_linear_to_srgb.h"
+#include "cpu/graphics/color/srgb_to_xyz.h"
 
 // morphology
 #include "cpu/morphology/erosion.h"
@@ -473,6 +474,7 @@
 #include "autograd/graphics/color/hsv_to_srgb.h"
 #include "autograd/graphics/color/srgb_to_srgb_linear.h"
 #include "autograd/graphics/color/srgb_linear_to_srgb.h"
+#include "autograd/graphics/color/srgb_to_xyz.h"
 #include "autograd/signal_processing/filter.h"
 #include "autograd/optimization/test_functions.h"
 #include "autograd/optimization/combinatorial.h"
@@ -540,6 +542,7 @@
 #include "meta/graphics/color/hsv_to_srgb.h"
 #include "meta/graphics/color/srgb_to_srgb_linear.h"
 #include "meta/graphics/color/srgb_linear_to_srgb.h"
+#include "meta/graphics/color/srgb_to_xyz.h"
 #include "meta/signal_processing/filter.h"
 #include "meta/optimization/test_functions.h"
 #include "meta/optimization/combinatorial.h"
@@ -1056,6 +1059,9 @@ TORCH_LIBRARY(torchscience, module) {
 
   module.def("srgb_linear_to_srgb(Tensor input) -> Tensor");
   module.def("srgb_linear_to_srgb_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("srgb_to_xyz(Tensor input) -> Tensor");
+  module.def("srgb_to_xyz_backward(Tensor grad_output, Tensor input) -> Tensor");
 
   // graphics.texture_mapping
   module.def("cube_mapping(Tensor direction) -> (Tensor, Tensor, Tensor)");

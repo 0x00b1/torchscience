@@ -8,10 +8,12 @@ from torchscience.color._srgb_to_hsv import srgb_to_hsv
 from torchscience.color._srgb_to_srgb_linear import (
     srgb_to_srgb_linear,
 )
+from torchscience.color._srgb_to_xyz import srgb_to_xyz
 
 __all__ = [
     "hsv_to_srgb",
     "srgb_linear_to_srgb",
     "srgb_to_hsv",
     "srgb_to_srgb_linear",
+    "srgb_to_xyz",
 ]
