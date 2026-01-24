@@ -2,6 +2,7 @@
 
 from torchscience.color._hls_to_srgb import hls_to_srgb
 from torchscience.color._hsv_to_srgb import hsv_to_srgb
+from torchscience.color._hwb_to_srgb import hwb_to_srgb
 from torchscience.color._lab_to_srgb import lab_to_srgb
 from torchscience.color._lchab_to_srgb import lchab_to_srgb
 from torchscience.color._lchuv_to_srgb import lchuv_to_srgb
@@ -13,6 +14,7 @@ from torchscience.color._srgb_linear_to_srgb import (
 )
 from torchscience.color._srgb_to_hls import srgb_to_hls
 from torchscience.color._srgb_to_hsv import srgb_to_hsv
+from torchscience.color._srgb_to_hwb import srgb_to_hwb
 from torchscience.color._srgb_to_lab import srgb_to_lab
 from torchscience.color._srgb_to_lchab import srgb_to_lchab
 from torchscience.color._srgb_to_lchuv import srgb_to_lchuv
@@ -32,6 +34,7 @@ from torchscience.color._yuv_to_srgb import yuv_to_srgb
 __all__ = [
     "hls_to_srgb",
     "hsv_to_srgb",
+    "hwb_to_srgb",
     "lab_to_srgb",
     "lchab_to_srgb",
     "lchuv_to_srgb",
@@ -41,6 +44,7 @@ __all__ = [
     "srgb_linear_to_srgb",
     "srgb_to_hls",
     "srgb_to_hsv",
+    "srgb_to_hwb",
     "srgb_to_lab",
     "srgb_to_lchab",
     "srgb_to_lchuv",

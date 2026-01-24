@@ -64,6 +64,8 @@
 #include "cpu/graphics/projection/perspective_projection.h"
 #include "cpu/graphics/color/srgb_to_hsv.h"
 #include "cpu/graphics/color/hsv_to_srgb.h"
+#include "cpu/graphics/color/srgb_to_hwb.h"
+#include "cpu/graphics/color/hwb_to_srgb.h"
 #include "cpu/graphics/color/srgb_to_hls.h"
 #include "cpu/graphics/color/hls_to_srgb.h"
 #include "cpu/graphics/color/srgb_to_srgb_linear.h"
@@ -84,6 +86,8 @@
 #include "cpu/graphics/color/oklch_to_srgb.h"
 #include "cpu/graphics/color/srgb_to_ycbcr.h"
 #include "cpu/graphics/color/ycbcr_to_srgb.h"
+#include "cpu/graphics/color/srgb_to_ypbpr.h"
+#include "cpu/graphics/color/ypbpr_to_srgb.h"
 #include "cpu/graphics/color/srgb_to_yuv.h"
 #include "cpu/graphics/color/yuv_to_srgb.h"
 
@@ -491,6 +495,8 @@
 #include "autograd/graphics/projection/perspective_projection.h"
 #include "autograd/graphics/color/srgb_to_hsv.h"
 #include "autograd/graphics/color/hsv_to_srgb.h"
+#include "autograd/graphics/color/srgb_to_hwb.h"
+#include "autograd/graphics/color/hwb_to_srgb.h"
 #include "autograd/graphics/color/srgb_to_hls.h"
 #include "autograd/graphics/color/hls_to_srgb.h"
 #include "autograd/graphics/color/srgb_to_srgb_linear.h"
@@ -511,6 +517,8 @@
 #include "autograd/graphics/color/oklch_to_srgb.h"
 #include "autograd/graphics/color/srgb_to_ycbcr.h"
 #include "autograd/graphics/color/ycbcr_to_srgb.h"
+#include "autograd/graphics/color/srgb_to_ypbpr.h"
+#include "autograd/graphics/color/ypbpr_to_srgb.h"
 #include "autograd/graphics/color/srgb_to_yuv.h"
 #include "autograd/graphics/color/yuv_to_srgb.h"
 #include "autograd/signal_processing/filter.h"
@@ -578,6 +586,8 @@
 #include "meta/graphics/projection/perspective_projection.h"
 #include "meta/graphics/color/srgb_to_hsv.h"
 #include "meta/graphics/color/hsv_to_srgb.h"
+#include "meta/graphics/color/srgb_to_hwb.h"
+#include "meta/graphics/color/hwb_to_srgb.h"
 #include "meta/graphics/color/srgb_to_hls.h"
 #include "meta/graphics/color/hls_to_srgb.h"
 #include "meta/graphics/color/srgb_to_srgb_linear.h"
@@ -598,6 +608,8 @@
 #include "meta/graphics/color/oklch_to_srgb.h"
 #include "meta/graphics/color/srgb_to_ycbcr.h"
 #include "meta/graphics/color/ycbcr_to_srgb.h"
+#include "meta/graphics/color/srgb_to_ypbpr.h"
+#include "meta/graphics/color/ypbpr_to_srgb.h"
 #include "meta/graphics/color/srgb_to_yuv.h"
 #include "meta/graphics/color/yuv_to_srgb.h"
 #include "meta/signal_processing/filter.h"
@@ -1110,6 +1122,12 @@ TORCH_LIBRARY(torchscience, module) {
 
   module.def("hsv_to_srgb(Tensor input) -> Tensor");
   module.def("hsv_to_srgb_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("srgb_to_hwb(Tensor input) -> Tensor");
+  module.def("srgb_to_hwb_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("hwb_to_srgb(Tensor input) -> Tensor");
+  module.def("hwb_to_srgb_backward(Tensor grad_output, Tensor input) -> Tensor");
 
   module.def("srgb_to_hls(Tensor input) -> Tensor");
   module.def("srgb_to_hls_backward(Tensor grad_output, Tensor input) -> Tensor");
