@@ -397,3 +397,139 @@ class TestFourierTransformParameterOrder:
         # This should fail - dim should be keyword only
         with pytest.raises(TypeError):
             fourier_transform(x, -1)  # type: ignore
+
+
+class TestInverseFourierTransformMultiDim:
+    """Tests for multi-dimensional inverse transform."""
+
+    def test_2d_inverse(self):
+        """Test 2D IFFT with dim tuple."""
+        X = torch.randn(16, 32, dtype=torch.complex64)
+        x = inverse_fourier_transform(X, dim=(-2, -1))
+        expected = torch.fft.ifft2(X)
+        assert torch.allclose(x, expected)
+
+    def test_round_trip_2d(self):
+        """Test 2D round trip."""
+        x_orig = torch.randn(16, 32)
+        X = fourier_transform(x_orig, dim=(-2, -1))
+        x_rec = inverse_fourier_transform(X, dim=(-2, -1))
+        assert torch.allclose(x_rec.real, x_orig, atol=1e-5)
+
+    def test_nd_inverse(self):
+        """Test nD IFFT with dim tuple."""
+        X = torch.randn(4, 8, 16, dtype=torch.complex64)
+        x = inverse_fourier_transform(X, dim=(0, 1, 2))
+        expected = torch.fft.ifftn(X)
+        assert torch.allclose(x, expected)
+
+    def test_n_with_multi_dim_inverse(self):
+        """Test n parameter with multi-dim inverse."""
+        X = torch.randn(16, 16, dtype=torch.complex64)
+        x = inverse_fourier_transform(X, dim=(-2, -1), n=(32, 32))
+        assert x.shape == torch.Size([32, 32])
+
+    def test_single_dim_as_tuple_inverse(self):
+        """Test single dim provided as tuple for inverse."""
+        X = torch.randn(32, 64, dtype=torch.complex64)
+        x = inverse_fourier_transform(X, dim=(-1,))
+        expected = torch.fft.ifft(X, dim=-1)
+        assert torch.allclose(x, expected)
+
+    def test_2d_with_batch_dim_inverse(self):
+        """Test 2D IFFT preserves batch dimensions."""
+        X = torch.randn(4, 8, 16, 32, dtype=torch.complex64)
+        x = inverse_fourier_transform(X, dim=(-2, -1))
+        expected = torch.fft.ifft2(X, dim=(-2, -1))
+        assert torch.allclose(x, expected)
+        assert x.shape == X.shape
+
+
+class TestInverseFourierTransformNormalization:
+    """Tests for inverse transform normalization modes."""
+
+    def test_backward_norm_inverse(self):
+        """Test backward normalization for inverse."""
+        X = torch.randn(32, dtype=torch.complex64)
+        x = inverse_fourier_transform(X, norm="backward")
+        expected = torch.fft.ifft(X, norm="backward")
+        assert torch.allclose(x, expected)
+
+    def test_ortho_norm_inverse(self):
+        """Test ortho normalization for inverse."""
+        X = torch.randn(32, dtype=torch.complex64)
+        x = inverse_fourier_transform(X, norm="ortho")
+        expected = torch.fft.ifft(X, norm="ortho")
+        assert torch.allclose(x, expected)
+
+    def test_forward_norm_inverse(self):
+        """Test forward normalization for inverse."""
+        X = torch.randn(32, dtype=torch.complex64)
+        x = inverse_fourier_transform(X, norm="forward")
+        expected = torch.fft.ifft(X, norm="forward")
+        assert torch.allclose(x, expected)
+
+
+class TestInverseFourierTransformPadding:
+    """Tests for inverse transform padding modes."""
+
+    def test_constant_padding_inverse(self):
+        """Test constant padding for inverse."""
+        X = torch.randn(32, dtype=torch.complex64)
+        x = inverse_fourier_transform(X, n=64, padding_mode="constant")
+        assert x.shape == torch.Size([64])
+
+    def test_reflect_padding_inverse(self):
+        """Test reflect padding for inverse."""
+        X = torch.randn(32, dtype=torch.complex64)
+        x = inverse_fourier_transform(X, n=64, padding_mode="reflect")
+        assert x.shape == torch.Size([64])
+
+    def test_linear_padding_inverse(self):
+        """Test linear padding for inverse."""
+        X = torch.randn(32, dtype=torch.complex64)
+        x = inverse_fourier_transform(X, n=64, padding_mode="linear")
+        assert x.shape == torch.Size([64])
+
+    def test_smooth_padding_inverse(self):
+        """Test smooth padding for inverse."""
+        X = torch.randn(32, dtype=torch.complex64)
+        x = inverse_fourier_transform(X, n=64, padding_mode="smooth")
+        assert x.shape == torch.Size([64])
+
+    def test_invalid_padding_mode_inverse(self):
+        """Test that invalid padding mode raises error for inverse."""
+        X = torch.randn(32, dtype=torch.complex64)
+        with pytest.raises(ValueError, match="padding_mode"):
+            inverse_fourier_transform(X, n=64, padding_mode="invalid")
+
+
+class TestInverseFourierTransformWindow:
+    """Tests for inverse transform windowing."""
+
+    def test_with_hann_window_inverse(self):
+        """Test with Hann window for inverse."""
+        X = torch.randn(32, dtype=torch.complex64)
+        window = torch.hann_window(32)
+        x = inverse_fourier_transform(X, window=window)
+
+        expected = torch.fft.ifft(X) * window
+        assert torch.allclose(x, expected)
+
+
+class TestInverseFourierTransformExplicitPadding:
+    """Tests for inverse transform explicit padding parameter."""
+
+    def test_explicit_padding_1d_inverse(self):
+        """Test explicit padding for 1D inverse."""
+        X = torch.randn(32, dtype=torch.complex64)
+        x = inverse_fourier_transform(X, padding=(8, 8))
+        assert x.shape == torch.Size([48])
+
+    def test_explicit_padding_multi_dim_inverse(self):
+        """Test explicit padding for multi-dim inverse."""
+        X = torch.randn(16, 16, dtype=torch.complex64)
+        x = inverse_fourier_transform(
+            X, dim=(-2, -1), padding=((4, 4), (4, 4))
+        )
+        assert x.shape == torch.Size([24, 24])
