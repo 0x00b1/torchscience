@@ -102,9 +102,17 @@
 #include "cpu/transform/inverse_fourier_sine_transform.h"
 #include "cpu/transform/convolution.h"
 #include "cpu/transform/laplace_transform.h"
+#include "cpu/transform/inverse_laplace_transform.h"
 #include "cpu/transform/mellin_transform.h"
+#include "cpu/transform/inverse_mellin_transform.h"
 #include "cpu/transform/two_sided_laplace_transform.h"
 #include "cpu/transform/hankel_transform.h"
+#include "cpu/transform/inverse_hankel_transform.h"
+#include "cpu/transform/abel_transform.h"
+#include "cpu/transform/inverse_abel_transform.h"
+#include "cpu/transform/z_transform.h"
+#include "cpu/transform/inverse_z_transform.h"
+#include "cpu/transform/inverse_two_sided_laplace_transform.h"
 #include "cpu/transform/radon_transform.h"
 #include "cpu/test/sum_squares.h"
 #include "cpu/graph_theory/floyd_warshall.h"
@@ -488,9 +496,17 @@
 #include "autograd/transform/fourier_sine_transform.h"
 #include "autograd/transform/convolution.h"
 #include "autograd/transform/laplace_transform.h"
+#include "autograd/transform/inverse_laplace_transform.h"
 #include "autograd/transform/mellin_transform.h"
+#include "autograd/transform/inverse_mellin_transform.h"
 #include "autograd/transform/two_sided_laplace_transform.h"
 #include "autograd/transform/hankel_transform.h"
+#include "autograd/transform/inverse_hankel_transform.h"
+#include "autograd/transform/abel_transform.h"
+#include "autograd/transform/inverse_abel_transform.h"
+#include "autograd/transform/z_transform.h"
+#include "autograd/transform/inverse_z_transform.h"
+#include "autograd/transform/inverse_two_sided_laplace_transform.h"
 #include "autograd/transform/radon_transform.h"
 #include "autograd/test/sum_squares.h"
 #include "autograd/information_theory/kullback_leibler_divergence.h"
@@ -564,9 +580,17 @@
 #include "meta/transform/fourier_sine_transform.h"
 #include "meta/transform/convolution.h"
 #include "meta/transform/laplace_transform.h"
+#include "meta/transform/inverse_laplace_transform.h"
 #include "meta/transform/mellin_transform.h"
+#include "meta/transform/inverse_mellin_transform.h"
 #include "meta/transform/two_sided_laplace_transform.h"
 #include "meta/transform/hankel_transform.h"
+#include "meta/transform/inverse_hankel_transform.h"
+#include "meta/transform/abel_transform.h"
+#include "meta/transform/inverse_abel_transform.h"
+#include "meta/transform/z_transform.h"
+#include "meta/transform/inverse_z_transform.h"
+#include "meta/transform/inverse_two_sided_laplace_transform.h"
 #include "meta/transform/radon_transform.h"
 #include "meta/test/sum_squares.h"
 #include "meta/graph_theory/floyd_warshall.h"
@@ -1328,9 +1352,17 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("laplace_transform_backward(Tensor grad_output, Tensor input, Tensor s, Tensor t, int dim, int integration_method) -> Tensor");
   module.def("laplace_transform_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, Tensor s, Tensor t, int dim, int integration_method) -> (Tensor, Tensor)");
 
+  module.def("inverse_laplace_transform(Tensor input, Tensor t_out, Tensor s_in, int dim, float sigma, int integration_method) -> Tensor");
+  module.def("inverse_laplace_transform_backward(Tensor grad_output, Tensor input, Tensor t_out, Tensor s_in, int dim, float sigma, int integration_method) -> Tensor");
+  module.def("inverse_laplace_transform_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, Tensor t_out, Tensor s_in, int dim, float sigma, int integration_method) -> (Tensor, Tensor)");
+
   module.def("mellin_transform(Tensor input, Tensor s, Tensor t, int dim, int integration_method) -> Tensor");
   module.def("mellin_transform_backward(Tensor grad_output, Tensor input, Tensor s, Tensor t, int dim, int integration_method) -> Tensor");
   module.def("mellin_transform_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, Tensor s, Tensor t, int dim, int integration_method) -> (Tensor, Tensor)");
+
+  module.def("inverse_mellin_transform(Tensor input, Tensor t_out, Tensor s_in, int dim, float c, int integration_method) -> Tensor");
+  module.def("inverse_mellin_transform_backward(Tensor grad_output, Tensor input, Tensor t_out, Tensor s_in, int dim, float c, int integration_method) -> Tensor");
+  module.def("inverse_mellin_transform_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, Tensor t_out, Tensor s_in, int dim, float c, int integration_method) -> (Tensor, Tensor)");
 
   module.def("two_sided_laplace_transform(Tensor input, Tensor s, Tensor t, int dim, int integration_method) -> Tensor");
   module.def("two_sided_laplace_transform_backward(Tensor grad_output, Tensor input, Tensor s, Tensor t, int dim, int integration_method) -> Tensor");
@@ -1339,6 +1371,30 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("hankel_transform(Tensor input, Tensor k_out, Tensor r_in, int dim, float order, int integration_method) -> Tensor");
   module.def("hankel_transform_backward(Tensor grad_output, Tensor input, Tensor k_out, Tensor r_in, int dim, float order, int integration_method) -> Tensor");
   module.def("hankel_transform_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, Tensor k_out, Tensor r_in, int dim, float order, int integration_method) -> (Tensor, Tensor)");
+
+  module.def("inverse_hankel_transform(Tensor input, Tensor r_out, Tensor k_in, int dim, float order, int integration_method) -> Tensor");
+  module.def("inverse_hankel_transform_backward(Tensor grad_output, Tensor input, Tensor r_out, Tensor k_in, int dim, float order, int integration_method) -> Tensor");
+  module.def("inverse_hankel_transform_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, Tensor r_out, Tensor k_in, int dim, float order, int integration_method) -> (Tensor, Tensor)");
+
+  module.def("abel_transform(Tensor input, Tensor y_out, Tensor r_in, int dim, int integration_method) -> Tensor");
+  module.def("abel_transform_backward(Tensor grad_output, Tensor input, Tensor y_out, Tensor r_in, int dim, int integration_method) -> Tensor");
+  module.def("abel_transform_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, Tensor y_out, Tensor r_in, int dim, int integration_method) -> (Tensor, Tensor)");
+
+  module.def("inverse_abel_transform(Tensor input, Tensor r_out, Tensor y_in, int dim, int integration_method) -> Tensor");
+  module.def("inverse_abel_transform_backward(Tensor grad_output, Tensor input, Tensor r_out, Tensor y_in, int dim, int integration_method) -> Tensor");
+  module.def("inverse_abel_transform_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, Tensor r_out, Tensor y_in, int dim, int integration_method) -> (Tensor, Tensor)");
+
+  module.def("z_transform(Tensor input, Tensor z_out, int dim) -> Tensor");
+  module.def("z_transform_backward(Tensor grad_output, Tensor input, Tensor z_out, int dim) -> Tensor");
+  module.def("z_transform_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, Tensor z_out, int dim) -> (Tensor, Tensor)");
+
+  module.def("inverse_z_transform(Tensor input, Tensor n_out, Tensor z_in, int dim) -> Tensor");
+  module.def("inverse_z_transform_backward(Tensor grad_output, Tensor input, Tensor n_out, Tensor z_in, int dim) -> Tensor");
+  module.def("inverse_z_transform_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, Tensor n_out, Tensor z_in, int dim) -> (Tensor, Tensor)");
+
+  module.def("inverse_two_sided_laplace_transform(Tensor input, Tensor t_out, Tensor s_in, int dim, float sigma, int integration_method) -> Tensor");
+  module.def("inverse_two_sided_laplace_transform_backward(Tensor grad_output, Tensor input, Tensor t_out, Tensor s_in, int dim, float sigma, int integration_method) -> Tensor");
+  module.def("inverse_two_sided_laplace_transform_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, Tensor t_out, Tensor s_in, int dim, float sigma, int integration_method) -> (Tensor, Tensor)");
 
   module.def("radon_transform(Tensor input, Tensor angles, bool circle) -> Tensor");
   module.def("radon_transform_backward(Tensor grad_output, Tensor input, Tensor angles, bool circle) -> Tensor");

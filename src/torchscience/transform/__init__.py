@@ -41,6 +41,7 @@ convolution
     FFT-based convolution with various modes.
 """
 
+from ._abel_transform import abel_transform
 from ._continuous_wavelet_transform import continuous_wavelet_transform
 from ._convolution import convolution
 from ._cosine_transform import cosine_transform, fourier_cosine_transform
@@ -50,6 +51,7 @@ from ._gabor_transform import gabor_transform
 from ._hankel_transform import hankel_transform
 from ._hartley_transform import hartley_transform
 from ._hilbert_transform import hilbert_transform
+from ._inverse_abel_transform import inverse_abel_transform
 from ._inverse_continuous_wavelet_transform import (
     inverse_continuous_wavelet_transform,
 )
@@ -62,7 +64,10 @@ from ._inverse_discrete_wavelet_transform import (
 )
 from ._inverse_fourier_transform import inverse_fourier_transform
 from ._inverse_gabor_transform import inverse_gabor_transform
+from ._inverse_hankel_transform import inverse_hankel_transform
 from ._inverse_hilbert_transform import inverse_hilbert_transform
+from ._inverse_laplace_transform import inverse_laplace_transform
+from ._inverse_mellin_transform import inverse_mellin_transform
 from ._inverse_short_time_fourier_transform import (
     inverse_short_time_fourier_transform,
 )
@@ -70,12 +75,17 @@ from ._inverse_sine_transform import (
     inverse_fourier_sine_transform,
     inverse_sine_transform,
 )
+from ._inverse_two_sided_laplace_transform import (
+    inverse_two_sided_laplace_transform,
+)
+from ._inverse_z_transform import inverse_z_transform
 from ._laplace_transform import laplace_transform
 from ._mellin_transform import mellin_transform
 from ._radon_transform import radon_transform
 from ._short_time_fourier_transform import short_time_fourier_transform
 from ._sine_transform import fourier_sine_transform, sine_transform
 from ._two_sided_laplace_transform import two_sided_laplace_transform
+from ._z_transform import z_transform
 
 __all__ = [
     # Fourier
@@ -103,12 +113,22 @@ __all__ = [
     "hartley_transform",
     # Laplace
     "laplace_transform",
+    "inverse_laplace_transform",
     # Two-sided Laplace
     "two_sided_laplace_transform",
+    "inverse_two_sided_laplace_transform",
     # Mellin
     "mellin_transform",
+    "inverse_mellin_transform",
     # Hankel
     "hankel_transform",
+    "inverse_hankel_transform",
+    # Abel
+    "abel_transform",
+    "inverse_abel_transform",
+    # Z-transform
+    "z_transform",
+    "inverse_z_transform",
     # Radon
     "radon_transform",
     # STFT
