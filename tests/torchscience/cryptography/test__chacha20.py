@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from torchscience.encryption import chacha20
+from torchscience.cryptography import chacha20
 
 
 class TestChaCha20:

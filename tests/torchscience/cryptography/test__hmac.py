@@ -3,7 +3,7 @@ import hmac as py_hmac
 
 import torch
 
-from torchscience.encryption import hmac_sha256
+from torchscience.cryptography import hmac_sha256
 
 
 class TestHMAC:
