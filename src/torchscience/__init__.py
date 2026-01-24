@@ -7,6 +7,7 @@ from . import (
     optimization,
     signal_processing,
     statistics,
+    transform,
 )
 
 __all__ = [
@@ -16,6 +17,7 @@ __all__ = [
     "optimization",
     "signal_processing",
     "statistics",
+    "transform",
 ]
 
 __version__ = "0.1.0"

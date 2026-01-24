@@ -84,6 +84,18 @@
 #include "cpu/statistics/hypothesis_test/kruskal_wallis.h"
 #include "cpu/integral_transform/hilbert_transform.h"
 #include "cpu/integral_transform/inverse_hilbert_transform.h"
+#include "cpu/transform/fourier_transform.h"
+#include "cpu/transform/inverse_fourier_transform.h"
+#include "cpu/transform/fourier_cosine_transform.h"
+#include "cpu/transform/inverse_fourier_cosine_transform.h"
+#include "cpu/transform/fourier_sine_transform.h"
+#include "cpu/transform/inverse_fourier_sine_transform.h"
+#include "cpu/transform/convolution.h"
+#include "cpu/transform/laplace_transform.h"
+#include "cpu/transform/mellin_transform.h"
+#include "cpu/transform/two_sided_laplace_transform.h"
+#include "cpu/transform/hankel_transform.h"
+#include "cpu/transform/radon_transform.h"
 #include "cpu/test/sum_squares.h"
 #include "cpu/graph_theory/floyd_warshall.h"
 #include "cpu/graph_theory/connected_components.h"
@@ -388,6 +400,16 @@
 #include "autograd/statistics/hypothesis_test/chi_square_test.h"
 #include "autograd/integral_transform/hilbert_transform.h"
 #include "autograd/integral_transform/inverse_hilbert_transform.h"
+#include "autograd/transform/fourier_transform.h"
+#include "autograd/transform/inverse_fourier_transform.h"
+#include "autograd/transform/fourier_cosine_transform.h"
+#include "autograd/transform/fourier_sine_transform.h"
+#include "autograd/transform/convolution.h"
+#include "autograd/transform/laplace_transform.h"
+#include "autograd/transform/mellin_transform.h"
+#include "autograd/transform/two_sided_laplace_transform.h"
+#include "autograd/transform/hankel_transform.h"
+#include "autograd/transform/radon_transform.h"
 #include "autograd/test/sum_squares.h"
 #include "autograd/information_theory/kullback_leibler_divergence.h"
 #include "autograd/information_theory/jensen_shannon_divergence.h"
@@ -444,6 +466,16 @@
 #include "meta/statistics/hypothesis_test/kruskal_wallis.h"
 #include "meta/integral_transform/hilbert_transform.h"
 #include "meta/integral_transform/inverse_hilbert_transform.h"
+#include "meta/transform/fourier_transform.h"
+#include "meta/transform/inverse_fourier_transform.h"
+#include "meta/transform/fourier_cosine_transform.h"
+#include "meta/transform/fourier_sine_transform.h"
+#include "meta/transform/convolution.h"
+#include "meta/transform/laplace_transform.h"
+#include "meta/transform/mellin_transform.h"
+#include "meta/transform/two_sided_laplace_transform.h"
+#include "meta/transform/hankel_transform.h"
+#include "meta/transform/radon_transform.h"
 #include "meta/test/sum_squares.h"
 #include "meta/graph_theory/floyd_warshall.h"
 #include "meta/graph_theory/connected_components.h"
@@ -488,6 +520,8 @@
 #include "autocast/statistics/descriptive/kurtosis.h"
 #include "autocast/integral_transform/hilbert_transform.h"
 #include "autocast/integral_transform/inverse_hilbert_transform.h"
+#include "autocast/transform/fourier_transform.h"
+#include "autocast/transform/inverse_fourier_transform.h"
 #include "autocast/test/sum_squares.h"
 #include "autocast/space_partitioning/kd_tree.h"
 #include "autocast/space_partitioning/k_nearest_neighbors.h"
@@ -510,6 +544,8 @@
 #include "cuda/statistics/descriptive/histogram.cu"
 #include "cuda/integral_transform/hilbert_transform.cu"
 #include "cuda/integral_transform/inverse_hilbert_transform.cu"
+#include "cuda/transform/fourier_transform.cu"
+#include "cuda/transform/inverse_fourier_transform.cu"
 #include "cuda/graph_theory/floyd_warshall.cu"
 #include "sparse/coo/cuda/special_functions.h"
 #include "sparse/coo/cuda/optimization/test_functions.h"
@@ -1147,6 +1183,55 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("inverse_hilbert_transform(Tensor input, int n_param, int dim, int padding_mode, float padding_value, Tensor? window) -> Tensor");
   module.def("inverse_hilbert_transform_backward(Tensor grad_output, Tensor input, int n_param, int dim, int padding_mode, float padding_value, Tensor? window) -> Tensor");
   module.def("inverse_hilbert_transform_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, int n_param, int dim, int padding_mode, float padding_value, Tensor? window) -> (Tensor, Tensor)");
+
+  // transform
+  module.def("fourier_transform(Tensor input, int n_param, int dim, int padding_mode, float padding_value, Tensor? window, int norm) -> Tensor");
+  module.def("fourier_transform_backward(Tensor grad_output, Tensor input, int n_param, int dim, int padding_mode, float padding_value, Tensor? window, int norm) -> Tensor");
+  module.def("fourier_transform_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, int n_param, int dim, int padding_mode, float padding_value, Tensor? window, int norm) -> (Tensor, Tensor)");
+
+  module.def("inverse_fourier_transform(Tensor input, int n_param, int dim, int padding_mode, float padding_value, Tensor? window, int norm) -> Tensor");
+  module.def("inverse_fourier_transform_backward(Tensor grad_output, Tensor input, int n_param, int dim, int padding_mode, float padding_value, Tensor? window, int norm) -> Tensor");
+  module.def("inverse_fourier_transform_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, int n_param, int dim, int padding_mode, float padding_value, Tensor? window, int norm) -> (Tensor, Tensor)");
+
+  module.def("fourier_cosine_transform(Tensor input, int n_param, int dim, int type, int norm) -> Tensor");
+  module.def("fourier_cosine_transform_backward(Tensor grad_output, Tensor input, int n_param, int dim, int type, int norm) -> Tensor");
+  module.def("fourier_cosine_transform_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, int n_param, int dim, int type, int norm) -> (Tensor, Tensor)");
+
+  module.def("inverse_fourier_cosine_transform(Tensor input, int n_param, int dim, int type, int norm) -> Tensor");
+  module.def("inverse_fourier_cosine_transform_backward(Tensor grad_output, Tensor input, int n_param, int dim, int type, int norm) -> Tensor");
+  module.def("inverse_fourier_cosine_transform_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, int n_param, int dim, int type, int norm) -> (Tensor, Tensor)");
+
+  module.def("fourier_sine_transform(Tensor input, int n_param, int dim, int type, int norm) -> Tensor");
+  module.def("fourier_sine_transform_backward(Tensor grad_output, Tensor input, int n_param, int dim, int type, int norm) -> Tensor");
+  module.def("fourier_sine_transform_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, int n_param, int dim, int type, int norm) -> (Tensor, Tensor)");
+
+  module.def("inverse_fourier_sine_transform(Tensor input, int n_param, int dim, int type, int norm) -> Tensor");
+  module.def("inverse_fourier_sine_transform_backward(Tensor grad_output, Tensor input, int n_param, int dim, int type, int norm) -> Tensor");
+  module.def("inverse_fourier_sine_transform_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, int n_param, int dim, int type, int norm) -> (Tensor, Tensor)");
+
+  module.def("convolution(Tensor input, Tensor kernel, int dim, int mode) -> Tensor");
+  module.def("convolution_backward(Tensor grad_output, Tensor input, Tensor kernel, int dim, int mode) -> (Tensor, Tensor)");
+  module.def("convolution_backward_backward(Tensor gg_input, Tensor gg_kernel, Tensor grad_output, Tensor input, Tensor kernel, int dim, int mode) -> (Tensor, Tensor, Tensor)");
+
+  module.def("laplace_transform(Tensor input, Tensor s, Tensor t, int dim, int integration_method) -> Tensor");
+  module.def("laplace_transform_backward(Tensor grad_output, Tensor input, Tensor s, Tensor t, int dim, int integration_method) -> Tensor");
+  module.def("laplace_transform_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, Tensor s, Tensor t, int dim, int integration_method) -> (Tensor, Tensor)");
+
+  module.def("mellin_transform(Tensor input, Tensor s, Tensor t, int dim, int integration_method) -> Tensor");
+  module.def("mellin_transform_backward(Tensor grad_output, Tensor input, Tensor s, Tensor t, int dim, int integration_method) -> Tensor");
+  module.def("mellin_transform_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, Tensor s, Tensor t, int dim, int integration_method) -> (Tensor, Tensor)");
+
+  module.def("two_sided_laplace_transform(Tensor input, Tensor s, Tensor t, int dim, int integration_method) -> Tensor");
+  module.def("two_sided_laplace_transform_backward(Tensor grad_output, Tensor input, Tensor s, Tensor t, int dim, int integration_method) -> Tensor");
+  module.def("two_sided_laplace_transform_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, Tensor s, Tensor t, int dim, int integration_method) -> (Tensor, Tensor)");
+
+  module.def("hankel_transform(Tensor input, Tensor k_out, Tensor r_in, int dim, float order, int integration_method) -> Tensor");
+  module.def("hankel_transform_backward(Tensor grad_output, Tensor input, Tensor k_out, Tensor r_in, int dim, float order, int integration_method) -> Tensor");
+  module.def("hankel_transform_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, Tensor k_out, Tensor r_in, int dim, float order, int integration_method) -> (Tensor, Tensor)");
+
+  module.def("radon_transform(Tensor input, Tensor angles, bool circle) -> Tensor");
+  module.def("radon_transform_backward(Tensor grad_output, Tensor input, Tensor angles, bool circle) -> Tensor");
+  module.def("radon_transform_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, Tensor angles, bool circle) -> (Tensor, Tensor)");
 
   // test (for validating reduction macros)
   module.def("sum_squares(Tensor input, int[]? dim, bool keepdim) -> Tensor");
