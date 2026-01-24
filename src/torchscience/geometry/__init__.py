@@ -10,6 +10,7 @@ from ._exceptions import (
 from ._ray_intersect import RayHit, ray_intersect
 from ._ray_occluded import ray_occluded
 from .intersection import RaySphereHit, ray_sphere_intersection
+from .mesh import Mesh
 
 __all__ = [
     "ClosestPoint",
@@ -17,6 +18,7 @@ __all__ = [
     "DegenerateInputError",
     "GeometryError",
     "InsufficientPointsError",
+    "Mesh",
     "RayHit",
     "RaySphereHit",
     "closest_point",
