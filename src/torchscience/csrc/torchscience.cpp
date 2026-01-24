@@ -64,8 +64,32 @@
 #include "cpu/graphics/projection/perspective_projection.h"
 #include "cpu/graphics/color/srgb_to_hsv.h"
 #include "cpu/graphics/color/hsv_to_srgb.h"
+#include "cpu/graphics/color/srgb_to_hwb.h"
+#include "cpu/graphics/color/hwb_to_srgb.h"
+#include "cpu/graphics/color/srgb_to_hls.h"
+#include "cpu/graphics/color/hls_to_srgb.h"
 #include "cpu/graphics/color/srgb_to_srgb_linear.h"
 #include "cpu/graphics/color/srgb_linear_to_srgb.h"
+#include "cpu/graphics/color/srgb_to_xyz.h"
+#include "cpu/graphics/color/xyz_to_srgb.h"
+#include "cpu/graphics/color/srgb_to_lab.h"
+#include "cpu/graphics/color/lab_to_srgb.h"
+#include "cpu/graphics/color/srgb_to_luv.h"
+#include "cpu/graphics/color/luv_to_srgb.h"
+#include "cpu/graphics/color/srgb_to_lchab.h"
+#include "cpu/graphics/color/lchab_to_srgb.h"
+#include "cpu/graphics/color/srgb_to_lchuv.h"
+#include "cpu/graphics/color/lchuv_to_srgb.h"
+#include "cpu/graphics/color/srgb_to_oklab.h"
+#include "cpu/graphics/color/oklab_to_srgb.h"
+#include "cpu/graphics/color/srgb_to_oklch.h"
+#include "cpu/graphics/color/oklch_to_srgb.h"
+#include "cpu/graphics/color/srgb_to_ycbcr.h"
+#include "cpu/graphics/color/ycbcr_to_srgb.h"
+#include "cpu/graphics/color/srgb_to_ypbpr.h"
+#include "cpu/graphics/color/ypbpr_to_srgb.h"
+#include "cpu/graphics/color/srgb_to_yuv.h"
+#include "cpu/graphics/color/yuv_to_srgb.h"
 
 // morphology
 #include "cpu/morphology/erosion.h"
@@ -480,8 +504,32 @@
 #include "autograd/graphics/projection/perspective_projection.h"
 #include "autograd/graphics/color/srgb_to_hsv.h"
 #include "autograd/graphics/color/hsv_to_srgb.h"
+#include "autograd/graphics/color/srgb_to_hwb.h"
+#include "autograd/graphics/color/hwb_to_srgb.h"
+#include "autograd/graphics/color/srgb_to_hls.h"
+#include "autograd/graphics/color/hls_to_srgb.h"
 #include "autograd/graphics/color/srgb_to_srgb_linear.h"
 #include "autograd/graphics/color/srgb_linear_to_srgb.h"
+#include "autograd/graphics/color/srgb_to_xyz.h"
+#include "autograd/graphics/color/xyz_to_srgb.h"
+#include "autograd/graphics/color/srgb_to_lab.h"
+#include "autograd/graphics/color/lab_to_srgb.h"
+#include "autograd/graphics/color/srgb_to_luv.h"
+#include "autograd/graphics/color/luv_to_srgb.h"
+#include "autograd/graphics/color/srgb_to_lchab.h"
+#include "autograd/graphics/color/lchab_to_srgb.h"
+#include "autograd/graphics/color/srgb_to_lchuv.h"
+#include "autograd/graphics/color/lchuv_to_srgb.h"
+#include "autograd/graphics/color/srgb_to_oklab.h"
+#include "autograd/graphics/color/oklab_to_srgb.h"
+#include "autograd/graphics/color/srgb_to_oklch.h"
+#include "autograd/graphics/color/oklch_to_srgb.h"
+#include "autograd/graphics/color/srgb_to_ycbcr.h"
+#include "autograd/graphics/color/ycbcr_to_srgb.h"
+#include "autograd/graphics/color/srgb_to_ypbpr.h"
+#include "autograd/graphics/color/ypbpr_to_srgb.h"
+#include "autograd/graphics/color/srgb_to_yuv.h"
+#include "autograd/graphics/color/yuv_to_srgb.h"
 #include "autograd/signal_processing/filter.h"
 #include "autograd/optimization/test_functions.h"
 #include "autograd/optimization/combinatorial.h"
@@ -556,8 +604,32 @@
 #include "meta/graphics/projection/perspective_projection.h"
 #include "meta/graphics/color/srgb_to_hsv.h"
 #include "meta/graphics/color/hsv_to_srgb.h"
+#include "meta/graphics/color/srgb_to_hwb.h"
+#include "meta/graphics/color/hwb_to_srgb.h"
+#include "meta/graphics/color/srgb_to_hls.h"
+#include "meta/graphics/color/hls_to_srgb.h"
 #include "meta/graphics/color/srgb_to_srgb_linear.h"
 #include "meta/graphics/color/srgb_linear_to_srgb.h"
+#include "meta/graphics/color/srgb_to_xyz.h"
+#include "meta/graphics/color/xyz_to_srgb.h"
+#include "meta/graphics/color/srgb_to_lab.h"
+#include "meta/graphics/color/lab_to_srgb.h"
+#include "meta/graphics/color/srgb_to_luv.h"
+#include "meta/graphics/color/luv_to_srgb.h"
+#include "meta/graphics/color/srgb_to_lchab.h"
+#include "meta/graphics/color/lchab_to_srgb.h"
+#include "meta/graphics/color/srgb_to_lchuv.h"
+#include "meta/graphics/color/lchuv_to_srgb.h"
+#include "meta/graphics/color/srgb_to_oklab.h"
+#include "meta/graphics/color/oklab_to_srgb.h"
+#include "meta/graphics/color/srgb_to_oklch.h"
+#include "meta/graphics/color/oklch_to_srgb.h"
+#include "meta/graphics/color/srgb_to_ycbcr.h"
+#include "meta/graphics/color/ycbcr_to_srgb.h"
+#include "meta/graphics/color/srgb_to_ypbpr.h"
+#include "meta/graphics/color/ypbpr_to_srgb.h"
+#include "meta/graphics/color/srgb_to_yuv.h"
+#include "meta/graphics/color/yuv_to_srgb.h"
 #include "meta/signal_processing/filter.h"
 #include "meta/optimization/test_functions.h"
 #include "meta/optimization/combinatorial.h"
@@ -1078,11 +1150,83 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("hsv_to_srgb(Tensor input) -> Tensor");
   module.def("hsv_to_srgb_backward(Tensor grad_output, Tensor input) -> Tensor");
 
+  module.def("srgb_to_hwb(Tensor input) -> Tensor");
+  module.def("srgb_to_hwb_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("hwb_to_srgb(Tensor input) -> Tensor");
+  module.def("hwb_to_srgb_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("srgb_to_hls(Tensor input) -> Tensor");
+  module.def("srgb_to_hls_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("hls_to_srgb(Tensor input) -> Tensor");
+  module.def("hls_to_srgb_backward(Tensor grad_output, Tensor input) -> Tensor");
+
   module.def("srgb_to_srgb_linear(Tensor input) -> Tensor");
   module.def("srgb_to_srgb_linear_backward(Tensor grad_output, Tensor input) -> Tensor");
 
   module.def("srgb_linear_to_srgb(Tensor input) -> Tensor");
   module.def("srgb_linear_to_srgb_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("srgb_to_xyz(Tensor input) -> Tensor");
+  module.def("srgb_to_xyz_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("xyz_to_srgb(Tensor input) -> Tensor");
+  module.def("xyz_to_srgb_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("srgb_to_lab(Tensor input) -> Tensor");
+  module.def("srgb_to_lab_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("lab_to_srgb(Tensor input) -> Tensor");
+  module.def("lab_to_srgb_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("srgb_to_luv(Tensor input) -> Tensor");
+  module.def("srgb_to_luv_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("luv_to_srgb(Tensor input) -> Tensor");
+  module.def("luv_to_srgb_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("srgb_to_lchab(Tensor input) -> Tensor");
+  module.def("srgb_to_lchab_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("lchab_to_srgb(Tensor input) -> Tensor");
+  module.def("lchab_to_srgb_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("srgb_to_lchuv(Tensor input) -> Tensor");
+  module.def("srgb_to_lchuv_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("lchuv_to_srgb(Tensor input) -> Tensor");
+  module.def("lchuv_to_srgb_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("srgb_to_oklab(Tensor input) -> Tensor");
+  module.def("srgb_to_oklab_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("oklab_to_srgb(Tensor input) -> Tensor");
+  module.def("oklab_to_srgb_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("srgb_to_oklch(Tensor input) -> Tensor");
+  module.def("srgb_to_oklch_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("oklch_to_srgb(Tensor input) -> Tensor");
+  module.def("oklch_to_srgb_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("srgb_to_ycbcr(Tensor input) -> Tensor");
+  module.def("srgb_to_ycbcr_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("ycbcr_to_srgb(Tensor input) -> Tensor");
+  module.def("ycbcr_to_srgb_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("srgb_to_ypbpr(Tensor input) -> Tensor");
+  module.def("srgb_to_ypbpr_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("ypbpr_to_srgb(Tensor input) -> Tensor");
+  module.def("ypbpr_to_srgb_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("srgb_to_yuv(Tensor input) -> Tensor");
+  module.def("srgb_to_yuv_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("yuv_to_srgb(Tensor input) -> Tensor");
+  module.def("yuv_to_srgb_backward(Tensor grad_output, Tensor input) -> Tensor");
 
   // graphics.texture_mapping
   module.def("cube_mapping(Tensor direction) -> (Tensor, Tensor, Tensor)");
