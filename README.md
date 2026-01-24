@@ -46,7 +46,7 @@ Many operators are implemented in C++ for performance; Python is used when algor
 The library spans common scientific and engineering areas. Below is a non‑exhaustive map of packages and subpackages:
 
 - combinatorics: combinatorial utilities
-- cryptography and encryption: core cryptographic primitives and encryption
+- cryptography: core cryptographic primitives
 - game: game theory (sequential, simultaneous)
 - geometry: computational geometry (e.g., intersection, meshing, transform)
 - graph: graph and network theory

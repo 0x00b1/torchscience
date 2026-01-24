@@ -237,7 +237,7 @@ def cumulative_simpson(
 
     if n < 3:
         # Fall back to trapezoid for very short arrays
-        from torchscience.integration.quadrature._trapezoid import (
+        from torchscience.quadrature._trapezoid import (
             cumulative_trapezoid,
         )
 

@@ -7,7 +7,7 @@ class TestGaussLegendreNodesWeights:
     @pytest.mark.parametrize("n", [2, 5, 10, 32, 64])
     def test_matches_numpy(self, n):
         """Compare with numpy's Gauss-Legendre implementation"""
-        from torchscience.integration.quadrature._nodes import (
+        from torchscience.quadrature._nodes import (
             gauss_legendre_nodes_weights,
         )
 
@@ -19,7 +19,7 @@ class TestGaussLegendreNodesWeights:
 
     def test_nodes_in_interval(self):
         """Nodes should be in [-1, 1]"""
-        from torchscience.integration.quadrature._nodes import (
+        from torchscience.quadrature._nodes import (
             gauss_legendre_nodes_weights,
         )
 
@@ -30,7 +30,7 @@ class TestGaussLegendreNodesWeights:
 
     def test_weights_sum_to_two(self):
         """Weights should sum to 2 (length of [-1, 1])"""
-        from torchscience.integration.quadrature._nodes import (
+        from torchscience.quadrature._nodes import (
             gauss_legendre_nodes_weights,
         )
 
@@ -42,7 +42,7 @@ class TestGaussLegendreNodesWeights:
 
     def test_exact_for_polynomial(self):
         """Should exactly integrate polynomials up to degree 2n-1"""
-        from torchscience.integration.quadrature._nodes import (
+        from torchscience.quadrature._nodes import (
             gauss_legendre_nodes_weights,
         )
 
@@ -59,7 +59,7 @@ class TestGaussLegendreNodesWeights:
 
     def test_n_equals_1(self):
         """Single-point quadrature: midpoint rule"""
-        from torchscience.integration.quadrature._nodes import (
+        from torchscience.quadrature._nodes import (
             gauss_legendre_nodes_weights,
         )
 
@@ -74,7 +74,7 @@ class TestGaussLegendreNodesWeights:
 
     def test_invalid_n_raises(self):
         """n < 1 should raise ValueError"""
-        from torchscience.integration.quadrature._nodes import (
+        from torchscience.quadrature._nodes import (
             gauss_legendre_nodes_weights,
         )
 
@@ -83,7 +83,7 @@ class TestGaussLegendreNodesWeights:
 
     def test_device_placement(self):
         """Test that device parameter works"""
-        from torchscience.integration.quadrature._nodes import (
+        from torchscience.quadrature._nodes import (
             gauss_legendre_nodes_weights,
         )
 
@@ -99,7 +99,7 @@ class TestGaussKronrodNodesWeights:
     @pytest.mark.parametrize("order", [15, 21])
     def test_valid_orders(self, order):
         """Test that implemented orders work"""
-        from torchscience.integration.quadrature._nodes import (
+        from torchscience.quadrature._nodes import (
             gauss_kronrod_nodes_weights,
         )
 
@@ -116,7 +116,7 @@ class TestGaussKronrodNodesWeights:
 
     def test_invalid_order(self):
         """Invalid orders should raise"""
-        from torchscience.integration.quadrature._nodes import (
+        from torchscience.quadrature._nodes import (
             gauss_kronrod_nodes_weights,
         )
 
@@ -125,7 +125,7 @@ class TestGaussKronrodNodesWeights:
 
     def test_kronrod_weights_sum(self):
         """Kronrod weights should sum to 2"""
-        from torchscience.integration.quadrature._nodes import (
+        from torchscience.quadrature._nodes import (
             gauss_kronrod_nodes_weights,
         )
 
@@ -139,7 +139,7 @@ class TestGaussKronrodNodesWeights:
 
     def test_gauss_weights_sum(self):
         """Gauss weights should sum to 2"""
-        from torchscience.integration.quadrature._nodes import (
+        from torchscience.quadrature._nodes import (
             gauss_kronrod_nodes_weights,
         )
 
@@ -153,7 +153,7 @@ class TestGaussKronrodNodesWeights:
 
     def test_g7k15_integration(self):
         """G7-K15 should integrate polynomials exactly"""
-        from torchscience.integration.quadrature._nodes import (
+        from torchscience.quadrature._nodes import (
             gauss_kronrod_nodes_weights,
         )
 
@@ -170,7 +170,7 @@ class TestGaussKronrodNodesWeights:
 
     def test_gauss_indices_correct(self):
         """Gauss nodes should be at the returned indices"""
-        from torchscience.integration.quadrature._nodes import (
+        from torchscience.quadrature._nodes import (
             gauss_kronrod_nodes_weights,
         )
 
@@ -191,7 +191,7 @@ class TestGaussKronrodNodesWeights:
 
     def test_nodes_symmetric(self):
         """Nodes should be symmetric about 0"""
-        from torchscience.integration.quadrature._nodes import (
+        from torchscience.quadrature._nodes import (
             gauss_kronrod_nodes_weights,
         )
 
@@ -211,7 +211,7 @@ class TestGaussHermiteNodesWeights:
         """Weights should sum to sqrt(pi) for physicists' Hermite."""
         import math
 
-        from torchscience.integration.quadrature._nodes import (
+        from torchscience.quadrature._nodes import (
             gauss_hermite_nodes_weights,
         )
 
@@ -222,7 +222,7 @@ class TestGaussHermiteNodesWeights:
 
     def test_nodes_symmetric(self):
         """Nodes should be symmetric about 0."""
-        from torchscience.integration.quadrature._nodes import (
+        from torchscience.quadrature._nodes import (
             gauss_hermite_nodes_weights,
         )
 
@@ -235,7 +235,7 @@ class TestGaussHermiteNodesWeights:
 
     def test_exact_for_polynomial(self):
         """Should exactly integrate polynomials with weight exp(-x^2)."""
-        from torchscience.integration.quadrature._nodes import (
+        from torchscience.quadrature._nodes import (
             gauss_hermite_nodes_weights,
         )
 
@@ -258,7 +258,7 @@ class TestGaussHermiteNodesWeights:
         """Single-point quadrature."""
         import math
 
-        from torchscience.integration.quadrature._nodes import (
+        from torchscience.quadrature._nodes import (
             gauss_hermite_nodes_weights,
         )
 
@@ -273,7 +273,7 @@ class TestGaussHermiteNodesWeights:
 
     def test_invalid_n_raises(self):
         """n < 1 should raise ValueError."""
-        from torchscience.integration.quadrature._nodes import (
+        from torchscience.quadrature._nodes import (
             gauss_hermite_nodes_weights,
         )
 
@@ -289,7 +289,7 @@ class TestGaussLaguerreNodesWeights:
         """Weights should sum to Gamma(alpha+1) for generalized Laguerre."""
         import math
 
-        from torchscience.integration.quadrature._nodes import (
+        from torchscience.quadrature._nodes import (
             gauss_laguerre_nodes_weights,
         )
 
@@ -309,7 +309,7 @@ class TestGaussLaguerreNodesWeights:
 
     def test_nodes_positive(self):
         """Nodes should be positive (Laguerre is on [0, inf))."""
-        from torchscience.integration.quadrature._nodes import (
+        from torchscience.quadrature._nodes import (
             gauss_laguerre_nodes_weights,
         )
 
@@ -319,7 +319,7 @@ class TestGaussLaguerreNodesWeights:
 
     def test_exact_for_polynomial(self):
         """Should exactly integrate polynomials with weight x^alpha * exp(-x)."""
-        from torchscience.integration.quadrature._nodes import (
+        from torchscience.quadrature._nodes import (
             gauss_laguerre_nodes_weights,
         )
 
@@ -337,7 +337,7 @@ class TestGaussLaguerreNodesWeights:
 
     def test_invalid_alpha_raises(self):
         """alpha <= -1 should raise ValueError."""
-        from torchscience.integration.quadrature._nodes import (
+        from torchscience.quadrature._nodes import (
             gauss_laguerre_nodes_weights,
         )
 
@@ -353,7 +353,7 @@ class TestGaussChebyshevNodesWeights:
         """Chebyshev T weights should sum to pi."""
         import math
 
-        from torchscience.integration.quadrature._nodes import (
+        from torchscience.quadrature._nodes import (
             gauss_chebyshev_nodes_weights,
         )
 
@@ -369,7 +369,7 @@ class TestGaussChebyshevNodesWeights:
         """Chebyshev U weights should sum to pi/2."""
         import math
 
-        from torchscience.integration.quadrature._nodes import (
+        from torchscience.quadrature._nodes import (
             gauss_chebyshev_nodes_weights,
         )
 
@@ -382,7 +382,7 @@ class TestGaussChebyshevNodesWeights:
 
     def test_nodes_in_interval(self):
         """Nodes should be in (-1, 1)."""
-        from torchscience.integration.quadrature._nodes import (
+        from torchscience.quadrature._nodes import (
             gauss_chebyshev_nodes_weights,
         )
 
@@ -395,7 +395,7 @@ class TestGaussChebyshevNodesWeights:
 
     def test_invalid_kind_raises(self):
         """kind not in {1, 2} should raise ValueError."""
-        from torchscience.integration.quadrature._nodes import (
+        from torchscience.quadrature._nodes import (
             gauss_chebyshev_nodes_weights,
         )
 
@@ -408,7 +408,7 @@ class TestGaussJacobiNodesWeights:
 
     def test_legendre_special_case(self):
         """Jacobi with alpha=beta=0 should give Legendre."""
-        from torchscience.integration.quadrature._nodes import (
+        from torchscience.quadrature._nodes import (
             gauss_jacobi_nodes_weights,
             gauss_legendre_nodes_weights,
         )
@@ -428,7 +428,7 @@ class TestGaussJacobiNodesWeights:
         """Weights should sum to 2^{alpha+beta+1} * B(alpha+1, beta+1)."""
         import math
 
-        from torchscience.integration.quadrature._nodes import (
+        from torchscience.quadrature._nodes import (
             gauss_jacobi_nodes_weights,
         )
 
@@ -450,7 +450,7 @@ class TestGaussJacobiNodesWeights:
 
     def test_nodes_in_interval(self):
         """Nodes should be in (-1, 1)."""
-        from torchscience.integration.quadrature._nodes import (
+        from torchscience.quadrature._nodes import (
             gauss_jacobi_nodes_weights,
         )
 
@@ -463,7 +463,7 @@ class TestGaussJacobiNodesWeights:
 
     def test_invalid_alpha_raises(self):
         """alpha <= -1 should raise ValueError."""
-        from torchscience.integration.quadrature._nodes import (
+        from torchscience.quadrature._nodes import (
             gauss_jacobi_nodes_weights,
         )
 
@@ -472,7 +472,7 @@ class TestGaussJacobiNodesWeights:
 
     def test_invalid_beta_raises(self):
         """beta <= -1 should raise ValueError."""
-        from torchscience.integration.quadrature._nodes import (
+        from torchscience.quadrature._nodes import (
             gauss_jacobi_nodes_weights,
         )
 

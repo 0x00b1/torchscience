@@ -3,7 +3,7 @@
 import torch
 from torch.autograd import gradcheck
 
-from torchscience.graphics.color import srgb_to_srgb_linear
+from torchscience.color import srgb_to_srgb_linear
 
 
 class TestSrgbToSrgbLinearShape:

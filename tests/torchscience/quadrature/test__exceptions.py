@@ -1,6 +1,6 @@
 import pytest
 
-from torchscience.integration.quadrature import (
+from torchscience.quadrature import (
     IntegrationError,
     QuadratureWarning,
 )

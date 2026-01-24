@@ -9,7 +9,7 @@ class TestTrapezoid:
         x = torch.linspace(0, torch.pi, 1000)
         y = torch.sin(x)
 
-        from torchscience.integration.quadrature import trapezoid
+        from torchscience.quadrature import trapezoid
 
         result = trapezoid(y, x)
 
@@ -21,7 +21,7 @@ class TestTrapezoid:
         y = torch.sin(torch.linspace(0, torch.pi, 1000))
         dx = torch.pi / 999
 
-        from torchscience.integration.quadrature import trapezoid
+        from torchscience.quadrature import trapezoid
 
         result = trapezoid(y, dx=dx)
 
@@ -32,7 +32,7 @@ class TestTrapezoid:
         x = torch.linspace(0, 1, 100)
         y = x**2
 
-        from torchscience.integration.quadrature import trapezoid
+        from torchscience.quadrature import trapezoid
 
         result = trapezoid(y, x)
         expected = torch.trapezoid(y, x)
@@ -46,7 +46,7 @@ class TestTrapezoidGradients:
         x = torch.linspace(0, 1, 10)
         y = torch.randn(10, requires_grad=True, dtype=torch.float64)
 
-        from torchscience.integration.quadrature import trapezoid
+        from torchscience.quadrature import trapezoid
 
         result = trapezoid(y, x)
         result.backward()
@@ -59,7 +59,7 @@ class TestTrapezoidGradients:
         x = torch.linspace(0, 1, 10, requires_grad=True, dtype=torch.float64)
         y = x**2
 
-        from torchscience.integration.quadrature import trapezoid
+        from torchscience.quadrature import trapezoid
 
         result = trapezoid(y, x)
         result.backward()
@@ -71,7 +71,7 @@ class TestTrapezoidGradients:
         x = torch.linspace(0, 1, 10, dtype=torch.float64)
         y = torch.randn(10, requires_grad=True, dtype=torch.float64)
 
-        from torchscience.integration.quadrature import trapezoid
+        from torchscience.quadrature import trapezoid
 
         assert torch.autograd.gradcheck(
             lambda y_: trapezoid(y_, x),
@@ -84,7 +84,7 @@ class TestTrapezoidGradients:
         x = torch.linspace(0, 1, 10, dtype=torch.float64)
         y = torch.randn(10, requires_grad=True, dtype=torch.float64)
 
-        from torchscience.integration.quadrature import trapezoid
+        from torchscience.quadrature import trapezoid
 
         assert torch.autograd.gradgradcheck(
             lambda y_: trapezoid(y_, x),
@@ -99,7 +99,7 @@ class TestTrapezoidBatching:
         x = torch.linspace(0, 1, 100)
         y = torch.stack([x**2, x**3, x**4], dim=0)  # Shape: (3, 100)
 
-        from torchscience.integration.quadrature import trapezoid
+        from torchscience.quadrature import trapezoid
 
         result = trapezoid(y, x, dim=-1)
 
@@ -113,7 +113,7 @@ class TestTrapezoidBatching:
         y = torch.randn(5, 100, 3)
         x = torch.linspace(0, 1, 100)
 
-        from torchscience.integration.quadrature import trapezoid
+        from torchscience.quadrature import trapezoid
 
         result = trapezoid(y, x, dim=1)
 
@@ -125,7 +125,7 @@ class TestTrapezoidEdgeCases:
         """Single point has zero area"""
         y = torch.tensor([1.0])
 
-        from torchscience.integration.quadrature import trapezoid
+        from torchscience.quadrature import trapezoid
 
         result = trapezoid(y)
 
@@ -135,7 +135,7 @@ class TestTrapezoidEdgeCases:
         """Two points = one trapezoid"""
         y = torch.tensor([1.0, 2.0])
 
-        from torchscience.integration.quadrature import trapezoid
+        from torchscience.quadrature import trapezoid
 
         result = trapezoid(y, dx=1.0)
 
@@ -149,7 +149,7 @@ class TestTrapezoidDtypes:
         x = torch.linspace(0, 1, 10, dtype=dtype)
         y = torch.sin(x)
 
-        from torchscience.integration.quadrature import trapezoid
+        from torchscience.quadrature import trapezoid
 
         result = trapezoid(y, x)
 
@@ -162,7 +162,7 @@ class TestCumulativeTrapezoid:
         x = torch.linspace(0, torch.pi, 100)
         y = torch.sin(x)
 
-        from torchscience.integration.quadrature import cumulative_trapezoid
+        from torchscience.quadrature import cumulative_trapezoid
 
         result = cumulative_trapezoid(y, x)
 
@@ -175,7 +175,7 @@ class TestCumulativeTrapezoid:
         """Without initial, output has one fewer element"""
         y = torch.randn(100)
 
-        from torchscience.integration.quadrature import cumulative_trapezoid
+        from torchscience.quadrature import cumulative_trapezoid
 
         result = cumulative_trapezoid(y)
 
@@ -185,7 +185,7 @@ class TestCumulativeTrapezoid:
         """With initial, output has same shape as input"""
         y = torch.randn(100)
 
-        from torchscience.integration.quadrature import cumulative_trapezoid
+        from torchscience.quadrature import cumulative_trapezoid
 
         result = cumulative_trapezoid(y, initial=0.0)
 
@@ -197,7 +197,7 @@ class TestCumulativeTrapezoid:
         x = torch.linspace(0, 1, 50)
         y = x**2
 
-        from torchscience.integration.quadrature import (
+        from torchscience.quadrature import (
             cumulative_trapezoid,
             trapezoid,
         )
@@ -214,7 +214,7 @@ class TestCumulativeTrapezoidGradients:
         x = torch.linspace(0, 1, 20, dtype=torch.float64)
         y = torch.randn(20, requires_grad=True, dtype=torch.float64)
 
-        from torchscience.integration.quadrature import cumulative_trapezoid
+        from torchscience.quadrature import cumulative_trapezoid
 
         def fn(y_):
             return cumulative_trapezoid(y_, x).sum()
@@ -226,7 +226,7 @@ class TestCumulativeTrapezoidGradients:
         x = torch.linspace(0, 1, 20, dtype=torch.float64)
         y = torch.randn(20, requires_grad=True, dtype=torch.float64)
 
-        from torchscience.integration.quadrature import cumulative_trapezoid
+        from torchscience.quadrature import cumulative_trapezoid
 
         def fn(y_):
             return cumulative_trapezoid(y_, x).sum()

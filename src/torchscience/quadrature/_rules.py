@@ -5,7 +5,7 @@ from typing import Callable, Optional, Tuple, Union
 import torch
 from torch import Tensor
 
-from torchscience.integration.quadrature._nodes import (
+from torchscience.quadrature._nodes import (
     gauss_kronrod_nodes_weights,
     gauss_legendre_nodes_weights,
 )

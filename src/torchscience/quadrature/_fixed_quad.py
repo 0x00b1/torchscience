@@ -5,7 +5,7 @@ from typing import Callable, Union
 import torch
 from torch import Tensor
 
-from torchscience.integration.quadrature._rules import GaussLegendre
+from torchscience.quadrature._rules import GaussLegendre
 
 
 class _FixedQuadFunction(torch.autograd.Function):

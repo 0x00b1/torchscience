@@ -9,7 +9,7 @@ class TestSimpson:
         x = torch.linspace(0, torch.pi, 101)  # Odd number of points
         y = torch.sin(x)
 
-        from torchscience.integration.quadrature import simpson
+        from torchscience.quadrature import simpson
 
         result = simpson(y, x)
 
@@ -23,7 +23,7 @@ class TestSimpson:
         x = torch.linspace(0, 1, 11)
         y = x**4  # integral from 0 to 1 = 1/5 = 0.2
 
-        from torchscience.integration.quadrature import simpson, trapezoid
+        from torchscience.quadrature import simpson, trapezoid
 
         trap_result = trapezoid(y, x)
         simp_result = simpson(y, x)
@@ -38,7 +38,7 @@ class TestSimpson:
         """Simpson's rule needs at least 3 points"""
         y = torch.tensor([1.0, 2.0])
 
-        from torchscience.integration.quadrature import simpson
+        from torchscience.quadrature import simpson
 
         with pytest.raises(ValueError, match="at least 3"):
             simpson(y)
@@ -50,7 +50,7 @@ class TestSimpsonEven:
         x = torch.linspace(0, 1, 10)  # 9 intervals (odd, needs handling)
         y = x**2
 
-        from torchscience.integration.quadrature import simpson
+        from torchscience.quadrature import simpson
 
         result = simpson(y, x, even="avg")
 
@@ -62,7 +62,7 @@ class TestSimpsonEven:
         x = torch.linspace(0, 1, 10)
         y = x**2
 
-        from torchscience.integration.quadrature import simpson
+        from torchscience.quadrature import simpson
 
         result = simpson(y, x, even="first")
 
@@ -73,7 +73,7 @@ class TestSimpsonEven:
         x = torch.linspace(0, 1, 10)
         y = x**2
 
-        from torchscience.integration.quadrature import simpson
+        from torchscience.quadrature import simpson
 
         with pytest.raises(ValueError, match="even must be"):
             simpson(y, x, even="invalid")
@@ -85,7 +85,7 @@ class TestSimpsonGradients:
         x = torch.linspace(0, 1, 11, dtype=torch.float64)
         y = torch.randn(11, requires_grad=True, dtype=torch.float64)
 
-        from torchscience.integration.quadrature import simpson
+        from torchscience.quadrature import simpson
 
         def fn(y_):
             return simpson(y_, x)
@@ -97,7 +97,7 @@ class TestSimpsonGradients:
         x = torch.linspace(0, 1, 11, dtype=torch.float64)
         y = torch.randn(11, requires_grad=True, dtype=torch.float64)
 
-        from torchscience.integration.quadrature import simpson
+        from torchscience.quadrature import simpson
 
         def fn(y_):
             return simpson(y_, x)
@@ -111,7 +111,7 @@ class TestSimpsonBatching:
         x = torch.linspace(0, 1, 101)
         y = torch.stack([x**2, x**3, x**4], dim=0)  # Shape: (3, 101)
 
-        from torchscience.integration.quadrature import simpson
+        from torchscience.quadrature import simpson
 
         result = simpson(y, x, dim=-1)
 
@@ -127,7 +127,7 @@ class TestCumulativeSimpson:
         x = torch.linspace(0, 1, 51)  # Odd number of points
         y = x**2
 
-        from torchscience.integration.quadrature import (
+        from torchscience.quadrature import (
             cumulative_simpson,
             simpson,
         )
@@ -141,7 +141,7 @@ class TestCumulativeSimpson:
         """Without initial, output shape depends on parity"""
         y = torch.randn(51)  # 50 intervals (even)
 
-        from torchscience.integration.quadrature import cumulative_simpson
+        from torchscience.quadrature import cumulative_simpson
 
         result = cumulative_simpson(y)
 
@@ -152,7 +152,7 @@ class TestCumulativeSimpson:
         """With initial, output has same shape as input"""
         y = torch.randn(51)
 
-        from torchscience.integration.quadrature import cumulative_simpson
+        from torchscience.quadrature import cumulative_simpson
 
         result = cumulative_simpson(y, initial=0.0)
 
@@ -164,7 +164,7 @@ class TestCumulativeSimpson:
         x = torch.linspace(0, 1, 51)
         y = x**2 + 1  # Always positive
 
-        from torchscience.integration.quadrature import cumulative_simpson
+        from torchscience.quadrature import cumulative_simpson
 
         result = cumulative_simpson(y, x, initial=0.0)
 
@@ -179,7 +179,7 @@ class TestCumulativeSimpsonGradients:
         x = torch.linspace(0, 1, 21, dtype=torch.float64)
         y = torch.randn(21, requires_grad=True, dtype=torch.float64)
 
-        from torchscience.integration.quadrature import cumulative_simpson
+        from torchscience.quadrature import cumulative_simpson
 
         def fn(y_):
             return cumulative_simpson(y_, x).sum()
