@@ -1,10 +1,6 @@
 from torchscience.signal_processing import (
-    filter,
     filter_analysis,
-    filter_design,
-    noise,
     transform,
-    waveform,
 )
 from torchscience.signal_processing._constants import (
     SAMPLE_RATE_CD,
@@ -18,12 +14,8 @@ from torchscience.signal_processing._constants import (
 
 __all__ = [
     # Submodules
-    "filter",
     "filter_analysis",
-    "filter_design",
-    "noise",
     "transform",
-    "waveform",
     # Constants
     "SAMPLE_RATE_CD",
     "SAMPLE_RATE_DAT",

@@ -13,7 +13,7 @@ import numpy as np
 import torch
 
 # torchscience imports
-from torchscience.signal_processing.filter_design import (
+from torchscience.filter_design import (
     kalman_filter,
     leaky_lms,
     lms,

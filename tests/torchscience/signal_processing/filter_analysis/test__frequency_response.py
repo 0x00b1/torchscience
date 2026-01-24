@@ -5,17 +5,17 @@ import pytest
 import torch
 from scipy import signal as scipy_signal
 
+from torchscience.filter_design import (
+    SOSNormalizationError,
+    bilinear_transform_zpk,
+    butterworth_design,
+    butterworth_prototype,
+)
 from torchscience.signal_processing.filter_analysis import (
     frequency_response,
     frequency_response_fir,
     frequency_response_sos,
     frequency_response_zpk,
-)
-from torchscience.signal_processing.filter_design import (
-    SOSNormalizationError,
-    bilinear_transform_zpk,
-    butterworth_design,
-    butterworth_prototype,
 )
 
 

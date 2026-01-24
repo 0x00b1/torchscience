@@ -22,7 +22,7 @@ except ImportError:
     SCIPY_AVAILABLE = False
 
 # torchscience imports
-from torchscience.signal_processing.filter_design import (
+from torchscience.filter_design import (
     butterworth_design,
     fftfilt,
     filtfilt,
