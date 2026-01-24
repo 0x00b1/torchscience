@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <c10/macros/Macros.h>
 #include "common.h"
 
 namespace torchscience::kernel::window_function {
@@ -13,7 +14,7 @@ namespace torchscience::kernel::window_function {
 // w[k] = a0 - a1*cos(2*pi*k/denom) + a2*cos(4*pi*k/denom)
 //        - a3*cos(6*pi*k/denom) + a4*cos(8*pi*k/denom)
 template<typename scalar_t>
-inline scalar_t flat_top(int64_t i, int64_t n, bool periodic) {
+C10_HOST_DEVICE inline scalar_t flat_top(int64_t i, int64_t n, bool periodic) {
   if (n == 1) {
     return scalar_t(1);
   }

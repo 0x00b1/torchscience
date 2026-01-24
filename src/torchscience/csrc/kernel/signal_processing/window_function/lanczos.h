@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <c10/macros/Macros.h>
 #include "common.h"
 
 namespace torchscience::kernel::window_function {
@@ -8,7 +9,7 @@ namespace torchscience::kernel::window_function {
 // Lanczos window (sinc window): w[k] = sinc(2k/denom - 1)
 // where sinc(x) = sin(pi*x)/(pi*x) with sinc(0) = 1
 template<typename scalar_t>
-inline scalar_t lanczos(int64_t i, int64_t n, bool periodic) {
+C10_HOST_DEVICE inline scalar_t lanczos(int64_t i, int64_t n, bool periodic) {
   if (n == 1) {
     return scalar_t(1);
   }
