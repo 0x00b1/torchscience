@@ -1,5 +1,6 @@
 """Color space conversion functions."""
 
+from torchscience.color._hls_to_srgb import hls_to_srgb
 from torchscience.color._hsv_to_srgb import hsv_to_srgb
 from torchscience.color._lab_to_srgb import lab_to_srgb
 from torchscience.color._lchab_to_srgb import lchab_to_srgb
@@ -10,6 +11,7 @@ from torchscience.color._oklch_to_srgb import oklch_to_srgb
 from torchscience.color._srgb_linear_to_srgb import (
     srgb_linear_to_srgb,
 )
+from torchscience.color._srgb_to_hls import srgb_to_hls
 from torchscience.color._srgb_to_hsv import srgb_to_hsv
 from torchscience.color._srgb_to_lab import srgb_to_lab
 from torchscience.color._srgb_to_lchab import srgb_to_lchab
@@ -26,6 +28,7 @@ from torchscience.color._xyz_to_srgb import xyz_to_srgb
 from torchscience.color._ycbcr_to_srgb import ycbcr_to_srgb
 
 __all__ = [
+    "hls_to_srgb",
     "hsv_to_srgb",
     "lab_to_srgb",
     "lchab_to_srgb",
@@ -34,6 +37,7 @@ __all__ = [
     "oklab_to_srgb",
     "oklch_to_srgb",
     "srgb_linear_to_srgb",
+    "srgb_to_hls",
     "srgb_to_hsv",
     "srgb_to_lab",
     "srgb_to_lchab",

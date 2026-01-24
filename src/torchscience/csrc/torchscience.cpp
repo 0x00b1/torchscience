@@ -64,6 +64,8 @@
 #include "cpu/graphics/projection/perspective_projection.h"
 #include "cpu/graphics/color/srgb_to_hsv.h"
 #include "cpu/graphics/color/hsv_to_srgb.h"
+#include "cpu/graphics/color/srgb_to_hls.h"
+#include "cpu/graphics/color/hls_to_srgb.h"
 #include "cpu/graphics/color/srgb_to_srgb_linear.h"
 #include "cpu/graphics/color/srgb_linear_to_srgb.h"
 #include "cpu/graphics/color/srgb_to_xyz.h"
@@ -487,6 +489,8 @@
 #include "autograd/graphics/projection/perspective_projection.h"
 #include "autograd/graphics/color/srgb_to_hsv.h"
 #include "autograd/graphics/color/hsv_to_srgb.h"
+#include "autograd/graphics/color/srgb_to_hls.h"
+#include "autograd/graphics/color/hls_to_srgb.h"
 #include "autograd/graphics/color/srgb_to_srgb_linear.h"
 #include "autograd/graphics/color/srgb_linear_to_srgb.h"
 #include "autograd/graphics/color/srgb_to_xyz.h"
@@ -570,6 +574,8 @@
 #include "meta/graphics/projection/perspective_projection.h"
 #include "meta/graphics/color/srgb_to_hsv.h"
 #include "meta/graphics/color/hsv_to_srgb.h"
+#include "meta/graphics/color/srgb_to_hls.h"
+#include "meta/graphics/color/hls_to_srgb.h"
 #include "meta/graphics/color/srgb_to_srgb_linear.h"
 #include "meta/graphics/color/srgb_linear_to_srgb.h"
 #include "meta/graphics/color/srgb_to_xyz.h"
@@ -1098,6 +1104,12 @@ TORCH_LIBRARY(torchscience, module) {
 
   module.def("hsv_to_srgb(Tensor input) -> Tensor");
   module.def("hsv_to_srgb_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("srgb_to_hls(Tensor input) -> Tensor");
+  module.def("srgb_to_hls_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("hls_to_srgb(Tensor input) -> Tensor");
+  module.def("hls_to_srgb_backward(Tensor grad_output, Tensor input) -> Tensor");
 
   module.def("srgb_to_srgb_linear(Tensor input) -> Tensor");
   module.def("srgb_to_srgb_linear_backward(Tensor grad_output, Tensor input) -> Tensor");
