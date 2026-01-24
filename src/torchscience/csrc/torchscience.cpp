@@ -360,6 +360,33 @@
 #include "autograd/polynomial/jacobi_polynomial_p/jacobi_polynomial_p_mulx.h"
 #include "autocast/polynomial/jacobi_polynomial_p/jacobi_polynomial_p_mulx.h"
 
+// linear_algebra decomposition
+#include "cpu/linear_algebra/symmetric_generalized_eigenvalue.h"
+#include "meta/linear_algebra/symmetric_generalized_eigenvalue.h"
+#include "autograd/linear_algebra/symmetric_generalized_eigenvalue.h"
+#include "autocast/linear_algebra/symmetric_generalized_eigenvalue.h"
+#include "cpu/linear_algebra/generalized_eigenvalue.h"
+#include "meta/linear_algebra/generalized_eigenvalue.h"
+#include "cpu/linear_algebra/schur_decomposition.h"
+#include "meta/linear_algebra/schur_decomposition.h"
+#include "cpu/linear_algebra/polar_decomposition.h"
+#include "meta/linear_algebra/polar_decomposition.h"
+#include "autograd/linear_algebra/polar_decomposition.h"
+#include "cpu/linear_algebra/hessenberg.h"
+#include "meta/linear_algebra/hessenberg.h"
+#include "cpu/linear_algebra/generalized_schur.h"
+#include "meta/linear_algebra/generalized_schur.h"
+#include "cpu/linear_algebra/jordan_decomposition.h"
+#include "meta/linear_algebra/jordan_decomposition.h"
+#include "cpu/linear_algebra/pivoted_lu.h"
+#include "meta/linear_algebra/pivoted_lu.h"
+#include "cpu/linear_algebra/pivoted_qr.h"
+#include "meta/linear_algebra/pivoted_qr.h"
+#include "cpu/linear_algebra/rank_revealing_qr.h"
+#include "meta/linear_algebra/rank_revealing_qr.h"
+#include "cpu/linear_algebra/ldl_decomposition.h"
+#include "meta/linear_algebra/ldl_decomposition.h"
+
 // pad
 #include "cpu/pad/pad.h"
 #include "meta/pad/pad.h"
@@ -1708,6 +1735,19 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("jacobi_polynomial_p_mulx(Tensor coeffs, Tensor alpha, Tensor beta) -> Tensor");
   module.def("jacobi_polynomial_p_mulx_backward(Tensor grad_output, Tensor coeffs, Tensor alpha, Tensor beta) -> (Tensor, Tensor, Tensor)");
   module.def("jacobi_polynomial_p_mulx_backward_backward(Tensor gg_coeffs, Tensor coeffs, Tensor alpha, Tensor beta) -> Tensor");
+
+  // linear_algebra decomposition
+  module.def("symmetric_generalized_eigenvalue(Tensor a, Tensor b) -> (Tensor, Tensor, Tensor)");
+  module.def("generalized_eigenvalue(Tensor a, Tensor b) -> (Tensor, Tensor, Tensor, Tensor)");
+  module.def("schur_decomposition(Tensor a, str output='real') -> (Tensor, Tensor, Tensor, Tensor)");
+  module.def("polar_decomposition(Tensor a, str side='right') -> (Tensor, Tensor, Tensor)");
+  module.def("hessenberg(Tensor a) -> (Tensor, Tensor, Tensor)");
+  module.def("generalized_schur(Tensor a, Tensor b, str output='real') -> (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor)");
+  module.def("jordan_decomposition(Tensor a) -> (Tensor, Tensor, Tensor)");
+  module.def("pivoted_lu(Tensor a) -> (Tensor, Tensor, Tensor, Tensor)");
+  module.def("pivoted_qr(Tensor a) -> (Tensor, Tensor, Tensor, Tensor)");
+  module.def("rank_revealing_qr(Tensor a, float tol=1e-10) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
+  module.def("ldl_decomposition(Tensor a) -> (Tensor, Tensor, Tensor, Tensor)");
 
   // morphology
   module.def("erosion(Tensor input, Tensor structuring_element, int[]? origin, int padding_mode) -> Tensor");

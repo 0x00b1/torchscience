@@ -230,8 +230,8 @@ class TestGeneralizedEigenvalue:
         assert result.eigenvalues.dtype == torch.complex64
         assert result.info.item() == 0
 
-    def test_backward_not_implemented(self):
-        """Test that backward returns None gradients (not yet implemented)."""
+    def test_backward_through_composition(self):
+        """Test that backward works through composed differentiable operations."""
         torch.manual_seed(789)
         n = 2
         a = torch.randn(n, n, dtype=torch.float64, requires_grad=True)
@@ -242,4 +242,6 @@ class TestGeneralizedEigenvalue:
         loss = result.eigenvalues.real.sum()
         loss.backward()
 
-        assert a.grad is None
+        # Gradients flow through composed operations (linalg_solve, linalg_eig)
+        assert a.grad is not None
+        assert a.grad.shape == a.shape
