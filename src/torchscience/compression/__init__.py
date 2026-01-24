@@ -11,6 +11,7 @@ from ._lattice_quantize import lattice_quantize
 from ._lz77 import lz77_decode, lz77_encode
 from ._noise_quantize import noise_quantize, soft_round, ste_round
 from ._optimal_quantizer import optimal_quantizer
+from ._perceptual_loss import perceptual_loss, rate_loss
 from ._range import range_decode, range_encode
 from ._rans import rans_decode, rans_encode
 from ._rate_distortion_lagrangian import (
@@ -41,11 +42,13 @@ __all__ = [
     "lz77_encode",
     "noise_quantize",
     "optimal_quantizer",
+    "perceptual_loss",
     "range_decode",
     "range_encode",
     "rans_decode",
     "rans_encode",
     "rate_distortion_lagrangian",
+    "rate_loss",
     "run_length_decode",
     "run_length_encode",
     "scalar_quantize",
