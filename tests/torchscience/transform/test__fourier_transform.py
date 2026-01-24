@@ -233,3 +233,167 @@ class TestFourierTransformMeta:
         X = fourier_transform(x, n=64)
 
         assert X.shape == torch.Size([64])
+
+
+class TestFourierTransformMultiDim:
+    """Tests for multi-dimensional transform support."""
+
+    def test_2d_transform(self):
+        """Test 2D FFT with dim tuple."""
+        x = torch.randn(8, 16, 32)
+        X = fourier_transform(x, dim=(-2, -1))
+        expected = torch.fft.fft2(x, dim=(-2, -1))
+        assert torch.allclose(X, expected)
+
+    def test_nd_transform(self):
+        """Test nD FFT with dim tuple."""
+        x = torch.randn(4, 8, 16)
+        X = fourier_transform(x, dim=(0, 1, 2))
+        expected = torch.fft.fftn(x)
+        assert torch.allclose(X, expected)
+
+    def test_n_with_multi_dim(self):
+        """Test n parameter with multi-dim."""
+        x = torch.randn(16, 16)
+        X = fourier_transform(x, dim=(-2, -1), n=(32, 32))
+        assert X.shape == torch.Size([32, 32])
+
+    def test_n_tuple_truncation(self):
+        """Test n parameter for truncation with multi-dim."""
+        x = torch.randn(32, 32)
+        X = fourier_transform(x, dim=(-2, -1), n=(16, 16))
+        assert X.shape == torch.Size([16, 16])
+
+    def test_single_dim_as_tuple(self):
+        """Test single dim provided as tuple."""
+        x = torch.randn(32, 64)
+        X = fourier_transform(x, dim=(-1,))
+        expected = torch.fft.fft(x, dim=-1)
+        assert torch.allclose(X, expected)
+
+    def test_n_tuple_length_mismatch_raises(self):
+        """Test that mismatched n and dim tuple lengths raise error."""
+        x = torch.randn(16, 16)
+        with pytest.raises(ValueError, match="length"):
+            fourier_transform(x, dim=(-2, -1), n=(32,))
+
+    def test_2d_with_batch_dim(self):
+        """Test 2D FFT preserves batch dimensions."""
+        x = torch.randn(4, 8, 16, 32)
+        X = fourier_transform(x, dim=(-2, -1))
+        expected = torch.fft.fft2(x, dim=(-2, -1))
+        assert torch.allclose(X, expected)
+        assert X.shape == x.shape
+
+
+class TestFourierTransformNewPadding:
+    """Tests for new padding modes from torchscience.pad."""
+
+    def test_linear_padding(self):
+        """Test linear extrapolation padding."""
+        x = torch.randn(32)
+        X = fourier_transform(x, n=64, padding_mode="linear")
+        assert X.shape == torch.Size([64])
+
+    def test_smooth_padding(self):
+        """Test smooth padding mode."""
+        x = torch.randn(32)
+        X = fourier_transform(x, n=64, padding_mode="smooth")
+        assert X.shape == torch.Size([64])
+
+    def test_polynomial_padding(self):
+        """Test polynomial padding mode."""
+        x = torch.randn(32)
+        X = fourier_transform(x, n=64, padding_mode="polynomial")
+        assert X.shape == torch.Size([64])
+
+    def test_spline_padding(self):
+        """Test spline padding mode."""
+        x = torch.randn(32)
+        X = fourier_transform(x, n=64, padding_mode="spline")
+        assert X.shape == torch.Size([64])
+
+    def test_padding_order_for_polynomial(self):
+        """Test padding_order parameter for polynomial mode."""
+        x = torch.randn(32)
+        X = fourier_transform(
+            x, n=64, padding_mode="polynomial", padding_order=2
+        )
+        assert X.shape == torch.Size([64])
+
+    def test_padding_order_quadratic(self):
+        """Test quadratic polynomial padding."""
+        x = torch.randn(32)
+        X1 = fourier_transform(
+            x, n=64, padding_mode="polynomial", padding_order=1
+        )
+        X2 = fourier_transform(
+            x, n=64, padding_mode="polynomial", padding_order=2
+        )
+        # Different orders should give different results (usually)
+        # Just check they both work and have correct shape
+        assert X1.shape == torch.Size([64])
+        assert X2.shape == torch.Size([64])
+
+    def test_reflect_odd_padding(self):
+        """Test reflect_odd (antisymmetric) padding mode."""
+        x = torch.randn(32)
+        X = fourier_transform(x, n=64, padding_mode="reflect_odd")
+        assert X.shape == torch.Size([64])
+
+    def test_new_padding_modes_with_multi_dim(self):
+        """Test new padding modes work with multi-dim transforms."""
+        x = torch.randn(16, 16)
+        X = fourier_transform(
+            x, dim=(-2, -1), n=(32, 32), padding_mode="linear"
+        )
+        assert X.shape == torch.Size([32, 32])
+
+
+class TestFourierTransformExplicitPadding:
+    """Tests for explicit padding parameter."""
+
+    def test_explicit_padding_1d(self):
+        """Test explicit padding for 1D."""
+        x = torch.randn(32)
+        # Pad 8 on left, 8 on right
+        X = fourier_transform(x, padding=(8, 8))
+        assert X.shape == torch.Size([48])
+
+    def test_explicit_padding_asymmetric(self):
+        """Test asymmetric explicit padding."""
+        x = torch.randn(32)
+        X = fourier_transform(x, padding=(4, 12))
+        assert X.shape == torch.Size([48])
+
+    def test_explicit_padding_multi_dim(self):
+        """Test explicit padding for multi-dim transform."""
+        x = torch.randn(16, 16)
+        # Pad each dim by (4, 4)
+        X = fourier_transform(x, dim=(-2, -1), padding=((4, 4), (4, 4)))
+        assert X.shape == torch.Size([24, 24])
+
+    def test_n_overrides_padding(self):
+        """Test that n parameter works with explicit padding."""
+        x = torch.randn(32)
+        # Explicit padding of 8 each side would give 48, but n=64 should override
+        X = fourier_transform(x, padding=(8, 8), n=64)
+        assert X.shape == torch.Size([64])
+
+
+class TestFourierTransformParameterOrder:
+    """Tests for new parameter ordering (keyword-only)."""
+
+    def test_all_parameters_keyword_only(self):
+        """Test that all parameters after input are keyword-only."""
+        x = torch.randn(32)
+        # This should work
+        X = fourier_transform(x, dim=-1, n=64, norm="ortho")
+        assert X.shape == torch.Size([64])
+
+    def test_positional_input_only(self):
+        """Test that only input can be positional."""
+        x = torch.randn(32)
+        # This should fail - dim should be keyword only
+        with pytest.raises(TypeError):
+            fourier_transform(x, -1)  # type: ignore
