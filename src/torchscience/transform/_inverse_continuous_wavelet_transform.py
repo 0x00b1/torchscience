@@ -3,15 +3,12 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING, Callable
+from typing import Callable
 
 import torch
 from torch import Tensor
 
 from ._continuous_wavelet_transform import _get_wavelet_function
-
-if TYPE_CHECKING:
-    pass
 
 
 def inverse_continuous_wavelet_transform(
@@ -146,7 +143,10 @@ def inverse_continuous_wavelet_transform(
     if (scales <= 0).any():
         raise ValueError("All scale values must be positive")
 
-    # Get wavelet function (validates wavelet name)
+    # Validate wavelet name by getting the wavelet function.
+    # The result is not used because computing the wavelet's admissibility
+    # constant analytically for arbitrary wavelets is complex. Instead, we
+    # use an empirical normalization approach that works well in practice.
     _get_wavelet_function(wavelet)
 
     num_scales = scales.shape[0]
@@ -201,25 +201,33 @@ def inverse_continuous_wavelet_transform(
     # Scale weights: 1/s for each scale
     # We integrate over scales using the trapezoidal rule approximation
     # for ds/s^2, which gives weights proportional to 1/s
+    #
+    # The sampling_period affects the effective scale in physical units.
+    # In the forward CWT, the wavelet support is scaled by sampling_period,
+    # so the effective scale is (scale * sampling_period). We incorporate
+    # this into the integration weights for proper roundtrip reconstruction.
+
+    # Effective scales in physical units (matching forward CWT)
+    effective_scales = scales * sampling_period
 
     # Compute scale weights for integration
     # Using logarithmic scale spacing assumption: ds/s ~ d(log s)
     # Weight for each scale is approximately delta_log_s / s
-    if len(scales) > 1:
+    if len(effective_scales) > 1:
         # Use logarithmic spacing for integration weights
-        log_scales = torch.log(scales)
+        log_scales = torch.log(effective_scales)
         # Compute the log-scale spacing (using central differences where possible)
-        delta_log_s = torch.zeros_like(scales)
+        delta_log_s = torch.zeros_like(effective_scales)
         delta_log_s[0] = log_scales[1] - log_scales[0]
         delta_log_s[-1] = log_scales[-1] - log_scales[-2]
-        if len(scales) > 2:
+        if len(effective_scales) > 2:
             delta_log_s[1:-1] = (log_scales[2:] - log_scales[:-2]) / 2
     else:
         # Single scale: use unit weight
-        delta_log_s = torch.ones_like(scales)
+        delta_log_s = torch.ones_like(effective_scales)
 
     # Weight = delta_log_s / s (for ds/s^2 integration)
-    scale_weights = delta_log_s / scales
+    scale_weights = delta_log_s / effective_scales
 
     # Reshape scale_weights for broadcasting: (..., num_scales, 1)
     for _ in range(len(batch_shape)):
@@ -243,7 +251,7 @@ def inverse_continuous_wavelet_transform(
     # We normalize by the total weight to achieve approximately unit gain
 
     # Compute normalization factor
-    total_weight = (delta_log_s / (scales**1.5)).sum()
+    total_weight = (delta_log_s / (effective_scales**1.5)).sum()
     if total_weight > 0:
         # Apply normalization - the factor depends on the wavelet and scale distribution
         # For a good range of scales, this provides reasonable reconstruction

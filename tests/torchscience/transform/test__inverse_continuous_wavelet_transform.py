@@ -290,18 +290,17 @@ class TestInverseContinuousWaveletTransformGradient:
             icwt_wrapper, (coeffs,), eps=1e-6, atol=1e-4, rtol=1e-3
         )
 
-    def test_gradcheck_complex_wavelet(self):
-        """Test gradient correctness with Morlet (complex) wavelet."""
-        # For complex wavelet, input can be complex
-        # Use real coefficients to test gradient through real output
-        coeffs = torch.randn(3, 64, dtype=torch.float64, requires_grad=True)
+    def test_gradcheck_batched(self):
+        """Test gradient correctness with batched input."""
+        coeffs = torch.randn(2, 3, 64, dtype=torch.float64, requires_grad=True)
         scales = torch.tensor([1.0, 2.0, 4.0], dtype=torch.float64)
 
         def icwt_wrapper(coeffs):
             return inverse_continuous_wavelet_transform(
                 coeffs,
                 scales,
-                wavelet="mexican_hat",  # Use real for gradcheck
+                wavelet="mexican_hat",
+                dim=-1,
             )
 
         assert gradcheck(
