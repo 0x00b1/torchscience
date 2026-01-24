@@ -5,6 +5,7 @@ from torchscience.color._srgb_linear_to_srgb import (
     srgb_linear_to_srgb,
 )
 from torchscience.color._srgb_to_hsv import srgb_to_hsv
+from torchscience.color._srgb_to_lab import srgb_to_lab
 from torchscience.color._srgb_to_srgb_linear import (
     srgb_to_srgb_linear,
 )
@@ -15,6 +16,7 @@ __all__ = [
     "hsv_to_srgb",
     "srgb_linear_to_srgb",
     "srgb_to_hsv",
+    "srgb_to_lab",
     "srgb_to_srgb_linear",
     "srgb_to_xyz",
     "xyz_to_srgb",
