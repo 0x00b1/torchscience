@@ -33,12 +33,18 @@ short_time_fourier_transform, inverse_short_time_fourier_transform
     Short-time Fourier transform for time-frequency analysis.
 gabor_transform, inverse_gabor_transform
     Gabor transform (STFT with Gaussian window) for optimal time-frequency localization.
+discrete_wavelet_transform, inverse_discrete_wavelet_transform
+    Discrete wavelet transform using filter bank convolution.
+continuous_wavelet_transform
+    Continuous wavelet transform with Morlet and Mexican hat wavelets.
 convolution
     FFT-based convolution with various modes.
 """
 
+from ._continuous_wavelet_transform import continuous_wavelet_transform
 from ._convolution import convolution
 from ._cosine_transform import cosine_transform, fourier_cosine_transform
+from ._discrete_wavelet_transform import discrete_wavelet_transform
 from ._fourier_transform import fourier_transform
 from ._gabor_transform import gabor_transform
 from ._hankel_transform import hankel_transform
@@ -47,6 +53,9 @@ from ._hilbert_transform import hilbert_transform
 from ._inverse_cosine_transform import (
     inverse_cosine_transform,
     inverse_fourier_cosine_transform,
+)
+from ._inverse_discrete_wavelet_transform import (
+    inverse_discrete_wavelet_transform,
 )
 from ._inverse_fourier_transform import inverse_fourier_transform
 from ._inverse_gabor_transform import inverse_gabor_transform
@@ -102,6 +111,11 @@ __all__ = [
     # STFT
     "short_time_fourier_transform",
     "inverse_short_time_fourier_transform",
+    # DWT
+    "discrete_wavelet_transform",
+    "inverse_discrete_wavelet_transform",
+    # CWT
+    "continuous_wavelet_transform",
     # Convolution
     "convolution",
 ]
