@@ -200,6 +200,13 @@ dop853
     problems requiring high precision. More efficient than dormand_prince_5
     when rtol < 1e-8.
 
+Multistep Methods
+-----------------
+adams
+    Adams-Bashforth-Moulton predictor-corrector (variable order 1-5).
+    Efficient when f is expensive to evaluate. Reuses previous function
+    evaluations. Not suitable for stiff problems.
+
 Utilities
 ---------
 recommend_solver
@@ -210,6 +217,7 @@ analyze_problem
     Analyze ODE problem characteristics (stiffness ratio, structure).
 """
 
+from torchscience.integration.initial_value_problem._adams import adams
 from torchscience.integration.initial_value_problem._adjoint import adjoint
 
 # Neural ODE optimizations
@@ -312,6 +320,8 @@ __all__ = [
     "is_compile_compatible",
     # High-order adaptive
     "dop853",
+    # Multistep methods
+    "adams",
     # Utilities
     "recommend_solver",
     "analyze_problem",
