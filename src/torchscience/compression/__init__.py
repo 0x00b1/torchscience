@@ -8,6 +8,7 @@ from ._gaussian_conditional import GaussianConditional, gaussian_conditional
 from ._huffman import huffman_decode, huffman_encode
 from ._lattice_quantize import lattice_quantize
 from ._lz77 import lz77_decode, lz77_encode
+from ._noise_quantize import noise_quantize, soft_round, ste_round
 from ._optimal_quantizer import optimal_quantizer
 from ._range import range_decode, range_encode
 from ._rans import rans_decode, rans_encode
@@ -35,6 +36,7 @@ __all__ = [
     "lattice_quantize",
     "lz77_decode",
     "lz77_encode",
+    "noise_quantize",
     "optimal_quantizer",
     "range_decode",
     "range_encode",
@@ -44,6 +46,8 @@ __all__ = [
     "run_length_decode",
     "run_length_encode",
     "scalar_quantize",
+    "soft_round",
+    "ste_round",
     "transform_code",
     "vector_quantize",
 ]
