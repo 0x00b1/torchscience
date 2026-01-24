@@ -35,7 +35,7 @@ gabor_transform, inverse_gabor_transform
     Gabor transform (STFT with Gaussian window) for optimal time-frequency localization.
 discrete_wavelet_transform, inverse_discrete_wavelet_transform
     Discrete wavelet transform using filter bank convolution.
-continuous_wavelet_transform
+continuous_wavelet_transform, inverse_continuous_wavelet_transform
     Continuous wavelet transform with Morlet and Mexican hat wavelets.
 convolution
     FFT-based convolution with various modes.
@@ -50,6 +50,9 @@ from ._gabor_transform import gabor_transform
 from ._hankel_transform import hankel_transform
 from ._hartley_transform import hartley_transform
 from ._hilbert_transform import hilbert_transform
+from ._inverse_continuous_wavelet_transform import (
+    inverse_continuous_wavelet_transform,
+)
 from ._inverse_cosine_transform import (
     inverse_cosine_transform,
     inverse_fourier_cosine_transform,
@@ -116,6 +119,7 @@ __all__ = [
     "inverse_discrete_wavelet_transform",
     # CWT
     "continuous_wavelet_transform",
+    "inverse_continuous_wavelet_transform",
     # Convolution
     "convolution",
 ]
