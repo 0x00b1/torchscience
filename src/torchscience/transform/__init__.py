@@ -7,8 +7,10 @@ Transforms
 ----------
 fourier_transform, inverse_fourier_transform
     Discrete Fourier transform with padding and windowing support.
+cosine_transform, inverse_cosine_transform
+    Discrete Cosine Transform (DCT) types I-IV with padding and windowing.
 fourier_cosine_transform, inverse_fourier_cosine_transform
-    Discrete Cosine Transform (DCT) types I-IV.
+    Aliases for cosine_transform/inverse_cosine_transform (backward compatible).
 fourier_sine_transform, inverse_fourier_sine_transform
     Discrete Sine Transform (DST) types I-IV.
 hilbert_transform, inverse_hilbert_transform
@@ -28,12 +30,15 @@ convolution
 """
 
 from ._convolution import convolution
-from ._fourier_cosine_transform import fourier_cosine_transform
+from ._cosine_transform import cosine_transform, fourier_cosine_transform
 from ._fourier_sine_transform import fourier_sine_transform
 from ._fourier_transform import fourier_transform
 from ._hankel_transform import hankel_transform
 from ._hilbert_transform import hilbert_transform
-from ._inverse_fourier_cosine_transform import inverse_fourier_cosine_transform
+from ._inverse_cosine_transform import (
+    inverse_cosine_transform,
+    inverse_fourier_cosine_transform,
+)
 from ._inverse_fourier_sine_transform import inverse_fourier_sine_transform
 from ._inverse_fourier_transform import inverse_fourier_transform
 from ._inverse_hilbert_transform import inverse_hilbert_transform
@@ -46,7 +51,10 @@ __all__ = [
     # Fourier
     "fourier_transform",
     "inverse_fourier_transform",
-    # DCT
+    # DCT (new names)
+    "cosine_transform",
+    "inverse_cosine_transform",
+    # DCT (backward-compatible aliases)
     "fourier_cosine_transform",
     "inverse_fourier_cosine_transform",
     # DST
