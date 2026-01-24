@@ -3,6 +3,7 @@
 from ._active_information_storage import active_information_storage
 from ._blahut_arimoto import blahut_arimoto
 from ._causally_conditioned_entropy import causally_conditioned_entropy
+from ._channel_capacity import channel_capacity
 from ._chi_squared_divergence import chi_squared_divergence
 from ._coinformation import coinformation
 from ._conditional_entropy import conditional_entropy
@@ -44,6 +45,7 @@ __all__ = [
     "active_information_storage",
     "blahut_arimoto",
     "causally_conditioned_entropy",
+    "channel_capacity",
     "chi_squared_divergence",
     "coinformation",
     "conditional_entropy",
