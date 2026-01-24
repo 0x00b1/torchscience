@@ -157,6 +157,10 @@
 #include "meta/encryption/ed25519.h"
 #include "meta/encryption/pbkdf2.h"
 #include "meta/encryption/hkdf.h"
+#include "cpu/encryption/shamir.h"
+#include "cpu/encryption/additive.h"
+#include "meta/encryption/shamir.h"
+#include "meta/encryption/additive.h"
 #include "cpu/privacy/gaussian_mechanism.h"
 #include "cpu/privacy/laplace_mechanism.h"
 #include "meta/privacy/gaussian_mechanism.h"
@@ -1354,6 +1358,12 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("hkdf_extract_sha256(Tensor salt, Tensor ikm) -> Tensor");
   module.def("hkdf_expand_sha256(Tensor prk, Tensor info, int output_len) -> Tensor");
   module.def("hkdf_sha256(Tensor ikm, Tensor salt, Tensor info, int output_len) -> Tensor");
+
+  // Secret sharing
+  module.def("shamir_split(Tensor secret, Tensor randomness, int n, int k) -> Tensor");
+  module.def("shamir_reconstruct(Tensor shares, Tensor indices) -> Tensor");
+  module.def("additive_split(Tensor secret, Tensor randomness, int n) -> Tensor");
+  module.def("additive_reconstruct(Tensor shares) -> Tensor");
 
   // Privacy operators
   module.def("gaussian_mechanism(Tensor x, Tensor noise, float sigma) -> Tensor");
