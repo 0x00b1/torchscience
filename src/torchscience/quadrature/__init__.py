@@ -19,13 +19,13 @@ Exceptions:
     QuadratureWarning, IntegrationError
 """
 
-from torchscience.integration.quadrature._dblquad import dblquad
-from torchscience.integration.quadrature._exceptions import (
+from torchscience.quadrature._dblquad import dblquad
+from torchscience.quadrature._exceptions import (
     IntegrationError,
     QuadratureWarning,
 )
-from torchscience.integration.quadrature._fixed_quad import fixed_quad
-from torchscience.integration.quadrature._nodes import (
+from torchscience.quadrature._fixed_quad import fixed_quad
+from torchscience.quadrature._nodes import (
     gauss_chebyshev_nodes_weights,
     gauss_hermite_nodes_weights,
     gauss_jacobi_nodes_weights,
@@ -33,16 +33,16 @@ from torchscience.integration.quadrature._nodes import (
     gauss_laguerre_nodes_weights,
     gauss_legendre_nodes_weights,
 )
-from torchscience.integration.quadrature._quad import quad, quad_info
-from torchscience.integration.quadrature._rules import (
+from torchscience.quadrature._quad import quad, quad_info
+from torchscience.quadrature._rules import (
     GaussKronrod,
     GaussLegendre,
 )
-from torchscience.integration.quadrature._simpson import (
+from torchscience.quadrature._simpson import (
     cumulative_simpson,
     simpson,
 )
-from torchscience.integration.quadrature._trapezoid import (
+from torchscience.quadrature._trapezoid import (
     cumulative_trapezoid,
     trapezoid,
 )

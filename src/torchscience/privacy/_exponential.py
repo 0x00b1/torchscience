@@ -1,7 +1,7 @@
 import torch
 from torch import Tensor
 
-from torchscience.encryption import ChaCha20Generator
+from torchscience.cryptography import ChaCha20Generator
 
 
 def exponential_mechanism(

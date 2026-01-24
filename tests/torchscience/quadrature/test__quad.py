@@ -7,7 +7,7 @@ import torch
 class TestQuad:
     def test_basic_integration(self):
         """Integrate sin(x) from 0 to pi"""
-        from torchscience.integration.quadrature import quad
+        from torchscience.quadrature import quad
 
         result = quad(torch.sin, 0, torch.pi)
 
@@ -17,7 +17,7 @@ class TestQuad:
 
     def test_matches_scipy(self):
         """Compare with scipy.integrate.quad"""
-        from torchscience.integration.quadrature import quad
+        from torchscience.quadrature import quad
 
         result = quad(lambda x: torch.exp(-(x**2)), -2, 2)
         expected, _ = scipy.integrate.quad(lambda x: np.exp(-(x**2)), -2, 2)
@@ -28,7 +28,7 @@ class TestQuad:
 
     def test_oscillatory(self):
         """Handle oscillatory integrand"""
-        from torchscience.integration.quadrature import quad
+        from torchscience.quadrature import quad
 
         result = quad(lambda x: torch.sin(20 * x), 0, torch.pi, limit=100)
         expected = (1 - torch.cos(torch.tensor(20 * torch.pi))) / 20
@@ -37,7 +37,7 @@ class TestQuad:
 
     def test_convergence_failure_raises(self):
         """Should raise IntegrationError when convergence fails"""
-        from torchscience.integration.quadrature import IntegrationError, quad
+        from torchscience.quadrature import IntegrationError, quad
 
         # Very difficult integrand with very tight tolerance and low limit
         with pytest.raises(IntegrationError, match="failed to converge"):
@@ -53,7 +53,7 @@ class TestQuad:
 class TestQuadInfo:
     def test_returns_error_and_info(self):
         """quad_info returns error estimate and info dict"""
-        from torchscience.integration.quadrature import quad_info
+        from torchscience.quadrature import quad_info
 
         result, error, info = quad_info(torch.sin, 0, torch.pi)
 
@@ -68,7 +68,7 @@ class TestQuadInfo:
 
     def test_info_shows_convergence_status(self):
         """Info dict correctly reports non-convergence"""
-        from torchscience.integration.quadrature import quad_info
+        from torchscience.quadrature import quad_info
 
         # Very difficult integrand
         result, error, info = quad_info(
@@ -85,7 +85,7 @@ class TestQuadInfo:
 class TestQuadGradients:
     def test_gradient_closure(self):
         """Gradient through closure parameters (within tolerance)"""
-        from torchscience.integration.quadrature import quad
+        from torchscience.quadrature import quad
 
         theta = torch.tensor(2.0, requires_grad=True, dtype=torch.float64)
         result = quad(lambda x: theta * x**2, 0, 1)
@@ -102,7 +102,7 @@ class TestQuadGradients:
 class TestQuadTolerance:
     def test_epsabs(self):
         """Test absolute tolerance"""
-        from torchscience.integration.quadrature import quad_info
+        from torchscience.quadrature import quad_info
 
         _, error, _ = quad_info(torch.sin, 0, torch.pi, epsabs=1e-10)
 
@@ -110,7 +110,7 @@ class TestQuadTolerance:
 
     def test_epsrel(self):
         """Test relative tolerance"""
-        from torchscience.integration.quadrature import quad_info
+        from torchscience.quadrature import quad_info
 
         result, error, _ = quad_info(torch.sin, 0, torch.pi, epsrel=1e-8)
 

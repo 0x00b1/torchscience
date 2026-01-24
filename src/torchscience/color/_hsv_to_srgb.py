@@ -45,13 +45,13 @@ def hsv_to_srgb(input: Tensor) -> Tensor:
 
     >>> import math
     >>> hsv = torch.tensor([[0.0, 1.0, 1.0]])  # H=0 (red), S=1, V=1
-    >>> torchscience.graphics.color.hsv_to_srgb(hsv)
+    >>> torchscience.color.hsv_to_srgb(hsv)
     tensor([[1.0000, 0.0000, 0.0000]])
 
     Convert HSV green to RGB:
 
     >>> hsv = torch.tensor([[2 * math.pi / 3, 1.0, 1.0]])  # H=2π/3 (green)
-    >>> torchscience.graphics.color.hsv_to_srgb(hsv)
+    >>> torchscience.color.hsv_to_srgb(hsv)
     tensor([[0.0000, 1.0000, 0.0000]])
 
     Notes

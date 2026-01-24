@@ -6,20 +6,20 @@ import torch
 
 class TestGaussLegendre:
     def test_init(self):
-        from torchscience.integration.quadrature import GaussLegendre
+        from torchscience.quadrature import GaussLegendre
 
         rule = GaussLegendre(32)
         assert rule.n == 32
 
     def test_invalid_n_raises(self):
-        from torchscience.integration.quadrature import GaussLegendre
+        from torchscience.quadrature import GaussLegendre
 
         with pytest.raises(ValueError, match="at least 1"):
             GaussLegendre(0)
 
     def test_nodes_and_weights_default(self):
         """Default interval is [-1, 1]"""
-        from torchscience.integration.quadrature import GaussLegendre
+        from torchscience.quadrature import GaussLegendre
 
         rule = GaussLegendre(10)
         nodes, weights = rule.nodes_and_weights()
@@ -31,7 +31,7 @@ class TestGaussLegendre:
 
     def test_nodes_and_weights_scaled(self):
         """Scale to [a, b]"""
-        from torchscience.integration.quadrature import GaussLegendre
+        from torchscience.quadrature import GaussLegendre
 
         rule = GaussLegendre(10)
         nodes, weights = rule.nodes_and_weights(a=0, b=1)
@@ -45,7 +45,7 @@ class TestGaussLegendre:
 
     def test_integrate_sin(self):
         """Integrate sin(x) from 0 to pi"""
-        from torchscience.integration.quadrature import GaussLegendre
+        from torchscience.quadrature import GaussLegendre
 
         rule = GaussLegendre(32)
         result = rule.integrate(torch.sin, 0, torch.pi)
@@ -56,7 +56,7 @@ class TestGaussLegendre:
 
     def test_integrate_polynomial_exact(self):
         """Should be exact for polynomials of degree <= 2n-1"""
-        from torchscience.integration.quadrature import GaussLegendre
+        from torchscience.quadrature import GaussLegendre
 
         rule = GaussLegendre(5)
         # Integrate x^8 from 0 to 1 = 1/9
@@ -68,7 +68,7 @@ class TestGaussLegendre:
 
     def test_integrate_matches_scipy(self):
         """Compare with scipy.integrate.fixed_quad"""
-        from torchscience.integration.quadrature import GaussLegendre
+        from torchscience.quadrature import GaussLegendre
 
         rule = GaussLegendre(10)
         result = rule.integrate(lambda x: torch.exp(-(x**2)), -1, 1)
@@ -83,7 +83,7 @@ class TestGaussLegendre:
 class TestGaussLegendreBatched:
     def test_batched_limits(self):
         """Test with batched integration limits"""
-        from torchscience.integration.quadrature import GaussLegendre
+        from torchscience.quadrature import GaussLegendre
 
         rule = GaussLegendre(32)
         b = torch.linspace(1, 10, 5)
@@ -98,7 +98,7 @@ class TestGaussLegendreBatched:
 
     def test_batched_both_limits(self):
         """Test with both limits batched"""
-        from torchscience.integration.quadrature import GaussLegendre
+        from torchscience.quadrature import GaussLegendre
 
         rule = GaussLegendre(32)
         a = torch.tensor([0.0, 1.0, 2.0])
@@ -114,7 +114,7 @@ class TestGaussLegendreBatched:
 class TestGaussLegendreGradients:
     def test_gradient_through_closure(self):
         """Gradient flows through closure parameters"""
-        from torchscience.integration.quadrature import GaussLegendre
+        from torchscience.quadrature import GaussLegendre
 
         theta = torch.tensor(2.0, requires_grad=True, dtype=torch.float64)
         rule = GaussLegendre(32)
@@ -130,7 +130,7 @@ class TestGaussLegendreGradients:
 
     def test_gradcheck_closure(self):
         """Numerical gradient check for closure parameter"""
-        from torchscience.integration.quadrature import GaussLegendre
+        from torchscience.quadrature import GaussLegendre
 
         theta = torch.tensor(2.0, requires_grad=True, dtype=torch.float64)
         rule = GaussLegendre(16)
@@ -143,20 +143,20 @@ class TestGaussLegendreGradients:
 
 class TestGaussKronrod:
     def test_init(self):
-        from torchscience.integration.quadrature import GaussKronrod
+        from torchscience.quadrature import GaussKronrod
 
         rule = GaussKronrod(15)
         assert rule.order == 15
 
     def test_invalid_order(self):
-        from torchscience.integration.quadrature import GaussKronrod
+        from torchscience.quadrature import GaussKronrod
 
         with pytest.raises(ValueError, match="order must be"):
             GaussKronrod(20)
 
     def test_integrate(self):
         """Basic integration should work"""
-        from torchscience.integration.quadrature import GaussKronrod
+        from torchscience.quadrature import GaussKronrod
 
         rule = GaussKronrod(15)
         result = rule.integrate(torch.sin, 0, torch.pi)
@@ -166,7 +166,7 @@ class TestGaussKronrod:
         )
 
     def test_integrate_with_error(self):
-        from torchscience.integration.quadrature import GaussKronrod
+        from torchscience.quadrature import GaussKronrod
 
         rule = GaussKronrod(15)
         result, error = rule.integrate_with_error(torch.sin, 0, torch.pi)
@@ -178,7 +178,7 @@ class TestGaussKronrod:
 
     def test_error_estimate(self):
         """Error estimate should be |Kronrod - Gauss|"""
-        from torchscience.integration.quadrature import GaussKronrod
+        from torchscience.quadrature import GaussKronrod
 
         rule = GaussKronrod(15)
 
@@ -194,7 +194,7 @@ class TestGaussKronrod:
 
     def test_gauss_vs_kronrod(self):
         """Gauss and Kronrod should agree for smooth functions"""
-        from torchscience.integration.quadrature import GaussKronrod
+        from torchscience.quadrature import GaussKronrod
 
         rule = GaussKronrod(21)
 
@@ -216,7 +216,7 @@ class TestGaussKronrod:
 class TestGaussKronrodGradients:
     def test_gradient_closure(self):
         """Gradient flows through closure parameters"""
-        from torchscience.integration.quadrature import GaussKronrod
+        from torchscience.quadrature import GaussKronrod
 
         theta = torch.tensor(2.0, requires_grad=True, dtype=torch.float64)
         rule = GaussKronrod(15)

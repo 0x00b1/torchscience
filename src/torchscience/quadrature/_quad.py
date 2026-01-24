@@ -7,11 +7,11 @@ from typing import Callable, Tuple, Union
 import torch
 from torch import Tensor
 
-from torchscience.integration.quadrature._exceptions import (
+from torchscience.quadrature._exceptions import (
     IntegrationError,
     QuadratureWarning,
 )
-from torchscience.integration.quadrature._rules import GaussKronrod
+from torchscience.quadrature._rules import GaussKronrod
 
 
 def quad(

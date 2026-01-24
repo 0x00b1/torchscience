@@ -48,19 +48,19 @@ def srgb_linear_to_srgb(input: Tensor) -> Tensor:
     Convert a single linear value:
 
     >>> linear = torch.tensor([0.214])
-    >>> torchscience.graphics.color.srgb_linear_to_srgb(linear)
+    >>> torchscience.color.srgb_linear_to_srgb(linear)
     tensor([0.5000])
 
     Convert an RGB triplet:
 
     >>> linear = torch.tensor([0.0331, 0.2140, 0.6038])
-    >>> torchscience.graphics.color.srgb_linear_to_srgb(linear)
+    >>> torchscience.color.srgb_linear_to_srgb(linear)
     tensor([0.2000, 0.5000, 0.8000])
 
     Convert values in the linear region (below threshold 0.0031308):
 
     >>> linear = torch.tensor([0.0008, 0.0015, 0.0031])
-    >>> srgb = torchscience.graphics.color.srgb_linear_to_srgb(linear)
+    >>> srgb = torchscience.color.srgb_linear_to_srgb(linear)
     >>> srgb  # srgb = linear * 12.92
     tensor([0.0103, 0.0194, 0.0401])
 

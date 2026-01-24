@@ -47,7 +47,7 @@ def srgb_to_hsv(input: Tensor) -> Tensor:
     Convert pure red to HSV:
 
     >>> rgb = torch.tensor([[1.0, 0.0, 0.0]])
-    >>> torchscience.graphics.color.srgb_to_hsv(rgb)
+    >>> torchscience.color.srgb_to_hsv(rgb)
     tensor([[0.0000, 1.0000, 1.0000]])
 
     Convert a batch of colors:
@@ -57,7 +57,7 @@ def srgb_to_hsv(input: Tensor) -> Tensor:
     ...     [0.0, 1.0, 0.0],  # Green
     ...     [0.0, 0.0, 1.0],  # Blue
     ... ])
-    >>> hsv = torchscience.graphics.color.srgb_to_hsv(rgb)
+    >>> hsv = torchscience.color.srgb_to_hsv(rgb)
     >>> hsv[:, 0]  # Hue values
     tensor([0.0000, 2.0944, 4.1888])
 

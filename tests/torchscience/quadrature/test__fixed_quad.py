@@ -7,7 +7,7 @@ import torch
 class TestFixedQuad:
     def test_basic_integration(self):
         """Integrate sin(x) from 0 to pi"""
-        from torchscience.integration.quadrature import fixed_quad
+        from torchscience.quadrature import fixed_quad
 
         result = fixed_quad(torch.sin, 0, torch.pi, n=32)
 
@@ -17,7 +17,7 @@ class TestFixedQuad:
 
     def test_matches_scipy(self):
         """Compare with scipy.integrate.fixed_quad"""
-        from torchscience.integration.quadrature import fixed_quad
+        from torchscience.quadrature import fixed_quad
 
         result = fixed_quad(lambda x: torch.exp(-(x**2)), -1, 1, n=10)
         expected, _ = scipy.integrate.fixed_quad(
@@ -28,7 +28,7 @@ class TestFixedQuad:
 
     def test_batched_limits(self):
         """Test with batched upper limit"""
-        from torchscience.integration.quadrature import fixed_quad
+        from torchscience.quadrature import fixed_quad
 
         b = torch.linspace(1, 5, 10)
         result = fixed_quad(lambda x: x**2, 0, b, n=32)
@@ -39,7 +39,7 @@ class TestFixedQuad:
 
     def test_polynomial_exact(self):
         """Fixed quad should be exact for polynomials of degree <= 2n-1"""
-        from torchscience.integration.quadrature import fixed_quad
+        from torchscience.quadrature import fixed_quad
 
         # n=5 => exact for degree <= 9
         result = fixed_quad(lambda x: x**8, 0, 1, n=5)
@@ -52,7 +52,7 @@ class TestFixedQuad:
 class TestFixedQuadGradients:
     def test_gradient_closure_param(self):
         """Gradient flows through closure parameters"""
-        from torchscience.integration.quadrature import fixed_quad
+        from torchscience.quadrature import fixed_quad
 
         theta = torch.tensor(2.0, requires_grad=True, dtype=torch.float64)
 
@@ -67,7 +67,7 @@ class TestFixedQuadGradients:
 
     def test_gradient_upper_limit(self):
         """Gradient flows through upper limit via Leibniz rule"""
-        from torchscience.integration.quadrature import fixed_quad
+        from torchscience.quadrature import fixed_quad
 
         b = torch.tensor(torch.pi, requires_grad=True, dtype=torch.float64)
 
@@ -80,7 +80,7 @@ class TestFixedQuadGradients:
 
     def test_gradient_lower_limit(self):
         """Gradient flows through lower limit via Leibniz rule"""
-        from torchscience.integration.quadrature import fixed_quad
+        from torchscience.quadrature import fixed_quad
 
         a = torch.tensor(0.0, requires_grad=True, dtype=torch.float64)
 
@@ -93,7 +93,7 @@ class TestFixedQuadGradients:
 
     def test_gradcheck_limits(self):
         """Numerical gradient check for limits"""
-        from torchscience.integration.quadrature import fixed_quad
+        from torchscience.quadrature import fixed_quad
 
         a = torch.tensor(0.5, requires_grad=True, dtype=torch.float64)
         b = torch.tensor(2.0, requires_grad=True, dtype=torch.float64)
@@ -105,7 +105,7 @@ class TestFixedQuadGradients:
 
     def test_gradcheck_closure(self):
         """Numerical gradient check for closure parameters"""
-        from torchscience.integration.quadrature import fixed_quad
+        from torchscience.quadrature import fixed_quad
 
         theta = torch.tensor(2.0, requires_grad=True, dtype=torch.float64)
 
@@ -119,7 +119,7 @@ class TestFixedQuadDtypes:
     @pytest.mark.parametrize("dtype", [torch.float32, torch.float64])
     def test_dtype_from_limits(self, dtype):
         """Output dtype matches limit dtype"""
-        from torchscience.integration.quadrature import fixed_quad
+        from torchscience.quadrature import fixed_quad
 
         a = torch.tensor(0.0, dtype=dtype)
         b = torch.tensor(1.0, dtype=dtype)
