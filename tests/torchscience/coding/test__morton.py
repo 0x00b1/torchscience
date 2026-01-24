@@ -2,7 +2,7 @@ import pytest
 import torch
 import torch.testing
 
-from torchscience.coding import morton_decode, morton_encode
+from torchscience.information.coding import morton_decode, morton_encode
 
 
 class TestMortonEncode3D:

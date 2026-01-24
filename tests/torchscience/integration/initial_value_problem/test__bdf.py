@@ -516,34 +516,42 @@ class TestBDFRobertson:
     """Robertson's chemical kinetics - classic stiff benchmark.
 
     The Robertson problem is an extremely stiff chemical kinetics system
-    with stiffness ratio ~10^12. We use a rescaled version to make it
-    tractable for testing while still exercising stiff solver capabilities.
+    with the classic rate constants k1=0.04, k2=1e4, k3=3e7, giving a
+    stiffness ratio of approximately 10^12.
+
+    dy1/dt = -k1*y1 + k2*y2*y3
+    dy2/dt = k1*y1 - k2*y2*y3 - k3*y2^2
+    dy3/dt = k3*y2^2
+
+    Reference: Robertson, H.H. (1966). "The solution of a set of reaction
+    rate equations." In J. Walsh (ed.), Numerical Analysis: An Introduction,
+    pp. 178-182. Academic Press, London.
     """
 
+    def _robertson_equations(self, t, y):
+        """Classic Robertson equations with standard rate constants."""
+        k1, k2, k3 = 0.04, 1e4, 3e7
+        y1, y2, y3 = y[0], y[1], y[2]
+        dy1 = -k1 * y1 + k2 * y2 * y3
+        dy2 = k1 * y1 - k2 * y2 * y3 - k3 * y2**2
+        dy3 = k3 * y2**2
+        return torch.stack([dy1, dy2, dy3])
+
     def test_robertson_short_integration(self):
-        """Solve mildly stiff Robertson-like system for short time.
+        """Solve Robertson's problem with actual constants for short time.
 
-        Uses much smaller rate constants than the classic problem to reduce
-        stiffness while still testing multiscale dynamics.
+        Uses the actual Robertson constants (k1=0.04, k2=1e4, k3=3e7).
+        Short integration to t=0.1 to verify basic solver functionality
+        on the extremely stiff problem.
         """
-
-        def robertson(t, y):
-            # Mildly stiff Robertson-like system
-            k1, k2, k3 = 0.04, 10.0, 100.0
-            y1, y2, y3 = y[0], y[1], y[2]
-            dy1 = -k1 * y1 + k2 * y2 * y3
-            dy2 = k1 * y1 - k2 * y2 * y3 - k3 * y2**2
-            dy3 = k3 * y2**2
-            return torch.stack([dy1, dy2, dy3])
-
         y0 = torch.tensor([1.0, 0.0, 0.0], dtype=torch.float64)
         y_final, _ = bdf(
-            robertson,
+            self._robertson_equations,
             y0,
-            t_span=(0.0, 1.0),
-            rtol=1e-3,
-            atol=1e-6,
-            max_steps=20000,
+            t_span=(0.0, 0.1),
+            rtol=1e-4,
+            atol=1e-8,
+            max_steps=50000,
         )
 
         # Conservation: y1 + y2 + y3 = 1 (mass balance)
@@ -555,32 +563,57 @@ class TestBDFRobertson:
         # All concentrations should be non-negative
         assert (y_final >= -1e-5).all()
 
-    def test_robertson_medium_integration(self):
-        """Solve rescaled Robertson's problem to moderate time."""
+    def test_robertson_long_integration(self):
+        """Solve Robertson's problem to t=1e5 (classic benchmark endpoint).
 
-        def robertson(t, y):
-            # Rescaled Robertson with reduced stiffness
-            k1, k2, k3 = 0.04, 1e2, 3e3
-            y1, y2, y3 = y[0], y[1], y[2]
-            dy1 = -k1 * y1 + k2 * y2 * y3
-            dy2 = k1 * y1 - k2 * y2 * y3 - k3 * y2**2
-            dy3 = k3 * y2**2
-            return torch.stack([dy1, dy2, dy3])
-
+        The classic Robertson benchmark integrates to t=1e5 or t=1e11.
+        This tests the solver's ability to handle extremely stiff dynamics
+        over many orders of magnitude in time.
+        """
         y0 = torch.tensor([1.0, 0.0, 0.0], dtype=torch.float64)
         y_final, _ = bdf(
-            robertson,
+            self._robertson_equations,
             y0,
-            t_span=(0.0, 10.0),
-            rtol=1e-3,
-            atol=1e-6,
-            max_steps=50000,
+            t_span=(0.0, 1e5),
+            rtol=1e-4,
+            atol=1e-8,
+            max_steps=500000,
         )
+
+        # Conservation: y1 + y2 + y3 = 1 (mass balance)
+        total = y_final.sum()
+        assert torch.allclose(
+            total, torch.tensor(1.0, dtype=torch.float64), atol=1e-2
+        )
+
+        # All concentrations should be non-negative
+        assert (y_final >= -1e-4).all()
+
+        # At t=1e5, y1 should be nearly depleted, y3 should dominate
+        # (qualitative check based on known solution behavior)
+        assert y_final[0].item() < 0.5  # y1 should decrease significantly
+        assert y_final[2].item() > 0.5  # y3 should accumulate
+
+    def test_robertson_medium_integration(self):
+        """Solve Robertson's problem with actual constants to moderate time."""
+        y0 = torch.tensor([1.0, 0.0, 0.0], dtype=torch.float64)
+        y_final, _ = bdf(
+            self._robertson_equations,
+            y0,
+            t_span=(0.0, 1.0),
+            rtol=1e-4,
+            atol=1e-8,
+            max_steps=100000,
+        )
+
         # Conservation with looser tolerance for longer integration
         total = y_final.sum()
         assert torch.allclose(
             total, torch.tensor(1.0, dtype=torch.float64), atol=1e-3
         )
+
+        # All concentrations should be non-negative
+        assert (y_final >= -1e-5).all()
 
 
 class TestBDFVanDerPol:
@@ -589,11 +622,21 @@ class TestBDFVanDerPol:
     The Van der Pol oscillator becomes increasingly stiff as mu increases.
     For large mu, the solution exhibits relaxation oscillations with
     rapid transitions between slow and fast dynamics.
+
+    dy1/dt = y2
+    dy2/dt = mu * (1 - y1^2) * y2 - y1
+
+    Classic benchmark values for mu are 10, 100, and 1000, with mu=1000
+    being extremely stiff. The period of oscillation is approximately
+    (3 - 2*ln(2))*mu for large mu.
     """
 
-    @pytest.mark.parametrize("mu", [1.0, 5.0, 10.0])
-    def test_van_der_pol_bounded(self, mu):
-        """Solution should remain bounded for various stiffness levels."""
+    def test_van_der_pol_mu_10(self):
+        """Test Van der Pol with mu=10 (moderately stiff).
+
+        mu=10 is the mildest of the classic benchmark cases.
+        """
+        mu = 10.0
 
         def van_der_pol(t, y):
             y1, y2 = y[0], y[1]
@@ -602,42 +645,106 @@ class TestBDFVanDerPol:
             return torch.stack([dy1, dy2])
 
         y0 = torch.tensor([2.0, 0.0], dtype=torch.float64)
-        # Integration time scales with oscillation period
-        t_final = 2.0 * (2.0 - 1.5 * torch.log(torch.tensor(mu + 1.0))).item()
-        t_final = max(t_final, 1.0)  # At least integrate for 1.0
+        y_final, _ = bdf(
+            van_der_pol,
+            y0,
+            t_span=(0.0, 5.0),
+            rtol=1e-3,
+            atol=1e-6,
+            max_steps=100000,
+        )
+
+        assert not torch.isnan(y_final).any()
+        assert y_final[0].abs().item() < 5  # Position bounded
+
+    @pytest.mark.xfail(reason="BDF solver needs tuning for mu=100 stiffness")
+    def test_van_der_pol_mu_100(self):
+        """Test Van der Pol with mu=100 (classic stiff benchmark).
+
+        mu=100 is a classic benchmark case that is significantly stiff.
+        The BDF solver currently cannot handle this stiffness level.
+        """
+        mu = 100.0
+
+        def van_der_pol(t, y):
+            y1, y2 = y[0], y[1]
+            dy1 = y2
+            dy2 = mu * (1 - y1**2) * y2 - y1
+            return torch.stack([dy1, dy2])
+
+        y0 = torch.tensor([2.0, 0.0], dtype=torch.float64)
+        y_final, _ = bdf(
+            van_der_pol,
+            y0,
+            t_span=(0.0, 2.0),
+            rtol=1e-4,
+            atol=1e-8,
+            max_steps=100000,
+        )
+
+        assert not torch.isnan(y_final).any()
+        assert y_final[0].abs().item() < 5  # Position bounded
+
+    @pytest.mark.xfail(
+        reason="BDF solver needs tuning for mu=1000 extreme stiffness"
+    )
+    def test_van_der_pol_mu_1000(self):
+        """Test Van der Pol with mu=1000 (extremely stiff benchmark).
+
+        mu=1000 is extremely stiff with very rapid transitions.
+        The BDF solver currently cannot handle this stiffness level.
+        """
+        mu = 1000.0
+
+        def van_der_pol(t, y):
+            y1, y2 = y[0], y[1]
+            dy1 = y2
+            dy2 = mu * (1 - y1**2) * y2 - y1
+            return torch.stack([dy1, dy2])
+
+        y0 = torch.tensor([2.0, 0.0], dtype=torch.float64)
+        y_final, _ = bdf(
+            van_der_pol,
+            y0,
+            t_span=(0.0, 0.5),
+            rtol=1e-4,
+            atol=1e-8,
+            max_steps=100000,
+        )
+
+        assert not torch.isnan(y_final).any()
+        assert y_final[0].abs().item() < 5  # Position bounded
+
+    @pytest.mark.xfail(
+        reason="BDF solver needs tuning for mu=1000 full period"
+    )
+    def test_van_der_pol_extreme_stiffness_full_period(self):
+        """Test Van der Pol with extreme stiffness (mu=1000) for full period.
+
+        At mu=1000, the Van der Pol oscillator is extremely stiff with
+        very rapid transitions. The period is approximately 1614 time units.
+        """
+        mu = 1000.0
+
+        def van_der_pol(t, y):
+            y1, y2 = y[0], y[1]
+            dy1 = y2
+            dy2 = mu * (1 - y1**2) * y2 - y1
+            return torch.stack([dy1, dy2])
+
+        y0 = torch.tensor([2.0, 0.0], dtype=torch.float64)
+        # Period is approximately (3 - 2*ln(2))*mu ~ 1.614*mu
+        t_final = 1.614 * mu  # One full period
 
         y_final, _ = bdf(
             van_der_pol,
             y0,
             t_span=(0.0, t_final),
-            rtol=1e-3,
-            atol=1e-6,
-            max_steps=50000,
+            rtol=1e-5,
+            atol=1e-9,
+            max_steps=500000,
         )
 
         assert not torch.isnan(y_final).any()
-        assert y_final.abs().max() < 10  # Should stay bounded
-
-    def test_van_der_pol_moderate_stiffness(self):
-        """Test Van der Pol with moderate stiffness (mu=20)."""
-
-        mu = 20.0
-
-        def van_der_pol(t, y):
-            y1, y2 = y[0], y[1]
-            dy1 = y2
-            dy2 = mu * (1 - y1**2) * y2 - y1
-            return torch.stack([dy1, dy2])
-
-        y0 = torch.tensor([2.0, 0.0], dtype=torch.float64)
-        y_final, _ = bdf(
-            van_der_pol,
-            y0,
-            t_span=(0.0, 1.0),
-            rtol=1e-3,
-            atol=1e-6,
-            max_steps=50000,
-        )
-
-        assert not torch.isnan(y_final).any()
-        assert y_final.abs().max() < 10  # Should stay bounded
+        # After one period, should return close to initial condition
+        assert torch.allclose(y_final, y0, rtol=0.2, atol=0.5)

@@ -1,10 +1,12 @@
+from typing import TYPE_CHECKING
+
 import torch
 
-from ._polynomial import Polynomial, polynomial
-from ._polynomial_multiply import polynomial_multiply
+if TYPE_CHECKING:
+    from ._polynomial import Polynomial
 
 
-def polynomial_pow(p: Polynomial, n: int) -> Polynomial:
+def polynomial_pow(p: "Polynomial", n: int) -> "Polynomial":
     """Raise polynomial to non-negative integer power.
 
     Uses binary exponentiation (repeated squaring) for efficiency.
@@ -43,6 +45,8 @@ def polynomial_pow(p: Polynomial, n: int) -> Polynomial:
         if p.dim() > 1:
             batch_shape = p.shape[:-1]
             one = one.expand(*batch_shape, 1)
+        from ._polynomial import polynomial
+
         return polynomial(one)
 
     if n == 1:
@@ -57,7 +61,11 @@ def polynomial_pow(p: Polynomial, n: int) -> Polynomial:
             if result is None:
                 result = base
             else:
+                from ._polynomial_multiply import polynomial_multiply
+
                 result = polynomial_multiply(result, base)
+        from ._polynomial_multiply import polynomial_multiply
+
         base = polynomial_multiply(base, base)
         n >>= 1
 

@@ -12,6 +12,7 @@ from . import (
     signal_processing,
     statistics,
     transform,
+    window_function,
 )
 
 __all__ = [
@@ -26,6 +27,7 @@ __all__ = [
     "signal_processing",
     "statistics",
     "transform",
+    "window_function",
 ]
 
 __version__ = "0.1.0"
