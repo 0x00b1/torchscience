@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <c10/macros/Macros.h>
 #include "common.h"
 
 namespace torchscience::kernel::window_function {
@@ -11,7 +12,7 @@ namespace torchscience::kernel::window_function {
 // Coefficients: a0=0.62, a1=0.48, a2=0.38
 // These coefficients match scipy.signal.windows.barthann
 template<typename scalar_t>
-inline scalar_t bartlett_hann(int64_t i, int64_t n, bool periodic) {
+C10_HOST_DEVICE inline scalar_t bartlett_hann(int64_t i, int64_t n, bool periodic) {
   if (n == 1) {
     return scalar_t(1);
   }
