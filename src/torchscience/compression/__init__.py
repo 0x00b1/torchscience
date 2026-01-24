@@ -6,6 +6,7 @@ from ._lz77 import lz77_decode, lz77_encode
 from ._range import range_decode, range_encode
 from ._rans import rans_decode, rans_encode
 from ._run_length import run_length_decode, run_length_encode
+from ._scalar_quantize import scalar_quantize
 
 __all__ = [
     "arithmetic_decode",
@@ -20,4 +21,5 @@ __all__ = [
     "rans_encode",
     "run_length_decode",
     "run_length_encode",
+    "scalar_quantize",
 ]
