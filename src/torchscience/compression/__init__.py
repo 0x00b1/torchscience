@@ -2,6 +2,7 @@
 
 from ._arithmetic import arithmetic_decode, arithmetic_encode
 from ._distortion_measure import distortion_measure
+from ._dithered_quantize import dithered_quantize
 from ._huffman import huffman_decode, huffman_encode
 from ._lz77 import lz77_decode, lz77_encode
 from ._range import range_decode, range_encode
@@ -18,6 +19,7 @@ __all__ = [
     "arithmetic_decode",
     "arithmetic_encode",
     "distortion_measure",
+    "dithered_quantize",
     "estimate_bitrate",
     "huffman_decode",
     "huffman_encode",
