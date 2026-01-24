@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <c10/macros/Macros.h>
 #include "common.h"
 #include "planck_taper.h"
 #include "kaiser.h"
@@ -13,7 +14,7 @@ namespace window_function {
 // Combines Planck taper with Kaiser window: w[k] = planck_taper[k] * kaiser[k]
 // Two parameters: epsilon (taper width) and beta (Kaiser shape)
 template<typename scalar_t>
-inline scalar_t planck_bessel(int64_t i, int64_t n, scalar_t epsilon, scalar_t beta, bool periodic) {
+C10_HOST_DEVICE inline scalar_t planck_bessel(int64_t i, int64_t n, scalar_t epsilon, scalar_t beta, bool periodic) {
   scalar_t p = planck_taper<scalar_t>(i, n, epsilon, periodic);
   scalar_t k = kaiser<scalar_t>(i, n, beta, periodic);
   return p * k;
@@ -24,7 +25,7 @@ inline scalar_t planck_bessel(int64_t i, int64_t n, scalar_t epsilon, scalar_t b
 // dw/d(epsilon) = d(planck_taper)/d(epsilon) * kaiser
 // dw/d(beta) = planck_taper * d(kaiser)/d(beta)
 template<typename scalar_t>
-inline void planck_bessel_backward(
+C10_HOST_DEVICE inline void planck_bessel_backward(
   scalar_t grad_out,
   int64_t i,
   int64_t n,

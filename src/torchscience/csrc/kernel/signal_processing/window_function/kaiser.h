@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include <c10/macros/Macros.h>
 #include "common.h"
 #include "../../../kernel/special_functions/modified_bessel_i_0.h"
 #include "../../../kernel/special_functions/modified_bessel_i_1.h"
@@ -13,13 +14,13 @@ namespace window_function {
 // Modified Bessel function of the first kind, order 0
 // Uses the existing torchscience kernel implementation
 template<typename scalar_t>
-inline scalar_t bessel_i0(scalar_t x) {
+C10_HOST_DEVICE inline scalar_t bessel_i0(scalar_t x) {
   return special_functions::modified_bessel_i_0(x);
 }
 
 // Modified Bessel function of the first kind, order 1
 template<typename scalar_t>
-inline scalar_t bessel_i1(scalar_t x) {
+C10_HOST_DEVICE inline scalar_t bessel_i1(scalar_t x) {
   return special_functions::modified_bessel_i_1(x);
 }
 
@@ -27,7 +28,7 @@ inline scalar_t bessel_i1(scalar_t x) {
 // w[k] = I_0(beta * sqrt(1 - x^2)) / I_0(beta)
 // where x = (k - center) / center
 template<typename scalar_t>
-inline scalar_t kaiser(int64_t i, int64_t n, scalar_t beta, bool periodic) {
+C10_HOST_DEVICE inline scalar_t kaiser(int64_t i, int64_t n, scalar_t beta, bool periodic) {
   scalar_t denom = window_denominator<scalar_t>(n, periodic);
   scalar_t center = denom / scalar_t(2);
   scalar_t x = (scalar_t(i) - center) / center;
@@ -57,7 +58,7 @@ inline scalar_t kaiser(int64_t i, int64_t n, scalar_t beta, bool periodic) {
 // = I_1(arg) * sqrt(1-x^2) / I_0(beta) - (I_0(arg)/I_0(beta)) * (I_1(beta)/I_0(beta))
 // = I_1(arg) * sqrt(1-x^2) / I_0(beta) - w * I_1(beta) / I_0(beta)
 template<typename scalar_t>
-inline scalar_t kaiser_backward(
+C10_HOST_DEVICE inline scalar_t kaiser_backward(
   scalar_t grad_out,
   int64_t i,
   int64_t n,

@@ -59,9 +59,14 @@ inline at::Tensor name##_window(                                                
   bool requires_grad                                                            \
 ) {                                                                             \
   at::Device target_device = device.value_or(at::kCPU);                         \
-  c10::DispatchKeySet ks = target_device.type() == at::kMeta                    \
-    ? c10::DispatchKeySet(c10::DispatchKey::Meta)                               \
-    : c10::DispatchKeySet(c10::DispatchKey::CPU);                               \
+  c10::DispatchKeySet ks;                                                       \
+  if (target_device.type() == at::kMeta) {                                      \
+    ks = c10::DispatchKeySet(c10::DispatchKey::Meta);                           \
+  } else if (target_device.type() == at::kCUDA) {                               \
+    ks = c10::DispatchKeySet(c10::DispatchKey::CUDA);                           \
+  } else {                                                                      \
+    ks = c10::DispatchKeySet(c10::DispatchKey::CPU);                            \
+  }                                                                             \
   return c10::Dispatcher::singleton()                                           \
     .findSchemaOrThrow("torchscience::" #name "_window", "")                    \
     .typed<at::Tensor(int64_t, c10::optional<at::ScalarType>,                   \
@@ -78,9 +83,14 @@ inline at::Tensor periodic_##name##_window(                                     
   bool requires_grad                                                            \
 ) {                                                                             \
   at::Device target_device = device.value_or(at::kCPU);                         \
-  c10::DispatchKeySet ks = target_device.type() == at::kMeta                    \
-    ? c10::DispatchKeySet(c10::DispatchKey::Meta)                               \
-    : c10::DispatchKeySet(c10::DispatchKey::CPU);                               \
+  c10::DispatchKeySet ks;                                                       \
+  if (target_device.type() == at::kMeta) {                                      \
+    ks = c10::DispatchKeySet(c10::DispatchKey::Meta);                           \
+  } else if (target_device.type() == at::kCUDA) {                               \
+    ks = c10::DispatchKeySet(c10::DispatchKey::CUDA);                           \
+  } else {                                                                      \
+    ks = c10::DispatchKeySet(c10::DispatchKey::CPU);                            \
+  }                                                                             \
   return c10::Dispatcher::singleton()                                           \
     .findSchemaOrThrow("torchscience::periodic_" #name "_window", "")           \
     .typed<at::Tensor(int64_t, c10::optional<at::ScalarType>,                   \
@@ -119,9 +129,14 @@ inline at::Tensor gaussian_window(
 ) {
   // For parameterized windows, device from tensor or explicit device param
   at::Device target_device = device.value_or(std_input.device());
-  c10::DispatchKeySet ks = target_device.type() == at::kMeta
-    ? c10::DispatchKeySet(c10::DispatchKey::Meta)
-    : c10::DispatchKeySet(c10::DispatchKey::CPU);
+  c10::DispatchKeySet ks;
+  if (target_device.type() == at::kMeta) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::Meta);
+  } else if (target_device.type() == at::kCUDA) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CUDA);
+  } else {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CPU);
+  }
   return c10::Dispatcher::singleton()
     .findSchemaOrThrow("torchscience::gaussian_window", "")
     .typed<at::Tensor(int64_t, const at::Tensor&, c10::optional<at::ScalarType>,
@@ -137,9 +152,14 @@ inline at::Tensor periodic_gaussian_window(
   c10::optional<at::Device> device
 ) {
   at::Device target_device = device.value_or(std_input.device());
-  c10::DispatchKeySet ks = target_device.type() == at::kMeta
-    ? c10::DispatchKeySet(c10::DispatchKey::Meta)
-    : c10::DispatchKeySet(c10::DispatchKey::CPU);
+  c10::DispatchKeySet ks;
+  if (target_device.type() == at::kMeta) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::Meta);
+  } else if (target_device.type() == at::kCUDA) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CUDA);
+  } else {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CPU);
+  }
   return c10::Dispatcher::singleton()
     .findSchemaOrThrow("torchscience::periodic_gaussian_window", "")
     .typed<at::Tensor(int64_t, const at::Tensor&, c10::optional<at::ScalarType>,
@@ -155,9 +175,14 @@ inline at::Tensor general_hamming_window(
   c10::optional<at::Device> device
 ) {
   at::Device target_device = device.value_or(alpha_input.device());
-  c10::DispatchKeySet ks = target_device.type() == at::kMeta
-    ? c10::DispatchKeySet(c10::DispatchKey::Meta)
-    : c10::DispatchKeySet(c10::DispatchKey::CPU);
+  c10::DispatchKeySet ks;
+  if (target_device.type() == at::kMeta) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::Meta);
+  } else if (target_device.type() == at::kCUDA) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CUDA);
+  } else {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CPU);
+  }
   return c10::Dispatcher::singleton()
     .findSchemaOrThrow("torchscience::general_hamming_window", "")
     .typed<at::Tensor(int64_t, const at::Tensor&, c10::optional<at::ScalarType>,
@@ -173,9 +198,14 @@ inline at::Tensor periodic_general_hamming_window(
   c10::optional<at::Device> device
 ) {
   at::Device target_device = device.value_or(alpha_input.device());
-  c10::DispatchKeySet ks = target_device.type() == at::kMeta
-    ? c10::DispatchKeySet(c10::DispatchKey::Meta)
-    : c10::DispatchKeySet(c10::DispatchKey::CPU);
+  c10::DispatchKeySet ks;
+  if (target_device.type() == at::kMeta) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::Meta);
+  } else if (target_device.type() == at::kCUDA) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CUDA);
+  } else {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CPU);
+  }
   return c10::Dispatcher::singleton()
     .findSchemaOrThrow("torchscience::periodic_general_hamming_window", "")
     .typed<at::Tensor(int64_t, const at::Tensor&, c10::optional<at::ScalarType>,
@@ -191,9 +221,14 @@ inline at::Tensor general_cosine_window(
   c10::optional<at::Device> device
 ) {
   at::Device target_device = device.value_or(coeffs_input.device());
-  c10::DispatchKeySet ks = target_device.type() == at::kMeta
-    ? c10::DispatchKeySet(c10::DispatchKey::Meta)
-    : c10::DispatchKeySet(c10::DispatchKey::CPU);
+  c10::DispatchKeySet ks;
+  if (target_device.type() == at::kMeta) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::Meta);
+  } else if (target_device.type() == at::kCUDA) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CUDA);
+  } else {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CPU);
+  }
   return c10::Dispatcher::singleton()
     .findSchemaOrThrow("torchscience::general_cosine_window", "")
     .typed<at::Tensor(int64_t, const at::Tensor&, c10::optional<at::ScalarType>,
@@ -209,9 +244,14 @@ inline at::Tensor periodic_general_cosine_window(
   c10::optional<at::Device> device
 ) {
   at::Device target_device = device.value_or(coeffs_input.device());
-  c10::DispatchKeySet ks = target_device.type() == at::kMeta
-    ? c10::DispatchKeySet(c10::DispatchKey::Meta)
-    : c10::DispatchKeySet(c10::DispatchKey::CPU);
+  c10::DispatchKeySet ks;
+  if (target_device.type() == at::kMeta) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::Meta);
+  } else if (target_device.type() == at::kCUDA) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CUDA);
+  } else {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CPU);
+  }
   return c10::Dispatcher::singleton()
     .findSchemaOrThrow("torchscience::periodic_general_cosine_window", "")
     .typed<at::Tensor(int64_t, const at::Tensor&, c10::optional<at::ScalarType>,
@@ -227,9 +267,14 @@ inline at::Tensor tukey_window(
   c10::optional<at::Device> device
 ) {
   at::Device target_device = device.value_or(alpha_input.device());
-  c10::DispatchKeySet ks = target_device.type() == at::kMeta
-    ? c10::DispatchKeySet(c10::DispatchKey::Meta)
-    : c10::DispatchKeySet(c10::DispatchKey::CPU);
+  c10::DispatchKeySet ks;
+  if (target_device.type() == at::kMeta) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::Meta);
+  } else if (target_device.type() == at::kCUDA) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CUDA);
+  } else {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CPU);
+  }
   return c10::Dispatcher::singleton()
     .findSchemaOrThrow("torchscience::tukey_window", "")
     .typed<at::Tensor(int64_t, const at::Tensor&, c10::optional<at::ScalarType>,
@@ -245,9 +290,14 @@ inline at::Tensor periodic_tukey_window(
   c10::optional<at::Device> device
 ) {
   at::Device target_device = device.value_or(alpha_input.device());
-  c10::DispatchKeySet ks = target_device.type() == at::kMeta
-    ? c10::DispatchKeySet(c10::DispatchKey::Meta)
-    : c10::DispatchKeySet(c10::DispatchKey::CPU);
+  c10::DispatchKeySet ks;
+  if (target_device.type() == at::kMeta) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::Meta);
+  } else if (target_device.type() == at::kCUDA) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CUDA);
+  } else {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CPU);
+  }
   return c10::Dispatcher::singleton()
     .findSchemaOrThrow("torchscience::periodic_tukey_window", "")
     .typed<at::Tensor(int64_t, const at::Tensor&, c10::optional<at::ScalarType>,
@@ -263,9 +313,14 @@ inline at::Tensor exponential_window(
   c10::optional<at::Device> device
 ) {
   at::Device target_device = device.value_or(tau_input.device());
-  c10::DispatchKeySet ks = target_device.type() == at::kMeta
-    ? c10::DispatchKeySet(c10::DispatchKey::Meta)
-    : c10::DispatchKeySet(c10::DispatchKey::CPU);
+  c10::DispatchKeySet ks;
+  if (target_device.type() == at::kMeta) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::Meta);
+  } else if (target_device.type() == at::kCUDA) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CUDA);
+  } else {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CPU);
+  }
   return c10::Dispatcher::singleton()
     .findSchemaOrThrow("torchscience::exponential_window", "")
     .typed<at::Tensor(int64_t, const at::Tensor&, c10::optional<at::ScalarType>,
@@ -281,9 +336,14 @@ inline at::Tensor periodic_exponential_window(
   c10::optional<at::Device> device
 ) {
   at::Device target_device = device.value_or(tau_input.device());
-  c10::DispatchKeySet ks = target_device.type() == at::kMeta
-    ? c10::DispatchKeySet(c10::DispatchKey::Meta)
-    : c10::DispatchKeySet(c10::DispatchKey::CPU);
+  c10::DispatchKeySet ks;
+  if (target_device.type() == at::kMeta) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::Meta);
+  } else if (target_device.type() == at::kCUDA) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CUDA);
+  } else {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CPU);
+  }
   return c10::Dispatcher::singleton()
     .findSchemaOrThrow("torchscience::periodic_exponential_window", "")
     .typed<at::Tensor(int64_t, const at::Tensor&, c10::optional<at::ScalarType>,
@@ -299,9 +359,14 @@ inline at::Tensor hann_poisson_window(
   c10::optional<at::Device> device
 ) {
   at::Device target_device = device.value_or(alpha_input.device());
-  c10::DispatchKeySet ks = target_device.type() == at::kMeta
-    ? c10::DispatchKeySet(c10::DispatchKey::Meta)
-    : c10::DispatchKeySet(c10::DispatchKey::CPU);
+  c10::DispatchKeySet ks;
+  if (target_device.type() == at::kMeta) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::Meta);
+  } else if (target_device.type() == at::kCUDA) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CUDA);
+  } else {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CPU);
+  }
   return c10::Dispatcher::singleton()
     .findSchemaOrThrow("torchscience::hann_poisson_window", "")
     .typed<at::Tensor(int64_t, const at::Tensor&, c10::optional<at::ScalarType>,
@@ -317,9 +382,14 @@ inline at::Tensor periodic_hann_poisson_window(
   c10::optional<at::Device> device
 ) {
   at::Device target_device = device.value_or(alpha_input.device());
-  c10::DispatchKeySet ks = target_device.type() == at::kMeta
-    ? c10::DispatchKeySet(c10::DispatchKey::Meta)
-    : c10::DispatchKeySet(c10::DispatchKey::CPU);
+  c10::DispatchKeySet ks;
+  if (target_device.type() == at::kMeta) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::Meta);
+  } else if (target_device.type() == at::kCUDA) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CUDA);
+  } else {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CPU);
+  }
   return c10::Dispatcher::singleton()
     .findSchemaOrThrow("torchscience::periodic_hann_poisson_window", "")
     .typed<at::Tensor(int64_t, const at::Tensor&, c10::optional<at::ScalarType>,
@@ -336,9 +406,14 @@ inline at::Tensor generalized_normal_window(
   c10::optional<at::Device> device
 ) {
   at::Device target_device = device.value_or(p_input.device());
-  c10::DispatchKeySet ks = target_device.type() == at::kMeta
-    ? c10::DispatchKeySet(c10::DispatchKey::Meta)
-    : c10::DispatchKeySet(c10::DispatchKey::CPU);
+  c10::DispatchKeySet ks;
+  if (target_device.type() == at::kMeta) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::Meta);
+  } else if (target_device.type() == at::kCUDA) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CUDA);
+  } else {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CPU);
+  }
   return c10::Dispatcher::singleton()
     .findSchemaOrThrow("torchscience::generalized_normal_window", "")
     .typed<at::Tensor(int64_t, const at::Tensor&, const at::Tensor&, c10::optional<at::ScalarType>,
@@ -355,9 +430,14 @@ inline at::Tensor periodic_generalized_normal_window(
   c10::optional<at::Device> device
 ) {
   at::Device target_device = device.value_or(p_input.device());
-  c10::DispatchKeySet ks = target_device.type() == at::kMeta
-    ? c10::DispatchKeySet(c10::DispatchKey::Meta)
-    : c10::DispatchKeySet(c10::DispatchKey::CPU);
+  c10::DispatchKeySet ks;
+  if (target_device.type() == at::kMeta) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::Meta);
+  } else if (target_device.type() == at::kCUDA) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CUDA);
+  } else {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CPU);
+  }
   return c10::Dispatcher::singleton()
     .findSchemaOrThrow("torchscience::periodic_generalized_normal_window", "")
     .typed<at::Tensor(int64_t, const at::Tensor&, const at::Tensor&, c10::optional<at::ScalarType>,
@@ -373,9 +453,14 @@ inline at::Tensor kaiser_window(
   c10::optional<at::Device> device
 ) {
   at::Device target_device = device.value_or(beta_input.device());
-  c10::DispatchKeySet ks = target_device.type() == at::kMeta
-    ? c10::DispatchKeySet(c10::DispatchKey::Meta)
-    : c10::DispatchKeySet(c10::DispatchKey::CPU);
+  c10::DispatchKeySet ks;
+  if (target_device.type() == at::kMeta) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::Meta);
+  } else if (target_device.type() == at::kCUDA) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CUDA);
+  } else {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CPU);
+  }
   return c10::Dispatcher::singleton()
     .findSchemaOrThrow("torchscience::kaiser_window", "")
     .typed<at::Tensor(int64_t, const at::Tensor&, c10::optional<at::ScalarType>,
@@ -391,9 +476,14 @@ inline at::Tensor periodic_kaiser_window(
   c10::optional<at::Device> device
 ) {
   at::Device target_device = device.value_or(beta_input.device());
-  c10::DispatchKeySet ks = target_device.type() == at::kMeta
-    ? c10::DispatchKeySet(c10::DispatchKey::Meta)
-    : c10::DispatchKeySet(c10::DispatchKey::CPU);
+  c10::DispatchKeySet ks;
+  if (target_device.type() == at::kMeta) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::Meta);
+  } else if (target_device.type() == at::kCUDA) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CUDA);
+  } else {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CPU);
+  }
   return c10::Dispatcher::singleton()
     .findSchemaOrThrow("torchscience::periodic_kaiser_window", "")
     .typed<at::Tensor(int64_t, const at::Tensor&, c10::optional<at::ScalarType>,
@@ -409,9 +499,14 @@ inline at::Tensor planck_taper_window(
   c10::optional<at::Device> device
 ) {
   at::Device target_device = device.value_or(epsilon_input.device());
-  c10::DispatchKeySet ks = target_device.type() == at::kMeta
-    ? c10::DispatchKeySet(c10::DispatchKey::Meta)
-    : c10::DispatchKeySet(c10::DispatchKey::CPU);
+  c10::DispatchKeySet ks;
+  if (target_device.type() == at::kMeta) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::Meta);
+  } else if (target_device.type() == at::kCUDA) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CUDA);
+  } else {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CPU);
+  }
   return c10::Dispatcher::singleton()
     .findSchemaOrThrow("torchscience::planck_taper_window", "")
     .typed<at::Tensor(int64_t, const at::Tensor&, c10::optional<at::ScalarType>,
@@ -427,9 +522,14 @@ inline at::Tensor periodic_planck_taper_window(
   c10::optional<at::Device> device
 ) {
   at::Device target_device = device.value_or(epsilon_input.device());
-  c10::DispatchKeySet ks = target_device.type() == at::kMeta
-    ? c10::DispatchKeySet(c10::DispatchKey::Meta)
-    : c10::DispatchKeySet(c10::DispatchKey::CPU);
+  c10::DispatchKeySet ks;
+  if (target_device.type() == at::kMeta) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::Meta);
+  } else if (target_device.type() == at::kCUDA) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CUDA);
+  } else {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CPU);
+  }
   return c10::Dispatcher::singleton()
     .findSchemaOrThrow("torchscience::periodic_planck_taper_window", "")
     .typed<at::Tensor(int64_t, const at::Tensor&, c10::optional<at::ScalarType>,
@@ -446,9 +546,14 @@ inline at::Tensor planck_bessel_window(
   c10::optional<at::Device> device
 ) {
   at::Device target_device = device.value_or(epsilon_input.device());
-  c10::DispatchKeySet ks = target_device.type() == at::kMeta
-    ? c10::DispatchKeySet(c10::DispatchKey::Meta)
-    : c10::DispatchKeySet(c10::DispatchKey::CPU);
+  c10::DispatchKeySet ks;
+  if (target_device.type() == at::kMeta) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::Meta);
+  } else if (target_device.type() == at::kCUDA) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CUDA);
+  } else {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CPU);
+  }
   return c10::Dispatcher::singleton()
     .findSchemaOrThrow("torchscience::planck_bessel_window", "")
     .typed<at::Tensor(int64_t, const at::Tensor&, const at::Tensor&, c10::optional<at::ScalarType>,
@@ -465,9 +570,14 @@ inline at::Tensor periodic_planck_bessel_window(
   c10::optional<at::Device> device
 ) {
   at::Device target_device = device.value_or(epsilon_input.device());
-  c10::DispatchKeySet ks = target_device.type() == at::kMeta
-    ? c10::DispatchKeySet(c10::DispatchKey::Meta)
-    : c10::DispatchKeySet(c10::DispatchKey::CPU);
+  c10::DispatchKeySet ks;
+  if (target_device.type() == at::kMeta) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::Meta);
+  } else if (target_device.type() == at::kCUDA) {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CUDA);
+  } else {
+    ks = c10::DispatchKeySet(c10::DispatchKey::CPU);
+  }
   return c10::Dispatcher::singleton()
     .findSchemaOrThrow("torchscience::periodic_planck_bessel_window", "")
     .typed<at::Tensor(int64_t, const at::Tensor&, const at::Tensor&, c10::optional<at::ScalarType>,

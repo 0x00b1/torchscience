@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <c10/macros/Macros.h>
 #include "common.h"
 
 namespace torchscience::kernel::window_function {
@@ -10,7 +11,7 @@ namespace torchscience::kernel::window_function {
 // Coefficients: a0=0.35875, a1=0.48829, a2=0.14128, a3=0.01168
 // These coefficients match scipy.signal.windows.blackmanharris
 template<typename scalar_t>
-inline scalar_t blackman_harris(int64_t i, int64_t n, bool periodic) {
+C10_HOST_DEVICE inline scalar_t blackman_harris(int64_t i, int64_t n, bool periodic) {
   if (n == 1) {
     return scalar_t(1);
   }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <c10/macros/Macros.h>
 #include "common.h"
 
 #ifndef M_PI
@@ -14,7 +15,7 @@ namespace torchscience::kernel::window_function {
 // and poisson[k] = exp(-alpha * |denom - 2k| / denom)
 // For symmetric: denom = n-1, for periodic: denom = n
 template<typename scalar_t>
-inline scalar_t hann_poisson(int64_t i, int64_t n, scalar_t alpha, bool periodic) {
+C10_HOST_DEVICE inline scalar_t hann_poisson(int64_t i, int64_t n, scalar_t alpha, bool periodic) {
   if (n == 1) {
     return scalar_t(1);
   }
@@ -39,7 +40,7 @@ inline scalar_t hann_poisson(int64_t i, int64_t n, scalar_t alpha, bool periodic
 // Let f = hann * poisson, where poisson = exp(-alpha * x), x = |denom - 2k| / denom
 // d/d(alpha) = hann * poisson * (-x) = -forward_value * x
 template<typename scalar_t>
-inline scalar_t hann_poisson_backward(
+C10_HOST_DEVICE inline scalar_t hann_poisson_backward(
   scalar_t grad_out,
   int64_t i,
   int64_t n,
