@@ -9,6 +9,7 @@ from ._conditional_mutual_information import conditional_mutual_information
 from ._cross_entropy import cross_entropy
 from ._directed_information import directed_information
 from ._dual_total_correlation import dual_total_correlation
+from ._entropy_rate import entropy_rate
 from ._f_divergence import f_divergence
 from ._histogram_entropy import histogram_entropy
 from ._huffman_lengths import huffman_lengths
@@ -47,6 +48,7 @@ __all__ = [
     "cross_entropy",
     "directed_information",
     "dual_total_correlation",
+    "entropy_rate",
     "f_divergence",
     "histogram_entropy",
     "huffman_lengths",
