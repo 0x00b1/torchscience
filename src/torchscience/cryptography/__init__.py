@@ -1,3 +1,7 @@
+from torchscience.cryptography._additive import (
+    additive_reconstruct,
+    additive_split,
+)
 from torchscience.cryptography._aes import (
     aes_ctr,
     aes_decrypt_block,
@@ -25,6 +29,7 @@ from torchscience.cryptography._pbkdf2 import pbkdf2_sha256
 from torchscience.cryptography._poly1305 import poly1305
 from torchscience.cryptography._sha3 import keccak256, sha3_256, sha3_512
 from torchscience.cryptography._sha256 import sha256
+from torchscience.cryptography._shamir import shamir_reconstruct, shamir_split
 from torchscience.cryptography._x25519 import (
     x25519,
     x25519_base,
@@ -32,6 +37,8 @@ from torchscience.cryptography._x25519 import (
 )
 
 __all__ = [
+    "additive_reconstruct",
+    "additive_split",
     "aes_ctr",
     "aes_decrypt_block",
     "aes_encrypt_block",
@@ -54,6 +61,8 @@ __all__ = [
     "sha256",
     "sha3_256",
     "sha3_512",
+    "shamir_reconstruct",
+    "shamir_split",
     "x25519",
     "x25519_base",
     "x25519_keypair",
