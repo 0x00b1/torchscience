@@ -52,7 +52,7 @@ The library spans common scientific and engineering areas. Below is a non‑exha
 - graph: graph and network theory
 - graphics: color, lighting, shading, projection, texture mapping, tone mapping
 - information and information_theory: coding theory, compression
-- integration: boundary-value problems, initial-value problems, quadrature
+- ordinary_differential_equation: boundary-value problems, initial-value problems
 - linear_algebra: matrix ops and decompositions
 - morphology: mathematical morphology
 - pad: padding utilities
