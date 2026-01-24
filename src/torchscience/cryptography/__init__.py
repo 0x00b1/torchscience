@@ -30,6 +30,7 @@ from torchscience.cryptography._key_exchange import (
     derive_key,
     x25519_shared_secret,
 )
+from torchscience.cryptography._password import password_hash, password_verify
 from torchscience.cryptography._pbkdf2 import pbkdf2_sha256
 from torchscience.cryptography._poly1305 import poly1305
 from torchscience.cryptography._sha3 import keccak256, sha3_256, sha3_512
@@ -64,6 +65,8 @@ __all__ = [
     "hkdf_sha256",
     "hmac_sha256",
     "keccak256",
+    "password_hash",
+    "password_verify",
     "pbkdf2_sha256",
     "poly1305",
     "sha256",
