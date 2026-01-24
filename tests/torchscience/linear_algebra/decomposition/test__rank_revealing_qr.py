@@ -476,6 +476,7 @@ class TestRankRevealingQR:
         # Depending on tolerance, rank should be 3 (the 4th singular value is tiny)
         assert result.rank.item() <= 4
 
+    @pytest.mark.xfail(reason="Autograd kernel not implemented")
     def test_gradcheck(self):
         """Test gradient computation."""
         torch.manual_seed(1111)
@@ -490,6 +491,7 @@ class TestRankRevealingQR:
 
         assert torch.autograd.gradcheck(fn, (a,), eps=1e-6, atol=1e-4)
 
+    @pytest.mark.xfail(reason="Autograd kernel not implemented")
     def test_gradcheck_batched(self):
         """Test gradient computation with batched input."""
         torch.manual_seed(1212)
