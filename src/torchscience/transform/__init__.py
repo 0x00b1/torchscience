@@ -49,6 +49,7 @@ from ._inverse_cosine_transform import (
     inverse_fourier_cosine_transform,
 )
 from ._inverse_fourier_transform import inverse_fourier_transform
+from ._inverse_gabor_transform import inverse_gabor_transform
 from ._inverse_hilbert_transform import inverse_hilbert_transform
 from ._inverse_short_time_fourier_transform import (
     inverse_short_time_fourier_transform,
@@ -70,6 +71,7 @@ __all__ = [
     "inverse_fourier_transform",
     # Gabor
     "gabor_transform",
+    "inverse_gabor_transform",
     # DCT (new names)
     "cosine_transform",
     "inverse_cosine_transform",
