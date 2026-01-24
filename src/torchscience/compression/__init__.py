@@ -6,6 +6,7 @@ from ._dithered_quantize import dithered_quantize
 from ._entropy_bottleneck import EntropyBottleneck, entropy_bottleneck
 from ._gaussian_conditional import GaussianConditional, gaussian_conditional
 from ._huffman import huffman_decode, huffman_encode
+from ._importance_map import gain_unit, importance_map
 from ._lattice_quantize import lattice_quantize
 from ._lz77 import lz77_decode, lz77_encode
 from ._noise_quantize import noise_quantize, soft_round, ste_round
@@ -33,6 +34,8 @@ __all__ = [
     "gaussian_conditional",
     "huffman_decode",
     "huffman_encode",
+    "gain_unit",
+    "importance_map",
     "lattice_quantize",
     "lz77_decode",
     "lz77_encode",
