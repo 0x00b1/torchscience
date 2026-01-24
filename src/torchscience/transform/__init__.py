@@ -68,6 +68,7 @@ from ._inverse_hankel_transform import inverse_hankel_transform
 from ._inverse_hilbert_transform import inverse_hilbert_transform
 from ._inverse_laplace_transform import inverse_laplace_transform
 from ._inverse_mellin_transform import inverse_mellin_transform
+from ._inverse_radon_transform import inverse_radon_transform
 from ._inverse_short_time_fourier_transform import (
     inverse_short_time_fourier_transform,
 )
@@ -131,6 +132,7 @@ __all__ = [
     "inverse_z_transform",
     # Radon
     "radon_transform",
+    "inverse_radon_transform",
     # STFT
     "short_time_fourier_transform",
     "inverse_short_time_fourier_transform",

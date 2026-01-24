@@ -1,0 +1,299 @@
+"""Tests for inverse Radon transform (filtered back-projection) implementation."""
+
+import math
+
+import pytest
+import torch
+from torch.autograd import gradcheck
+
+import torchscience.transform as T
+
+
+class TestInverseRadonTransformForward:
+    """Test inverse Radon transform forward pass correctness."""
+
+    def test_basic_reconstruction(self):
+        """Test basic reconstruction of a centered square."""
+        # Create a simple phantom
+        phantom = torch.zeros(32, 32, dtype=torch.float64)
+        phantom[12:20, 12:20] = 1.0
+
+        # Forward Radon transform
+        angles = torch.linspace(0, math.pi, 90, dtype=torch.float64)
+        sinogram = T.radon_transform(phantom, angles, circle=True)
+
+        # Inverse Radon transform
+        reconstructed = T.inverse_radon_transform(
+            sinogram, angles, circle=True, output_size=32
+        )
+
+        # Check shape
+        assert reconstructed.shape == (32, 32)
+
+        # The reconstruction should have similar structure to original
+        # (not exact due to limited angles and filtering)
+        center_val = reconstructed[14:18, 14:18].mean()
+        border_val = reconstructed[0:4, 0:4].mean()
+        # Center should be brighter than border
+        assert center_val > border_val
+
+    def test_output_shape_2d(self):
+        """Output shape for 2D sinogram."""
+        sinogram = torch.randn(90, 91, dtype=torch.float64)
+        angles = torch.linspace(0, math.pi, 90, dtype=torch.float64)
+
+        reconstructed = T.inverse_radon_transform(sinogram, angles)
+
+        assert reconstructed.dim() == 2
+        # Default size is approximately num_bins / sqrt(2)
+        expected_size = int(91 / math.sqrt(2))
+        assert reconstructed.shape[0] == expected_size
+        assert reconstructed.shape[1] == expected_size
+
+    def test_output_shape_with_explicit_size(self):
+        """Output shape with explicit output_size."""
+        sinogram = torch.randn(90, 91, dtype=torch.float64)
+        angles = torch.linspace(0, math.pi, 90, dtype=torch.float64)
+
+        reconstructed = T.inverse_radon_transform(
+            sinogram, angles, output_size=64
+        )
+
+        assert reconstructed.shape == (64, 64)
+
+    def test_output_shape_batched(self):
+        """Output shape for batched sinogram."""
+        sinograms = torch.randn(5, 90, 91, dtype=torch.float64)
+        angles = torch.linspace(0, math.pi, 90, dtype=torch.float64)
+
+        reconstructed = T.inverse_radon_transform(
+            sinograms, angles, output_size=32
+        )
+
+        assert reconstructed.dim() == 3
+        assert reconstructed.shape[0] == 5
+        assert reconstructed.shape[1] == 32
+        assert reconstructed.shape[2] == 32
+
+    def test_different_filters(self):
+        """Different filters should produce different results."""
+        sinogram = torch.randn(45, 65, dtype=torch.float64)
+        angles = torch.linspace(0, math.pi, 45, dtype=torch.float64)
+
+        recon_ramp = T.inverse_radon_transform(
+            sinogram, angles, filter_type="ramp", output_size=32
+        )
+        recon_hamming = T.inverse_radon_transform(
+            sinogram, angles, filter_type="hamming", output_size=32
+        )
+        recon_hann = T.inverse_radon_transform(
+            sinogram, angles, filter_type="hann", output_size=32
+        )
+
+        # Different filters should give different results
+        assert not torch.allclose(recon_ramp, recon_hamming)
+        assert not torch.allclose(recon_ramp, recon_hann)
+        assert not torch.allclose(recon_hamming, recon_hann)
+
+    def test_all_filter_types(self):
+        """All filter types should work without error."""
+        sinogram = torch.randn(45, 65, dtype=torch.float64)
+        angles = torch.linspace(0, math.pi, 45, dtype=torch.float64)
+
+        for filter_type in [
+            "ramp",
+            "shepp-logan",
+            "cosine",
+            "hamming",
+            "hann",
+        ]:
+            reconstructed = T.inverse_radon_transform(
+                sinogram, angles, filter_type=filter_type, output_size=32
+            )
+            assert reconstructed.shape == (32, 32)
+            assert torch.isfinite(reconstructed).all()
+
+    def test_circle_mode(self):
+        """Circle mode should produce different results than no circle."""
+        sinogram = torch.randn(45, 65, dtype=torch.float64)
+        angles = torch.linspace(0, math.pi, 45, dtype=torch.float64)
+
+        recon_circle = T.inverse_radon_transform(
+            sinogram, angles, circle=True, output_size=32
+        )
+        recon_no_circle = T.inverse_radon_transform(
+            sinogram, angles, circle=False, output_size=32
+        )
+
+        # Results should differ
+        assert not torch.allclose(recon_circle, recon_no_circle)
+
+        # In circle mode, corners should be zero
+        # Check a corner pixel
+        assert abs(recon_circle[0, 0].item()) < 1e-10
+
+    def test_round_trip(self):
+        """Round trip: radon -> inverse_radon should approximate original."""
+        # Create a simple phantom
+        phantom = torch.zeros(48, 48, dtype=torch.float64)
+        phantom[16:32, 16:32] = 1.0
+
+        # Use many angles for better reconstruction
+        angles = torch.linspace(0, math.pi, 180, dtype=torch.float64)
+
+        # Forward and inverse
+        sinogram = T.radon_transform(phantom, angles, circle=True)
+        reconstructed = T.inverse_radon_transform(
+            sinogram, angles, circle=True, output_size=48
+        )
+
+        # The reconstruction should capture the main structure
+        # Normalize both for comparison
+        phantom_norm = phantom / phantom.max()
+        recon_norm = reconstructed / reconstructed.max()
+
+        # Check correlation (should be positive)
+        correlation = (phantom_norm * recon_norm).sum()
+        assert correlation > 0
+
+
+class TestInverseRadonTransformGradient:
+    """Test inverse Radon transform gradient correctness."""
+
+    def test_gradcheck(self):
+        """Gradient w.r.t. sinogram should pass numerical check."""
+        sinogram = torch.randn(10, 16, dtype=torch.float64, requires_grad=True)
+        angles = torch.linspace(0, math.pi, 10, dtype=torch.float64)
+
+        def func(sino):
+            return T.inverse_radon_transform(
+                sino, angles, output_size=8, filter_type="ramp"
+            )
+
+        assert gradcheck(func, (sinogram,), raise_exception=True)
+
+    def test_gradient_batched(self):
+        """Gradient should work with batched inputs."""
+        sinograms = torch.randn(
+            2, 10, 16, dtype=torch.float64, requires_grad=True
+        )
+        angles = torch.linspace(0, math.pi, 10, dtype=torch.float64)
+
+        def func(sino):
+            return T.inverse_radon_transform(sino, angles, output_size=8)
+
+        assert gradcheck(func, (sinograms,), raise_exception=True)
+
+    def test_gradient_with_different_filters(self):
+        """Gradient should work with different filter types."""
+        sinogram = torch.randn(8, 12, dtype=torch.float64, requires_grad=True)
+        angles = torch.linspace(0, math.pi, 8, dtype=torch.float64)
+
+        for filter_type in ["ramp", "shepp-logan", "hamming"]:
+
+            def func(sino):
+                return T.inverse_radon_transform(
+                    sino, angles, output_size=6, filter_type=filter_type
+                )
+
+            assert gradcheck(
+                func,
+                (sinogram.clone().requires_grad_(True),),
+                raise_exception=True,
+            )
+
+
+class TestInverseRadonTransformMeta:
+    """Test inverse Radon transform with meta tensors."""
+
+    def test_meta_tensor_shape(self):
+        """Meta tensor should produce correct output shape."""
+        sinogram = torch.empty(90, 91, device="meta", dtype=torch.float64)
+        angles = torch.empty(90, device="meta", dtype=torch.float64)
+
+        reconstructed = T.inverse_radon_transform(sinogram, angles)
+
+        assert reconstructed.dim() == 2
+        expected_size = int(91 / math.sqrt(2))
+        assert reconstructed.shape[0] == expected_size
+        assert reconstructed.shape[1] == expected_size
+        assert reconstructed.device.type == "meta"
+
+    def test_meta_tensor_explicit_size(self):
+        """Meta tensor with explicit output size."""
+        sinogram = torch.empty(90, 91, device="meta", dtype=torch.float64)
+        angles = torch.empty(90, device="meta", dtype=torch.float64)
+
+        reconstructed = T.inverse_radon_transform(
+            sinogram, angles, output_size=64
+        )
+
+        assert reconstructed.shape == (64, 64)
+        assert reconstructed.device.type == "meta"
+
+    def test_meta_tensor_batched(self):
+        """Meta tensor should work with batched inputs."""
+        sinogram = torch.empty(3, 45, 65, device="meta", dtype=torch.float64)
+        angles = torch.empty(45, device="meta", dtype=torch.float64)
+
+        reconstructed = T.inverse_radon_transform(
+            sinogram, angles, output_size=32
+        )
+
+        assert reconstructed.dim() == 3
+        assert reconstructed.shape[0] == 3
+        assert reconstructed.shape[1] == 32
+        assert reconstructed.shape[2] == 32
+
+
+class TestInverseRadonTransformEdgeCases:
+    """Test edge cases and error handling."""
+
+    def test_single_angle(self):
+        """Should work with a single angle."""
+        sinogram = torch.randn(1, 32, dtype=torch.float64)
+        angles = torch.tensor([0.0], dtype=torch.float64)
+
+        reconstructed = T.inverse_radon_transform(
+            sinogram, angles, output_size=16
+        )
+        assert reconstructed.shape == (16, 16)
+
+    def test_invalid_filter_type(self):
+        """Should raise error for invalid filter type."""
+        sinogram = torch.randn(45, 65, dtype=torch.float64)
+        angles = torch.linspace(0, math.pi, 45, dtype=torch.float64)
+
+        with pytest.raises(ValueError, match="filter_type must be one of"):
+            T.inverse_radon_transform(sinogram, angles, filter_type="invalid")
+
+    def test_mismatched_angles(self):
+        """Should raise error when angles don't match sinogram."""
+        sinogram = torch.randn(45, 65, dtype=torch.float64)
+        angles = torch.linspace(
+            0, math.pi, 30, dtype=torch.float64
+        )  # Wrong size
+
+        with pytest.raises(RuntimeError):
+            T.inverse_radon_transform(sinogram, angles)
+
+    def test_float32_dtype(self):
+        """Should work with float32 dtype."""
+        sinogram = torch.randn(45, 65, dtype=torch.float32)
+        angles = torch.linspace(0, math.pi, 45, dtype=torch.float32)
+
+        reconstructed = T.inverse_radon_transform(
+            sinogram, angles, output_size=32
+        )
+        assert reconstructed.dtype == torch.float32
+        assert reconstructed.shape == (32, 32)
+
+    def test_small_output_size(self):
+        """Should work with very small output size."""
+        sinogram = torch.randn(10, 20, dtype=torch.float64)
+        angles = torch.linspace(0, math.pi, 10, dtype=torch.float64)
+
+        reconstructed = T.inverse_radon_transform(
+            sinogram, angles, output_size=4
+        )
+        assert reconstructed.shape == (4, 4)

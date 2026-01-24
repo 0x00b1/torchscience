@@ -114,6 +114,7 @@
 #include "cpu/transform/inverse_z_transform.h"
 #include "cpu/transform/inverse_two_sided_laplace_transform.h"
 #include "cpu/transform/radon_transform.h"
+#include "cpu/transform/inverse_radon_transform.h"
 #include "cpu/test/sum_squares.h"
 #include "cpu/graph_theory/floyd_warshall.h"
 #include "cpu/graph_theory/connected_components.h"
@@ -508,6 +509,7 @@
 #include "autograd/transform/inverse_z_transform.h"
 #include "autograd/transform/inverse_two_sided_laplace_transform.h"
 #include "autograd/transform/radon_transform.h"
+#include "autograd/transform/inverse_radon_transform.h"
 #include "autograd/test/sum_squares.h"
 #include "autograd/information_theory/kullback_leibler_divergence.h"
 #include "autograd/information_theory/jensen_shannon_divergence.h"
@@ -592,6 +594,7 @@
 #include "meta/transform/inverse_z_transform.h"
 #include "meta/transform/inverse_two_sided_laplace_transform.h"
 #include "meta/transform/radon_transform.h"
+#include "meta/transform/inverse_radon_transform.h"
 #include "meta/test/sum_squares.h"
 #include "meta/graph_theory/floyd_warshall.h"
 #include "meta/graph_theory/connected_components.h"
@@ -1399,6 +1402,10 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("radon_transform(Tensor input, Tensor angles, bool circle) -> Tensor");
   module.def("radon_transform_backward(Tensor grad_output, Tensor input, Tensor angles, bool circle) -> Tensor");
   module.def("radon_transform_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, Tensor angles, bool circle) -> (Tensor, Tensor)");
+
+  module.def("inverse_radon_transform(Tensor sinogram, Tensor angles, bool circle, int output_size, int filter_type) -> Tensor");
+  module.def("inverse_radon_transform_backward(Tensor grad_output, Tensor sinogram, Tensor angles, bool circle, int output_size, int filter_type) -> Tensor");
+  module.def("inverse_radon_transform_backward_backward(Tensor gg_sinogram, Tensor grad_output, Tensor sinogram, Tensor angles, bool circle, int output_size, int filter_type) -> (Tensor, Tensor)");
 
   // test (for validating reduction macros)
   module.def("sum_squares(Tensor input, int[]? dim, bool keepdim) -> Tensor");
