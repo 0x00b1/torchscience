@@ -15,7 +15,13 @@ from torchscience.cryptography._ed25519 import (
     ed25519_verify,
 )
 from torchscience.cryptography._generator import ChaCha20Generator
+from torchscience.cryptography._hkdf import (
+    hkdf_expand_sha256,
+    hkdf_extract_sha256,
+    hkdf_sha256,
+)
 from torchscience.cryptography._hmac import hmac_sha256
+from torchscience.cryptography._pbkdf2 import pbkdf2_sha256
 from torchscience.cryptography._poly1305 import poly1305
 from torchscience.cryptography._sha3 import keccak256, sha3_256, sha3_512
 from torchscience.cryptography._sha256 import sha256
@@ -38,8 +44,12 @@ __all__ = [
     "ed25519_keypair",
     "ed25519_sign",
     "ed25519_verify",
+    "hkdf_expand_sha256",
+    "hkdf_extract_sha256",
+    "hkdf_sha256",
     "hmac_sha256",
     "keccak256",
+    "pbkdf2_sha256",
     "poly1305",
     "sha256",
     "sha3_256",
