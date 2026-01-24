@@ -1,6 +1,7 @@
 """Information theory operators."""
 
 from ._active_information_storage import active_information_storage
+from ._blahut_arimoto import blahut_arimoto
 from ._causally_conditioned_entropy import causally_conditioned_entropy
 from ._chi_squared_divergence import chi_squared_divergence
 from ._coinformation import coinformation
@@ -41,6 +42,7 @@ from ._typical_set_probability import typical_set_probability
 
 __all__ = [
     "active_information_storage",
+    "blahut_arimoto",
     "causally_conditioned_entropy",
     "chi_squared_divergence",
     "coinformation",
