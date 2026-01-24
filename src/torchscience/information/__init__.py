@@ -37,6 +37,7 @@ from ._source_coding_bound import source_coding_bound
 from ._total_correlation import total_correlation
 from ._transfer_entropy import transfer_entropy
 from ._tsallis_entropy import tsallis_entropy
+from ._typical_set_probability import typical_set_probability
 
 __all__ = [
     "active_information_storage",
@@ -74,4 +75,5 @@ __all__ = [
     "total_correlation",
     "transfer_entropy",
     "tsallis_entropy",
+    "typical_set_probability",
 ]
