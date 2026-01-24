@@ -5,7 +5,6 @@ from torchscience.signal_processing import (
     noise,
     transform,
     waveform,
-    window_function,
 )
 from torchscience.signal_processing._constants import (
     SAMPLE_RATE_CD,
@@ -25,7 +24,6 @@ __all__ = [
     "noise",
     "transform",
     "waveform",
-    "window_function",
     # Constants
     "SAMPLE_RATE_CD",
     "SAMPLE_RATE_DAT",

@@ -119,9 +119,38 @@ def backward_euler(
         # Initial guess: forward Euler prediction
         y_guess = y + h_step * f_flat(t, y)
 
-        y_next, converged = newton_solve(
-            residual, y_guess, tol=newton_tol, max_iter=max_newton_iter
-        )
+        # Solve either single system or per-batch element to avoid
+        # shape/broadcast issues with captured batch tensors in closures.
+        if y.dim() == 1:
+            y_next, converged = newton_solve(
+                residual, y_guess, tol=newton_tol, max_iter=max_newton_iter
+            )
+        else:
+            B, N = y.shape[0], y.shape[-1]
+            y_next_rows = []
+            converged_all = True
+
+            for i in range(B):
+                y_i = y[i]
+
+                def residual_i(y_next_i):
+                    return (
+                        y_next_i - y_i - h_curr * f_flat(t_curr_next, y_next_i)
+                    )
+
+                y_guess_i = y_guess[i]
+                y_next_i, ok = newton_solve(
+                    residual_i,
+                    y_guess_i,
+                    tol=newton_tol,
+                    max_iter=max_newton_iter,
+                )
+                if not ok:
+                    converged_all = False
+                y_next_rows.append(y_next_i)
+
+            y_next = torch.stack(y_next_rows, dim=0).reshape(B, N)
+            converged = converged_all
 
         if not converged:
             if throw:

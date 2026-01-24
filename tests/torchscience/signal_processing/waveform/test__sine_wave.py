@@ -5,6 +5,7 @@ import torch
 import torch.testing
 
 import torchscience.signal_processing.waveform
+import torchscience.window_function
 from torchscience.testing import (
     CreationOpDescriptor,
     CreationOpTestCase,
@@ -671,10 +672,8 @@ class TestSineWave(CreationOpTestCase):
         sine = torchscience.signal_processing.waveform.sine_wave(
             n, dtype=torch.float64
         )
-        window = (
-            torchscience.signal_processing.window_function.rectangular_window(
-                n, dtype=torch.float64
-            )
+        window = torchscience.window_function.rectangular_window(
+            n, dtype=torch.float64
         )
 
         windowed = sine * window

@@ -1,13 +1,16 @@
+from typing import TYPE_CHECKING
+
 import torch
 
 from torchscience.polynomial._degree_error import DegreeError
 
-from ._polynomial import Polynomial, polynomial
+if TYPE_CHECKING:
+    from ._polynomial import Polynomial
 
 
 def polynomial_divmod(
-    p: Polynomial, q: Polynomial
-) -> tuple[Polynomial, Polynomial]:
+    p: "Polynomial", q: "Polynomial"
+) -> tuple["Polynomial", "Polynomial"]:
     """Divide polynomial p by q, returning quotient and remainder.
 
     Computes quotient and remainder such that p = q * quotient + remainder,
@@ -57,6 +60,8 @@ def polynomial_divmod(
         zero_shape = list(p.shape)
         zero_shape[-1] = 1
         zero_coeffs = torch.zeros(zero_shape, dtype=p.dtype, device=p.device)
+        from ._polynomial import polynomial
+
         return polynomial(zero_coeffs), p
 
     # Get batch shapes
@@ -96,5 +101,7 @@ def polynomial_divmod(
     else:
         quot_result = quot_flat.reshape(*broadcast_batch, quot_len)
         rem_result = rem_flat.reshape(*broadcast_batch, rem_len)
+
+    from ._polynomial import polynomial
 
     return polynomial(quot_result), polynomial(rem_result)

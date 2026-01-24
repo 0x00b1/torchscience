@@ -1,8 +1,10 @@
-from ._polynomial import Polynomial
-from ._polynomial_divmod import polynomial_divmod
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ._polynomial import Polynomial
 
 
-def polynomial_mod(p: Polynomial, q: Polynomial) -> Polynomial:
+def polynomial_mod(p: "Polynomial", q: "Polynomial") -> "Polynomial":
     """Return remainder of polynomial division.
 
     Convenience wrapper around polynomial_divmod that returns only the remainder.
@@ -26,5 +28,7 @@ def polynomial_mod(p: Polynomial, q: Polynomial) -> Polynomial:
     >>> polynomial_mod(p, q)  # remainder is 2
     Polynomial(tensor([2.]))
     """
+    from ._polynomial_divmod import polynomial_divmod
+
     _, remainder = polynomial_divmod(p, q)
     return remainder

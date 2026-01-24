@@ -1,10 +1,13 @@
+from typing import TYPE_CHECKING
+
 import torch
 from torch import Tensor
 
-from ._polynomial import Polynomial
+if TYPE_CHECKING:
+    from ._polynomial import Polynomial
 
 
-def polynomial_evaluate(p: Polynomial, x: Tensor) -> Tensor:
+def polynomial_evaluate(p: "Polynomial", x: Tensor) -> Tensor:
     """Evaluate polynomial at points using Horner's method.
 
     Parameters

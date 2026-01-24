@@ -1,10 +1,13 @@
+from typing import TYPE_CHECKING
+
 import torch
 from torch import Tensor
 
-from ._polynomial import Polynomial, polynomial
+if TYPE_CHECKING:
+    from ._polynomial import Polynomial
 
 
-def polynomial_scale(p: Polynomial, c: Tensor) -> Polynomial:
+def polynomial_scale(p: "Polynomial", c: Tensor) -> "Polynomial":
     """Multiply polynomial by scalar(s).
 
     Uses the polynomial_scale C++ kernel with full autograd support for
@@ -65,5 +68,7 @@ def polynomial_scale(p: Polynomial, c: Tensor) -> Polynomial:
         result = result_flat.reshape(n_coeffs)
     else:
         result = result_flat.reshape(*broadcast_batch, n_coeffs)
+
+    from ._polynomial import polynomial
 
     return polynomial(result)

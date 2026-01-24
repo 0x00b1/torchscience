@@ -1,9 +1,12 @@
+from typing import TYPE_CHECKING
+
 import torch
 
-from ._polynomial import Polynomial, polynomial
+if TYPE_CHECKING:  # import for type checking only
+    from ._polynomial import Polynomial
 
 
-def polynomial_add(p: Polynomial, q: Polynomial) -> Polynomial:
+def polynomial_add(p: "Polynomial", q: "Polynomial") -> "Polynomial":
     """Add two polynomials.
 
     Computes element-wise sum of coefficients with zero-padding for
@@ -52,5 +55,8 @@ def polynomial_add(p: Polynomial, q: Polynomial) -> Polynomial:
         result = result_flat.reshape(n_out)
     else:
         result = result_flat.reshape(*broadcast_batch, n_out)
+
+    # Import here to avoid circular import at module load time
+    from ._polynomial import polynomial
 
     return polynomial(result)

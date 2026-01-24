@@ -107,25 +107,20 @@ def euler(
 
     interp = LinearInterpolant(t_tensor, y_tensor, success=success)
 
-    # Wrap interpolant for TensorDict
+    # Wrap interpolant for TensorDict using vectorized unflatten
     if is_tensordict:
 
-        def interp_tensordict(t_query):
-            y_flat_query = interp(t_query)
-            if isinstance(t_query, (int, float)) or (
-                isinstance(t_query, torch.Tensor) and t_query.dim() == 0
-            ):
-                return unflatten(y_flat_query)
-            else:
-                return torch.stack(
-                    [
-                        unflatten(y_flat_query[i])
-                        for i in range(y_flat_query.shape[0])
-                    ]
-                )
+        class TensorDictInterpolant:
+            def __init__(self, base_interp, unflatten_fn):
+                self._base = base_interp
+                self._unflatten = unflatten_fn
+                self.success = base_interp.success
 
-        interp_tensordict.success = interp.success
-        final_interp = interp_tensordict
+            def __call__(self, t_query):
+                y_flat_query = self._base(t_query)
+                return self._unflatten(y_flat_query)
+
+        final_interp = TensorDictInterpolant(interp, unflatten)
     else:
         final_interp = interp
 

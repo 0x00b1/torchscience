@@ -72,7 +72,7 @@ def hilbert_transform(
         Window function to apply before the transform. Must be 1-D with size
         matching the (possibly padded) signal length along ``dim``.
         Use window functions from ``torch`` (e.g., ``torch.hann_window``) or
-        ``torchscience.signal_processing.window_function``.
+        ``torchscience.window_function``.
         Default: ``None`` (no windowing).
 
     Returns

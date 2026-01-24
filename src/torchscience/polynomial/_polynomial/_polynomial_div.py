@@ -1,8 +1,10 @@
-from ._polynomial import Polynomial
-from ._polynomial_divmod import polynomial_divmod
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ._polynomial import Polynomial
 
 
-def polynomial_div(p: Polynomial, q: Polynomial) -> Polynomial:
+def polynomial_div(p: "Polynomial", q: "Polynomial") -> "Polynomial":
     """Return quotient of polynomial division.
 
     Convenience wrapper around polynomial_divmod that returns only the quotient.
@@ -26,5 +28,7 @@ def polynomial_div(p: Polynomial, q: Polynomial) -> Polynomial:
     >>> polynomial_div(p, q)
     Polynomial(tensor([1., 1., 1.]))
     """
+    from ._polynomial_divmod import polynomial_divmod
+
     quotient, _ = polynomial_divmod(p, q)
     return quotient

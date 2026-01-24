@@ -1,9 +1,12 @@
+from typing import TYPE_CHECKING
+
 import torch
 
-from ._polynomial import Polynomial, polynomial
+if TYPE_CHECKING:
+    from ._polynomial import Polynomial
 
 
-def polynomial_subtract(p: Polynomial, q: Polynomial) -> Polynomial:
+def polynomial_subtract(p: "Polynomial", q: "Polynomial") -> "Polynomial":
     """Subtract two polynomials.
 
     Computes element-wise difference of coefficients with zero-padding for
@@ -52,5 +55,7 @@ def polynomial_subtract(p: Polynomial, q: Polynomial) -> Polynomial:
         result = result_flat.reshape(n_out)
     else:
         result = result_flat.reshape(*broadcast_batch, n_out)
+
+    from ._polynomial import polynomial
 
     return polynomial(result)

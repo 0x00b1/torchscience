@@ -1,9 +1,12 @@
+from typing import TYPE_CHECKING
+
 import torch
 
-from ._polynomial import Polynomial, polynomial
+if TYPE_CHECKING:
+    from ._polynomial import Polynomial
 
 
-def polynomial_negate(p: Polynomial) -> Polynomial:
+def polynomial_negate(p: "Polynomial") -> "Polynomial":
     """Negate polynomial.
 
     Computes element-wise negation of coefficients.
@@ -35,5 +38,7 @@ def polynomial_negate(p: Polynomial) -> Polynomial:
         result = result_flat.reshape(n_p)
     else:
         result = result_flat.reshape(*p_batch, n_p)
+
+    from ._polynomial import polynomial
 
     return polynomial(result)

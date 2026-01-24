@@ -59,7 +59,13 @@ class HermitePolynomialHe(Tensor):
     DOMAIN = (float("-inf"), float("inf"))
 
     @staticmethod
-    def __new__(cls, data, *, dtype=None, device=None):
+    def __new__(
+        cls,
+        data,
+        *,
+        dtype=None,
+        device=None,
+    ):
         if isinstance(data, Tensor):
             tensor = data.clone()
             if dtype is not None:
@@ -71,7 +77,13 @@ class HermitePolynomialHe(Tensor):
         return tensor.as_subclass(cls)
 
     @classmethod
-    def __torch_function__(cls, func, types, args=(), kwargs=None):
+    def __torch_function__(
+        cls,
+        func,
+        types,
+        args=(),
+        kwargs=None,
+    ):
         kwargs = kwargs or {}
         result = super().__torch_function__(func, types, args, kwargs)
 
@@ -81,38 +93,55 @@ class HermitePolynomialHe(Tensor):
 
         return result
 
-    def __call__(self, x: Tensor) -> Tensor:
+    def __call__(
+        self,
+        x: Tensor,
+    ) -> Tensor:
         from ._hermite_polynomial_he_evaluate import (
             hermite_polynomial_he_evaluate,
         )
 
         return hermite_polynomial_he_evaluate(self, x)
 
-    def __add__(self, other: "HermitePolynomialHe") -> "HermitePolynomialHe":
+    def __add__(
+        self,
+        other: "HermitePolynomialHe",
+    ) -> "HermitePolynomialHe":
         from ._hermite_polynomial_he_add import hermite_polynomial_he_add
 
         return hermite_polynomial_he_add(self, other)
 
-    def __radd__(self, other: "HermitePolynomialHe") -> "HermitePolynomialHe":
+    def __radd__(
+        self,
+        other: "HermitePolynomialHe",
+    ) -> "HermitePolynomialHe":
         from ._hermite_polynomial_he_add import hermite_polynomial_he_add
 
         return hermite_polynomial_he_add(other, self)
 
-    def __sub__(self, other: "HermitePolynomialHe") -> "HermitePolynomialHe":
+    def __sub__(
+        self,
+        other: "HermitePolynomialHe",
+    ) -> "HermitePolynomialHe":
         from ._hermite_polynomial_he_subtract import (
             hermite_polynomial_he_subtract,
         )
 
         return hermite_polynomial_he_subtract(self, other)
 
-    def __rsub__(self, other: "HermitePolynomialHe") -> "HermitePolynomialHe":
+    def __rsub__(
+        self,
+        other: "HermitePolynomialHe",
+    ) -> "HermitePolynomialHe":
         from ._hermite_polynomial_he_subtract import (
             hermite_polynomial_he_subtract,
         )
 
         return hermite_polynomial_he_subtract(other, self)
 
-    def __neg__(self) -> "HermitePolynomialHe":
+    def __neg__(
+        self,
+    ) -> "HermitePolynomialHe":
         from ._hermite_polynomial_he_negate import (
             hermite_polynomial_he_negate,
         )
@@ -120,7 +149,8 @@ class HermitePolynomialHe(Tensor):
         return hermite_polynomial_he_negate(self)
 
     def __mul__(
-        self, other: Union["HermitePolynomialHe", Tensor]
+        self,
+        other: Union["HermitePolynomialHe", Tensor],
     ) -> "HermitePolynomialHe":
         from ._hermite_polynomial_he_multiply import (
             hermite_polynomial_he_multiply,
@@ -134,7 +164,8 @@ class HermitePolynomialHe(Tensor):
         return hermite_polynomial_he_scale(self, other)
 
     def __rmul__(
-        self, other: Union["HermitePolynomialHe", Tensor]
+        self,
+        other: Union["HermitePolynomialHe", Tensor],
     ) -> "HermitePolynomialHe":
         from ._hermite_polynomial_he_multiply import (
             hermite_polynomial_he_multiply,
@@ -147,24 +178,33 @@ class HermitePolynomialHe(Tensor):
             return hermite_polynomial_he_multiply(other, self)
         return hermite_polynomial_he_scale(self, other)
 
-    def __pow__(self, n: int) -> "HermitePolynomialHe":
+    def __pow__(
+        self,
+        n: int,
+    ) -> "HermitePolynomialHe":
         from ._hermite_polynomial_he_pow import hermite_polynomial_he_pow
 
         return hermite_polynomial_he_pow(self, n)
 
     def __floordiv__(
-        self, other: "HermitePolynomialHe"
+        self,
+        other: "HermitePolynomialHe",
     ) -> "HermitePolynomialHe":
         from ._hermite_polynomial_he_div import hermite_polynomial_he_div
 
         return hermite_polynomial_he_div(self, other)
 
-    def __mod__(self, other: "HermitePolynomialHe") -> "HermitePolynomialHe":
+    def __mod__(
+        self,
+        other: "HermitePolynomialHe",
+    ) -> "HermitePolynomialHe":
         from ._hermite_polynomial_he_mod import hermite_polynomial_he_mod
 
         return hermite_polynomial_he_mod(self, other)
 
-    def __repr__(self) -> str:
+    def __repr__(
+        self,
+    ) -> str:
         return f"HermitePolynomialHe({Tensor.__repr__(self)})"
 
 
