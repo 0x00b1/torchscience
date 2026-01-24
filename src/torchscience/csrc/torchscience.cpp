@@ -72,6 +72,8 @@
 #include "cpu/graphics/color/lab_to_srgb.h"
 #include "cpu/graphics/color/srgb_to_luv.h"
 #include "cpu/graphics/color/luv_to_srgb.h"
+#include "cpu/graphics/color/srgb_to_lchab.h"
+#include "cpu/graphics/color/lchab_to_srgb.h"
 
 // morphology
 #include "cpu/morphology/erosion.h"
@@ -485,6 +487,8 @@
 #include "autograd/graphics/color/lab_to_srgb.h"
 #include "autograd/graphics/color/srgb_to_luv.h"
 #include "autograd/graphics/color/luv_to_srgb.h"
+#include "autograd/graphics/color/srgb_to_lchab.h"
+#include "autograd/graphics/color/lchab_to_srgb.h"
 #include "autograd/signal_processing/filter.h"
 #include "autograd/optimization/test_functions.h"
 #include "autograd/optimization/combinatorial.h"
@@ -558,6 +562,8 @@
 #include "meta/graphics/color/lab_to_srgb.h"
 #include "meta/graphics/color/srgb_to_luv.h"
 #include "meta/graphics/color/luv_to_srgb.h"
+#include "meta/graphics/color/srgb_to_lchab.h"
+#include "meta/graphics/color/lchab_to_srgb.h"
 #include "meta/signal_processing/filter.h"
 #include "meta/optimization/test_functions.h"
 #include "meta/optimization/combinatorial.h"
@@ -1092,6 +1098,12 @@ TORCH_LIBRARY(torchscience, module) {
 
   module.def("luv_to_srgb(Tensor input) -> Tensor");
   module.def("luv_to_srgb_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("srgb_to_lchab(Tensor input) -> Tensor");
+  module.def("srgb_to_lchab_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("lchab_to_srgb(Tensor input) -> Tensor");
+  module.def("lchab_to_srgb_backward(Tensor grad_output, Tensor input) -> Tensor");
 
   // graphics.texture_mapping
   module.def("cube_mapping(Tensor direction) -> (Tensor, Tensor, Tensor)");
