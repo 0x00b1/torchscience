@@ -10,7 +10,7 @@ from ._exceptions import (
 from ._ray_intersect import RayHit, ray_intersect
 from ._ray_occluded import ray_occluded
 from .intersection import RaySphereHit, ray_sphere_intersection
-from .mesh import Mesh
+from .mesh import Mesh, rectangle_mesh
 
 __all__ = [
     "ClosestPoint",
@@ -26,4 +26,5 @@ __all__ = [
     "ray_intersect",
     "ray_occluded",
     "ray_sphere_intersection",
+    "rectangle_mesh",
 ]
