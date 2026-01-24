@@ -11,6 +11,7 @@ from ._directed_information import directed_information
 from ._dual_total_correlation import dual_total_correlation
 from ._f_divergence import f_divergence
 from ._histogram_entropy import histogram_entropy
+from ._huffman_lengths import huffman_lengths
 from ._interaction_information import interaction_information
 from ._jackknife_entropy import jackknife_entropy
 from ._jensen_shannon_divergence import jensen_shannon_divergence
@@ -47,6 +48,7 @@ __all__ = [
     "dual_total_correlation",
     "f_divergence",
     "histogram_entropy",
+    "huffman_lengths",
     "interaction_information",
     "jackknife_entropy",
     "jensen_shannon_divergence",
