@@ -93,6 +93,21 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE void conditional_entropy_backward_kernel(
 
 /**
  * Compute second-order gradient of conditional entropy.
+ *
+ * The first gradient is: g(x,y) = -log(p(y|x)) * scale
+ *
+ * Second-order derivatives:
+ * - d²H/dp(x,y)² = (-1/p(x,y) + 1/p(x)) * scale
+ * - d²H/dp(x,y)dp(x,y') = 1/p(x) * scale  for y' != y (same row cross-term)
+ * - d²H/dp(x,y)dp(x',y') = 0  for x' != x (different rows are independent)
+ *
+ * The backward_backward computes:
+ * - grad_grad_output = sum_{x,y} gg_joint(x,y) * dH/dp(x,y)
+ * - grad_joint(x,y) = sum_{x',y'} gg_joint(x',y') * grad_output * d²H/dp(x',y')dp(x,y)
+ *                   = grad_output * [gg_joint(x,y) * (-1/p(x,y) + 1/p(x))
+ *                                  + sum_{y'!=y} gg_joint(x,y') * 1/p(x)]
+ *                   = grad_output * [gg_joint(x,y) * (-1/p(x,y))
+ *                                  + sum_{y'} gg_joint(x,y') * 1/p(x)]
  */
 template <typename T>
 C10_HOST_DEVICE C10_ALWAYS_INLINE void conditional_entropy_backward_backward_kernel(
@@ -107,52 +122,68 @@ C10_HOST_DEVICE C10_ALWAYS_INLINE void conditional_entropy_backward_backward_ker
     T* grad_joint
 ) {
   T eps = get_eps<T>();
+  T scaled_grad = grad_output * log_base_scale;
 
   grad_grad_output = T(0);
 
   if (condition_dim == 0) {
+    // Condition on X (rows): H(Y|X)
     for (int64_t x = 0; x < size_x; ++x) {
+      // Compute marginal p(x) and sum of gg for this row
       T p_x = T(0);
+      T gg_row_sum = T(0);
       for (int64_t y = 0; y < size_y; ++y) {
         p_x += joint[x * size_y + y];
+        if (gg_joint) {
+          gg_row_sum += gg_joint[x * size_y + y];
+        }
       }
       p_x = p_x > eps ? p_x : eps;
+
+      // Cross-term contribution: (1/p(x)) * sum_y' gg(x,y')
+      T cross_term = gg_row_sum / p_x;
 
       for (int64_t y = 0; y < size_y; ++y) {
         T p_xy = joint[x * size_y + y] > eps ? joint[x * size_y + y] : eps;
         T p_y_given_x = p_xy / p_x;
         T gg = gg_joint ? gg_joint[x * size_y + y] : T(0);
 
-        // d/dp(x,y) of (-log(p(y|x))) = -1/p(y|x) * d(p(y|x))/dp(x,y)
-        // d(p(y|x))/dp(x,y) = 1/p(x) - p(x,y)/p(x)^2 = (p(x) - p(x,y))/p(x)^2
-        //                   = (1 - p(y|x))/p(x)
-        // So d(-log(p(y|x)))/dp(x,y) = -1/p(y|x) * (1 - p(y|x))/p(x)
-        //                            = -(1 - p(y|x))/(p(y|x) * p(x))
-        //                            = -(1/p(x,y) - 1/p(x))
-
+        // grad_grad_output contribution
         grad_grad_output += gg * (-std::log(p_y_given_x) * log_base_scale);
 
-        T d2 = -(T(1) / p_xy - T(1) / p_x);
-        grad_joint[x * size_y + y] = grad_output * log_base_scale * gg * d2;
+        // grad_joint: diagonal term (-1/p(x,y)) + cross term (1/p(x) from all y' in same row)
+        // = gg * (-1/p(x,y)) + cross_term
+        // But we scale by grad_output and log_base_scale
+        grad_joint[x * size_y + y] = scaled_grad * (-gg / p_xy + cross_term);
       }
     }
   } else {
+    // Condition on Y (cols): H(X|Y)
     for (int64_t y = 0; y < size_y; ++y) {
+      // Compute marginal p(y) and sum of gg for this column
       T p_y = T(0);
+      T gg_col_sum = T(0);
       for (int64_t x = 0; x < size_x; ++x) {
         p_y += joint[x * size_y + y];
+        if (gg_joint) {
+          gg_col_sum += gg_joint[x * size_y + y];
+        }
       }
       p_y = p_y > eps ? p_y : eps;
+
+      // Cross-term contribution: (1/p(y)) * sum_x' gg(x',y)
+      T cross_term = gg_col_sum / p_y;
 
       for (int64_t x = 0; x < size_x; ++x) {
         T p_xy = joint[x * size_y + y] > eps ? joint[x * size_y + y] : eps;
         T p_x_given_y = p_xy / p_y;
         T gg = gg_joint ? gg_joint[x * size_y + y] : T(0);
 
+        // grad_grad_output contribution
         grad_grad_output += gg * (-std::log(p_x_given_y) * log_base_scale);
 
-        T d2 = -(T(1) / p_xy - T(1) / p_y);
-        grad_joint[x * size_y + y] = grad_output * log_base_scale * gg * d2;
+        // grad_joint: diagonal term + cross term
+        grad_joint[x * size_y + y] = scaled_grad * (-gg / p_xy + cross_term);
       }
     }
   }

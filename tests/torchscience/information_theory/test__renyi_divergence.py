@@ -4,9 +4,9 @@ import math
 
 import pytest
 import torch
-from torch.autograd import gradcheck
+from torch.autograd import gradcheck, gradgradcheck
 
-from torchscience.information_theory import (
+from torchscience.information import (
     kullback_leibler_divergence,
     renyi_divergence,
 )
@@ -375,6 +375,98 @@ class TestRenyiDivergenceGradients:
         assert q.grad is not None
         assert torch.isfinite(p.grad).all()
         assert torch.isfinite(q.grad).all()
+
+    def test_gradgradcheck_probability(self):
+        """Second-order gradients are correct for probability inputs."""
+        p = torch.softmax(torch.randn(5, dtype=torch.float64), dim=-1)
+        q = torch.softmax(torch.randn(5, dtype=torch.float64), dim=-1)
+
+        p.requires_grad_(True)
+        q.requires_grad_(True)
+
+        def func(p_in, q_in):
+            return renyi_divergence(
+                p_in, q_in, alpha=2.0, input_type="probability"
+            )
+
+        assert gradgradcheck(func, (p, q), eps=1e-6, atol=1e-4, rtol=1e-3)
+
+    def test_gradgradcheck_alpha_half(self):
+        """Second-order gradients are correct for alpha=0.5."""
+        p = torch.softmax(torch.randn(5, dtype=torch.float64), dim=-1)
+        q = torch.softmax(torch.randn(5, dtype=torch.float64), dim=-1)
+
+        p.requires_grad_(True)
+        q.requires_grad_(True)
+
+        def func(p_in, q_in):
+            return renyi_divergence(
+                p_in, q_in, alpha=0.5, input_type="probability"
+            )
+
+        assert gradgradcheck(func, (p, q), eps=1e-6, atol=1e-4, rtol=1e-3)
+
+    def test_gradgradcheck_batch(self):
+        """Second-order gradients are correct for batched inputs."""
+        p = torch.softmax(torch.randn(3, 5, dtype=torch.float64), dim=-1)
+        q = torch.softmax(torch.randn(3, 5, dtype=torch.float64), dim=-1)
+
+        p.requires_grad_(True)
+        q.requires_grad_(True)
+
+        def func(p_in, q_in):
+            return renyi_divergence(
+                p_in,
+                q_in,
+                alpha=2.0,
+                input_type="probability",
+                reduction="sum",
+            )
+
+        assert gradgradcheck(func, (p, q), eps=1e-6, atol=1e-4, rtol=1e-3)
+
+    def test_gradgradcheck_alpha_3(self):
+        """Second-order gradients are correct for alpha=3."""
+        p = torch.softmax(torch.randn(5, dtype=torch.float64), dim=-1)
+        q = torch.softmax(torch.randn(5, dtype=torch.float64), dim=-1)
+
+        p.requires_grad_(True)
+        q.requires_grad_(True)
+
+        def func(p_in, q_in):
+            return renyi_divergence(
+                p_in, q_in, alpha=3.0, input_type="probability"
+            )
+
+        assert gradgradcheck(func, (p, q), eps=1e-6, atol=1e-4, rtol=1e-3)
+
+    def test_second_order_backward_runs(self):
+        """Second-order backward pass runs without errors."""
+        p = torch.softmax(torch.randn(10, dtype=torch.float64), dim=-1)
+        q = torch.softmax(torch.randn(10, dtype=torch.float64), dim=-1)
+
+        p.requires_grad_(True)
+        q.requires_grad_(True)
+
+        result = renyi_divergence(p, q, alpha=2.0)
+        grad_p, grad_q = torch.autograd.grad(result, (p, q), create_graph=True)
+
+        # Compute second-order gradients
+        grad_grad_p = torch.autograd.grad(
+            grad_p.sum(), (p, q), retain_graph=True
+        )
+        grad_grad_q = torch.autograd.grad(
+            grad_q.sum(), (p, q), retain_graph=True
+        )
+
+        assert grad_grad_p[0] is not None
+        assert grad_grad_p[1] is not None
+        assert grad_grad_q[0] is not None
+        assert grad_grad_q[1] is not None
+        assert torch.isfinite(grad_grad_p[0]).all()
+        assert torch.isfinite(grad_grad_p[1]).all()
+        assert torch.isfinite(grad_grad_q[0]).all()
+        assert torch.isfinite(grad_grad_q[1]).all()
 
 
 class TestRenyiDivergenceValidation:

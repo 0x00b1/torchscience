@@ -137,6 +137,16 @@
 #include "cpu/information_theory/renyi_entropy.h"
 #include "cpu/information_theory/tsallis_entropy.h"
 #include "cpu/information_theory/renyi_divergence.h"
+#include "cpu/information_theory/conditional_mutual_information.h"
+#include "cpu/information_theory/total_correlation.h"
+#include "cpu/information_theory/dual_total_correlation.h"
+#include "cpu/information_theory/interaction_information.h"
+#include "cpu/information_theory/coinformation.h"
+#include "cpu/information_theory/transfer_entropy.h"
+#include "cpu/information_theory/directed_information.h"
+#include "cpu/information_theory/active_information_storage.h"
+#include "cpu/information_theory/causally_conditioned_entropy.h"
+#include "cpu/information_theory/partial_information_decomposition.h"
 #include "cpu/space_partitioning/kd_tree.h"
 #include "cpu/space_partitioning/k_nearest_neighbors.h"
 #include "cpu/space_partitioning/range_search.h"
@@ -495,6 +505,16 @@
 #include "autograd/information_theory/renyi_entropy.h"
 #include "autograd/information_theory/tsallis_entropy.h"
 #include "autograd/information_theory/renyi_divergence.h"
+#include "autograd/information_theory/conditional_mutual_information.h"
+#include "autograd/information_theory/total_correlation.h"
+#include "autograd/information_theory/dual_total_correlation.h"
+#include "autograd/information_theory/interaction_information.h"
+#include "autograd/information_theory/coinformation.h"
+#include "autograd/information_theory/transfer_entropy.h"
+#include "autograd/information_theory/directed_information.h"
+#include "autograd/information_theory/active_information_storage.h"
+#include "autograd/information_theory/causally_conditioned_entropy.h"
+#include "autograd/information_theory/partial_information_decomposition.h"
 #include "autograd/geometry/transform/reflect.h"
 #include "autograd/geometry/transform/refract.h"
 #include "autograd/geometry/transform/quaternion_multiply.h"
@@ -579,6 +599,16 @@
 #include "meta/information_theory/renyi_entropy.h"
 #include "meta/information_theory/tsallis_entropy.h"
 #include "meta/information_theory/renyi_divergence.h"
+#include "meta/information_theory/conditional_mutual_information.h"
+#include "meta/information_theory/total_correlation.h"
+#include "meta/information_theory/dual_total_correlation.h"
+#include "meta/information_theory/interaction_information.h"
+#include "meta/information_theory/coinformation.h"
+#include "meta/information_theory/transfer_entropy.h"
+#include "meta/information_theory/directed_information.h"
+#include "meta/information_theory/active_information_storage.h"
+#include "meta/information_theory/causally_conditioned_entropy.h"
+#include "meta/information_theory/partial_information_decomposition.h"
 #include "meta/space_partitioning/kd_tree.h"
 #include "meta/space_partitioning/k_nearest_neighbors.h"
 #include "meta/space_partitioning/range_search.h"
@@ -1389,17 +1419,60 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("pointwise_mutual_information_backward(Tensor grad_output, Tensor joint, int[] dims, str input_type, float? base) -> Tensor");
   module.def("pointwise_mutual_information_backward_backward(Tensor gg_joint, Tensor grad_output, Tensor joint, int[] dims, str input_type, float? base) -> (Tensor, Tensor)");
 
+  // Conditional mutual information
+  module.def("conditional_mutual_information(Tensor joint, int[] dims_x, int[] dims_y, int[] dims_z, str input_type, str reduction, float? base) -> Tensor");
+  module.def("conditional_mutual_information_backward(Tensor grad_output, Tensor joint, int[] dims_x, int[] dims_y, int[] dims_z, str input_type, str reduction, float? base) -> Tensor");
+
+  // Total correlation (multi-information)
+  module.def("total_correlation(Tensor joint, str input_type, str reduction, float? base) -> Tensor");
+  module.def("total_correlation_backward(Tensor grad_output, Tensor joint, str input_type, str reduction, float? base) -> Tensor");
+
+  // Dual total correlation (binding information)
+  module.def("dual_total_correlation(Tensor joint, str input_type, str reduction, float? base) -> Tensor");
+  module.def("dual_total_correlation_backward(Tensor grad_output, Tensor joint, str input_type, str reduction, float? base) -> Tensor");
+
+  // Interaction information
+  module.def("interaction_information(Tensor joint, str input_type, str reduction, float? base) -> Tensor");
+  module.def("interaction_information_backward(Tensor grad_output, Tensor joint, str input_type, str reduction, float? base) -> Tensor");
+
+  // Coinformation (N-variable generalization of interaction information)
+  module.def("coinformation(Tensor joint, str input_type, str reduction, float? base) -> Tensor");
+  module.def("coinformation_backward(Tensor grad_output, Tensor joint, str input_type, str reduction, float? base) -> Tensor");
+
+  // Transfer entropy
+  module.def("transfer_entropy(Tensor joint, str input_type, str reduction, float? base) -> Tensor");
+  module.def("transfer_entropy_backward(Tensor grad_output, Tensor joint, str input_type, str reduction, float? base) -> Tensor");
+
+  // Directed information
+  module.def("directed_information(Tensor joint, str input_type, str reduction, float? base) -> Tensor");
+  module.def("directed_information_backward(Tensor grad_output, Tensor joint, str input_type, str reduction, float? base) -> Tensor");
+
+  // Active information storage
+  module.def("active_information_storage(Tensor joint, str input_type, str reduction, float? base) -> Tensor");
+  module.def("active_information_storage_backward(Tensor grad_output, Tensor joint, str input_type, str reduction, float? base) -> Tensor");
+
+  // Causally conditioned entropy
+  module.def("causally_conditioned_entropy(Tensor joint, str input_type, str reduction, float? base) -> Tensor");
+  module.def("causally_conditioned_entropy_backward(Tensor grad_output, Tensor joint, str input_type, str reduction, float? base) -> Tensor");
+
+  // Partial information decomposition
+  module.def("partial_information_decomposition(Tensor joint, str method, str input_type, float? base) -> Tensor[]");
+  module.def("partial_information_decomposition_backward(Tensor grad_redundancy, Tensor grad_unique_x, Tensor grad_unique_y, Tensor grad_synergy, Tensor grad_mutual_info, Tensor joint, str method, str input_type, float? base) -> Tensor[]");
+
   // Renyi entropy
   module.def("renyi_entropy(Tensor p, float alpha, int dim, str input_type, str reduction, float? base) -> Tensor");
   module.def("renyi_entropy_backward(Tensor grad_output, Tensor p, float alpha, int dim, str input_type, str reduction, float? base) -> Tensor");
+  module.def("renyi_entropy_backward_backward(Tensor gg_p, Tensor grad_output, Tensor p, float alpha, int dim, str input_type, str reduction, float? base) -> (Tensor, Tensor)");
 
   // Tsallis entropy
   module.def("tsallis_entropy(Tensor p, float q, int dim, str input_type, str reduction) -> Tensor");
   module.def("tsallis_entropy_backward(Tensor grad_output, Tensor p, float q, int dim, str input_type, str reduction) -> Tensor");
+  module.def("tsallis_entropy_backward_backward(Tensor gg_p, Tensor grad_output, Tensor p, float q, int dim, str input_type, str reduction) -> (Tensor, Tensor)");
 
   // Renyi divergence
   module.def("renyi_divergence(Tensor p, Tensor q, float alpha, int dim, str input_type, str reduction, float? base, bool pairwise) -> Tensor");
   module.def("renyi_divergence_backward(Tensor grad_output, Tensor p, Tensor q, float alpha, int dim, str input_type, str reduction, float? base, bool pairwise) -> (Tensor, Tensor)");
+  module.def("renyi_divergence_backward_backward(Tensor gg_p, Tensor gg_q, Tensor grad_output, Tensor p, Tensor q, float alpha, int dim, str input_type, str reduction, float? base) -> (Tensor, Tensor, Tensor)");
 
   // Cross-entropy
   module.def("cross_entropy(Tensor p, Tensor q, int dim, str input_type, str reduction, float? base) -> Tensor");

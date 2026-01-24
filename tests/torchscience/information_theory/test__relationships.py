@@ -14,7 +14,7 @@ Tests the mathematical relationships between entropy and divergence operators:
 
 import torch
 
-from torchscience.information_theory import (
+from torchscience.information import (
     chi_squared_divergence,
     cross_entropy,
     f_divergence,

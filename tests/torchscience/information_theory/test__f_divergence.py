@@ -4,7 +4,7 @@ import pytest
 import torch
 from torch.autograd import gradcheck
 
-from torchscience.information_theory import (
+from torchscience.information import (
     chi_squared_divergence,
     f_divergence,
     kullback_leibler_divergence,

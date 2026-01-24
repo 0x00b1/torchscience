@@ -7,7 +7,7 @@ import scipy.stats
 import torch
 from torch.autograd import gradcheck, gradgradcheck
 
-from torchscience.information_theory import shannon_entropy
+from torchscience.information import shannon_entropy
 
 
 class TestShannonEntropyBasic:

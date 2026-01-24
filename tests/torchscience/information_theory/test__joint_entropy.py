@@ -5,7 +5,7 @@ import scipy.stats
 import torch
 from torch.autograd import gradcheck
 
-from torchscience.information_theory import joint_entropy, shannon_entropy
+from torchscience.information import joint_entropy, shannon_entropy
 
 
 class TestJointEntropyBasic:
