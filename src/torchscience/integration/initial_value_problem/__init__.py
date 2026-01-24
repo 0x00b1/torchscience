@@ -165,9 +165,41 @@ Choosing between stiff solvers:
 - Use ``bdf`` for most stiff problems (good general choice)
 - Use ``radau`` for very stiff problems or when L-stability is important
 - Use ``backward_euler`` for simple problems or when speed matters more than accuracy
+
+Neural ODE Optimizations
+------------------------
+reversible_heun
+    Heun's method with O(1) memory gradients. Reconstructs forward
+    trajectory during backprop by algebraically inverting steps.
+    Best for moderate-length neural ODE training.
+
+asynchronous_leapfrog
+    Asynchronous Leapfrog (ALA) integrator. O(1) memory via staggered
+    state estimates that enable exact reversal without iteration.
+    Better stability than reversible_heun for some problems.
+
+compile_solver
+    Wrap any solver with torch.compile for speedup. Fixed-step
+    explicit solvers benefit most. First call slow (compilation),
+    subsequent calls fast.
+
+is_compile_compatible
+    Check if a solver is compatible with torch.compile.
+
+Choosing between neural ODE solvers:
+
+- Use ``adjoint(dormand_prince_5)`` for accuracy with O(1) memory
+- Use ``reversible_heun`` for faster training on moderate integrations
+- Use ``asynchronous_leapfrog`` when reversible_heun is unstable
+- Use ``compile_solver(runge_kutta_4)`` for fastest fixed-step GPU training
 """
 
 from torchscience.integration.initial_value_problem._adjoint import adjoint
+
+# Neural ODE optimizations
+from torchscience.integration.initial_value_problem._asynchronous_leapfrog import (
+    asynchronous_leapfrog,
+)
 from torchscience.integration.initial_value_problem._backward_euler import (
     backward_euler,
 )
@@ -179,6 +211,10 @@ from torchscience.integration.initial_value_problem._cnf import (
     cnf_dynamics,
     exact_trace,
     hutchinson_trace,
+)
+from torchscience.integration.initial_value_problem._compile_utils import (
+    compile_solver,
+    is_compile_compatible,
 )
 from torchscience.integration.initial_value_problem._dormand_prince_5 import (
     dormand_prince_5,
@@ -195,6 +231,9 @@ from torchscience.integration.initial_value_problem._implicit_midpoint import (
 )
 from torchscience.integration.initial_value_problem._midpoint import midpoint
 from torchscience.integration.initial_value_problem._radau import radau
+from torchscience.integration.initial_value_problem._reversible_heun import (
+    reversible_heun,
+)
 from torchscience.integration.initial_value_problem._runge_kutta_4 import (
     runge_kutta_4,
 )
@@ -245,4 +284,9 @@ __all__ = [
     "cnf_dynamics",
     "exact_trace",
     "hutchinson_trace",
+    # Neural ODE optimizations
+    "reversible_heun",
+    "asynchronous_leapfrog",
+    "compile_solver",
+    "is_compile_compatible",
 ]
