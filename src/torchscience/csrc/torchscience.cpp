@@ -1189,6 +1189,12 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("ycbcr_to_srgb(Tensor input) -> Tensor");
   module.def("ycbcr_to_srgb_backward(Tensor grad_output, Tensor input) -> Tensor");
 
+  module.def("srgb_to_ypbpr(Tensor input) -> Tensor");
+  module.def("srgb_to_ypbpr_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("ypbpr_to_srgb(Tensor input) -> Tensor");
+  module.def("ypbpr_to_srgb_backward(Tensor grad_output, Tensor input) -> Tensor");
+
   module.def("srgb_to_yuv(Tensor input) -> Tensor");
   module.def("srgb_to_yuv_backward(Tensor grad_output, Tensor input) -> Tensor");
 

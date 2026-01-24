@@ -26,9 +26,11 @@ from torchscience.color._srgb_to_srgb_linear import (
 )
 from torchscience.color._srgb_to_xyz import srgb_to_xyz
 from torchscience.color._srgb_to_ycbcr import srgb_to_ycbcr
+from torchscience.color._srgb_to_ypbpr import srgb_to_ypbpr
 from torchscience.color._srgb_to_yuv import srgb_to_yuv
 from torchscience.color._xyz_to_srgb import xyz_to_srgb
 from torchscience.color._ycbcr_to_srgb import ycbcr_to_srgb
+from torchscience.color._ypbpr_to_srgb import ypbpr_to_srgb
 from torchscience.color._yuv_to_srgb import yuv_to_srgb
 
 __all__ = [
@@ -54,8 +56,10 @@ __all__ = [
     "srgb_to_srgb_linear",
     "srgb_to_xyz",
     "srgb_to_ycbcr",
+    "srgb_to_ypbpr",
     "srgb_to_yuv",
     "xyz_to_srgb",
     "ycbcr_to_srgb",
+    "ypbpr_to_srgb",
     "yuv_to_srgb",
 ]
