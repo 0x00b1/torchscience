@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <c10/macros/Macros.h>
 #include "common.h"
 
 namespace torchscience::kernel::window_function {
@@ -8,7 +9,7 @@ namespace torchscience::kernel::window_function {
 // General Hamming window: w[k] = alpha - (1 - alpha) * cos(2*pi*k / denom)
 // Standard Hamming uses alpha = 0.54, Hann uses alpha = 0.5
 template<typename scalar_t>
-inline scalar_t general_hamming(int64_t i, int64_t n, scalar_t alpha, bool periodic) {
+C10_HOST_DEVICE inline scalar_t general_hamming(int64_t i, int64_t n, scalar_t alpha, bool periodic) {
   if (n == 1) {
     return scalar_t(1);
   }
@@ -22,7 +23,7 @@ inline scalar_t general_hamming(int64_t i, int64_t n, scalar_t alpha, bool perio
 
 // Gradient w.r.t. alpha: d/d(alpha) = 1 + cos(x)
 template<typename scalar_t>
-inline scalar_t general_hamming_backward(
+C10_HOST_DEVICE inline scalar_t general_hamming_backward(
   scalar_t grad_out,
   int64_t i,
   int64_t n,

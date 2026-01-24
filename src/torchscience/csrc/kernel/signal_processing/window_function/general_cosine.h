@@ -1,13 +1,14 @@
 #pragma once
 
 #include <cmath>
+#include <c10/macros/Macros.h>
 #include "common.h"
 
 namespace torchscience::kernel::window_function {
 
 // General cosine window: w[k] = sum_{j=0}^{M-1} (-1)^j * a_j * cos(2*pi*j*k / denom)
 template<typename scalar_t>
-inline scalar_t general_cosine(
+C10_HOST_DEVICE inline scalar_t general_cosine(
   int64_t i,
   int64_t n,
   const scalar_t* coeffs,
@@ -45,7 +46,7 @@ inline scalar_t general_cosine(
 
 // Gradient w.r.t. coefficient j: d/d(a_j) = (-1)^j * cos(j * x)
 template<typename scalar_t>
-inline scalar_t general_cosine_backward_coeff(
+C10_HOST_DEVICE inline scalar_t general_cosine_backward_coeff(
   scalar_t grad_out,
   int64_t i,
   int64_t n,
