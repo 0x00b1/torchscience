@@ -1,4 +1,4 @@
-"""Inverse Fourier transform implementation."""
+"""Hartley transform implementation."""
 
 from typing import Literal
 
@@ -21,7 +21,7 @@ _VALID_PADDING_MODES = {
 }
 
 
-def inverse_fourier_transform(
+def hartley_transform(
     input: Tensor,
     *,
     dim: int | tuple[int, ...] = -1,
@@ -38,25 +38,28 @@ def inverse_fourier_transform(
     window: Tensor | None = None,
     out: Tensor | None = None,
 ) -> Tensor:
-    r"""Compute the inverse discrete Fourier transform of a signal.
+    r"""Compute the discrete Hartley transform of a signal.
 
-    The inverse Fourier transform is defined as:
+    The Hartley transform is defined as:
 
     .. math::
-        x[n] = \frac{1}{N} \sum_{k=0}^{N-1} X[k] \cdot e^{2\pi i k n / N}
+        H[k] = \text{Re}(F[k]) - \text{Im}(F[k])
 
-    (with default ``'backward'`` normalization).
+    where :math:`F[k]` is the discrete Fourier transform. The Hartley transform
+    is real-to-real and is self-inverse (applying it twice with ortho normalization
+    recovers the original signal).
 
-    This implementation wraps PyTorch's IFFT with additional support for
+    This implementation wraps PyTorch's FFT with additional support for
     padding, windowing, and multi-dimensional transforms.
 
     Parameters
     ----------
     input : Tensor
-        Input tensor of any shape. Typically complex-valued.
+        Input tensor of any shape. Must be real-valued (complex input raises
+        an error).
     dim : int or tuple of int, optional
         The dimension(s) along which to compute the transform.
-        If a tuple, computes a multi-dimensional IFFT.
+        If a tuple, computes a multi-dimensional Hartley transform.
         Default: ``-1`` (last dimension).
     n : int or tuple of int, optional
         Signal length(s). If given, the input will either be padded or
@@ -69,6 +72,7 @@ def inverse_fourier_transform(
 
         - ``'backward'``: No normalization on forward, divide by n on inverse.
         - ``'ortho'``: Normalize by 1/sqrt(n) on both forward and inverse.
+          This makes the transform self-inverse.
         - ``'forward'``: Divide by n on forward, no normalization on inverse.
 
         Default: ``'backward'``.
@@ -103,83 +107,131 @@ def inverse_fourier_transform(
         Polynomial order for ``'polynomial'`` padding mode.
         Default: ``1`` (linear).
     window : Tensor, optional
-        Window function to apply after the transform. Must be 1-D with size
-        matching the output signal length along ``dim``.
+        Window function to apply before the transform. Must be 1-D with size
+        matching the (possibly padded) signal length along ``dim``.
         For multi-dimensional transforms, windowing is only supported for
         single-dimension transforms.
         Use window functions from ``torch`` (e.g., ``torch.hann_window``).
         Default: ``None`` (no windowing).
     out : Tensor, optional
-        Output tensor. Must have the correct shape and dtype (complex).
+        Output tensor. Must have the correct shape and dtype (real).
         Default: ``None`` (allocate new tensor).
 
     Returns
     -------
     Tensor
-        The inverse Fourier transform of the input. Complex-valued.
+        The Hartley transform of the input. Always real-valued with the same
+        dtype as the input.
         If ``n`` is specified and differs from the input size along ``dim``,
         the output size along ``dim`` will be ``n``.
 
+    Raises
+    ------
+    ValueError
+        If the input tensor is complex-valued.
+
     Examples
     --------
-    Round-trip with forward transform:
+    Basic usage:
 
-    >>> x = torch.randn(100)
-    >>> X = torchscience.transform.fourier_transform(x)
-    >>> x_recovered = torchscience.transform.inverse_fourier_transform(X)
-    >>> torch.allclose(x_recovered.real, x, atol=1e-5)
+    >>> x = torch.tensor([1., 2., 3., 4.])
+    >>> H = hartley_transform(x)
+    >>> H.shape
+    torch.Size([4])
+    >>> H.dtype
+    torch.float32
+
+    Relationship to FFT (H = Re(F) - Im(F)):
+
+    >>> x = torch.randn(32)
+    >>> H = hartley_transform(x)
+    >>> F = torch.fft.fft(x)
+    >>> torch.allclose(H, F.real - F.imag)
     True
 
-    Compare with torch.fft.ifft:
+    Self-inverse property (with ortho normalization):
 
-    >>> X = torch.randn(64, dtype=torch.complex64)
-    >>> x = inverse_fourier_transform(X)
-    >>> torch.allclose(x, torch.fft.ifft(X))
+    >>> x = torch.randn(32)
+    >>> H = hartley_transform(x, norm="ortho")
+    >>> x_rec = hartley_transform(H, norm="ortho")
+    >>> torch.allclose(x, x_rec, atol=1e-5)
     True
 
-    Multi-dimensional inverse transform:
+    With padding to get more frequency resolution:
 
-    >>> X = torch.randn(8, 16, 32, dtype=torch.complex64)
-    >>> x = inverse_fourier_transform(X, dim=(-2, -1))
-    >>> x.shape
+    >>> x = torch.randn(64)
+    >>> H = hartley_transform(x, n=128)
+    >>> H.shape
+    torch.Size([128])
+
+    Multi-dimensional transform:
+
+    >>> x = torch.randn(8, 16, 32)
+    >>> H = hartley_transform(x, dim=(-2, -1))
+    >>> H.shape
     torch.Size([8, 16, 32])
-
-    With new padding modes:
-
-    >>> X = torch.randn(32, dtype=torch.complex64)
-    >>> x = inverse_fourier_transform(X, n=64, padding_mode="linear")
-    >>> x.shape
-    torch.Size([64])
 
     Notes
     -----
-    **Normalization:**
+    **Self-Inverse Property:**
 
-    - ``'backward'`` (default): The inverse transform is normalized by 1/n.
-    - ``'ortho'``: Normalized by 1/sqrt(n), making the transform unitary.
-    - ``'forward'``: The inverse transform is unnormalized.
+    The Hartley transform is its own inverse when using ortho normalization:
+
+    .. math::
+        x = H(H(x))
+
+    This is because the Hartley transform matrix is symmetric and orthogonal.
+
+    **Relationship to Fourier Transform:**
+
+    The Hartley transform is closely related to the Fourier transform:
+
+    .. math::
+        H[k] = \text{Re}(F[k]) - \text{Im}(F[k])
+
+    And conversely:
+
+    .. math::
+        F[k] = \frac{H[k] + H[N-k]}{2} - i\frac{H[k] - H[N-k]}{2}
+
+    **Advantages:**
+
+    - Real input produces real output (no complex arithmetic needed)
+    - Self-inverse (simpler to implement and understand)
+    - Same computational complexity as FFT
 
     **Windowing:**
 
-    Unlike the forward transform where the window is applied before the FFT,
-    the window is applied after the IFFT in the inverse transform.
+    Applying a window function before the transform reduces spectral leakage.
+    Common windows include:
+
+    - ``torch.hann_window``: Good general-purpose window
+    - ``torch.hamming_window``: Similar to Hann
+    - ``torch.blackman_window``: Better sidelobe suppression
+
+    **Implementation:**
+
+    Uses PyTorch's FFT backend (cuFFT on CUDA, MKL/FFTW on CPU) and extracts
+    the Hartley transform as H = Re(F) - Im(F).
 
     **Gradient Computation:**
 
-    Gradients are computed analytically. The IFFT is a linear operator, so:
-
-    .. math::
-        \frac{\partial L}{\partial X} = \text{FFT}\left[\frac{\partial L}{\partial x}\right]
-
-    (with appropriate normalization adjustments). Second-order gradients are
-    also supported through torchscience.pad.
+    Gradients are computed analytically via torch.fft's autograd support.
+    Second-order gradients are also supported through torchscience.pad.
 
     See Also
     --------
-    fourier_transform : The forward Fourier transform.
-    torch.fft.ifft : PyTorch's 1D IFFT implementation.
-    torch.fft.ifftn : PyTorch's nD IFFT implementation.
+    fourier_transform : The discrete Fourier transform.
+    torch.fft.fft : PyTorch's 1D FFT implementation.
     """
+    # Check that input is real
+    if input.is_complex():
+        raise ValueError(
+            "hartley_transform requires real input. "
+            f"Got complex dtype {input.dtype}. "
+            "Use fourier_transform for complex inputs."
+        )
+
     # Validate padding_mode
     if padding_mode not in _VALID_PADDING_MODES:
         raise ValueError(
@@ -293,15 +345,7 @@ def inverse_fourier_transform(
                     # Need to truncate
                     x = x.narrow(d, 0, target)
 
-    # Perform the IFFT
-    if len(dim_tuple) == 1:
-        # 1D IFFT
-        result = torch.fft.ifft(x, dim=dim_tuple[0], norm=norm)
-    else:
-        # nD IFFT
-        result = torch.fft.ifftn(x, dim=dim_tuple, norm=norm)
-
-    # Apply window if provided (after IFFT for inverse transform)
+    # Apply window if provided
     if window is not None:
         if len(dim_tuple) != 1:
             raise ValueError(
@@ -315,7 +359,7 @@ def inverse_fourier_transform(
             )
         # Validate window size matches signal length
         d = normalized_dims[0]
-        expected_size = result.shape[d]
+        expected_size = x.shape[d]
         if window.size(0) != expected_size:
             raise ValueError(
                 f"window size ({window.size(0)}) must match signal length along "
@@ -323,10 +367,21 @@ def inverse_fourier_transform(
             )
         # Expand window to broadcast along the transform dimension
         # Create shape for broadcasting
-        window_shape = [1] * result.ndim
+        window_shape = [1] * x.ndim
         window_shape[d] = -1
         window_expanded = window.view(*window_shape)
-        result = result * window_expanded
+        x = x * window_expanded
+
+    # Perform the FFT and compute Hartley transform: H = Re(F) - Im(F)
+    if len(dim_tuple) == 1:
+        # 1D FFT
+        fft_result = torch.fft.fft(x, dim=dim_tuple[0], norm=norm)
+    else:
+        # nD FFT
+        fft_result = torch.fft.fftn(x, dim=dim_tuple, norm=norm)
+
+    # Hartley transform: H = Re(F) - Im(F)
+    result = fft_result.real - fft_result.imag
 
     # Handle out parameter
     if out is not None:

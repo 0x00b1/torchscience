@@ -1,10 +1,11 @@
-"""Inverse Fourier transform implementation."""
+"""Discrete Sine Transform (DST) implementation with new contract."""
 
 from typing import Literal
 
 import torch
 from torch import Tensor
 
+import torchscience._csrc  # noqa: F401 - Load C++ operators
 from torchscience.pad import PaddingMode, pad
 
 # Valid padding modes for validation
@@ -20,10 +21,18 @@ _VALID_PADDING_MODES = {
     "smooth",
 }
 
+# Normalization mode mapping for the C++ backend
+_NORM_MODES = {
+    "backward": 0,
+    "ortho": 1,
+    "forward": 2,
+}
 
-def inverse_fourier_transform(
+
+def sine_transform(
     input: Tensor,
     *,
+    type: int = 2,
     dim: int | tuple[int, ...] = -1,
     n: int | tuple[int, ...] | None = None,
     norm: Literal["forward", "backward", "ortho"] = "backward",
@@ -38,25 +47,34 @@ def inverse_fourier_transform(
     window: Tensor | None = None,
     out: Tensor | None = None,
 ) -> Tensor:
-    r"""Compute the inverse discrete Fourier transform of a signal.
+    r"""Compute the Discrete Sine Transform (DST) of a signal.
 
-    The inverse Fourier transform is defined as:
+    The DST transforms a sequence of N real numbers into another sequence
+    of N real numbers. There are four types of DST (I-IV), with DST-II
+    being the most commonly used.
+
+    DST-II (default):
 
     .. math::
-        x[n] = \frac{1}{N} \sum_{k=0}^{N-1} X[k] \cdot e^{2\pi i k n / N}
-
-    (with default ``'backward'`` normalization).
-
-    This implementation wraps PyTorch's IFFT with additional support for
-    padding, windowing, and multi-dimensional transforms.
+        X[k] = 2 \sum_{n=0}^{N-1} x[n] \sin\left(\frac{\pi (2n+1)(k+1)}{2N}\right)
 
     Parameters
     ----------
     input : Tensor
-        Input tensor of any shape. Typically complex-valued.
+        Input tensor of any shape. Must be real-valued.
+    type : int, optional
+        DST type (1, 2, 3, or 4).
+
+        - Type 1: Boundary conditions assume x[-1] = x[N] = 0.
+        - Type 2: The "standard" DST, related to DCT-II.
+        - Type 3: Inverse of Type 2 (up to scaling).
+        - Type 4: Antisymmetric at both endpoints.
+
+        Default: ``2``.
     dim : int or tuple of int, optional
         The dimension(s) along which to compute the transform.
-        If a tuple, computes a multi-dimensional IFFT.
+        If a tuple, computes a multi-dimensional DST by applying
+        the 1D DST sequentially along each dimension.
         Default: ``-1`` (last dimension).
     n : int or tuple of int, optional
         Signal length(s). If given, the input will either be padded or
@@ -67,9 +85,9 @@ def inverse_fourier_transform(
     norm : str, optional
         Normalization mode. One of:
 
-        - ``'backward'``: No normalization on forward, divide by n on inverse.
-        - ``'ortho'``: Normalize by 1/sqrt(n) on both forward and inverse.
-        - ``'forward'``: Divide by n on forward, no normalization on inverse.
+        - ``'backward'``: No normalization (sum without scaling).
+        - ``'ortho'``: Orthonormal normalization (makes DST matrix orthogonal).
+        - ``'forward'``: Divide by N on forward transform.
 
         Default: ``'backward'``.
     padding : int, tuple of int, or tuple of tuple of int, optional
@@ -103,83 +121,104 @@ def inverse_fourier_transform(
         Polynomial order for ``'polynomial'`` padding mode.
         Default: ``1`` (linear).
     window : Tensor, optional
-        Window function to apply after the transform. Must be 1-D with size
-        matching the output signal length along ``dim``.
+        Window function to apply before the transform. Must be 1-D with size
+        matching the (possibly padded) signal length along ``dim``.
         For multi-dimensional transforms, windowing is only supported for
         single-dimension transforms.
         Use window functions from ``torch`` (e.g., ``torch.hann_window``).
         Default: ``None`` (no windowing).
     out : Tensor, optional
-        Output tensor. Must have the correct shape and dtype (complex).
+        Output tensor. Must have the correct shape and dtype (real).
         Default: ``None`` (allocate new tensor).
 
     Returns
     -------
     Tensor
-        The inverse Fourier transform of the input. Complex-valued.
+        The DST of the input. Same dtype as input (real-valued).
         If ``n`` is specified and differs from the input size along ``dim``,
         the output size along ``dim`` will be ``n``.
 
+    Raises
+    ------
+    ValueError
+        If input is complex-valued (DST requires real input).
+    ValueError
+        If type is not in {1, 2, 3, 4}.
+
     Examples
     --------
-    Round-trip with forward transform:
+    Basic DST-II:
 
-    >>> x = torch.randn(100)
-    >>> X = torchscience.transform.fourier_transform(x)
-    >>> x_recovered = torchscience.transform.inverse_fourier_transform(X)
-    >>> torch.allclose(x_recovered.real, x, atol=1e-5)
+    >>> x = torch.tensor([1., 2., 3., 4.])
+    >>> X = sine_transform(x)
+    >>> X.shape
+    torch.Size([4])
+
+    Compare with scipy.fft.dst:
+
+    >>> import scipy.fft
+    >>> x_np = x.numpy()
+    >>> X_scipy = scipy.fft.dst(x_np, type=2)
+    >>> torch.allclose(X, torch.from_numpy(X_scipy).float(), atol=1e-5)
     True
 
-    Compare with torch.fft.ifft:
+    With orthonormal normalization:
 
-    >>> X = torch.randn(64, dtype=torch.complex64)
-    >>> x = inverse_fourier_transform(X)
-    >>> torch.allclose(x, torch.fft.ifft(X))
-    True
+    >>> X_ortho = sine_transform(x, norm='ortho')
 
-    Multi-dimensional inverse transform:
+    Multi-dimensional DST:
 
-    >>> X = torch.randn(8, 16, 32, dtype=torch.complex64)
-    >>> x = inverse_fourier_transform(X, dim=(-2, -1))
-    >>> x.shape
+    >>> x = torch.randn(8, 16, 32)
+    >>> X = sine_transform(x, dim=(-2, -1))
+    >>> X.shape
     torch.Size([8, 16, 32])
 
-    With new padding modes:
+    With explicit padding:
 
-    >>> X = torch.randn(32, dtype=torch.complex64)
-    >>> x = inverse_fourier_transform(X, n=64, padding_mode="linear")
-    >>> x.shape
+    >>> x = torch.randn(32)
+    >>> X = sine_transform(x, n=64, padding_mode="linear")
+    >>> X.shape
     torch.Size([64])
 
     Notes
     -----
-    **Normalization:**
+    **DST Types:**
 
-    - ``'backward'`` (default): The inverse transform is normalized by 1/n.
-    - ``'ortho'``: Normalized by 1/sqrt(n), making the transform unitary.
-    - ``'forward'``: The inverse transform is unnormalized.
+    - **Type I (DST-I)**: Requires N >= 2. The transform is its own inverse
+      (up to scaling).
+    - **Type II (DST-II)**: Most common DST, related to DCT-II. Its inverse
+      is DST-III.
+    - **Type III (DST-III)**: Inverse of DST-II. Sometimes called IDST.
+    - **Type IV (DST-IV)**: The transform is its own inverse.
 
-    **Windowing:**
+    **Applications:**
 
-    Unlike the forward transform where the window is applied before the FFT,
-    the window is applied after the IFFT in the inverse transform.
+    - DST is used in signal processing where odd boundary conditions are natural.
+    - DST-I is used in solving differential equations with Dirichlet boundary
+      conditions (zero at boundaries).
+    - DST is related to Fourier series of odd functions.
 
-    **Gradient Computation:**
+    **Implementation:**
 
-    Gradients are computed analytically. The IFFT is a linear operator, so:
-
-    .. math::
-        \frac{\partial L}{\partial X} = \text{FFT}\left[\frac{\partial L}{\partial x}\right]
-
-    (with appropriate normalization adjustments). Second-order gradients are
-    also supported through torchscience.pad.
+    DST-II and DST-III are computed via FFT by constructing an appropriate
+    antisymmetric sequence. DST-I and DST-IV use direct or FFT-based methods.
 
     See Also
     --------
-    fourier_transform : The forward Fourier transform.
-    torch.fft.ifft : PyTorch's 1D IFFT implementation.
-    torch.fft.ifftn : PyTorch's nD IFFT implementation.
+    inverse_sine_transform : The inverse DST.
+    scipy.fft.dst : SciPy's DST implementation.
     """
+    # Validate input is real
+    if input.is_complex():
+        raise ValueError(
+            "sine_transform requires real-valued input, "
+            f"but got complex dtype {input.dtype}"
+        )
+
+    # Validate DST type
+    if type not in (1, 2, 3, 4):
+        raise ValueError(f"type must be 1, 2, 3, or 4, got {type}")
+
     # Validate padding_mode
     if padding_mode not in _VALID_PADDING_MODES:
         raise ValueError(
@@ -293,15 +332,7 @@ def inverse_fourier_transform(
                     # Need to truncate
                     x = x.narrow(d, 0, target)
 
-    # Perform the IFFT
-    if len(dim_tuple) == 1:
-        # 1D IFFT
-        result = torch.fft.ifft(x, dim=dim_tuple[0], norm=norm)
-    else:
-        # nD IFFT
-        result = torch.fft.ifftn(x, dim=dim_tuple, norm=norm)
-
-    # Apply window if provided (after IFFT for inverse transform)
+    # Apply window if provided
     if window is not None:
         if len(dim_tuple) != 1:
             raise ValueError(
@@ -315,7 +346,7 @@ def inverse_fourier_transform(
             )
         # Validate window size matches signal length
         d = normalized_dims[0]
-        expected_size = result.shape[d]
+        expected_size = x.shape[d]
         if window.size(0) != expected_size:
             raise ValueError(
                 f"window size ({window.size(0)}) must match signal length along "
@@ -323,10 +354,45 @@ def inverse_fourier_transform(
             )
         # Expand window to broadcast along the transform dimension
         # Create shape for broadcasting
-        window_shape = [1] * result.ndim
+        window_shape = [1] * x.ndim
         window_shape[d] = -1
         window_expanded = window.view(*window_shape)
-        result = result * window_expanded
+        x = x * window_expanded
+
+    # Map norm mode - the C++ backend only supports "backward" and "ortho"
+    # For "forward" norm, we use "backward" and scale manually
+    if norm == "forward":
+        norm_int = 0  # backward
+    else:
+        norm_int = _NORM_MODES.get(norm, 0)
+
+    # Perform the DST
+    if len(dim_tuple) == 1:
+        # 1D DST
+        result = torch.ops.torchscience.fourier_sine_transform(
+            x,
+            -1,  # n=-1 means use input size (we already handled padding/truncation)
+            dim_tuple[0],
+            type,
+            norm_int,
+        )
+    else:
+        # Multi-dimensional DST: apply 1D DST sequentially along each dimension
+        result = x
+        for d in dim_tuple:
+            result = torch.ops.torchscience.fourier_sine_transform(
+                result,
+                -1,  # n=-1 means use input size
+                d,
+                type,
+                norm_int,
+            )
+
+    # Handle forward normalization manually if needed
+    if norm == "forward":
+        # Scale by 1/(2*N) for each dimension
+        for d in normalized_dims:
+            result = result / (2 * result.shape[d])
 
     # Handle out parameter
     if out is not None:
@@ -334,3 +400,7 @@ def inverse_fourier_transform(
         return out
 
     return result
+
+
+# Alias for backward compatibility
+fourier_sine_transform = sine_transform
