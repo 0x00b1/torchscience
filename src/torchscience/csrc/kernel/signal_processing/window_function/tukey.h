@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <c10/macros/Macros.h>
 #include "common.h"
 
 namespace torchscience::kernel::window_function {
@@ -10,7 +11,7 @@ namespace torchscience::kernel::window_function {
 // alpha = 1: Hann window
 // alpha in (0, 1): tapered cosine
 template<typename scalar_t>
-inline scalar_t tukey(int64_t i, int64_t n, scalar_t alpha, bool periodic) {
+C10_HOST_DEVICE inline scalar_t tukey(int64_t i, int64_t n, scalar_t alpha, bool periodic) {
   if (n == 1) {
     return scalar_t(1);
   }
@@ -47,7 +48,7 @@ inline scalar_t tukey(int64_t i, int64_t n, scalar_t alpha, bool periodic) {
 
 // Gradient w.r.t. alpha parameter
 template<typename scalar_t>
-inline scalar_t tukey_backward(
+C10_HOST_DEVICE inline scalar_t tukey_backward(
   scalar_t grad_out,
   int64_t i,
   int64_t n,

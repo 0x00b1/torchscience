@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <c10/macros/Macros.h>
 #include "common.h"
 
 namespace torchscience {
@@ -14,7 +15,7 @@ namespace window_function {
 // epsilon <= t <= 1 - epsilon: w = 1
 // 1 - epsilon < t < 1: w = 1 / (1 + exp(Z⁻)) where Z⁻ = epsilon * (1/(1-t) + 1/(1-t-epsilon))
 template<typename scalar_t>
-inline scalar_t planck_taper(int64_t i, int64_t n, scalar_t epsilon, bool periodic) {
+C10_HOST_DEVICE inline scalar_t planck_taper(int64_t i, int64_t n, scalar_t epsilon, bool periodic) {
   // Handle epsilon = 0 case (rectangular window - all ones)
   if (epsilon <= scalar_t(0)) {
     return scalar_t(1);
@@ -64,7 +65,7 @@ inline scalar_t planck_taper(int64_t i, int64_t n, scalar_t epsilon, bool period
 // dw/d(epsilon) = -w² * exp(Z⁻) * dZ⁻/d(epsilon)
 // dZ⁻/d(epsilon) = 1/(1-t) + 1/(1-t-epsilon) + epsilon/(1-t-epsilon)²
 template<typename scalar_t>
-inline scalar_t planck_taper_backward(
+C10_HOST_DEVICE inline scalar_t planck_taper_backward(
   scalar_t grad_out,
   int64_t i,
   int64_t n,

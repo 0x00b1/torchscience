@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <c10/macros/Macros.h>
 #include "common.h"
 
 namespace torchscience::kernel::window_function {
@@ -8,7 +9,7 @@ namespace torchscience::kernel::window_function {
 // Generalized normal window: w[k] = exp(-|(k - center) / sigma|^p)
 // where center = denom / 2, and denom is (n-1) for symmetric, n for periodic
 template<typename scalar_t>
-inline scalar_t generalized_normal(int64_t i, int64_t n, scalar_t p, scalar_t sigma, bool periodic) {
+C10_HOST_DEVICE inline scalar_t generalized_normal(int64_t i, int64_t n, scalar_t p, scalar_t sigma, bool periodic) {
   if (n == 1) {
     return scalar_t(1);
   }
@@ -38,7 +39,7 @@ inline scalar_t generalized_normal(int64_t i, int64_t n, scalar_t p, scalar_t si
 // d/d(p) exp(-|x/sigma|^p) = exp(...) * (-|x/sigma|^p * ln(|x/sigma|))
 //                          = forward_value * (-normalized^p * ln(normalized))
 template<typename scalar_t>
-inline scalar_t generalized_normal_backward_p(
+C10_HOST_DEVICE inline scalar_t generalized_normal_backward_p(
   scalar_t grad_out,
   int64_t i,
   int64_t n,
@@ -84,7 +85,7 @@ inline scalar_t generalized_normal_backward_p(
 // d/d(sigma) exp(-|x/sigma|^p) = exp(...) * (-p) * |x/sigma|^(p-1) * (-|x|/sigma^2)
 //                               = forward_value * p * |x|^p / sigma^(p+1)
 template<typename scalar_t>
-inline scalar_t generalized_normal_backward_sigma(
+C10_HOST_DEVICE inline scalar_t generalized_normal_backward_sigma(
   scalar_t grad_out,
   int64_t i,
   int64_t n,
