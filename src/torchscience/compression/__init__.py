@@ -15,6 +15,7 @@ from ._rate_distortion_lagrangian import (
 )
 from ._run_length import run_length_decode, run_length_encode
 from ._scalar_quantize import scalar_quantize
+from ._transform_code import transform_code
 from ._vector_quantize import vector_quantize
 
 __all__ = [
@@ -37,5 +38,6 @@ __all__ = [
     "run_length_decode",
     "run_length_encode",
     "scalar_quantize",
+    "transform_code",
     "vector_quantize",
 ]
