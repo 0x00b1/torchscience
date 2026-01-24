@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchscience.graph_theory import dijkstra
+from torchscience.graph import dijkstra
 
 
 class TestDijkstraBasic:

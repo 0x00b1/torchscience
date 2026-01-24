@@ -41,7 +41,7 @@ def betweenness_centrality(
     Examples
     --------
     >>> import torch
-    >>> from torchscience.graph_theory import betweenness_centrality
+    >>> from torchscience.graph import betweenness_centrality
     >>> # Star graph - center has highest betweenness
     >>> adj = torch.tensor([
     ...     [0.0, 1.0, 1.0, 1.0],

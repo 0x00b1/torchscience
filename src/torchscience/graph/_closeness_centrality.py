@@ -99,7 +99,7 @@ def closeness_centrality(
     Star graph (center has highest closeness):
 
     >>> import torch
-    >>> from torchscience.graph_theory import closeness_centrality
+    >>> from torchscience.graph import closeness_centrality
     >>> inf = float("inf")
     >>> adj = torch.tensor([
     ...     [0.0, 1.0, 1.0, 1.0],

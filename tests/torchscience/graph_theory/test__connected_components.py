@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchscience.graph_theory import connected_components
+from torchscience.graph import connected_components
 
 
 class TestConnectedComponentsWeak:

@@ -19,36 +19,38 @@ def maximum_bipartite_matching(
     Parameters
     ----------
     biadjacency : Tensor
-        Biadjacency matrix of shape ``(M, N)`` where ``M`` is the size of the
-        left partition and ``N`` is the size of the right partition.
-        ``biadjacency[i, j] > 0`` indicates an edge between left node ``i``
+        Biadjacency matrix of shape ``(*, M, N)`` where ``*`` is any number
+        of batch dimensions, ``M`` is the size of the left partition and
+        ``N`` is the size of the right partition.
+        ``biadjacency[..., i, j] > 0`` indicates an edge between left node ``i``
         and right node ``j``. The actual values are ignored (only nonzero
         matters).
 
     Returns
     -------
     matching_size : Tensor
-        Scalar integer tensor with the size of the maximum matching.
+        Integer tensor with the size of the maximum matching. Shape is ``(*)``
+        matching the batch dimensions of input.
     left_match : Tensor
-        Tensor of shape ``(M,)`` with dtype ``int64``.
-        ``left_match[i]`` is the index of the right node matched to left
+        Tensor of shape ``(*, M)`` with dtype ``int64``.
+        ``left_match[..., i]`` is the index of the right node matched to left
         node ``i``, or ``-1`` if left node ``i`` is unmatched.
     right_match : Tensor
-        Tensor of shape ``(N,)`` with dtype ``int64``.
-        ``right_match[j]`` is the index of the left node matched to right
+        Tensor of shape ``(*, N)`` with dtype ``int64``.
+        ``right_match[..., j]`` is the index of the left node matched to right
         node ``j``, or ``-1`` if right node ``j`` is unmatched.
 
     Raises
     ------
     ValueError
-        If input is not 2D.
+        If input is not at least 2D.
 
     Examples
     --------
     Simple bipartite graph:
 
     >>> import torch
-    >>> from torchscience.graph_theory import maximum_bipartite_matching
+    >>> from torchscience.graph import maximum_bipartite_matching
     >>> # 3 left nodes, 3 right nodes
     >>> # Edges: (0,0), (0,1), (1,1), (1,2), (2,2)
     >>> biadj = torch.tensor([
@@ -120,15 +122,22 @@ def maximum_bipartite_matching(
     .. [2] Kuhn, H. W. (1955). "The Hungarian Method for the assignment
            problem". Naval Research Logistics Quarterly. 2 (1-2): 83-97.
 
+    Batched computation:
+
+    >>> batch_biadj = torch.stack([biadj, biadj])  # (2, 3, 3)
+    >>> size, left, right = maximum_bipartite_matching(batch_biadj)
+    >>> size.shape
+    torch.Size([2])
+
     See Also
     --------
     scipy.sparse.csgraph.maximum_bipartite_matching : SciPy implementation
     scipy.optimize.linear_sum_assignment : Weighted bipartite matching
     """
     # Input validation
-    if biadjacency.dim() != 2:
+    if biadjacency.dim() < 2:
         raise ValueError(
-            f"maximum_bipartite_matching: biadjacency must be 2D, "
+            f"maximum_bipartite_matching: biadjacency must be at least 2D, "
             f"got {biadjacency.dim()}D"
         )
 

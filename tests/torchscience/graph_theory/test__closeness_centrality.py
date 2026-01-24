@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchscience.graph_theory import closeness_centrality
+from torchscience.graph import closeness_centrality
 
 
 class TestClosenessCentralityBasic:

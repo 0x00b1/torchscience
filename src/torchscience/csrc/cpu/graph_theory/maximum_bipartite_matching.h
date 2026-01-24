@@ -136,28 +136,46 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> maximum_bipartite_matching
     const at::Tensor& biadjacency
 ) {
   TORCH_CHECK(
-      biadjacency.dim() == 2,
-      "maximum_bipartite_matching: biadjacency must be 2D, got ",
+      biadjacency.dim() >= 2,
+      "maximum_bipartite_matching: biadjacency must be at least 2D, got ",
       biadjacency.dim(), "D"
   );
 
-  int64_t M = biadjacency.size(0);
-  int64_t N = biadjacency.size(1);
+  int64_t M = biadjacency.size(-2);
+  int64_t N = biadjacency.size(-1);
 
   // Handle sparse input
   at::Tensor dense_biadj = biadjacency.is_sparse() ? biadjacency.to_dense() : biadjacency;
   dense_biadj = dense_biadj.contiguous();
 
+  // Compute batch size
+  int64_t batch_size = dense_biadj.numel() / (M * N);
+
+  // Build output shapes
+  std::vector<int64_t> batch_dims;
+  for (int64_t i = 0; i < dense_biadj.dim() - 2; ++i) {
+    batch_dims.push_back(dense_biadj.size(i));
+  }
+
+  std::vector<int64_t> size_shape = batch_dims;  // (*,)
+  std::vector<int64_t> left_shape = batch_dims;
+  left_shape.push_back(M);  // (*, M)
+  std::vector<int64_t> right_shape = batch_dims;
+  right_shape.push_back(N);  // (*, N)
+
   // Handle empty graph
   if (M == 0 || N == 0) {
     return std::make_tuple(
-        at::zeros({}, dense_biadj.options().dtype(at::kLong)),
-        at::full({M}, -1, dense_biadj.options().dtype(at::kLong)),
-        at::full({N}, -1, dense_biadj.options().dtype(at::kLong))
+        at::zeros(size_shape, dense_biadj.options().dtype(at::kLong)),
+        at::full(left_shape, -1, dense_biadj.options().dtype(at::kLong)),
+        at::full(right_shape, -1, dense_biadj.options().dtype(at::kLong))
     );
   }
 
-  at::Tensor matching_size, left_match, right_match;
+  // Allocate output tensors
+  at::Tensor matching_size = at::empty(size_shape, dense_biadj.options().dtype(at::kLong));
+  at::Tensor left_match = at::empty(left_shape, dense_biadj.options().dtype(at::kLong));
+  at::Tensor right_match = at::empty(right_shape, dense_biadj.options().dtype(at::kLong));
 
   AT_DISPATCH_ALL_TYPES_AND2(
       at::kHalf, at::kBFloat16,
@@ -165,10 +183,31 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> maximum_bipartite_matching
       "maximum_bipartite_matching_cpu",
       [&] {
         const scalar_t* biadj_ptr = dense_biadj.data_ptr<scalar_t>();
-        std::tie(matching_size, left_match, right_match) =
-            maximum_bipartite_matching_impl<scalar_t>(
-                biadj_ptr, M, N, dense_biadj.options()
-            );
+        int64_t* size_ptr = matching_size.data_ptr<int64_t>();
+        int64_t* left_ptr = left_match.data_ptr<int64_t>();
+        int64_t* right_ptr = right_match.data_ptr<int64_t>();
+
+        // Process each batch element
+        for (int64_t b = 0; b < batch_size; ++b) {
+          const scalar_t* batch_biadj = biadj_ptr + b * M * N;
+
+          auto [size_b, left_b, right_b] = maximum_bipartite_matching_impl<scalar_t>(
+              batch_biadj, M, N, dense_biadj.options()
+          );
+
+          // Copy results
+          size_ptr[b] = size_b.item<int64_t>();
+
+          const int64_t* left_b_ptr = left_b.data_ptr<int64_t>();
+          const int64_t* right_b_ptr = right_b.data_ptr<int64_t>();
+
+          for (int64_t i = 0; i < M; ++i) {
+            left_ptr[b * M + i] = left_b_ptr[i];
+          }
+          for (int64_t j = 0; j < N; ++j) {
+            right_ptr[b * N + j] = right_b_ptr[j];
+          }
+        }
       }
   );
 

@@ -1,30 +1,29 @@
-"""Dijkstra's single-source shortest path algorithm."""
+"""DAG shortest paths using topological sort."""
 
 import torch
 from torch import Tensor
 
 import torchscience._csrc  # noqa: F401 - Load C++ operators
+from torchscience.graph._topological_sort import CycleError
 
 
-class _DijkstraFunction(torch.autograd.Function):
-    """Autograd function for Dijkstra with implicit differentiation."""
+class _DAGShortestPathsFunction(torch.autograd.Function):
+    """Autograd function for DAG shortest paths with implicit differentiation."""
 
     @staticmethod
     def forward(
         ctx,
         adjacency: Tensor,
         source: int,
-        directed: bool,
     ) -> tuple[Tensor, Tensor]:
         # Call C++ operator
-        distances, predecessors = torch.ops.torchscience.dijkstra(
-            adjacency, source, directed
+        distances, predecessors = torch.ops.torchscience.dag_shortest_paths(
+            adjacency, source
         )
 
         # Save for backward
         ctx.save_for_backward(adjacency, distances, predecessors)
         ctx.source = source
-        ctx.directed = directed
 
         return distances, predecessors
 
@@ -50,7 +49,7 @@ class _DijkstraFunction(torch.autograd.Function):
         reachable_indices = torch.where(reachable_mask)[0]
 
         if reachable_indices.numel() == 0:
-            return grad_adj, None, None
+            return grad_adj, None
 
         # Sort by decreasing distance (process furthest first)
         sorted_idx = torch.argsort(
@@ -69,24 +68,18 @@ class _DijkstraFunction(torch.autograd.Function):
                 # Gradient accumulates to predecessor's distance
                 grad_d[pred] += grad_d[node]
 
-        # For undirected graphs, symmetrize gradient
-        if not ctx.directed:
-            grad_adj = grad_adj + grad_adj.T
-
-        return grad_adj, None, None
+        return grad_adj, None
 
 
-def dijkstra(
+def dag_shortest_paths(
     adjacency: Tensor,
     source: int,
-    *,
-    directed: bool = True,
 ) -> tuple[Tensor, Tensor]:
     r"""
-    Compute single-source shortest paths using Dijkstra's algorithm.
+    Compute single-source shortest paths in a directed acyclic graph (DAG).
 
-    Dijkstra's algorithm finds the shortest paths from a source vertex to
-    all other vertices in a weighted graph with non-negative edge weights.
+    This algorithm uses topological sorting to find shortest paths in O(V + E)
+    time, which is faster than Dijkstra's algorithm for DAGs.
 
     .. math::
         d_v = \min_{u: (u,v) \in E} (d_u + w_{uv})
@@ -99,9 +92,6 @@ def dijkstra(
         for missing edges. All weights must be non-negative.
     source : int
         Index of the source vertex (0 to N-1).
-    directed : bool, default=True
-        If True, treat graph as directed. If False, symmetrize the adjacency
-        matrix by taking the element-wise minimum of ``A`` and ``A.T``.
 
     Returns
     -------
@@ -119,37 +109,25 @@ def dijkstra(
     ------
     ValueError
         If input is not 2D, not square, source is out of range, or
-        graph contains negative edge weights.
+        graph contains a cycle (including self-loops).
 
     Examples
     --------
-    Simple directed graph:
+    Simple DAG:
 
     >>> import torch
-    >>> from torchscience.graph import dijkstra
+    >>> from torchscience.graph import dag_shortest_paths
     >>> inf = float("inf")
     >>> adj = torch.tensor([
     ...     [0.0, 1.0, 4.0],
     ...     [inf, 0.0, 2.0],
     ...     [inf, inf, 0.0],
     ... ])
-    >>> dist, pred = dijkstra(adj, source=0)
+    >>> dist, pred = dag_shortest_paths(adj, source=0)
     >>> dist
     tensor([0., 1., 3.])
     >>> pred
     tensor([-1,  0,  1])
-
-    Path reconstruction (0 -> 2):
-
-    >>> def reconstruct_path(pred, source, target):
-    ...     if pred[target] == -1 and target != source:
-    ...         return []  # No path
-    ...     path = [target]
-    ...     while path[0] != source:
-    ...         path.insert(0, pred[path[0]].item())
-    ...     return path
-    >>> reconstruct_path(pred, 0, 2)
-    [0, 1, 2]
 
     Gradient through shortest paths (implicit differentiation):
 
@@ -158,68 +136,64 @@ def dijkstra(
     ...     [inf, 0.0, 2.0],
     ...     [inf, inf, 0.0],
     ... ], requires_grad=True)
-    >>> dist, _ = dijkstra(adj, source=0)
+    >>> dist, _ = dag_shortest_paths(adj, source=0)
     >>> dist.sum().backward()
     >>> adj.grad  # Gradient flows through shortest path edges
-    tensor([[0., 1., 0.],
+    tensor([[0., 2., 0.],
             [0., 0., 1.],
             [0., 0., 0.]])
 
     Notes
     -----
-    - **Complexity**: O((N + E) log N) time using a priority queue, O(N) space.
-    - **Non-negative weights**: Dijkstra requires all edge weights >= 0.
-      For graphs with negative weights, use :func:`bellman_ford`.
+    - **Complexity**: O(V + E) time using topological sort, O(V) space.
+      This is faster than Dijkstra's O((V + E) log V) for DAGs.
+    - **DAG requirement**: The graph must be a directed acyclic graph.
+      Use :func:`dijkstra` for general graphs with non-negative weights.
     - **Gradient computation**: Uses implicit differentiation through the
       shortest path tree. The gradient with respect to edge (u, v) is nonzero
       only if that edge is on the shortest path tree.
-    - **Sparse graphs**: For very sparse graphs, consider using sparse tensor
-      input (converted to dense internally).
 
     References
     ----------
-    .. [1] Dijkstra, E. W. (1959). "A note on two problems in connexion with
-           graphs". Numerische Mathematik. 1: 269-271.
+    .. [1] Cormen, T. H., Leiserson, C. E., Rivest, R. L., & Stein, C. (2009).
+           "Introduction to Algorithms" (3rd ed.). MIT Press. Section 24.2.
 
     See Also
     --------
+    dijkstra : Single-source shortest paths for general graphs
     bellman_ford : Single-source shortest paths with negative weights
-    floyd_warshall : All-pairs shortest paths
-    scipy.sparse.csgraph.dijkstra : SciPy implementation
+    topological_sort : Compute topological ordering of a DAG
     """
     # Input validation
     if adjacency.dim() != 2:
         raise ValueError(
-            f"dijkstra: adjacency must be 2D, got {adjacency.dim()}D"
+            f"dag_shortest_paths: adjacency must be 2D, got {adjacency.dim()}D"
         )
     if adjacency.size(0) != adjacency.size(1):
         raise ValueError(
-            f"dijkstra: adjacency must be square, "
+            f"dag_shortest_paths: adjacency must be square, "
             f"got {adjacency.size(0)} x {adjacency.size(1)}"
         )
     N = adjacency.size(0)
     if source < 0 or source >= N:
         raise ValueError(
-            f"dijkstra: source must be in [0, {N - 1}], got {source}"
+            f"dag_shortest_paths: source must be in [0, {N - 1}], got {source}"
         )
 
     # Handle sparse input
     if adjacency.is_sparse:
         adjacency = adjacency.to_dense()
 
-    # Check for negative weights (excluding inf which is valid)
-    # Skip for meta tensors since data-dependent operations don't work
-    if adjacency.device.type != "meta":
-        finite_mask = ~torch.isinf(adjacency)
-        if (adjacency[finite_mask] < 0).any():
-            raise ValueError(
-                "dijkstra: graph contains negative edge weights. "
-                "Use bellman_ford for graphs with negative weights."
-            )
-
     # Use autograd function for gradient support
     if adjacency.requires_grad:
-        return _DijkstraFunction.apply(adjacency, source, directed)
+        return _DAGShortestPathsFunction.apply(adjacency, source)
 
     # Direct call for non-differentiable case
-    return torch.ops.torchscience.dijkstra(adjacency, source, directed)
+    try:
+        return torch.ops.torchscience.dag_shortest_paths(adjacency, source)
+    except RuntimeError as e:
+        # Convert C++ cycle error to Python CycleError
+        msg = str(e)
+        if "cycle" in msg.lower():
+            raise CycleError(msg) from None
+        raise

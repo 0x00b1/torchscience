@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchscience.graph_theory import maximum_bipartite_matching
+from torchscience.graph import maximum_bipartite_matching
 
 
 class TestMaximumBipartiteMatchingBasic:
@@ -164,13 +164,8 @@ class TestMaximumBipartiteMatchingValidation:
 
     def test_rejects_1d_input(self):
         """Should reject 1D input."""
-        with pytest.raises(ValueError, match="2D"):
+        with pytest.raises(ValueError, match="at least 2D"):
             maximum_bipartite_matching(torch.tensor([1.0, 2.0, 3.0]))
-
-    def test_rejects_3d_input(self):
-        """Should reject 3D input."""
-        with pytest.raises(ValueError, match="2D"):
-            maximum_bipartite_matching(torch.rand(2, 3, 3))
 
 
 class TestMaximumBipartiteMatchingConsistency:
@@ -338,3 +333,114 @@ class TestMaximumBipartiteMatchingClassicExamples:
         for worker in range(5):
             job = assignment[worker].item()
             assert capable[worker, job] == 1
+
+
+class TestMaximumBipartiteMatchingBatched:
+    """Tests for batched input support."""
+
+    def test_batch_2d(self):
+        """Batched with single batch dimension."""
+        biadj = torch.rand(3, 4, 5)
+        biadj = (biadj > 0.5).float()
+
+        size, left, right = maximum_bipartite_matching(biadj)
+        assert size.shape == (3,)
+        assert left.shape == (3, 4)
+        assert right.shape == (3, 5)
+
+    def test_batch_consistency(self):
+        """Batched result matches individual computations."""
+        biadj1 = torch.tensor(
+            [
+                [1, 1, 0],
+                [0, 1, 1],
+                [0, 0, 1],
+            ],
+            dtype=torch.float32,
+        )
+        biadj2 = torch.tensor(
+            [
+                [1, 0, 0],
+                [1, 1, 0],
+                [0, 1, 1],
+            ],
+            dtype=torch.float32,
+        )
+
+        s1, l1, r1 = maximum_bipartite_matching(biadj1)
+        s2, l2, r2 = maximum_bipartite_matching(biadj2)
+
+        batch_biadj = torch.stack([biadj1, biadj2])
+        s_batch, l_batch, r_batch = maximum_bipartite_matching(batch_biadj)
+
+        assert s_batch[0].item() == s1.item()
+        assert s_batch[1].item() == s2.item()
+        assert torch.equal(l_batch[0], l1)
+        assert torch.equal(l_batch[1], l2)
+        assert torch.equal(r_batch[0], r1)
+        assert torch.equal(r_batch[1], r2)
+
+    def test_batch_multi_dimensional(self):
+        """Multiple batch dimensions."""
+        biadj = torch.rand(2, 3, 4, 5)
+        biadj = (biadj > 0.5).float()
+
+        size, left, right = maximum_bipartite_matching(biadj)
+        assert size.shape == (2, 3)
+        assert left.shape == (2, 3, 4)
+        assert right.shape == (2, 3, 5)
+
+    def test_batch_empty_partition(self):
+        """Batched with empty partitions."""
+        biadj = torch.zeros(2, 0, 3)
+        size, left, right = maximum_bipartite_matching(biadj)
+
+        assert size.shape == (2,)
+        assert left.shape == (2, 0)
+        assert right.shape == (2, 3)
+        assert (size == 0).all()
+        assert (right == -1).all()
+
+    def test_batch_meta_shape(self):
+        """Meta tensor with batched input."""
+        biadj = torch.rand(3, 4, 5, device="meta")
+        size, left, right = maximum_bipartite_matching(biadj)
+
+        assert size.shape == (3,)
+        assert left.shape == (3, 4)
+        assert right.shape == (3, 5)
+        assert size.device.type == "meta"
+        assert left.device.type == "meta"
+        assert right.device.type == "meta"
+
+    def test_batch_consistency_matching_valid(self):
+        """Verify batched matching consistency."""
+        biadj = torch.tensor(
+            [
+                [
+                    [1, 1, 0],
+                    [0, 1, 1],
+                    [0, 0, 1],
+                ],
+                [
+                    [1, 0, 0],
+                    [0, 1, 0],
+                    [0, 0, 1],
+                ],
+            ],
+            dtype=torch.float32,
+        )
+
+        size, left, right = maximum_bipartite_matching(biadj)
+
+        # Both should have perfect matching
+        assert size[0].item() == 3
+        assert size[1].item() == 3
+
+        # Verify consistency for each batch
+        for b in range(2):
+            for i in range(3):
+                j = left[b, i].item()
+                if j >= 0:
+                    assert right[b, j].item() == i
+                    assert biadj[b, i, j] > 0

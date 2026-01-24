@@ -57,7 +57,7 @@ def connected_components(
     Undirected graph with two components:
 
     >>> import torch
-    >>> from torchscience.graph_theory import connected_components
+    >>> from torchscience.graph import connected_components
     >>> # Two disconnected edges: 0-1 and 2-3
     >>> adj = torch.tensor([
     ...     [0., 1., 0., 0.],

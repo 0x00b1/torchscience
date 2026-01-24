@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchscience.graph_theory import katz_centrality
+from torchscience.graph import katz_centrality
 
 
 class TestKatzCentralityBasic:

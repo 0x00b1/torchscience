@@ -6,6 +6,109 @@ from torch import Tensor
 import torchscience._csrc  # noqa: F401 - Load C++ operators
 
 
+class _FloydWarshallFunction(torch.autograd.Function):
+    """Autograd function for Floyd-Warshall with implicit differentiation.
+
+    For Floyd-Warshall all-pairs shortest paths, the gradient can be computed
+    via implicit differentiation. For each pair (i, j), the gradient of
+    dist[i, j] with respect to the input adjacency matrix A is:
+    - 1 for edges on the shortest path from i to j
+    - 0 for edges not on the shortest path
+
+    The gradient flows through the predecessor tensor - for each (i, j),
+    we trace back the path using pred[i, j] and set gradient = 1 for
+    those edges.
+    """
+
+    @staticmethod
+    def forward(
+        ctx,
+        adjacency: Tensor,
+        directed: bool,
+    ) -> tuple[Tensor, Tensor]:
+        # Call C++ operator
+        distances, predecessors, has_negative_cycle = (
+            torch.ops.torchscience.floyd_warshall(adjacency, directed)
+        )
+
+        # Save for backward
+        ctx.save_for_backward(adjacency, distances, predecessors)
+        ctx.directed = directed
+        ctx.has_negative_cycle = has_negative_cycle
+
+        return distances, predecessors, has_negative_cycle
+
+    @staticmethod
+    def backward(
+        ctx, grad_distances: Tensor, grad_predecessors: Tensor, grad_flag
+    ):
+        adjacency, distances, predecessors = ctx.saved_tensors
+
+        # Handle batched input
+        batch_shape = adjacency.shape[:-2]
+        N = adjacency.size(-1)
+
+        # Initialize gradient for adjacency matrix
+        grad_adj = torch.zeros_like(adjacency)
+
+        # Flatten batch dimensions for easier iteration
+        if batch_shape:
+            flat_distances = distances.view(-1, N, N)
+            flat_predecessors = predecessors.view(-1, N, N)
+            flat_grad_distances = grad_distances.view(-1, N, N)
+            flat_grad_adj = grad_adj.view(-1, N, N)
+            batch_size = flat_distances.size(0)
+        else:
+            flat_distances = distances.unsqueeze(0)
+            flat_predecessors = predecessors.unsqueeze(0)
+            flat_grad_distances = grad_distances.unsqueeze(0)
+            flat_grad_adj = grad_adj.unsqueeze(0)
+            batch_size = 1
+
+        # Process each graph in the batch
+        for b in range(batch_size):
+            dist = flat_distances[b]
+            pred = flat_predecessors[b]
+            grad_d = flat_grad_distances[b]
+            g_adj = flat_grad_adj[b]
+
+            # For each pair (i, j), trace the path from i to j and accumulate
+            # gradient for edges along the path
+            for i in range(N):
+                for j in range(N):
+                    if i == j:
+                        continue
+
+                    # Skip if no path exists (inf distance or pred == -1)
+                    if torch.isinf(dist[i, j]) or pred[i, j] < 0:
+                        continue
+
+                    # Get the gradient for this (i, j) distance
+                    g = grad_d[i, j]
+
+                    # Skip if gradient is zero
+                    if g == 0:
+                        continue
+
+                    # Trace back the path from j to i using predecessors
+                    # pred[i, j] gives the node before j on the path from i to j
+                    current = j
+                    while pred[i, current].item() >= 0:
+                        prev = pred[i, current].item()
+                        # Edge (prev, current) is on the shortest path from i to j
+                        g_adj[prev, current] += g
+                        current = prev
+
+        # For undirected graphs, we need to handle symmetry
+        # The gradient with respect to adj[u, v] should include contributions
+        # from both directions since the undirected graph uses min(adj[u,v], adj[v,u])
+        if not ctx.directed:
+            # Symmetrize gradient: each undirected edge receives gradient from both
+            grad_adj = grad_adj + grad_adj.transpose(-1, -2)
+
+        return grad_adj, None
+
+
 class NegativeCycleError(ValueError):
     """Raised when the graph contains a negative cycle.
 
@@ -65,7 +168,7 @@ def floyd_warshall(
     Simple directed graph:
 
     >>> import torch
-    >>> from torchscience.graph_theory import floyd_warshall
+    >>> from torchscience.graph import floyd_warshall
     >>> inf = float("inf")
     >>> adj = torch.tensor([
     ...     [0.0, 1.0, 4.0],
@@ -146,10 +249,20 @@ def floyd_warshall(
             f"floyd_warshall: input must be floating-point, got {input.dtype}"
         )
 
-    # Call C++ operator
-    distances, predecessors, has_negative_cycle = (
-        torch.ops.torchscience.floyd_warshall(input, directed)
-    )
+    # Handle sparse input
+    if input.is_sparse:
+        input = input.to_dense()
+
+    # Use autograd function for gradient support
+    if input.requires_grad:
+        distances, predecessors, has_negative_cycle = (
+            _FloydWarshallFunction.apply(input, directed)
+        )
+    else:
+        # Direct call for non-differentiable case
+        distances, predecessors, has_negative_cycle = (
+            torch.ops.torchscience.floyd_warshall(input, directed)
+        )
 
     if has_negative_cycle:
         raise NegativeCycleError(

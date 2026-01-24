@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchscience.graph_theory import NegativeCycleError, floyd_warshall
+from torchscience.graph import NegativeCycleError, floyd_warshall
 
 
 class TestFloydWarshallBasic:
@@ -384,3 +384,186 @@ class TestFloydWarshallValidation:
         """Rejects integer dtype."""
         with pytest.raises(ValueError, match="floating-point"):
             floyd_warshall(torch.tensor([[0, 1], [1, 0]]))
+
+
+class TestFloydWarshallGradients:
+    """Gradient computation tests via implicit differentiation."""
+
+    def test_gradcheck(self):
+        """Gradient passes torch.autograd.gradcheck."""
+        adj = torch.tensor(
+            [
+                [0.0, 1.0, 4.0],
+                [float("inf"), 0.0, 2.0],
+                [float("inf"), float("inf"), 0.0],
+            ],
+            dtype=torch.float64,
+            requires_grad=True,
+        )
+
+        def func(adj):
+            dist, _ = floyd_warshall(adj)
+            # Only sum finite distances to avoid inf in gradcheck
+            return dist[dist < 1e10].sum()
+
+        assert torch.autograd.gradcheck(func, (adj,), eps=1e-4, atol=1e-3)
+
+    def test_gradient_on_shortest_path(self):
+        """Gradient is 1 for edges on shortest path, 0 otherwise."""
+        adj = torch.tensor(
+            [
+                [0.0, 1.0, 10.0],
+                [float("inf"), 0.0, 2.0],
+                [float("inf"), float("inf"), 0.0],
+            ],
+            requires_grad=True,
+        )
+
+        dist, _ = floyd_warshall(adj)
+        # dist[0, 2] = 3 via path 0 -> 1 -> 2 (not the direct edge of weight 10)
+        dist[0, 2].backward()
+
+        # Gradient should be 1 on path edges (0, 1) and (1, 2)
+        assert adj.grad[0, 1] == 1.0
+        assert adj.grad[1, 2] == 1.0
+        # Gradient should be 0 on non-path edge (0, 2) since it's not used
+        assert adj.grad[0, 2] == 0.0
+
+    def test_gradient_accumulates_multiple_paths(self):
+        """Gradient accumulates when an edge is used in multiple shortest paths."""
+        adj = torch.tensor(
+            [
+                [0.0, 1.0],
+                [float("inf"), 0.0],
+            ],
+            requires_grad=True,
+        )
+
+        dist, _ = floyd_warshall(adj)
+        # dist[0, 1] uses edge (0, 1)
+        # Summing all distances: dist[0, 0]=0, dist[0, 1]=1, dist[1, 0]=inf, dist[1, 1]=0
+        # Only finite distances contribute
+        finite_mask = dist < 1e10
+        dist[finite_mask].sum().backward()
+
+        assert adj.grad is not None
+        assert not adj.grad.isnan().any()
+        # Edge (0, 1) is used once (for path 0 -> 1)
+        assert adj.grad[0, 1] == 1.0
+
+    def test_gradient_chain_path(self):
+        """Gradient flows correctly through a chain of nodes."""
+        inf = float("inf")
+        adj = torch.tensor(
+            [
+                [0.0, 1.0, inf, inf],
+                [inf, 0.0, 1.0, inf],
+                [inf, inf, 0.0, 1.0],
+                [inf, inf, inf, 0.0],
+            ],
+            requires_grad=True,
+        )
+
+        dist, _ = floyd_warshall(adj)
+        # Path from 0 to 3 is 0 -> 1 -> 2 -> 3
+        dist[0, 3].backward()
+
+        # All edges on the path should have gradient 1
+        assert adj.grad[0, 1] == 1.0
+        assert adj.grad[1, 2] == 1.0
+        assert adj.grad[2, 3] == 1.0
+        # Off-path edges should have gradient 0
+        assert adj.grad[0, 2] == 0.0
+        assert adj.grad[0, 3] == 0.0
+
+    def test_gradient_multiple_destinations(self):
+        """Gradient accumulates correctly for multiple destinations."""
+        inf = float("inf")
+        adj = torch.tensor(
+            [
+                [0.0, 1.0, inf],
+                [inf, 0.0, 2.0],
+                [inf, inf, 0.0],
+            ],
+            requires_grad=True,
+        )
+
+        dist, _ = floyd_warshall(adj)
+        # Sum dist[0, 1] and dist[0, 2]
+        # Path 0 -> 1: uses edge (0, 1)
+        # Path 0 -> 2: uses edges (0, 1) and (1, 2)
+        (dist[0, 1] + dist[0, 2]).backward()
+
+        # Edge (0, 1) is used in both paths
+        assert adj.grad[0, 1] == 2.0
+        # Edge (1, 2) is used only in path 0 -> 2
+        assert adj.grad[1, 2] == 1.0
+
+    def test_gradient_no_path(self):
+        """Gradient is zero for unreachable pairs."""
+        inf = float("inf")
+        adj = torch.tensor(
+            [
+                [0.0, 1.0, inf],
+                [inf, 0.0, inf],
+                [inf, inf, 0.0],
+            ],
+            requires_grad=True,
+        )
+
+        dist, _ = floyd_warshall(adj)
+        # dist[0, 2] is inf (no path)
+        # Only sum finite distances
+        finite_mask = dist < 1e10
+        dist[finite_mask].sum().backward()
+
+        assert adj.grad is not None
+        # Edge (0, 1) is used for path 0 -> 1
+        assert adj.grad[0, 1] == 1.0
+        # No gradient flows through edges to node 2 since it's unreachable
+
+    def test_gradient_with_batching(self):
+        """Gradient works correctly with batched input."""
+        inf = float("inf")
+        adj = torch.tensor(
+            [
+                [
+                    [0.0, 1.0, inf],
+                    [inf, 0.0, 2.0],
+                    [inf, inf, 0.0],
+                ],
+                [
+                    [0.0, 3.0, inf],
+                    [inf, 0.0, 1.0],
+                    [inf, inf, 0.0],
+                ],
+            ],
+            requires_grad=True,
+        )
+
+        dist, _ = floyd_warshall(adj)
+        # Sum all finite distances
+        finite_mask = dist < 1e10
+        dist[finite_mask].sum().backward()
+
+        assert adj.grad is not None
+        assert adj.grad.shape == adj.shape
+        assert not adj.grad.isnan().any()
+
+    def test_gradient_undirected(self):
+        """Gradient is symmetrized for undirected graphs."""
+        adj = torch.tensor(
+            [
+                [0.0, 1.0],
+                [2.0, 0.0],
+            ],
+            requires_grad=True,
+        )
+
+        dist, _ = floyd_warshall(adj, directed=False)
+        # In undirected mode, the graph uses min(adj[i,j], adj[j,i])
+        dist.sum().backward()
+
+        assert adj.grad is not None
+        # Gradient should be symmetric for undirected case
+        # Both adj[0,1] and adj[1,0] contribute to the paths

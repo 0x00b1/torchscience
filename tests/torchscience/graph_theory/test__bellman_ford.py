@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchscience.graph_theory import (
+from torchscience.graph import (
     BellmanFordNegativeCycleError,
     bellman_ford,
 )
@@ -174,18 +174,147 @@ class TestBellmanFordDtypes:
         assert pred.dtype == torch.int64
 
 
+class TestBellmanFordBatched:
+    """Tests for batched input support."""
+
+    def test_batch_2d(self):
+        """Batched with single batch dimension."""
+        inf = float("inf")
+        # Create 3 small graphs
+        adj = torch.tensor(
+            [
+                [[0.0, 1.0, inf], [inf, 0.0, 2.0], [inf, inf, 0.0]],
+                [[0.0, 3.0, inf], [inf, 0.0, 1.0], [inf, inf, 0.0]],
+                [[0.0, 2.0, 4.0], [inf, 0.0, 1.0], [inf, inf, 0.0]],
+            ]
+        )
+
+        dist, pred = bellman_ford(adj, source=0)
+        assert dist.shape == (3, 3)
+        assert pred.shape == (3, 3)
+
+    def test_batch_3d(self):
+        """Batched with multiple batch dimensions."""
+        inf = float("inf")
+        # Create 2x2 batch of small graphs
+        adj = torch.tensor(
+            [
+                [
+                    [[0.0, 1.0, inf], [inf, 0.0, 2.0], [inf, inf, 0.0]],
+                    [[0.0, 3.0, inf], [inf, 0.0, 1.0], [inf, inf, 0.0]],
+                ],
+                [
+                    [[0.0, 2.0, 4.0], [inf, 0.0, 1.0], [inf, inf, 0.0]],
+                    [[0.0, 5.0, inf], [inf, 0.0, 3.0], [inf, inf, 0.0]],
+                ],
+            ]
+        )
+
+        dist, pred = bellman_ford(adj, source=0)
+        assert dist.shape == (2, 2, 3)
+        assert pred.shape == (2, 2, 3)
+
+    def test_batch_consistency(self):
+        """Batched result matches individual computations."""
+        inf = float("inf")
+        adj1 = torch.tensor(
+            [
+                [0.0, 1.0, inf],
+                [inf, 0.0, 2.0],
+                [inf, inf, 0.0],
+            ]
+        )
+        adj2 = torch.tensor(
+            [
+                [0.0, 3.0, inf],
+                [inf, 0.0, 1.0],
+                [inf, inf, 0.0],
+            ]
+        )
+
+        dist1, pred1 = bellman_ford(adj1, source=0)
+        dist2, pred2 = bellman_ford(adj2, source=0)
+
+        batch_adj = torch.stack([adj1, adj2])
+        dist_batch, pred_batch = bellman_ford(batch_adj, source=0)
+
+        torch.testing.assert_close(dist_batch[0], dist1)
+        torch.testing.assert_close(dist_batch[1], dist2)
+        torch.testing.assert_close(pred_batch[0], pred1)
+        torch.testing.assert_close(pred_batch[1], pred2)
+
+    def test_batch_with_negative_edges(self):
+        """Batched computation with negative edges."""
+        inf = float("inf")
+        adj1 = torch.tensor(
+            [
+                [0.0, 4.0, inf],
+                [inf, 0.0, -2.0],  # Negative edge
+                [inf, inf, 0.0],
+            ]
+        )
+        adj2 = torch.tensor(
+            [
+                [0.0, 5.0, 3.0],
+                [inf, 0.0, -4.0],  # Negative edge makes 0->1->2 shorter
+                [inf, inf, 0.0],
+            ]
+        )
+
+        dist1, _ = bellman_ford(adj1, source=0)
+        dist2, _ = bellman_ford(adj2, source=0)
+
+        batch_adj = torch.stack([adj1, adj2])
+        dist_batch, _ = bellman_ford(batch_adj, source=0)
+
+        torch.testing.assert_close(dist_batch[0], dist1)
+        torch.testing.assert_close(dist_batch[1], dist2)
+        assert dist_batch[0, 2] == 2.0  # 0->1->2 = 4 + (-2) = 2
+        assert dist_batch[1, 2] == 1.0  # 0->1->2 = 5 + (-4) = 1
+
+    def test_batch_gradient(self):
+        """Gradient works with batched input."""
+        inf = float("inf")
+        adj = torch.tensor(
+            [
+                [[0.0, 1.0, inf], [inf, 0.0, 2.0], [inf, inf, 0.0]],
+                [[0.0, 3.0, inf], [inf, 0.0, 1.0], [inf, inf, 0.0]],
+            ],
+            requires_grad=True,
+        )
+
+        dist, _ = bellman_ford(adj, source=0)
+        dist.sum().backward()
+
+        assert adj.grad is not None
+        assert adj.grad.shape == adj.shape
+        # Each graph: edges (0,1) and (1,2) are on shortest paths
+        assert adj.grad[0, 0, 1] != 0
+        assert adj.grad[0, 1, 2] != 0
+        assert adj.grad[1, 0, 1] != 0
+        assert adj.grad[1, 1, 2] != 0
+
+
 class TestBellmanFordValidation:
     """Input validation tests."""
 
     def test_rejects_1d_input(self):
         """Should reject 1D input."""
-        with pytest.raises(ValueError, match="2D"):
+        with pytest.raises(ValueError, match="at least 2D"):
             bellman_ford(torch.tensor([1.0, 2.0, 3.0]), source=0)
 
-    def test_rejects_3d_input(self):
-        """Should reject 3D input."""
-        with pytest.raises(ValueError, match="2D"):
-            bellman_ford(torch.rand(2, 3, 3), source=0)
+    def test_accepts_3d_input(self):
+        """Should accept 3D input (batched)."""
+        inf = float("inf")
+        adj = torch.tensor(
+            [
+                [[0.0, 1.0], [1.0, 0.0]],
+                [[0.0, 2.0], [2.0, 0.0]],
+            ]
+        )
+        dist, pred = bellman_ford(adj, source=0)
+        assert dist.shape == (2, 2)
+        assert pred.shape == (2, 2)
 
     def test_rejects_non_square(self):
         """Should reject non-square adjacency."""

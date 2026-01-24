@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchscience.graph_theory import betweenness_centrality
+from torchscience.graph import betweenness_centrality
 
 
 class TestBetweennessCentralityBasic:
