@@ -84,6 +84,8 @@
 #include "cpu/graphics/color/oklch_to_srgb.h"
 #include "cpu/graphics/color/srgb_to_ycbcr.h"
 #include "cpu/graphics/color/ycbcr_to_srgb.h"
+#include "cpu/graphics/color/srgb_to_yuv.h"
+#include "cpu/graphics/color/yuv_to_srgb.h"
 
 // morphology
 #include "cpu/morphology/erosion.h"
@@ -509,6 +511,8 @@
 #include "autograd/graphics/color/oklch_to_srgb.h"
 #include "autograd/graphics/color/srgb_to_ycbcr.h"
 #include "autograd/graphics/color/ycbcr_to_srgb.h"
+#include "autograd/graphics/color/srgb_to_yuv.h"
+#include "autograd/graphics/color/yuv_to_srgb.h"
 #include "autograd/signal_processing/filter.h"
 #include "autograd/optimization/test_functions.h"
 #include "autograd/optimization/combinatorial.h"
@@ -594,6 +598,8 @@
 #include "meta/graphics/color/oklch_to_srgb.h"
 #include "meta/graphics/color/srgb_to_ycbcr.h"
 #include "meta/graphics/color/ycbcr_to_srgb.h"
+#include "meta/graphics/color/srgb_to_yuv.h"
+#include "meta/graphics/color/yuv_to_srgb.h"
 #include "meta/signal_processing/filter.h"
 #include "meta/optimization/test_functions.h"
 #include "meta/optimization/combinatorial.h"
@@ -1164,6 +1170,12 @@ TORCH_LIBRARY(torchscience, module) {
 
   module.def("ycbcr_to_srgb(Tensor input) -> Tensor");
   module.def("ycbcr_to_srgb_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("srgb_to_yuv(Tensor input) -> Tensor");
+  module.def("srgb_to_yuv_backward(Tensor grad_output, Tensor input) -> Tensor");
+
+  module.def("yuv_to_srgb(Tensor input) -> Tensor");
+  module.def("yuv_to_srgb_backward(Tensor grad_output, Tensor input) -> Tensor");
 
   // graphics.texture_mapping
   module.def("cube_mapping(Tensor direction) -> (Tensor, Tensor, Tensor)");
