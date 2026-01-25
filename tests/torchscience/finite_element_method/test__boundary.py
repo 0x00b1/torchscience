@@ -1,8 +1,13 @@
 """Tests for FEM boundary condition utilities."""
 
+import pytest
 import torch
 
-from torchscience.finite_element_method import boundary_dofs, dof_map
+from torchscience.finite_element_method import (
+    apply_dirichlet_penalty,
+    boundary_dofs,
+    dof_map,
+)
 from torchscience.geometry.mesh import rectangle_mesh
 
 
@@ -112,3 +117,120 @@ class TestBoundaryDofs:
 
         # Should be exactly 1 DOF
         assert len(b_dofs) == 1
+
+
+class TestApplyDirichletPenalty:
+    def test_penalty_modifies_diagonal(self):
+        """Test that penalty method adds large value to diagonal."""
+        mesh = rectangle_mesh(2, 2, bounds=[[0, 1], [0, 1]])
+        dm = dof_map(mesh, order=1)
+
+        # Create a simple stiffness matrix (identity for testing)
+        K = torch.eye(9, dtype=torch.float64).to_sparse_csr()
+        f = torch.zeros(9, dtype=torch.float64)
+
+        # Apply Dirichlet BC: u = 1.0 at boundary
+        bc_dofs = boundary_dofs(mesh, dm)
+        bc_values = torch.ones(len(bc_dofs), dtype=torch.float64)
+
+        K_mod, f_mod = apply_dirichlet_penalty(K, f, bc_dofs, bc_values)
+
+        # Diagonal at BC DOFs should be much larger
+        K_dense = K_mod.to_dense()
+        for dof in bc_dofs:
+            assert K_dense[dof, dof] > 1e8
+
+    def test_penalty_modifies_rhs(self):
+        """Test that penalty method modifies RHS correctly."""
+        mesh = rectangle_mesh(2, 2, bounds=[[0, 1], [0, 1]])
+        dm = dof_map(mesh, order=1)
+
+        K = torch.eye(9, dtype=torch.float64).to_sparse_csr()
+        f = torch.zeros(9, dtype=torch.float64)
+
+        bc_dofs = boundary_dofs(mesh, dm)
+        bc_values = torch.full((len(bc_dofs),), 2.0, dtype=torch.float64)
+
+        K_mod, f_mod = apply_dirichlet_penalty(K, f, bc_dofs, bc_values)
+
+        # RHS at BC DOFs should be penalty * bc_value
+        for i, dof in enumerate(bc_dofs):
+            assert f_mod[dof] > 1e8  # penalty * 2.0
+
+    def test_penalty_preserves_symmetry(self):
+        """Test that penalty method preserves matrix symmetry."""
+        mesh = rectangle_mesh(2, 2, bounds=[[0, 1], [0, 1]])
+        dm = dof_map(mesh, order=1)
+
+        # Create symmetric matrix
+        K_dense = torch.randn(9, 9, dtype=torch.float64)
+        K_dense = (K_dense + K_dense.T) / 2
+        K = K_dense.to_sparse_csr()
+        f = torch.zeros(9, dtype=torch.float64)
+
+        bc_dofs = torch.tensor([0, 1], dtype=torch.long)
+        bc_values = torch.ones(2, dtype=torch.float64)
+
+        K_mod, f_mod = apply_dirichlet_penalty(K, f, bc_dofs, bc_values)
+
+        K_mod_dense = K_mod.to_dense()
+        assert torch.allclose(K_mod_dense, K_mod_dense.T, atol=1e-10)
+
+    def test_penalty_empty_dofs(self):
+        """Test that empty dofs tensor works correctly."""
+        K = torch.eye(9, dtype=torch.float64).to_sparse_csr()
+        f = torch.zeros(9, dtype=torch.float64)
+
+        bc_dofs = torch.tensor([], dtype=torch.long)
+        bc_values = torch.tensor([], dtype=torch.float64)
+
+        K_mod, f_mod = apply_dirichlet_penalty(K, f, bc_dofs, bc_values)
+
+        # Matrix and vector should be unchanged
+        assert torch.allclose(K_mod.to_dense(), K.to_dense())
+        assert torch.allclose(f_mod, f)
+
+    def test_penalty_device_mismatch_matrix_vector(self):
+        """Test that device mismatch between matrix and vector raises error."""
+        if not torch.cuda.is_available():
+            pytest.skip("CUDA not available")
+
+        K_cpu = torch.eye(9, dtype=torch.float64).to_sparse_csr()
+        f_cuda = torch.zeros(9, dtype=torch.float64, device="cuda")
+        bc_dofs = torch.tensor([0, 1], dtype=torch.long)
+        bc_values = torch.ones(2, dtype=torch.float64)
+
+        with pytest.raises(
+            ValueError, match="matrix and vector must be on the same device"
+        ):
+            apply_dirichlet_penalty(K_cpu, f_cuda, bc_dofs, bc_values)
+
+    def test_penalty_device_mismatch_matrix_dofs(self):
+        """Test that device mismatch between matrix and dofs raises error."""
+        if not torch.cuda.is_available():
+            pytest.skip("CUDA not available")
+
+        K_cpu = torch.eye(9, dtype=torch.float64).to_sparse_csr()
+        f_cpu = torch.zeros(9, dtype=torch.float64)
+        bc_dofs = torch.tensor([0, 1], dtype=torch.long, device="cuda")
+        bc_values = torch.ones(2, dtype=torch.float64)
+
+        with pytest.raises(
+            ValueError, match="matrix and dofs must be on the same device"
+        ):
+            apply_dirichlet_penalty(K_cpu, f_cpu, bc_dofs, bc_values)
+
+    def test_penalty_device_mismatch_matrix_values(self):
+        """Test that device mismatch between matrix and values raises error."""
+        if not torch.cuda.is_available():
+            pytest.skip("CUDA not available")
+
+        K_cpu = torch.eye(9, dtype=torch.float64).to_sparse_csr()
+        f_cpu = torch.zeros(9, dtype=torch.float64)
+        bc_dofs = torch.tensor([0, 1], dtype=torch.long)
+        bc_values = torch.ones(2, dtype=torch.float64, device="cuda")
+
+        with pytest.raises(
+            ValueError, match="matrix and values must be on the same device"
+        ):
+            apply_dirichlet_penalty(K_cpu, f_cpu, bc_dofs, bc_values)

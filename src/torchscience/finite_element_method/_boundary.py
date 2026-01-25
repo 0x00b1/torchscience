@@ -330,3 +330,93 @@ def _get_boundary_edge_dofs_quad(
     )
 
     return edge_dofs.flatten()
+
+
+def apply_dirichlet_penalty(
+    matrix: Tensor,
+    vector: Tensor,
+    dofs: Tensor,
+    values: Tensor,
+    penalty: float = 1e10,
+) -> tuple[Tensor, Tensor]:
+    """Apply Dirichlet boundary conditions using the penalty method.
+
+    Modifies the system K @ u = f by adding a large penalty to constrained DOFs:
+    - K[i,i] += penalty for each constrained DOF i
+    - f[i] += penalty * value[i] for each constrained DOF i
+
+    Parameters
+    ----------
+    matrix : Tensor
+        System matrix (sparse CSR), shape (n, n).
+    vector : Tensor
+        Load vector (dense), shape (n,).
+    dofs : Tensor
+        DOF indices to constrain, shape (num_bc,).
+    values : Tensor
+        Prescribed values at constrained DOFs, shape (num_bc,).
+    penalty : float, optional
+        Penalty factor. Default 1e10.
+
+    Returns
+    -------
+    matrix : Tensor
+        Modified system matrix (sparse CSR).
+    vector : Tensor
+        Modified load vector.
+
+    Notes
+    -----
+    The penalty method is simple but introduces numerical error proportional
+    to 1/penalty. For most applications, penalty=1e10 provides sufficient
+    accuracy while maintaining reasonable conditioning.
+
+    Examples
+    --------
+    >>> from torchscience.geometry.mesh import rectangle_mesh
+    >>> from torchscience.finite_element_method import (
+    ...     dof_map, boundary_dofs, apply_dirichlet_penalty
+    ... )
+    >>> mesh = rectangle_mesh(2, 2)
+    >>> dm = dof_map(mesh, order=1)
+    >>> K = torch.eye(9, dtype=torch.float64).to_sparse_csr()
+    >>> f = torch.zeros(9, dtype=torch.float64)
+    >>> bc_dofs = boundary_dofs(mesh, dm)
+    >>> bc_values = torch.ones(len(bc_dofs), dtype=torch.float64)
+    >>> K_mod, f_mod = apply_dirichlet_penalty(K, f, bc_dofs, bc_values)
+
+    """
+    # Validate device compatibility
+    if matrix.device != vector.device:
+        raise ValueError(
+            f"matrix and vector must be on the same device, "
+            f"got {matrix.device} and {vector.device}"
+        )
+    if matrix.device != dofs.device:
+        raise ValueError(
+            f"matrix and dofs must be on the same device, "
+            f"got {matrix.device} and {dofs.device}"
+        )
+    if matrix.device != values.device:
+        raise ValueError(
+            f"matrix and values must be on the same device, "
+            f"got {matrix.device} and {values.device}"
+        )
+
+    # Handle empty dofs case - return unchanged matrix and vector
+    if dofs.numel() == 0:
+        return matrix, vector
+
+    # TODO: For large-scale problems, implement sparse-aware diagonal modification
+    # to avoid O(n^2) memory usage. Current implementation converts to dense for
+    # simplicity.
+    K_dense = matrix.to_dense()
+    f_mod = vector.clone()
+
+    # Add penalty to diagonal
+    K_dense[dofs, dofs] += penalty
+
+    # Modify RHS
+    f_mod[dofs] += penalty * values
+
+    return K_dense.to_sparse_csr(), f_mod
