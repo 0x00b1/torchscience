@@ -420,3 +420,107 @@ def apply_dirichlet_penalty(
     f_mod[dofs] += penalty * values
 
     return K_dense.to_sparse_csr(), f_mod
+
+
+def apply_dirichlet_elimination(
+    matrix: Tensor,
+    vector: Tensor,
+    dofs: Tensor,
+    values: Tensor,
+) -> tuple[Tensor, Tensor]:
+    """Apply Dirichlet boundary conditions using the elimination method.
+
+    Modifies the system K @ u = f by eliminating constrained DOFs:
+    - For unconstrained DOFs j: f[j] -= K[j,i] * prescribed_value[i]
+    - Set row i of K to zero (except diagonal)
+    - Set column i of K to zero (except diagonal)
+    - Set K[i,i] = 1
+    - Set f[i] = prescribed_value[i]
+
+    This maintains symmetry if the original matrix was symmetric.
+
+    Parameters
+    ----------
+    matrix : Tensor
+        System matrix (sparse CSR), shape (n, n).
+    vector : Tensor
+        Load vector (dense), shape (n,).
+    dofs : Tensor
+        DOF indices to constrain, shape (num_bc,).
+    values : Tensor
+        Prescribed values at constrained DOFs, shape (num_bc,).
+
+    Returns
+    -------
+    matrix : Tensor
+        Modified system matrix (sparse CSR).
+    vector : Tensor
+        Modified load vector.
+
+    Notes
+    -----
+    The elimination method enforces boundary conditions exactly (up to numerical
+    precision) without introducing conditioning issues like the penalty method.
+    It is more accurate but requires modifying the matrix structure.
+
+    Examples
+    --------
+    >>> from torchscience.geometry.mesh import rectangle_mesh
+    >>> from torchscience.finite_element_method import (
+    ...     dof_map, boundary_dofs, apply_dirichlet_elimination
+    ... )
+    >>> mesh = rectangle_mesh(2, 2)
+    >>> dm = dof_map(mesh, order=1)
+    >>> K = torch.eye(9, dtype=torch.float64).to_sparse_csr()
+    >>> f = torch.zeros(9, dtype=torch.float64)
+    >>> bc_dofs = boundary_dofs(mesh, dm)
+    >>> bc_values = torch.ones(len(bc_dofs), dtype=torch.float64)
+    >>> K_mod, f_mod = apply_dirichlet_elimination(K, f, bc_dofs, bc_values)
+
+    """
+    # Validate device compatibility
+    if matrix.device != vector.device:
+        raise ValueError(
+            f"matrix and vector must be on the same device, "
+            f"got {matrix.device} and {vector.device}"
+        )
+    if matrix.device != dofs.device:
+        raise ValueError(
+            f"matrix and dofs must be on the same device, "
+            f"got {matrix.device} and {dofs.device}"
+        )
+    if matrix.device != values.device:
+        raise ValueError(
+            f"matrix and values must be on the same device, "
+            f"got {matrix.device} and {values.device}"
+        )
+
+    # Handle empty dofs case - return unchanged matrix and vector
+    if dofs.numel() == 0:
+        return matrix, vector
+
+    # TODO: For large-scale problems, implement sparse-aware modification
+    # to avoid O(n^2) memory usage. Current implementation converts to dense
+    # for simplicity.
+    K_dense = matrix.to_dense()
+    f_mod = vector.clone()
+
+    # Step 1: Modify RHS for unconstrained DOFs
+    # For each unconstrained DOF j: f[j] -= sum_i(K[j,i] * values[i])
+    # This accounts for the known values being moved to the RHS
+    f_mod = f_mod - K_dense[:, dofs] @ values
+
+    # Step 2: Zero out rows and columns for constrained DOFs
+    # Set entire rows to zero
+    K_dense[dofs, :] = 0.0
+
+    # Set entire columns to zero
+    K_dense[:, dofs] = 0.0
+
+    # Step 3: Set diagonal to 1 for constrained DOFs
+    K_dense[dofs, dofs] = 1.0
+
+    # Step 4: Set RHS for constrained DOFs to prescribed values
+    f_mod[dofs] = values
+
+    return K_dense.to_sparse_csr(), f_mod

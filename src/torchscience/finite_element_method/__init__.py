@@ -16,6 +16,7 @@ from torchscience.finite_element_method._basis import (
     lagrange_basis_gradient,
 )
 from torchscience.finite_element_method._boundary import (
+    apply_dirichlet_elimination,
     apply_dirichlet_penalty,
     boundary_dofs,
 )
@@ -28,6 +29,7 @@ from torchscience.finite_element_method._quadrature import quadrature_points
 
 __all__ = [
     "DOFMap",
+    "apply_dirichlet_elimination",
     "apply_dirichlet_penalty",
     "assemble_matrix",
     "assemble_vector",
