@@ -731,6 +731,7 @@
 #include "meta/geometry/intersection/ray_plane.h"
 #include "meta/geometry/intersection/ray_sphere.h"
 #include "meta/geometry/intersection/ray_triangle.h"
+#include "meta/geometry/intersection/ray_aabb.h"
 #include "autograd/space_partitioning/k_nearest_neighbors.h"
 #include "autograd/space_partitioning/range_search.h"
 #include "autograd/space_partitioning/octree.h"
