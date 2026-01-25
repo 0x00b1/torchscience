@@ -1,12 +1,14 @@
-"""RayHit tensorclass for intersection results."""
+"""IntersectionResult tensorclass for intersection results."""
+
+from __future__ import annotations
 
 from tensordict import tensorclass
 from torch import Tensor
 
 
 @tensorclass
-class RayHit:
-    """Ray intersection result.
+class IntersectionResult:
+    """Ray-geometry intersection result for primitive shapes.
 
     Attributes
     ----------
