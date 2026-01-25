@@ -4,6 +4,7 @@ import torch
 
 from torchscience.finite_element_method import (
     dof_map,
+    local_mass_matrices,
     local_stiffness_matrices,
 )
 from torchscience.geometry.mesh import rectangle_mesh
@@ -202,3 +203,64 @@ class TestLocalStiffnessQuadOrder:
         # For linear elements, higher quad order should give same result
         # (gradients are constant)
         assert torch.allclose(K_local_default, K_local_high, atol=1e-10)
+
+
+class TestLocalMassMatrices:
+    def test_local_mass_shape(self):
+        """Test shape of local mass matrices."""
+        mesh = rectangle_mesh(2, 2, bounds=[[0, 1], [0, 1]])
+        dm = dof_map(mesh, order=1)
+
+        M_local = local_mass_matrices(mesh, dm)
+
+        assert M_local.shape == (8, 3, 3)
+
+    def test_local_mass_symmetry(self):
+        """Test that local mass matrices are symmetric."""
+        mesh = rectangle_mesh(2, 2, bounds=[[0, 1], [0, 1]])
+        dm = dof_map(mesh, order=1)
+
+        M_local = local_mass_matrices(mesh, dm)
+
+        assert torch.allclose(M_local, M_local.transpose(-1, -2), atol=1e-10)
+
+    def test_local_mass_positive_definite(self):
+        """Test that local mass matrices are positive definite."""
+        mesh = rectangle_mesh(2, 2, bounds=[[0, 1], [0, 1]])
+        dm = dof_map(mesh, order=1)
+
+        M_local = local_mass_matrices(mesh, dm)
+
+        # Eigenvalues should be > 0
+        for i in range(M_local.shape[0]):
+            eigenvalues = torch.linalg.eigvalsh(M_local[i])
+            assert (eigenvalues > 1e-10).all()
+
+    def test_local_mass_with_density(self):
+        """Test mass with spatially varying density."""
+        mesh = rectangle_mesh(2, 2, bounds=[[0, 1], [0, 1]])
+        dm = dof_map(mesh, order=1)
+
+        density = torch.ones(8, dtype=torch.float64) * 3.0
+
+        M_local = local_mass_matrices(mesh, dm, density=density)
+        M_local_unit = local_mass_matrices(mesh, dm)
+
+        assert torch.allclose(M_local, 3.0 * M_local_unit, atol=1e-10)
+
+    def test_local_mass_sums_to_volume(self):
+        """Test that mass matrix sums relate to element volume."""
+        mesh = rectangle_mesh(2, 2, bounds=[[0, 1], [0, 1]])
+        dm = dof_map(mesh, order=1)
+
+        M_local = local_mass_matrices(mesh, dm)
+
+        # For unit density, sum of all entries = element volume
+        # Total mesh area = 1.0, 8 elements, so average element area = 1/8
+        total_mass = M_local.sum()
+        expected_mass = 1.0  # Total area
+        assert torch.allclose(
+            total_mass,
+            torch.tensor(expected_mass, dtype=torch.float64),
+            rtol=0.01,
+        )

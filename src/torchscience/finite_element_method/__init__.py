@@ -17,6 +17,7 @@ from torchscience.finite_element_method._basis import (
 )
 from torchscience.finite_element_method._dof_map import DOFMap, dof_map
 from torchscience.finite_element_method._local_matrices import (
+    local_mass_matrices,
     local_stiffness_matrices,
 )
 from torchscience.finite_element_method._quadrature import quadrature_points
@@ -28,6 +29,7 @@ __all__ = [
     "dof_map",
     "lagrange_basis",
     "lagrange_basis_gradient",
+    "local_mass_matrices",
     "local_stiffness_matrices",
     "quadrature_points",
 ]
