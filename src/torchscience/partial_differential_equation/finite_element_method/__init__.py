@@ -7,32 +7,40 @@ This module provides tools for finite element computations including:
     - Local element matrices
 """
 
-from torchscience.finite_element_method._assembly import (
+from torchscience.partial_differential_equation.finite_element_method._assembly import (
     assemble_matrix,
     assemble_vector,
 )
-from torchscience.finite_element_method._basis import (
+from torchscience.partial_differential_equation.finite_element_method._basis import (
     lagrange_basis,
     lagrange_basis_gradient,
 )
-from torchscience.finite_element_method._boundary import (
+from torchscience.partial_differential_equation.finite_element_method._boundary import (
     apply_dirichlet_elimination,
     apply_dirichlet_penalty,
     apply_neumann,
     boundary_dofs,
 )
-from torchscience.finite_element_method._dof_map import DOFMap, dof_map
-from torchscience.finite_element_method._local_matrices import (
+from torchscience.partial_differential_equation.finite_element_method._dof_map import (
+    DOFMap,
+    dof_map,
+)
+from torchscience.partial_differential_equation.finite_element_method._local_matrices import (
     local_mass_matrices,
     local_stiffness_matrices,
 )
-from torchscience.finite_element_method._physics import (
+from torchscience.partial_differential_equation.finite_element_method._physics import (
     solve_heat,
     solve_poisson,
 )
-from torchscience.finite_element_method._quadrature import quadrature_points
-from torchscience.finite_element_method._solve import solve_cg, solve_direct
-from torchscience.finite_element_method._weak_form import (
+from torchscience.partial_differential_equation.finite_element_method._quadrature import (
+    quadrature_points,
+)
+from torchscience.partial_differential_equation.finite_element_method._solve import (
+    solve_cg,
+    solve_direct,
+)
+from torchscience.partial_differential_equation.finite_element_method._weak_form import (
     BasisValues,
     WeakForm,
     assemble_weak_form,

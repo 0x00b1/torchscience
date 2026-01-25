@@ -2,7 +2,9 @@
 
 import torch
 
-from torchscience.finite_element_method import WeakForm
+from torchscience.partial_differential_equation.finite_element_method import (
+    WeakForm,
+)
 
 
 class TestWeakFormCreation:
@@ -318,14 +320,14 @@ class TestAssembleWeakForm:
 
     def test_assemble_poisson_weak_form_equals_stiffness(self):
         """Poisson weak form should produce same matrix as local_stiffness_matrices."""
-        from torchscience.finite_element_method import (
+        from torchscience.geometry.mesh import rectangle_mesh
+        from torchscience.partial_differential_equation.finite_element_method import (
             WeakForm,
             assemble_matrix,
             assemble_weak_form,
             dof_map,
             local_stiffness_matrices,
         )
-        from torchscience.geometry.mesh import rectangle_mesh
 
         mesh = rectangle_mesh(3, 3, bounds=[[0.0, 1.0], [0.0, 1.0]])
         dm = dof_map(mesh, order=1)
@@ -362,14 +364,14 @@ class TestAssembleWeakForm:
 
     def test_assemble_mass_weak_form_equals_mass_matrices(self):
         """Mass weak form should produce same matrix as local_mass_matrices."""
-        from torchscience.finite_element_method import (
+        from torchscience.geometry.mesh import rectangle_mesh
+        from torchscience.partial_differential_equation.finite_element_method import (
             WeakForm,
             assemble_matrix,
             assemble_weak_form,
             dof_map,
             local_mass_matrices,
         )
-        from torchscience.geometry.mesh import rectangle_mesh
 
         mesh = rectangle_mesh(3, 3, bounds=[[0.0, 1.0], [0.0, 1.0]])
         dm = dof_map(mesh, order=1)
@@ -404,7 +406,8 @@ class TestAssembleWeakForm:
 
     def test_assemble_custom_bilinear_form(self):
         """Test custom bilinear form that combines mass and stiffness."""
-        from torchscience.finite_element_method import (
+        from torchscience.geometry.mesh import rectangle_mesh
+        from torchscience.partial_differential_equation.finite_element_method import (
             WeakForm,
             assemble_matrix,
             assemble_weak_form,
@@ -412,7 +415,6 @@ class TestAssembleWeakForm:
             local_mass_matrices,
             local_stiffness_matrices,
         )
-        from torchscience.geometry.mesh import rectangle_mesh
 
         mesh = rectangle_mesh(3, 3, bounds=[[0.0, 1.0], [0.0, 1.0]])
         dm = dof_map(mesh, order=1)
@@ -452,12 +454,12 @@ class TestAssembleWeakForm:
 
     def test_symmetric_bilinear_form_produces_symmetric_matrix(self):
         """Symmetric weak form should produce symmetric matrix."""
-        from torchscience.finite_element_method import (
+        from torchscience.geometry.mesh import rectangle_mesh
+        from torchscience.partial_differential_equation.finite_element_method import (
             WeakForm,
             assemble_weak_form,
             dof_map,
         )
-        from torchscience.geometry.mesh import rectangle_mesh
 
         mesh = rectangle_mesh(3, 3, bounds=[[0.0, 1.0], [0.0, 1.0]])
         dm = dof_map(mesh, order=1)
@@ -482,12 +484,12 @@ class TestAssembleWeakForm:
 
     def test_sparse_csr_output(self):
         """Output matrix should be in sparse CSR format."""
-        from torchscience.finite_element_method import (
+        from torchscience.geometry.mesh import rectangle_mesh
+        from torchscience.partial_differential_equation.finite_element_method import (
             WeakForm,
             assemble_weak_form,
             dof_map,
         )
-        from torchscience.geometry.mesh import rectangle_mesh
 
         mesh = rectangle_mesh(3, 3, bounds=[[0.0, 1.0], [0.0, 1.0]])
         dm = dof_map(mesh, order=1)
@@ -517,14 +519,14 @@ class TestAssembleWeakForm:
 
     def test_linear_form_with_constant_source(self):
         """Test linear form with constant source f = 1."""
-        from torchscience.finite_element_method import (
+        from torchscience.geometry.mesh import rectangle_mesh
+        from torchscience.partial_differential_equation.finite_element_method import (
             WeakForm,
             assemble_vector,
             assemble_weak_form,
             dof_map,
             local_mass_matrices,
         )
-        from torchscience.geometry.mesh import rectangle_mesh
 
         mesh = rectangle_mesh(3, 3, bounds=[[0.0, 1.0], [0.0, 1.0]])
         dm = dof_map(mesh, order=1)
@@ -562,12 +564,12 @@ class TestAssembleWeakForm:
 
     def test_assemble_with_quad_order_parameter(self):
         """Test that quad_order parameter is respected."""
-        from torchscience.finite_element_method import (
+        from torchscience.geometry.mesh import rectangle_mesh
+        from torchscience.partial_differential_equation.finite_element_method import (
             WeakForm,
             assemble_weak_form,
             dof_map,
         )
-        from torchscience.geometry.mesh import rectangle_mesh
 
         mesh = rectangle_mesh(2, 2, bounds=[[0.0, 1.0], [0.0, 1.0]])
         dm = dof_map(mesh, order=1)
@@ -593,14 +595,14 @@ class TestAssembleWeakForm:
 
     def test_assemble_with_higher_order_elements(self):
         """Test weak form assembly with P2 elements."""
-        from torchscience.finite_element_method import (
+        from torchscience.geometry.mesh import rectangle_mesh
+        from torchscience.partial_differential_equation.finite_element_method import (
             WeakForm,
             assemble_matrix,
             assemble_weak_form,
             dof_map,
             local_stiffness_matrices,
         )
-        from torchscience.geometry.mesh import rectangle_mesh
 
         mesh = rectangle_mesh(2, 2, bounds=[[0.0, 1.0], [0.0, 1.0]])
         dm = dof_map(mesh, order=2)  # P2 elements
@@ -636,7 +638,9 @@ class TestBasisValues:
 
     def test_basis_values_creation(self):
         """Test creating BasisValues with value and grad."""
-        from torchscience.finite_element_method import BasisValues
+        from torchscience.partial_differential_equation.finite_element_method import (
+            BasisValues,
+        )
 
         value = torch.tensor([[0.5, 0.3, 0.2], [0.3, 0.4, 0.3]])
         grad = torch.randn(2, 3, 2)
@@ -648,7 +652,9 @@ class TestBasisValues:
 
     def test_basis_values_attributes(self):
         """Test that BasisValues has expected attributes."""
-        from torchscience.finite_element_method import BasisValues
+        from torchscience.partial_differential_equation.finite_element_method import (
+            BasisValues,
+        )
 
         value = torch.ones(4, 3)
         grad = torch.ones(4, 3, 2)
@@ -666,7 +672,9 @@ class TestPoissonForm:
 
     def test_poisson_form_default_diffusivity(self):
         """Test poisson_form with default diffusivity=1.0."""
-        from torchscience.finite_element_method import poisson_form
+        from torchscience.partial_differential_equation.finite_element_method import (
+            poisson_form,
+        )
 
         wf = poisson_form()
         assert callable(wf.bilinear_form)
@@ -675,7 +683,9 @@ class TestPoissonForm:
 
     def test_poisson_form_custom_diffusivity(self):
         """Test poisson_form with custom diffusivity."""
-        from torchscience.finite_element_method import poisson_form
+        from torchscience.partial_differential_equation.finite_element_method import (
+            poisson_form,
+        )
 
         kappa = 2.5
         wf = poisson_form(diffusivity=kappa)
@@ -683,7 +693,9 @@ class TestPoissonForm:
 
     def test_poisson_form_tensor_diffusivity(self):
         """Test poisson_form with tensor diffusivity."""
-        from torchscience.finite_element_method import poisson_form
+        from torchscience.partial_differential_equation.finite_element_method import (
+            poisson_form,
+        )
 
         kappa = torch.tensor(3.0)
         wf = poisson_form(diffusivity=kappa)
@@ -691,14 +703,14 @@ class TestPoissonForm:
 
     def test_poisson_form_matches_local_stiffness(self):
         """Verify poisson_form produces same matrix as local_stiffness_matrices."""
-        from torchscience.finite_element_method import (
+        from torchscience.geometry.mesh import rectangle_mesh
+        from torchscience.partial_differential_equation.finite_element_method import (
             assemble_matrix,
             assemble_weak_form,
             dof_map,
             local_stiffness_matrices,
             poisson_form,
         )
-        from torchscience.geometry.mesh import rectangle_mesh
 
         mesh = rectangle_mesh(3, 3, bounds=[[0.0, 1.0], [0.0, 1.0]])
         dm = dof_map(mesh, order=1)
@@ -720,14 +732,14 @@ class TestPoissonForm:
 
     def test_poisson_form_with_custom_diffusivity_matches(self):
         """Verify poisson_form with custom diffusivity matches local_stiffness_matrices."""
-        from torchscience.finite_element_method import (
+        from torchscience.geometry.mesh import rectangle_mesh
+        from torchscience.partial_differential_equation.finite_element_method import (
             assemble_matrix,
             assemble_weak_form,
             dof_map,
             local_stiffness_matrices,
             poisson_form,
         )
-        from torchscience.geometry.mesh import rectangle_mesh
 
         mesh = rectangle_mesh(3, 3, bounds=[[0.0, 1.0], [0.0, 1.0]])
         dm = dof_map(mesh, order=1)
@@ -750,7 +762,7 @@ class TestPoissonForm:
 
     def test_poisson_form_linear_form_returns_zeros(self):
         """Verify poisson_form linear_form returns zeros."""
-        from torchscience.finite_element_method import (
+        from torchscience.partial_differential_equation.finite_element_method import (
             BasisValues,
             poisson_form,
         )
@@ -773,7 +785,9 @@ class TestMassForm:
 
     def test_mass_form_default_density(self):
         """Test mass_form with default density=1.0."""
-        from torchscience.finite_element_method import mass_form
+        from torchscience.partial_differential_equation.finite_element_method import (
+            mass_form,
+        )
 
         wf = mass_form()
         assert callable(wf.bilinear_form)
@@ -782,7 +796,9 @@ class TestMassForm:
 
     def test_mass_form_custom_density(self):
         """Test mass_form with custom density."""
-        from torchscience.finite_element_method import mass_form
+        from torchscience.partial_differential_equation.finite_element_method import (
+            mass_form,
+        )
 
         rho = 7.85  # steel density
         wf = mass_form(density=rho)
@@ -790,7 +806,9 @@ class TestMassForm:
 
     def test_mass_form_tensor_density(self):
         """Test mass_form with tensor density."""
-        from torchscience.finite_element_method import mass_form
+        from torchscience.partial_differential_equation.finite_element_method import (
+            mass_form,
+        )
 
         rho = torch.tensor(2.7)  # aluminum density
         wf = mass_form(density=rho)
@@ -798,14 +816,14 @@ class TestMassForm:
 
     def test_mass_form_matches_local_mass(self):
         """Verify mass_form produces same matrix as local_mass_matrices."""
-        from torchscience.finite_element_method import (
+        from torchscience.geometry.mesh import rectangle_mesh
+        from torchscience.partial_differential_equation.finite_element_method import (
             assemble_matrix,
             assemble_weak_form,
             dof_map,
             local_mass_matrices,
             mass_form,
         )
-        from torchscience.geometry.mesh import rectangle_mesh
 
         mesh = rectangle_mesh(3, 3, bounds=[[0.0, 1.0], [0.0, 1.0]])
         dm = dof_map(mesh, order=1)
@@ -827,14 +845,14 @@ class TestMassForm:
 
     def test_mass_form_with_custom_density_matches(self):
         """Verify mass_form with custom density matches local_mass_matrices."""
-        from torchscience.finite_element_method import (
+        from torchscience.geometry.mesh import rectangle_mesh
+        from torchscience.partial_differential_equation.finite_element_method import (
             assemble_matrix,
             assemble_weak_form,
             dof_map,
             local_mass_matrices,
             mass_form,
         )
-        from torchscience.geometry.mesh import rectangle_mesh
 
         mesh = rectangle_mesh(3, 3, bounds=[[0.0, 1.0], [0.0, 1.0]])
         dm = dof_map(mesh, order=1)
@@ -857,7 +875,10 @@ class TestMassForm:
 
     def test_mass_form_linear_form_returns_zeros(self):
         """Verify mass_form linear_form returns zeros."""
-        from torchscience.finite_element_method import BasisValues, mass_form
+        from torchscience.partial_differential_equation.finite_element_method import (
+            BasisValues,
+            mass_form,
+        )
 
         wf = mass_form()
 

@@ -16,7 +16,9 @@ class TestSolvePoisson:
         The solution should be positive in the interior and zero on the boundary.
         For a unit square, the maximum value is approximately 0.073 (at the center).
         """
-        from torchscience.finite_element_method import solve_poisson
+        from torchscience.partial_differential_equation.finite_element_method import (
+            solve_poisson,
+        )
 
         mesh = rectangle_mesh(10, 10, bounds=[[0.0, 1.0], [0.0, 1.0]])
         u = solve_poisson(mesh, source=1.0)
@@ -40,7 +42,9 @@ class TestSolvePoisson:
         For -nabla . (kappa nabla u) = f, scaling kappa by factor c
         scales the solution by 1/c.
         """
-        from torchscience.finite_element_method import solve_poisson
+        from torchscience.partial_differential_equation.finite_element_method import (
+            solve_poisson,
+        )
 
         mesh = rectangle_mesh(10, 10, bounds=[[0.0, 1.0], [0.0, 1.0]])
 
@@ -59,7 +63,7 @@ class TestSolvePoisson:
         Solve -nabla^2 u = 0 with u = 1 on boundary.
         The solution should be constant u = 1 everywhere.
         """
-        from torchscience.finite_element_method import (
+        from torchscience.partial_differential_equation.finite_element_method import (
             boundary_dofs,
             dof_map,
             solve_poisson,
@@ -89,7 +93,9 @@ class TestSolvePoisson:
         With u = 0 on boundary (which sin(pi*x)*sin(pi*y) satisfies),
         the numerical solution should approximate u_exact.
         """
-        from torchscience.finite_element_method import solve_poisson
+        from torchscience.partial_differential_equation.finite_element_method import (
+            solve_poisson,
+        )
 
         mesh = rectangle_mesh(20, 20, bounds=[[0.0, 1.0], [0.0, 1.0]])
 
@@ -130,7 +136,7 @@ class TestSolvePoisson:
 
         With u = x + y on boundary, the solution should be exact.
         """
-        from torchscience.finite_element_method import (
+        from torchscience.partial_differential_equation.finite_element_method import (
             boundary_dofs,
             dof_map,
             solve_poisson,
@@ -159,7 +165,9 @@ class TestSolvePoisson:
 
     def test_cg_solver(self) -> None:
         """Test using conjugate gradient solver."""
-        from torchscience.finite_element_method import solve_poisson
+        from torchscience.partial_differential_equation.finite_element_method import (
+            solve_poisson,
+        )
 
         mesh = rectangle_mesh(10, 10, bounds=[[0.0, 1.0], [0.0, 1.0]])
 
@@ -177,7 +185,7 @@ class TestSolvePoisson:
 
         Higher-order elements should give better accuracy for the same mesh.
         """
-        from torchscience.finite_element_method import (
+        from torchscience.partial_differential_equation.finite_element_method import (
             boundary_dofs,
             dof_map,
             solve_poisson,
@@ -229,7 +237,9 @@ class TestSolvePoisson:
 
     def test_tensor_source(self) -> None:
         """Test with tensor source term (nodal values)."""
-        from torchscience.finite_element_method import solve_poisson
+        from torchscience.partial_differential_equation.finite_element_method import (
+            solve_poisson,
+        )
 
         mesh = rectangle_mesh(10, 10, bounds=[[0.0, 1.0], [0.0, 1.0]])
 
@@ -248,7 +258,9 @@ class TestSolvePoisson:
 
     def test_invalid_solver(self) -> None:
         """Test that invalid solver raises an error."""
-        from torchscience.finite_element_method import solve_poisson
+        from torchscience.partial_differential_equation.finite_element_method import (
+            solve_poisson,
+        )
 
         mesh = rectangle_mesh(5, 5, bounds=[[0.0, 1.0], [0.0, 1.0]])
 
@@ -257,7 +269,7 @@ class TestSolvePoisson:
 
     def test_default_boundary_conditions(self) -> None:
         """Test that default uses all boundary DOFs with zero values."""
-        from torchscience.finite_element_method import (
+        from torchscience.partial_differential_equation.finite_element_method import (
             boundary_dofs,
             dof_map,
             solve_poisson,
@@ -291,7 +303,9 @@ class TestSolveHeat:
         With u(t=0) = 1 everywhere (interior only, BC = 0 on boundary),
         the solution should decay over time towards the steady state (u = 0).
         """
-        from torchscience.finite_element_method import solve_heat
+        from torchscience.partial_differential_equation.finite_element_method import (
+            solve_heat,
+        )
 
         mesh = rectangle_mesh(10, 10, bounds=[[0.0, 1.0], [0.0, 1.0]])
 
@@ -318,7 +332,7 @@ class TestSolveHeat:
         If the initial condition is already the steady-state solution
         (satisfies the elliptic problem), it should not change over time.
         """
-        from torchscience.finite_element_method import (
+        from torchscience.partial_differential_equation.finite_element_method import (
             solve_heat,
             solve_poisson,
         )
@@ -347,7 +361,9 @@ class TestSolveHeat:
         Starting from a non-zero initial condition, the solution should
         decay exponentially towards zero (the steady state).
         """
-        from torchscience.finite_element_method import solve_heat
+        from torchscience.partial_differential_equation.finite_element_method import (
+            solve_heat,
+        )
 
         mesh = rectangle_mesh(10, 10, bounds=[[0.0, 1.0], [0.0, 1.0]])
 
@@ -383,7 +399,9 @@ class TestSolveHeat:
         Starting from zero, the solution should increase over time
         due to the positive heat source.
         """
-        from torchscience.finite_element_method import solve_heat
+        from torchscience.partial_differential_equation.finite_element_method import (
+            solve_heat,
+        )
 
         mesh = rectangle_mesh(10, 10, bounds=[[0.0, 1.0], [0.0, 1.0]])
 
@@ -404,7 +422,9 @@ class TestSolveHeat:
 
     def test_callable_initial_condition(self) -> None:
         """Test with callable initial condition."""
-        from torchscience.finite_element_method import solve_heat
+        from torchscience.partial_differential_equation.finite_element_method import (
+            solve_heat,
+        )
 
         mesh = rectangle_mesh(10, 10, bounds=[[0.0, 1.0], [0.0, 1.0]])
 
@@ -429,7 +449,7 @@ class TestSolveHeat:
 
     def test_return_all_time_steps(self) -> None:
         """Test returning solutions at all time steps."""
-        from torchscience.finite_element_method import (
+        from torchscience.partial_differential_equation.finite_element_method import (
             boundary_dofs,
             dof_map,
             solve_heat,
@@ -465,7 +485,9 @@ class TestSolveHeat:
         For the heat equation with homogeneous BCs and no source,
         the total energy should decrease monotonically.
         """
-        from torchscience.finite_element_method import solve_heat
+        from torchscience.partial_differential_equation.finite_element_method import (
+            solve_heat,
+        )
 
         mesh = rectangle_mesh(10, 10, bounds=[[0.0, 1.0], [0.0, 1.0]])
 
@@ -499,7 +521,9 @@ class TestSolveHeat:
         Higher density (rho*c) means more thermal inertia,
         so the solution should change more slowly.
         """
-        from torchscience.finite_element_method import solve_heat
+        from torchscience.partial_differential_equation.finite_element_method import (
+            solve_heat,
+        )
 
         mesh = rectangle_mesh(10, 10, bounds=[[0.0, 1.0], [0.0, 1.0]])
 
@@ -538,7 +562,7 @@ class TestSolveHeat:
 
     def test_nonhomogeneous_dirichlet_bc(self) -> None:
         """Test with non-zero Dirichlet boundary conditions."""
-        from torchscience.finite_element_method import (
+        from torchscience.partial_differential_equation.finite_element_method import (
             boundary_dofs,
             dof_map,
             solve_heat,
@@ -573,7 +597,9 @@ class TestSolveHeat:
         where lambda = 2*pi^2 (for unit square with kappa=1),
         the solution should decay exponentially.
         """
-        from torchscience.finite_element_method import solve_heat
+        from torchscience.partial_differential_equation.finite_element_method import (
+            solve_heat,
+        )
 
         mesh = rectangle_mesh(20, 20, bounds=[[0.0, 1.0], [0.0, 1.0]])
 

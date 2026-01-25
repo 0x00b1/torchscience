@@ -4,7 +4,10 @@ import pytest
 import torch
 from torch import Tensor
 
-from torchscience.finite_element_method import solve_cg, solve_direct
+from torchscience.partial_differential_equation.finite_element_method import (
+    solve_cg,
+    solve_direct,
+)
 
 
 class TestSolveDirect:

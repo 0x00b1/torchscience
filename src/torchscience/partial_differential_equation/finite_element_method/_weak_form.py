@@ -8,15 +8,19 @@ from typing import TYPE_CHECKING, Callable
 import torch
 from torch import Tensor
 
-from torchscience.finite_element_method._basis import (
+from torchscience.partial_differential_equation.finite_element_method._basis import (
     lagrange_basis,
     lagrange_basis_gradient,
 )
-from torchscience.finite_element_method._quadrature import quadrature_points
+from torchscience.partial_differential_equation.finite_element_method._quadrature import (
+    quadrature_points,
+)
 
 if TYPE_CHECKING:
-    from torchscience.finite_element_method._dof_map import DOFMap
     from torchscience.geometry.mesh import Mesh
+    from torchscience.partial_differential_equation.finite_element_method._dof_map import (
+        DOFMap,
+    )
 
 
 @dataclass
@@ -37,7 +41,7 @@ class BasisValues:
     Examples
     --------
     >>> import torch
-    >>> from torchscience.finite_element_method import BasisValues
+    >>> from torchscience.partial_differential_equation.finite_element_method import BasisValues
     >>> value = torch.tensor([[0.5, 0.3, 0.2], [0.3, 0.4, 0.3]])
     >>> grad = torch.randn(2, 3, 2)
     >>> bv = BasisValues(value=value, grad=grad)
@@ -200,7 +204,7 @@ def assemble_weak_form(
     --------
     >>> import torch
     >>> from torchscience.geometry.mesh import rectangle_mesh
-    >>> from torchscience.finite_element_method import (
+    >>> from torchscience.partial_differential_equation.finite_element_method import (
     ...     dof_map, WeakForm, assemble_weak_form
     ... )
     >>> mesh = rectangle_mesh(3, 3, bounds=[[0.0, 1.0], [0.0, 1.0]])
@@ -306,7 +310,7 @@ def assemble_weak_form(
     )
 
     # Assemble global matrix and vector
-    from torchscience.finite_element_method._assembly import (
+    from torchscience.partial_differential_equation.finite_element_method._assembly import (
         assemble_matrix,
         assemble_vector,
     )
@@ -599,7 +603,7 @@ def poisson_form(diffusivity: Tensor | float = 1.0) -> WeakForm:
 
     Examples
     --------
-    >>> from torchscience.finite_element_method import poisson_form, assemble_weak_form
+    >>> from torchscience.partial_differential_equation.finite_element_method import poisson_form, assemble_weak_form
     >>> from torchscience.geometry.mesh import rectangle_mesh
     >>> mesh = rectangle_mesh(3, 3, bounds=[[0.0, 1.0], [0.0, 1.0]])
     >>> dm = dof_map(mesh, order=1)
@@ -655,7 +659,7 @@ def mass_form(density: Tensor | float = 1.0) -> WeakForm:
 
     Examples
     --------
-    >>> from torchscience.finite_element_method import mass_form, assemble_weak_form
+    >>> from torchscience.partial_differential_equation.finite_element_method import mass_form, assemble_weak_form
     >>> from torchscience.geometry.mesh import rectangle_mesh
     >>> mesh = rectangle_mesh(3, 3, bounds=[[0.0, 1.0], [0.0, 1.0]])
     >>> dm = dof_map(mesh, order=1)

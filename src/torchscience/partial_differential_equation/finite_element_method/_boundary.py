@@ -48,7 +48,7 @@ def boundary_dofs(
     Examples
     --------
     >>> from torchscience.geometry.mesh import rectangle_mesh
-    >>> from torchscience.finite_element_method import dof_map, boundary_dofs
+    >>> from torchscience.partial_differential_equation.finite_element_method import dof_map, boundary_dofs
     >>> mesh = rectangle_mesh(3, 3)
     >>> dm = dof_map(mesh, order=1)
     >>> b_dofs = boundary_dofs(mesh, dm)
@@ -374,7 +374,7 @@ def apply_dirichlet_penalty(
     Examples
     --------
     >>> from torchscience.geometry.mesh import rectangle_mesh
-    >>> from torchscience.finite_element_method import (
+    >>> from torchscience.partial_differential_equation.finite_element_method import (
     ...     dof_map, boundary_dofs, apply_dirichlet_penalty
     ... )
     >>> mesh = rectangle_mesh(2, 2)
@@ -466,7 +466,7 @@ def apply_dirichlet_elimination(
     Examples
     --------
     >>> from torchscience.geometry.mesh import rectangle_mesh
-    >>> from torchscience.finite_element_method import (
+    >>> from torchscience.partial_differential_equation.finite_element_method import (
     ...     dof_map, boundary_dofs, apply_dirichlet_elimination
     ... )
     >>> mesh = rectangle_mesh(2, 2)
@@ -583,7 +583,7 @@ def apply_neumann(
     Examples
     --------
     >>> from torchscience.geometry.mesh import rectangle_mesh, mesh_boundary_facets
-    >>> from torchscience.finite_element_method import dof_map, apply_neumann
+    >>> from torchscience.partial_differential_equation.finite_element_method import dof_map, apply_neumann
     >>> mesh = rectangle_mesh(2, 2)
     >>> dm = dof_map(mesh, order=1)
     >>> f = torch.zeros(dm.num_global_dofs, dtype=torch.float64)

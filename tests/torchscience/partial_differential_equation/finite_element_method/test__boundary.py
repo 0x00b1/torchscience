@@ -3,14 +3,14 @@
 import pytest
 import torch
 
-from torchscience.finite_element_method import (
+from torchscience.geometry.mesh import mesh_boundary_facets, rectangle_mesh
+from torchscience.partial_differential_equation.finite_element_method import (
     apply_dirichlet_elimination,
     apply_dirichlet_penalty,
     apply_neumann,
     boundary_dofs,
     dof_map,
 )
-from torchscience.geometry.mesh import mesh_boundary_facets, rectangle_mesh
 
 
 class TestBoundaryDofs:

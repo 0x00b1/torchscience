@@ -101,7 +101,7 @@ def dof_map(
     --------
     >>> import torch
     >>> from torchscience.geometry.mesh import rectangle_mesh
-    >>> from torchscience.finite_element_method import dof_map
+    >>> from torchscience.partial_differential_equation.finite_element_method import dof_map
     >>> mesh = rectangle_mesh(2, 2, bounds=[[0.0, 1.0], [0.0, 1.0]])
     >>> dm = dof_map(mesh, order=1)
     >>> dm.num_global_dofs

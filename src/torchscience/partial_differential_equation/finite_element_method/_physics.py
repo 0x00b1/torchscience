@@ -7,22 +7,32 @@ from typing import Callable
 import torch
 from torch import Tensor
 
-from torchscience.finite_element_method._assembly import assemble_matrix
-from torchscience.finite_element_method._basis import (
+from torchscience.geometry.mesh import Mesh
+from torchscience.partial_differential_equation.finite_element_method._assembly import (
+    assemble_matrix,
+)
+from torchscience.partial_differential_equation.finite_element_method._basis import (
     lagrange_basis,
     lagrange_basis_gradient,
 )
-from torchscience.finite_element_method._boundary import (
+from torchscience.partial_differential_equation.finite_element_method._boundary import (
     apply_dirichlet_elimination,
     boundary_dofs,
 )
-from torchscience.finite_element_method._dof_map import DOFMap, dof_map
-from torchscience.finite_element_method._local_matrices import (
+from torchscience.partial_differential_equation.finite_element_method._dof_map import (
+    DOFMap,
+    dof_map,
+)
+from torchscience.partial_differential_equation.finite_element_method._local_matrices import (
     local_stiffness_matrices,
 )
-from torchscience.finite_element_method._quadrature import quadrature_points
-from torchscience.finite_element_method._solve import solve_cg, solve_direct
-from torchscience.geometry.mesh import Mesh
+from torchscience.partial_differential_equation.finite_element_method._quadrature import (
+    quadrature_points,
+)
+from torchscience.partial_differential_equation.finite_element_method._solve import (
+    solve_cg,
+    solve_direct,
+)
 
 
 def solve_poisson(
@@ -108,13 +118,13 @@ def solve_poisson(
     Solve -nabla^2 u = 1 with u = 0 on boundary:
 
     >>> from torchscience.geometry.mesh import rectangle_mesh
-    >>> from torchscience.finite_element_method import solve_poisson
+    >>> from torchscience.partial_differential_equation.finite_element_method import solve_poisson
     >>> mesh = rectangle_mesh(10, 10)
     >>> u = solve_poisson(mesh, source=1.0)
 
     With non-homogeneous boundary conditions:
 
-    >>> from torchscience.finite_element_method import boundary_dofs, dof_map
+    >>> from torchscience.partial_differential_equation.finite_element_method import boundary_dofs, dof_map
     >>> mesh = rectangle_mesh(10, 10)
     >>> dm = dof_map(mesh, order=1)
     >>> bc_dofs = boundary_dofs(mesh, dm)
@@ -306,7 +316,9 @@ def _compute_load_vector(
     )  # (E, D)
 
     # Assemble global load vector
-    from torchscience.finite_element_method._assembly import assemble_vector
+    from torchscience.partial_differential_equation.finite_element_method._assembly import (
+        assemble_vector,
+    )
 
     return assemble_vector(local_vectors, dm)
 
@@ -407,7 +419,7 @@ def solve_heat(
     Solve heat equation starting from constant initial condition:
 
     >>> from torchscience.geometry.mesh import rectangle_mesh
-    >>> from torchscience.finite_element_method import solve_heat
+    >>> from torchscience.partial_differential_equation.finite_element_method import solve_heat
     >>> mesh = rectangle_mesh(10, 10)
     >>> initial = torch.ones(mesh.num_vertices, dtype=torch.float64)
     >>> u = solve_heat(mesh, initial=initial, dt=0.01, num_steps=100)
@@ -428,7 +440,7 @@ def solve_heat(
     local_mass_matrices : Compute element mass matrices.
     local_stiffness_matrices : Compute element stiffness matrices.
     """
-    from torchscience.finite_element_method._local_matrices import (
+    from torchscience.partial_differential_equation.finite_element_method._local_matrices import (
         local_mass_matrices,
     )
 

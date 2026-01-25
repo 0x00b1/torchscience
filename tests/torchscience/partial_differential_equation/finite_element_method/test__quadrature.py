@@ -3,7 +3,9 @@
 import pytest
 import torch
 
-from torchscience.finite_element_method import quadrature_points
+from torchscience.partial_differential_equation.finite_element_method import (
+    quadrature_points,
+)
 
 
 class TestQuadrature:

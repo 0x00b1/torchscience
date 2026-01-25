@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchscience.finite_element_method import (
+from torchscience.partial_differential_equation.finite_element_method import (
     lagrange_basis,
     lagrange_basis_gradient,
 )

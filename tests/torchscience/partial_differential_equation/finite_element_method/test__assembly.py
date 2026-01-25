@@ -3,12 +3,12 @@
 import pytest
 import torch
 
-from torchscience.finite_element_method import (
+from torchscience.geometry.mesh import rectangle_mesh
+from torchscience.partial_differential_equation.finite_element_method import (
     assemble_matrix,
     assemble_vector,
     dof_map,
 )
-from torchscience.geometry.mesh import rectangle_mesh
 
 
 class TestAssembleMatrix:

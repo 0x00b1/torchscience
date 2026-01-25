@@ -5,7 +5,9 @@ from __future__ import annotations
 import torch
 from torch import Tensor
 
-from torchscience.finite_element_method._dof_map import DOFMap
+from torchscience.partial_differential_equation.finite_element_method._dof_map import (
+    DOFMap,
+)
 
 
 def assemble_matrix(
@@ -42,7 +44,7 @@ def assemble_matrix(
     Examples
     --------
     >>> from torchscience.geometry.mesh import rectangle_mesh
-    >>> from torchscience.finite_element_method import dof_map, assemble_matrix
+    >>> from torchscience.partial_differential_equation.finite_element_method import dof_map, assemble_matrix
     >>> mesh = rectangle_mesh(3, 3, bounds=[[0.0, 1.0], [0.0, 1.0]])
     >>> dm = dof_map(mesh, order=1)
     >>> local_K = torch.eye(3, dtype=torch.float64).unsqueeze(0).expand(dm.local_to_global.shape[0], -1, -1)
@@ -156,7 +158,7 @@ def assemble_vector(
     Examples
     --------
     >>> from torchscience.geometry.mesh import rectangle_mesh
-    >>> from torchscience.finite_element_method import dof_map, assemble_vector
+    >>> from torchscience.partial_differential_equation.finite_element_method import dof_map, assemble_vector
     >>> mesh = rectangle_mesh(3, 3, bounds=[[0.0, 1.0], [0.0, 1.0]])
     >>> dm = dof_map(mesh, order=1)
     >>> local_f = torch.ones(dm.local_to_global.shape[0], 3, dtype=torch.float64)

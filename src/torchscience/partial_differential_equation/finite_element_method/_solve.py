@@ -37,7 +37,7 @@ def solve_direct(
     Examples
     --------
     >>> import torch
-    >>> from torchscience.finite_element_method import solve_direct
+    >>> from torchscience.partial_differential_equation.finite_element_method import solve_direct
     >>> K = torch.tensor([[4.0, 1.0], [1.0, 3.0]], dtype=torch.float64)
     >>> f = torch.tensor([5.0, 4.0], dtype=torch.float64)
     >>> u = solve_direct(K, f)
@@ -125,7 +125,7 @@ def solve_cg(
     Examples
     --------
     >>> import torch
-    >>> from torchscience.finite_element_method import solve_cg
+    >>> from torchscience.partial_differential_equation.finite_element_method import solve_cg
     >>> K = torch.tensor([[4.0, 1.0], [1.0, 3.0]], dtype=torch.float64)
     >>> f = torch.tensor([5.0, 4.0], dtype=torch.float64)
     >>> u = solve_cg(K, f)

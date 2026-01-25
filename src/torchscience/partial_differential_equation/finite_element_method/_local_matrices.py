@@ -7,13 +7,17 @@ from typing import TYPE_CHECKING
 import torch
 from torch import Tensor
 
-from torchscience.finite_element_method._basis import (
+from torchscience.geometry.mesh import Mesh
+from torchscience.partial_differential_equation.finite_element_method._basis import (
     lagrange_basis,
     lagrange_basis_gradient,
 )
-from torchscience.finite_element_method._dof_map import DOFMap
-from torchscience.finite_element_method._quadrature import quadrature_points
-from torchscience.geometry.mesh import Mesh
+from torchscience.partial_differential_equation.finite_element_method._dof_map import (
+    DOFMap,
+)
+from torchscience.partial_differential_equation.finite_element_method._quadrature import (
+    quadrature_points,
+)
 
 if TYPE_CHECKING:
     pass
@@ -61,7 +65,7 @@ def local_stiffness_matrices(
     Examples
     --------
     >>> from torchscience.geometry.mesh import rectangle_mesh
-    >>> from torchscience.finite_element_method import dof_map, local_stiffness_matrices
+    >>> from torchscience.partial_differential_equation.finite_element_method import dof_map, local_stiffness_matrices
     >>> mesh = rectangle_mesh(2, 2, bounds=[[0, 1], [0, 1]])
     >>> dm = dof_map(mesh, order=1)
     >>> K_local = local_stiffness_matrices(mesh, dm)
@@ -354,7 +358,7 @@ def local_mass_matrices(
     Examples
     --------
     >>> from torchscience.geometry.mesh import rectangle_mesh
-    >>> from torchscience.finite_element_method import dof_map, local_mass_matrices
+    >>> from torchscience.partial_differential_equation.finite_element_method import dof_map, local_mass_matrices
     >>> mesh = rectangle_mesh(2, 2, bounds=[[0, 1], [0, 1]])
     >>> dm = dof_map(mesh, order=1)
     >>> M_local = local_mass_matrices(mesh, dm)
