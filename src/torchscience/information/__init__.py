@@ -1,5 +1,6 @@
 """Information theory operators."""
 
+from . import coding, compression
 from ._active_information_storage import active_information_storage
 from ._blahut_arimoto import blahut_arimoto
 from ._causally_conditioned_entropy import causally_conditioned_entropy
@@ -43,6 +44,8 @@ from ._tsallis_entropy import tsallis_entropy
 from ._typical_set_probability import typical_set_probability
 
 __all__ = [
+    "coding",
+    "compression",
     "active_information_storage",
     "blahut_arimoto",
     "causally_conditioned_entropy",

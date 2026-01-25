@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchscience.compression import gain_unit, importance_map
+from torchscience.information.compression import gain_unit, importance_map
 
 
 class TestImportanceMap:

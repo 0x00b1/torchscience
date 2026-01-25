@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchscience.compression import optimal_quantizer
+from torchscience.information.compression import optimal_quantizer
 
 
 class TestOptimalQuantizerBasic:

@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchscience.compression._entropy_bottleneck import (
+from torchscience.information.compression._entropy_bottleneck import (
     EntropyBottleneck,
     entropy_bottleneck,
 )

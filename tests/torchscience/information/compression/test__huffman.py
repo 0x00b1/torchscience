@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchscience.compression import huffman_decode, huffman_encode
+from torchscience.information.compression import huffman_decode, huffman_encode
 
 
 class TestHuffmanEncodeBasic:

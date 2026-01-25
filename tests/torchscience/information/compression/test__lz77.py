@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchscience.compression import lz77_decode, lz77_encode
+from torchscience.information.compression import lz77_decode, lz77_encode
 
 
 class TestLZ77EncodeBasic:

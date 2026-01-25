@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchscience.compression._perceptual_loss import (
+from torchscience.information.compression._perceptual_loss import (
     perceptual_loss,
     rate_loss,
 )

@@ -3,7 +3,11 @@
 import pytest
 import torch
 
-from torchscience.compression import noise_quantize, soft_round, ste_round
+from torchscience.information.compression import (
+    noise_quantize,
+    soft_round,
+    ste_round,
+)
 
 
 class TestNoiseQuantize:

@@ -5,7 +5,7 @@ import math
 import pytest
 import torch
 
-from torchscience.compression import (
+from torchscience.information.compression import (
     estimate_bitrate,
     rate_distortion_lagrangian,
 )

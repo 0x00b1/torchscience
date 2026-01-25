@@ -26,7 +26,7 @@ class GaussianConditional(nn.Module):
     Examples
     --------
     >>> import torch
-    >>> from torchscience.compression import GaussianConditional
+    >>> from torchscience.information.compression import GaussianConditional
     >>> gc = GaussianConditional()
     >>> y = torch.randn(4, 192, 16, 16)
     >>> scales = torch.abs(torch.randn(4, 192, 16, 16)) + 0.5

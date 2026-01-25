@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchscience.compression import transform_code
+from torchscience.information.compression import transform_code
 
 
 class TestTransformCodeBasic:

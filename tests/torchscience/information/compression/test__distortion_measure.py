@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchscience.compression import distortion_measure
+from torchscience.information.compression import distortion_measure
 
 
 class TestDistortionMeasureBasic:

@@ -3,7 +3,10 @@
 import pytest
 import torch
 
-from torchscience.compression import run_length_decode, run_length_encode
+from torchscience.information.compression import (
+    run_length_decode,
+    run_length_encode,
+)
 
 
 class TestRunLengthEncodeBasic:

@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchscience.compression import vector_quantize
+from torchscience.information.compression import vector_quantize
 
 
 class TestVectorQuantizeBasic:

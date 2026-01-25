@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchscience.compression import dithered_quantize
+from torchscience.information.compression import dithered_quantize
 
 
 class TestDitheredQuantizeBasic:

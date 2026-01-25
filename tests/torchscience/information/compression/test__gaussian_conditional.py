@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchscience.compression._gaussian_conditional import (
+from torchscience.information.compression._gaussian_conditional import (
     GaussianConditional,
     gaussian_conditional,
 )

@@ -31,7 +31,7 @@ class EntropyBottleneck(nn.Module):
     Examples
     --------
     >>> import torch
-    >>> from torchscience.compression import EntropyBottleneck
+    >>> from torchscience.information.compression import EntropyBottleneck
     >>> eb = EntropyBottleneck(channels=192)
     >>> x = torch.randn(4, 192, 16, 16)
     >>> y, likelihoods = eb(x)
