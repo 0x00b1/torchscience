@@ -595,6 +595,7 @@
 #include "autograd/geometry/transform/quaternion_slerp.h"
 #include "autograd/geometry/intersection/ray_plane.h"
 #include "autograd/geometry/intersection/ray_sphere.h"
+#include "autograd/geometry/intersection/ray_triangle.h"
 
 #include "meta/distance/minkowski_distance.h"
 #include "meta/distance/hellinger_distance.h"
