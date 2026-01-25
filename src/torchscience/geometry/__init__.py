@@ -10,7 +10,14 @@ from ._exceptions import (
 from ._ray_intersect import RayHit, ray_intersect
 from ._ray_occluded import ray_occluded
 from .intersection import RaySphereHit, ray_sphere_intersection
-from .mesh import Mesh, box_mesh, mesh_quality, rectangle_mesh, refine_mesh
+from .mesh import (
+    Mesh,
+    box_mesh,
+    delaunay_triangulation,
+    mesh_quality,
+    rectangle_mesh,
+    refine_mesh,
+)
 
 __all__ = [
     "ClosestPoint",
@@ -24,6 +31,7 @@ __all__ = [
     "box_mesh",
     "closest_point",
     "convex_hull",
+    "delaunay_triangulation",
     "mesh_quality",
     "ray_intersect",
     "ray_occluded",
