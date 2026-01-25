@@ -64,20 +64,20 @@ def minkowski_distance(
 
     >>> x = torch.tensor([[0.0, 0.0], [1.0, 1.0]])
     >>> y = torch.tensor([[1.0, 0.0], [0.0, 1.0]])
-    >>> torchscience.distance.minkowski_distance(x, y, p=2.0)
+    >>> torchscience.similarity_measure.minkowski_distance(x, y, p=2.0)
     tensor([[1.0000, 1.0000],
             [1.0000, 1.0000]])
 
     Compute Manhattan distances (p=1):
 
-    >>> torchscience.distance.minkowski_distance(x, y, p=1.0)
+    >>> torchscience.similarity_measure.minkowski_distance(x, y, p=1.0)
     tensor([[1., 1.],
             [1., 1.]])
 
     Self-pairwise distances:
 
     >>> x = torch.tensor([[0.0, 0.0], [3.0, 4.0]])
-    >>> torchscience.distance.minkowski_distance(x, p=2.0)
+    >>> torchscience.similarity_measure.minkowski_distance(x, p=2.0)
     tensor([[0., 5.],
             [5., 0.]])
 
@@ -86,7 +86,7 @@ def minkowski_distance(
     >>> x = torch.tensor([[0.0, 0.0], [1.0, 1.0]])
     >>> y = torch.tensor([[1.0, 1.0]])
     >>> w = torch.tensor([1.0, 4.0])  # Weight second dimension more
-    >>> torchscience.distance.minkowski_distance(x, y, p=2.0, weight=w)
+    >>> torchscience.similarity_measure.minkowski_distance(x, y, p=2.0, weight=w)
     tensor([[2.2361],
             [0.0000]])
 

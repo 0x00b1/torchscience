@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchscience.distance import bhattacharyya_distance
+from torchscience.similarity_measure import bhattacharyya_distance
 
 
 class TestBhattacharyyaDistanceBasic:
@@ -82,7 +82,7 @@ class TestBhattacharyyaDistanceCorrectness:
 
     def test_relationship_with_hellinger(self):
         """Verify relationship: H^2 = 1 - exp(-D_B)."""
-        from torchscience.distance import hellinger_distance
+        from torchscience.similarity_measure import hellinger_distance
 
         p = torch.softmax(torch.randn(10), dim=-1)
         q = torch.softmax(torch.randn(10), dim=-1)

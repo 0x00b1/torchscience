@@ -4,7 +4,7 @@ import pytest
 import torch
 from torch.autograd import gradcheck
 
-from torchscience.distance import hellinger_distance
+from torchscience.similarity_measure import hellinger_distance
 
 
 class TestHellingerDistanceBasic:

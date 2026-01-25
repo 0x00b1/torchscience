@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchscience.distance import total_variation_distance
+from torchscience.similarity_measure import total_variation_distance
 
 
 class TestTotalVariationDistanceBasic:

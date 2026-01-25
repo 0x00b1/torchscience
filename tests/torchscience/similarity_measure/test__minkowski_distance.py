@@ -1,11 +1,11 @@
-# tests/torchscience/distance/test__minkowski_distance.py
+# tests/torchscience/similarity_measure/test__minkowski_distance.py
 import math
 
 import pytest
 import torch
 from torch.autograd import gradcheck
 
-from torchscience.distance import minkowski_distance
+from torchscience.similarity_measure import minkowski_distance
 
 
 class TestMinkowskiDistanceBasic:

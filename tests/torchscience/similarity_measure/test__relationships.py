@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchscience.distance import (
+from torchscience.similarity_measure import (
     bhattacharyya_distance,
     hellinger_distance,
     total_variation_distance,

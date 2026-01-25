@@ -1,4 +1,4 @@
-"""Total variation distance implementation."""
+"""Hellinger distance implementation."""
 
 from typing import Literal
 
@@ -8,7 +8,7 @@ from torch import Tensor
 import torchscience._csrc  # noqa: F401
 
 
-def total_variation_distance(
+def hellinger_distance(
     p: Tensor,
     q: Tensor,
     *,
@@ -19,19 +19,23 @@ def total_variation_distance(
     reduction: Literal["none", "mean", "sum"] = "none",
     pairwise: bool = False,
 ) -> Tensor:
-    r"""Compute total variation distance between probability distributions.
+    r"""Compute Hellinger distance between probability distributions.
 
-    The total variation distance is a symmetric, bounded distance metric
+    The Hellinger distance is a symmetric, bounded distance metric
     between probability distributions.
 
     Mathematical Definition
     -----------------------
     .. math::
-        TV(P, Q) = \frac{1}{2} \sum_i |p_i - q_i|
+        H(P, Q) = \frac{1}{\sqrt{2}} \sqrt{\sum_i (\sqrt{p_i} - \sqrt{q_i})^2}
+
+    Equivalently:
+    .. math::
+        H(P, Q) = \sqrt{1 - \sum_i \sqrt{p_i q_i}}
 
     Properties:
-    - Symmetric: :math:`TV(P, Q) = TV(Q, P)`
-    - Bounded: :math:`0 \leq TV(P, Q) \leq 1`
+    - Symmetric: :math:`H(P, Q) = H(Q, P)`
+    - Bounded: :math:`0 \leq H(P, Q) \leq 1`
     - Metric: satisfies the triangle inequality
 
     Parameters
@@ -52,28 +56,29 @@ def total_variation_distance(
     Returns
     -------
     Tensor
-        Total variation distance values.
+        Hellinger distance values.
 
     Examples
     --------
     >>> p = torch.tensor([0.25, 0.25, 0.25, 0.25])
     >>> q = torch.tensor([0.1, 0.2, 0.3, 0.4])
-    >>> torchscience.distance.total_variation_distance(p, q)
-    tensor(0.15)
+    >>> torchscience.similarity_measure.hellinger_distance(p, q)
+    tensor(0.1548)
 
     >>> # Identical distributions have zero distance
-    >>> torchscience.distance.total_variation_distance(p, p)
+    >>> torchscience.similarity_measure.hellinger_distance(p, p)
     tensor(0.0)
 
     Notes
     -----
-    - Also known as statistical distance or variational distance
-    - The gradient at p_i = q_i uses subgradient = 0 (PyTorch convention)
+    - Related to Bhattacharyya coefficient: H^2 = 1 - BC
+    - Related to Bhattacharyya distance: H^2 = 1 - exp(-D_B)
     - Supports first-order gradients
 
     See Also
     --------
-    hellinger_distance : Another bounded distance metric.
+    bhattacharyya_distance : Related distance measure.
+    total_variation_distance : Another bounded distance metric.
     """
     if not isinstance(p, Tensor):
         raise TypeError(f"p must be a Tensor, got {type(p).__name__}")
@@ -92,6 +97,7 @@ def total_variation_distance(
             f"reduction must be one of {valid_reductions}, got '{reduction}'"
         )
 
+    # Normalize dim
     p_dim = p.dim()
     if dim < -p_dim or dim >= p_dim:
         raise IndexError(
@@ -99,6 +105,7 @@ def total_variation_distance(
         )
     dim = dim if dim >= 0 else p_dim + dim
 
+    # Check distribution sizes match
     if p.size(dim) != q.size(dim):
         raise ValueError(
             f"Distribution sizes must match along dim {dim}: "
@@ -111,12 +118,13 @@ def total_variation_distance(
                 "pairwise=True requires p and q to be at least 2D"
             )
 
+    # Dtype promotion
     target_dtype = torch.promote_types(p.dtype, q.dtype)
     if p.dtype != target_dtype:
         p = p.to(target_dtype)
     if q.dtype != target_dtype:
         q = q.to(target_dtype)
 
-    return torch.ops.torchscience.total_variation_distance(
+    return torch.ops.torchscience.hellinger_distance(
         p, q, dim, input_type, reduction, pairwise
     )

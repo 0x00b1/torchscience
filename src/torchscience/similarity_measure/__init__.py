@@ -1,7 +1,7 @@
-"""Statistical distance functions for probability distributions.
+"""Similarity measures for probability distributions.
 
-This module provides distance metrics between probability distributions
-with full autograd support.
+This module provides similarity measures (distances and metrics) between
+probability distributions with full autograd support.
 
 Functions
 ---------

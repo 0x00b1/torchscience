@@ -67,11 +67,11 @@ def bhattacharyya_distance(
     --------
     >>> p = torch.tensor([0.25, 0.25, 0.25, 0.25])
     >>> q = torch.tensor([0.1, 0.2, 0.3, 0.4])
-    >>> torchscience.distance.bhattacharyya_distance(p, q)
+    >>> torchscience.similarity_measure.bhattacharyya_distance(p, q)
     tensor(0.0253)
 
     >>> # Identical distributions have zero distance
-    >>> torchscience.distance.bhattacharyya_distance(p, p)
+    >>> torchscience.similarity_measure.bhattacharyya_distance(p, p)
     tensor(0.0)
 
     Notes
