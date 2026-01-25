@@ -79,13 +79,16 @@ def _triangle_quality(mesh: Mesh, metric: str) -> Tensor:
     len1 = torch.norm(e1, dim=-1)
     len2 = torch.norm(e2, dim=-1)
 
+    # Small epsilon to avoid division by zero for degenerate elements
+    eps = torch.finfo(len0.dtype).eps
+
     if metric == "aspect_ratio":
         # Stack edge lengths and find min/max
         edge_lengths = torch.stack([len0, len1, len2], dim=-1)
         max_len = edge_lengths.max(dim=-1).values
         min_len = edge_lengths.min(dim=-1).values
 
-        return max_len / min_len
+        return max_len / (min_len + eps)
 
     elif metric == "min_angle":
         # Use law of cosines to compute angles
@@ -99,13 +102,13 @@ def _triangle_quality(mesh: Mesh, metric: str) -> Tensor:
 
         # Using dot product: cos(angle) = (a . b) / (|a| |b|)
         # Vectors from v0: e0 = v1-v0, and (v2-v0) = -e2
-        cos_angle0 = torch.sum(e0 * (-e2), dim=-1) / (len0 * len2)
+        cos_angle0 = torch.sum(e0 * (-e2), dim=-1) / (len0 * len2 + eps)
 
         # Vectors from v1: -e0 = v0-v1, and e1 = v2-v1
-        cos_angle1 = torch.sum((-e0) * e1, dim=-1) / (len0 * len1)
+        cos_angle1 = torch.sum((-e0) * e1, dim=-1) / (len0 * len1 + eps)
 
         # Vectors from v2: -e1 = v1-v2, and e2 = v0-v2
-        cos_angle2 = torch.sum((-e1) * e2, dim=-1) / (len1 * len2)
+        cos_angle2 = torch.sum((-e1) * e2, dim=-1) / (len1 * len2 + eps)
 
         # Clamp to avoid numerical issues with acos
         cos_angle0 = torch.clamp(cos_angle0, -1.0, 1.0)
@@ -149,27 +152,30 @@ def _quad_quality(mesh: Mesh, metric: str) -> Tensor:
     len2 = torch.norm(e2, dim=-1)
     len3 = torch.norm(e3, dim=-1)
 
+    # Small epsilon to avoid division by zero for degenerate elements
+    eps = torch.finfo(len0.dtype).eps
+
     if metric == "aspect_ratio":
         # Stack edge lengths and find min/max
         edge_lengths = torch.stack([len0, len1, len2, len3], dim=-1)
         max_len = edge_lengths.max(dim=-1).values
         min_len = edge_lengths.min(dim=-1).values
 
-        return max_len / min_len
+        return max_len / (min_len + eps)
 
     elif metric == "min_angle":
         # Compute angles at each vertex using dot product
         # Angle at v0: between edges (v1-v0) and (v3-v0) = e0 and -e3
-        cos_angle0 = torch.sum(e0 * (-e3), dim=-1) / (len0 * len3)
+        cos_angle0 = torch.sum(e0 * (-e3), dim=-1) / (len0 * len3 + eps)
 
         # Angle at v1: between edges (v2-v1) and (v0-v1) = e1 and -e0
-        cos_angle1 = torch.sum(e1 * (-e0), dim=-1) / (len1 * len0)
+        cos_angle1 = torch.sum(e1 * (-e0), dim=-1) / (len1 * len0 + eps)
 
         # Angle at v2: between edges (v3-v2) and (v1-v2) = e2 and -e1
-        cos_angle2 = torch.sum(e2 * (-e1), dim=-1) / (len2 * len1)
+        cos_angle2 = torch.sum(e2 * (-e1), dim=-1) / (len2 * len1 + eps)
 
         # Angle at v3: between edges (v0-v3) and (v2-v3) = e3 and -e2
-        cos_angle3 = torch.sum(e3 * (-e2), dim=-1) / (len3 * len2)
+        cos_angle3 = torch.sum(e3 * (-e2), dim=-1) / (len3 * len2 + eps)
 
         # Clamp to avoid numerical issues with acos
         cos_angle0 = torch.clamp(cos_angle0, -1.0, 1.0)
