@@ -5,6 +5,7 @@ from __future__ import annotations
 import torch
 from torch import Tensor
 
+import torchscience._csrc  # noqa: F401 - Load C++ operators
 from torchscience.geometry.intersection._ray_hit import IntersectionResult
 
 
@@ -71,9 +72,9 @@ def ray_plane(
     >>> plane_offsets = torch.tensor([0.0])
     >>> hit = ray_plane(origins, directions, plane_normals, plane_offsets)
     >>> hit.t
-    tensor([[5.]])
+    tensor([5.])
     >>> hit.hit
-    tensor([[True]])
+    tensor([True])
     """
     if origins.shape[-1] != 3:
         raise ValueError(
