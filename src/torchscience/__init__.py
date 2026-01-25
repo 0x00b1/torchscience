@@ -5,10 +5,8 @@ from . import (
     color,
     cryptography,
     distance,
-    filter,
     graphics,
     morphology,
-    noise,
     optimization,
     pad,
     quadrature,
@@ -16,7 +14,6 @@ from . import (
     signal_processing,
     statistics,
     transform,
-    waveform,
     window_function,
 )
 
@@ -25,10 +22,8 @@ __all__ = [
     "color",
     "cryptography",
     "distance",
-    "filter",
     "graphics",
     "morphology",
-    "noise",
     "optimization",
     "pad",
     "quadrature",
@@ -36,7 +31,6 @@ __all__ = [
     "signal_processing",
     "statistics",
     "transform",
-    "waveform",
     "window_function",
 ]
 
