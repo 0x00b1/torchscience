@@ -26,6 +26,7 @@ from torchscience.finite_element_method._local_matrices import (
     local_mass_matrices,
     local_stiffness_matrices,
 )
+from torchscience.finite_element_method._physics import solve_poisson
 from torchscience.finite_element_method._quadrature import quadrature_points
 from torchscience.finite_element_method._solve import solve_cg, solve_direct
 from torchscience.finite_element_method._weak_form import (
@@ -57,4 +58,5 @@ __all__ = [
     "quadrature_points",
     "solve_cg",
     "solve_direct",
+    "solve_poisson",
 ]
