@@ -3,7 +3,10 @@
 import torch
 import torch.testing
 
-from torchscience.space_partitioning import octree, octree_ray_marching
+from torchscience.geometry.space_partitioning import (
+    octree,
+    octree_ray_marching,
+)
 
 
 class TestRayAABBIntersection:

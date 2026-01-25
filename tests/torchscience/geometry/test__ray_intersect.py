@@ -4,7 +4,7 @@ import pytest
 import torch
 
 from torchscience.geometry import RayHit, ray_intersect
-from torchscience.space_partitioning import bounding_volume_hierarchy
+from torchscience.geometry.space_partitioning import bounding_volume_hierarchy
 
 
 class TestRayIntersectBasic:

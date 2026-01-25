@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from torchscience.space_partitioning import kd_tree, range_search
+from torchscience.geometry.space_partitioning import kd_tree, range_search
 
 
 class TestRangeSearchBasic:

@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from torchscience.space_partitioning import Octree
+from torchscience.geometry.space_partitioning import Octree
 
 
 def _hash_code(code: int, capacity: int) -> int:

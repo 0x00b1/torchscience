@@ -1,9 +1,12 @@
-# tests/torchscience/space_partitioning/test__k_nearest_neighbors.py
+# tests/torchscience/geometry/space_partitioning/test__k_nearest_neighbors.py
 import pytest
 import torch
 from torch.autograd import gradcheck, gradgradcheck
 
-from torchscience.space_partitioning import k_nearest_neighbors, kd_tree
+from torchscience.geometry.space_partitioning import (
+    k_nearest_neighbors,
+    kd_tree,
+)
 
 
 class TestKNearestNeighborsBasic:

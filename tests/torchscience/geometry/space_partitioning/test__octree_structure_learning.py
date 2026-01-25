@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import torch.testing
 
-from torchscience.space_partitioning import (
+from torchscience.geometry.space_partitioning import (
     octree,
     octree_adaptive_subdivide,
     octree_insert,
@@ -336,7 +336,7 @@ class TestStraightThroughEstimator:
     def test_straight_through_gradients_flow(self):
         """Gradients flow through straight-through estimator."""
         # Test the _StraightThroughSubdivide autograd function directly
-        from torchscience.space_partitioning._octree_structure_learning import (
+        from torchscience.geometry.space_partitioning._octree_structure_learning import (
             _StraightThroughSubdivide,
         )
 
@@ -367,7 +367,7 @@ class TestStraightThroughEstimator:
         scores = torch.tensor([0.4, 0.5, 0.6], requires_grad=True)
 
         # Low temperature - sharp gradients
-        from torchscience.space_partitioning._octree_structure_learning import (
+        from torchscience.geometry.space_partitioning._octree_structure_learning import (
             _StraightThroughSubdivide,
         )
 
@@ -417,7 +417,7 @@ class TestEndToEndStructureLearning:
 
     def test_full_workflow(self):
         """Complete workflow: scores -> adaptive subdivide -> query."""
-        from torchscience.space_partitioning import octree_sample
+        from torchscience.geometry.space_partitioning import octree_sample
 
         # Create initial tree
         points = torch.rand(50, 3) * 2 - 1

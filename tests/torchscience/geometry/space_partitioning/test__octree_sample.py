@@ -4,7 +4,7 @@ import pytest
 import torch
 import torch.testing
 
-from torchscience.space_partitioning import octree, octree_sample
+from torchscience.geometry.space_partitioning import octree, octree_sample
 
 from .conftest import make_octree
 

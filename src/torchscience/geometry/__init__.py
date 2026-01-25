@@ -1,5 +1,7 @@
 """Geometric operations and queries."""
 
+from torchscience.geometry import space_partitioning
+
 from ._closest_point import ClosestPoint, closest_point
 from ._convex_hull import ConvexHull, convex_hull
 from ._exceptions import (
@@ -38,4 +40,5 @@ __all__ = [
     "ray_sphere_intersection",
     "rectangle_mesh",
     "refine_mesh",
+    "space_partitioning",
 ]

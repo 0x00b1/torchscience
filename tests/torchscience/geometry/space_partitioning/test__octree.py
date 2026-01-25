@@ -4,7 +4,7 @@ import pytest
 import torch
 import torch.testing
 
-from torchscience.space_partitioning import octree
+from torchscience.geometry.space_partitioning import octree
 
 from .conftest import _decode_depth, _hash_lookup
 

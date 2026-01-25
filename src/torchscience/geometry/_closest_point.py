@@ -6,7 +6,7 @@ import torch
 from tensordict import tensorclass
 from torch import Tensor
 
-from torchscience.space_partitioning import BoundingVolumeHierarchy
+from torchscience.geometry.space_partitioning import BoundingVolumeHierarchy
 
 
 @tensorclass

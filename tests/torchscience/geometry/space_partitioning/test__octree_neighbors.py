@@ -4,7 +4,7 @@ import pytest
 import torch
 import torch.testing
 
-from torchscience.space_partitioning import octree, octree_neighbors
+from torchscience.geometry.space_partitioning import octree, octree_neighbors
 
 
 class TestConnectivity:

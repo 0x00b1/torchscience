@@ -5,7 +5,7 @@ from __future__ import annotations
 import torch
 from torch import Tensor
 
-from torchscience.space_partitioning import BoundingVolumeHierarchy
+from torchscience.geometry.space_partitioning import BoundingVolumeHierarchy
 
 
 def ray_occluded(

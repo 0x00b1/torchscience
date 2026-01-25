@@ -1,8 +1,8 @@
-# tests/torchscience/space_partitioning/test__kd_tree.py
+# tests/torchscience/geometry/space_partitioning/test__kd_tree.py
 import pytest
 import torch
 
-from torchscience.space_partitioning import KdTree, kd_tree
+from torchscience.geometry.space_partitioning import KdTree, kd_tree
 
 
 class TestKdTreeBasic:

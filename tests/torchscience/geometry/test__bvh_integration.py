@@ -4,7 +4,7 @@ import pytest
 import torch
 
 from torchscience.geometry import closest_point, ray_intersect, ray_occluded
-from torchscience.space_partitioning import bounding_volume_hierarchy
+from torchscience.geometry.space_partitioning import bounding_volume_hierarchy
 
 
 class TestBVHIntegration:

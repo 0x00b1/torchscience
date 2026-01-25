@@ -4,7 +4,7 @@ import pytest
 import torch
 
 from torchscience.geometry import ClosestPoint, closest_point
-from torchscience.space_partitioning import bounding_volume_hierarchy
+from torchscience.geometry.space_partitioning import bounding_volume_hierarchy
 
 
 class TestClosestPointBasic:

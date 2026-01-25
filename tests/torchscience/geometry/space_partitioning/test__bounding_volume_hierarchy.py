@@ -2,7 +2,7 @@
 
 import torch
 
-from torchscience.space_partitioning import (
+from torchscience.geometry.space_partitioning import (
     BoundingVolumeHierarchy,
     bounding_volume_hierarchy,
 )
