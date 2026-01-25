@@ -311,6 +311,283 @@ def _compute_load_vector(
     return assemble_vector(local_vectors, dm)
 
 
+def solve_heat(
+    mesh: Mesh,
+    initial: Tensor | Callable[[Tensor], Tensor],
+    source: Tensor | Callable[[Tensor], Tensor] | float = 0.0,
+    diffusivity: Tensor | float = 1.0,
+    density: Tensor | float = 1.0,
+    dt: float = 0.01,
+    num_steps: int = 100,
+    dirichlet_dofs: Tensor | None = None,
+    dirichlet_values: Tensor | float = 0.0,
+    order: int = 1,
+    return_all: bool = False,
+) -> Tensor:
+    """Solve the heat equation rho*c du/dt - nabla . (kappa nabla u) = f.
+
+    This function provides a high-level interface for solving the heat equation
+    using the finite element method with implicit Euler time stepping (backward
+    Euler) for unconditional stability.
+
+    Parameters
+    ----------
+    mesh : Mesh
+        Input mesh defining the computational domain.
+    initial : Tensor or callable
+        Initial condition u_0. If callable, takes coordinates (n, dim) and returns
+        values (n,). If Tensor, shape (num_dofs,) for nodal values.
+    source : Tensor, callable, or float, optional
+        Heat source f. If callable, takes coordinates (n, dim) and returns values (n,).
+        If Tensor, shape (num_vertices,) for nodal values or (num_elements,) for
+        element-wise constant values. If float, constant source throughout.
+        Default 0.0.
+    diffusivity : Tensor or float, optional
+        Thermal diffusivity kappa. Can be a scalar or per-element tensor of
+        shape (num_elements,). Default 1.0.
+    density : Tensor or float, optional
+        Product rho*c (density times specific heat capacity). Can be a scalar
+        or per-element tensor of shape (num_elements,). Default 1.0.
+    dt : float, optional
+        Time step size. Default 0.01.
+    num_steps : int, optional
+        Number of time steps to perform. Default 100.
+    dirichlet_dofs : Tensor, optional
+        DOF indices for Dirichlet boundary conditions. If None, uses all boundary
+        DOFs (from boundary_dofs function).
+    dirichlet_values : Tensor or float, optional
+        Prescribed values at Dirichlet DOFs. If float, the same value is used for
+        all Dirichlet DOFs. If Tensor, must have shape (num_dirichlet_dofs,).
+        Default 0.0 (homogeneous boundary conditions).
+    order : int, optional
+        Polynomial order for the finite element space. Default 1 (P1 elements).
+    return_all : bool, optional
+        If True, return solutions at all time steps including t=0.
+        If False (default), return only the final solution.
+
+    Returns
+    -------
+    Tensor
+        Solution values at DOFs. Shape (num_dofs,) if return_all=False,
+        or (num_steps+1, num_dofs) if return_all=True.
+
+    Notes
+    -----
+    The heat equation in strong form is:
+
+    .. math::
+
+        \\rho c \\frac{\\partial u}{\\partial t} - \\nabla \\cdot (\\kappa \\nabla u) = f
+        \\quad \\text{in } \\Omega
+
+        u = g \\quad \\text{on } \\partial\\Omega
+
+        u(t=0) = u_0
+
+    Using implicit Euler (backward Euler) time discretization:
+
+    .. math::
+
+        \\rho c \\frac{u^{n+1} - u^n}{\\Delta t} - \\nabla \\cdot (\\kappa \\nabla u^{n+1}) = f^{n+1}
+
+    The finite element discretization leads to the linear system:
+
+    .. math::
+
+        \\left(\\frac{M}{\\Delta t} + K\\right) u^{n+1} = \\frac{M}{\\Delta t} u^n + f^{n+1}
+
+    where M is the mass matrix and K is the stiffness matrix.
+
+    The implicit Euler method is unconditionally stable, meaning there are no
+    restrictions on the time step size for stability (though accuracy may require
+    smaller time steps).
+
+    Examples
+    --------
+    Solve heat equation starting from constant initial condition:
+
+    >>> from torchscience.geometry.mesh import rectangle_mesh
+    >>> from torchscience.finite_element_method import solve_heat
+    >>> mesh = rectangle_mesh(10, 10)
+    >>> initial = torch.ones(mesh.num_vertices, dtype=torch.float64)
+    >>> u = solve_heat(mesh, initial=initial, dt=0.01, num_steps=100)
+
+    With non-zero source term:
+
+    >>> u = solve_heat(mesh, initial=initial, source=1.0, dt=0.01, num_steps=100)
+
+    Return all time steps:
+
+    >>> u_all = solve_heat(mesh, initial=initial, dt=0.01, num_steps=100, return_all=True)
+    >>> u_all.shape
+    torch.Size([101, ...])  # num_steps + 1 (includes t=0)
+
+    See Also
+    --------
+    solve_poisson : Solve the steady-state Poisson equation.
+    local_mass_matrices : Compute element mass matrices.
+    local_stiffness_matrices : Compute element stiffness matrices.
+    """
+    from torchscience.finite_element_method._local_matrices import (
+        local_mass_matrices,
+    )
+
+    device = mesh.vertices.device
+    dtype = mesh.vertices.dtype
+
+    # Create DOF map
+    dm = dof_map(mesh, order=order)
+    num_dofs = dm.num_global_dofs
+
+    # Compute local stiffness matrices (for diffusion term)
+    K_local = local_stiffness_matrices(mesh, dm, material=diffusivity)
+
+    # Compute local mass matrices (for time derivative term)
+    M_local = local_mass_matrices(mesh, dm, density=density)
+
+    # Assemble global matrices
+    K = assemble_matrix(K_local, dm)  # Stiffness matrix
+    M = assemble_matrix(M_local, dm)  # Mass matrix
+
+    # Compute load vector from source term
+    f = _compute_load_vector(mesh, dm, source)
+
+    # Get boundary DOFs if not provided
+    if dirichlet_dofs is None:
+        dirichlet_dofs = boundary_dofs(mesh, dm)
+
+    # Prepare Dirichlet values
+    if isinstance(dirichlet_values, (int, float)):
+        dirichlet_vals = torch.full(
+            (dirichlet_dofs.shape[0],),
+            float(dirichlet_values),
+            dtype=dtype,
+            device=device,
+        )
+    else:
+        dirichlet_vals = dirichlet_values.to(dtype=dtype, device=device)
+
+    # Initialize solution from initial condition
+    if callable(initial):
+        # Evaluate at DOF coordinates
+        # For P1 elements, DOFs are at vertices
+        if order == 1:
+            coords = mesh.vertices
+        else:
+            # For higher-order elements, we need DOF coordinates
+            # For now, evaluate at vertices and use those for vertex DOFs
+            # Edge/face DOFs would need interpolation
+            coords = mesh.vertices
+            # TODO: Handle higher-order DOF coordinates properly
+
+        u = initial(coords)
+        if u.shape[0] != num_dofs:
+            # If initial returns values only at vertices, pad for higher-order DOFs
+            if (
+                u.shape[0] == mesh.num_vertices
+                and num_dofs > mesh.num_vertices
+            ):
+                u_full = torch.zeros(num_dofs, dtype=dtype, device=device)
+                u_full[: mesh.num_vertices] = u
+                u = u_full
+    else:
+        u = initial.clone().to(dtype=dtype, device=device)
+        if u.shape[0] != num_dofs:
+            if (
+                u.shape[0] == mesh.num_vertices
+                and num_dofs > mesh.num_vertices
+            ):
+                u_full = torch.zeros(num_dofs, dtype=dtype, device=device)
+                u_full[: mesh.num_vertices] = u
+                u = u_full
+
+    # Apply initial Dirichlet BC values
+    u[dirichlet_dofs] = dirichlet_vals
+
+    # Storage for all time steps if requested
+    if return_all:
+        u_history = torch.zeros(
+            num_steps + 1, num_dofs, dtype=dtype, device=device
+        )
+        u_history[0] = u.clone()
+
+    # Build system matrix: A = M/dt + K
+    # We need to convert sparse matrices to dense for now
+    # TODO: Implement sparse arithmetic or use sparse solvers
+    M_dense = M.to_dense()
+    K_dense = K.to_dense()
+    A = M_dense / dt + K_dense
+
+    # Time stepping loop (implicit Euler)
+    for step in range(num_steps):
+        # Build RHS: b = M/dt @ u^n + f
+        rhs = (M_dense / dt) @ u + f
+
+        # Apply Dirichlet boundary conditions to the system A @ u = rhs
+        # Use elimination method for accuracy
+        A_bc, rhs_bc = _apply_dirichlet_to_dense(
+            A, rhs, dirichlet_dofs, dirichlet_vals
+        )
+
+        # Solve the linear system
+        u = torch.linalg.solve(A_bc, rhs_bc)
+
+        # Store if returning all time steps
+        if return_all:
+            u_history[step + 1] = u.clone()
+
+    if return_all:
+        return u_history
+    else:
+        return u
+
+
+def _apply_dirichlet_to_dense(
+    matrix: Tensor,
+    vector: Tensor,
+    dofs: Tensor,
+    values: Tensor,
+) -> tuple[Tensor, Tensor]:
+    """Apply Dirichlet BCs to a dense system using elimination.
+
+    Parameters
+    ----------
+    matrix : Tensor
+        Dense system matrix, shape (n, n).
+    vector : Tensor
+        RHS vector, shape (n,).
+    dofs : Tensor
+        DOF indices to constrain.
+    values : Tensor
+        Prescribed values.
+
+    Returns
+    -------
+    tuple[Tensor, Tensor]
+        Modified matrix and vector.
+    """
+    if dofs.numel() == 0:
+        return matrix, vector
+
+    A = matrix.clone()
+    b = vector.clone()
+
+    # Modify RHS for elimination
+    b = b - A[:, dofs] @ values
+
+    # Zero out rows and columns
+    A[dofs, :] = 0.0
+    A[:, dofs] = 0.0
+
+    # Set diagonal to 1
+    A[dofs, dofs] = 1.0
+
+    # Set RHS to prescribed values
+    b[dofs] = values
+
+    return A, b
+
+
 def _compute_coords_simplex(
     element_vertices: Tensor,
     quad_points: Tensor,
