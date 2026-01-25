@@ -27,7 +27,7 @@ from torchscience.finite_element_method._local_matrices import (
     local_stiffness_matrices,
 )
 from torchscience.finite_element_method._quadrature import quadrature_points
-from torchscience.finite_element_method._solve import solve_direct
+from torchscience.finite_element_method._solve import solve_cg, solve_direct
 
 __all__ = [
     "DOFMap",
@@ -43,5 +43,6 @@ __all__ = [
     "local_mass_matrices",
     "local_stiffness_matrices",
     "quadrature_points",
+    "solve_cg",
     "solve_direct",
 ]
