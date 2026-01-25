@@ -592,9 +592,28 @@ def apply_neumann(
     >>> f_mod = apply_neumann(f, mesh, dm, boundary_facets, flux)
 
     """
+    # Validate boundary_facets shape
+    if boundary_facets.ndim != 2 or boundary_facets.shape[1] != 2:
+        raise ValueError(
+            f"boundary_facets must have shape (num_facets, 2), "
+            f"got {boundary_facets.shape}"
+        )
+
     # Handle empty boundary_facets case
     if boundary_facets.numel() == 0:
         return vector.clone()
+
+    # Validate device compatibility
+    if boundary_facets.device != vector.device:
+        raise ValueError(
+            f"vector and boundary_facets must be on the same device, "
+            f"got {vector.device} and {boundary_facets.device}"
+        )
+    if not callable(flux) and flux.device != vector.device:
+        raise ValueError(
+            f"vector and flux must be on the same device, "
+            f"got {vector.device} and {flux.device}"
+        )
 
     device = vector.device
     dtype = vector.dtype
