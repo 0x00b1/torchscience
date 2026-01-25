@@ -1755,6 +1755,17 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("ray_triangle(Tensor origins, Tensor directions, Tensor v0, Tensor v1, Tensor v2) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
   module.def("ray_triangle_backward(Tensor grad_t, Tensor grad_hit_point, Tensor grad_normal, Tensor grad_uv, Tensor origins, Tensor directions, Tensor v0, Tensor v1, Tensor v2, Tensor t, Tensor hit) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
 
+  // geometry.intersection - ray_aabb (slab method)
+  //   Inputs: ray origins (*, 3), ray directions (*, 3), AABB min corner (*, 3), AABB max corner (*, 3)
+  //   Outputs:
+  //   t: intersection parameter (entry point of the box)
+  //   hit_point: world-space entry point
+  //   normal: face normal at entry point (axis-aligned, unit length)
+  //   uv: parametric coordinates on the hit face
+  //   hit: boolean mask indicating valid intersections
+  module.def("ray_aabb(Tensor origins, Tensor directions, Tensor box_min, Tensor box_max) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
+  module.def("ray_aabb_backward(Tensor grad_t, Tensor grad_hit_point, Tensor grad_normal, Tensor grad_uv, Tensor origins, Tensor directions, Tensor box_min, Tensor box_max, Tensor t, Tensor hit) -> (Tensor, Tensor, Tensor, Tensor)");
+
   // geometry.transform
   module.def("reflect(Tensor direction, Tensor normal) -> Tensor");
   module.def("reflect_backward(Tensor grad_output, Tensor direction, Tensor normal) -> (Tensor, Tensor)");
