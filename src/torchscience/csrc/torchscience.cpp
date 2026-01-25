@@ -201,6 +201,7 @@
 #include "cpu/geometry/intersection/ray_plane.h"
 #include "cpu/geometry/intersection/ray_sphere.h"
 #include "cpu/geometry/intersection/ray_triangle.h"
+#include "cpu/geometry/intersection/ray_aabb.h"
 #include "cpu/encryption/chacha20.h"
 #include "cpu/encryption/sha256.h"
 #include "cpu/encryption/sha3.h"
