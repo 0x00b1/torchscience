@@ -66,21 +66,21 @@ def shannon_entropy(
     --------
     >>> # Uniform distribution has maximum entropy
     >>> p = torch.tensor([0.25, 0.25, 0.25, 0.25])
-    >>> torchscience.information_theory.shannon_entropy(p)
+    >>> torchscience.information.shannon_entropy(p)
     tensor(1.3863)  # log(4) nats
 
     >>> # In bits
-    >>> torchscience.information_theory.shannon_entropy(p, base=2)
+    >>> torchscience.information.shannon_entropy(p, base=2)
     tensor(2.0)  # log2(4) = 2 bits
 
     >>> # Delta distribution has zero entropy
     >>> p = torch.tensor([1.0, 0.0, 0.0, 0.0])
-    >>> torchscience.information_theory.shannon_entropy(p)
+    >>> torchscience.information.shannon_entropy(p)
     tensor(0.0)
 
     >>> # Batch of distributions
     >>> p = torch.softmax(torch.randn(10, 5), dim=-1)
-    >>> H = torchscience.information_theory.shannon_entropy(p)
+    >>> H = torchscience.information.shannon_entropy(p)
     >>> H.shape
     torch.Size([10])
 

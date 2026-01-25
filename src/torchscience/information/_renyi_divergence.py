@@ -81,16 +81,16 @@ def renyi_divergence(
     --------
     >>> p = torch.tensor([0.25, 0.25, 0.25, 0.25])
     >>> q = torch.tensor([0.1, 0.2, 0.3, 0.4])
-    >>> torchscience.information_theory.renyi_divergence(p, q, alpha=2.0)
+    >>> torchscience.information.renyi_divergence(p, q, alpha=2.0)
     tensor(0.2157)
 
     >>> # Alpha=0.5 relates to Bhattacharyya distance
-    >>> d_half = torchscience.information_theory.renyi_divergence(p, q, alpha=0.5)
+    >>> d_half = torchscience.information.renyi_divergence(p, q, alpha=0.5)
 
     >>> # Batch of distributions
     >>> p = torch.softmax(torch.randn(10, 5), dim=-1)
     >>> q = torch.softmax(torch.randn(10, 5), dim=-1)
-    >>> d = torchscience.information_theory.renyi_divergence(
+    >>> d = torchscience.information.renyi_divergence(
     ...     p, q, alpha=2.0, reduction="none"
     ... )
     >>> d.shape

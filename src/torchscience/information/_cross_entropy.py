@@ -72,20 +72,20 @@ def cross_entropy(
     >>> # Cross-entropy between uniform and a peaked distribution
     >>> p = torch.tensor([0.25, 0.25, 0.25, 0.25])
     >>> q = torch.tensor([0.7, 0.1, 0.1, 0.1])
-    >>> torchscience.information_theory.cross_entropy(p, q)
+    >>> torchscience.information.cross_entropy(p, q)
     tensor(1.6611)
 
     >>> # Self cross-entropy equals Shannon entropy
     >>> p = torch.tensor([0.25, 0.25, 0.25, 0.25])
-    >>> H_p = torchscience.information_theory.shannon_entropy(p)
-    >>> H_pq = torchscience.information_theory.cross_entropy(p, p)
+    >>> H_p = torchscience.information.shannon_entropy(p)
+    >>> H_pq = torchscience.information.cross_entropy(p, p)
     >>> torch.isclose(H_p, H_pq)
     tensor(True)
 
     >>> # Batch of distributions
     >>> p = torch.softmax(torch.randn(10, 5), dim=-1)
     >>> q = torch.softmax(torch.randn(10, 5), dim=-1)
-    >>> H = torchscience.information_theory.cross_entropy(p, q)
+    >>> H = torchscience.information.cross_entropy(p, q)
     >>> H.shape
     torch.Size([10])
 

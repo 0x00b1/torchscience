@@ -51,7 +51,7 @@ The library spans common scientific and engineering areas. Below is a non‑exha
 - geometry: computational geometry (e.g., intersection, meshing, transform)
 - graph: graph and network theory
 - graphics: color, lighting, shading, projection, texture mapping, tone mapping
-- information and information_theory: coding theory, compression
+- information: coding theory, compression
 - ordinary_differential_equation: boundary-value problems, initial-value problems
 - linear_algebra: matrix ops and decompositions
 - morphology: mathematical morphology

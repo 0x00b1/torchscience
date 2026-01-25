@@ -59,12 +59,12 @@ def renyi_entropy(
     Examples
     --------
     >>> p = torch.tensor([0.25, 0.25, 0.25, 0.25])
-    >>> torchscience.information_theory.renyi_entropy(p, alpha=2)
+    >>> torchscience.information.renyi_entropy(p, alpha=2)
     tensor(1.3863)  # Same as Shannon for uniform
 
     >>> # Collision entropy (alpha=2)
     >>> p = torch.tensor([0.7, 0.2, 0.1])
-    >>> torchscience.information_theory.renyi_entropy(p, alpha=2)
+    >>> torchscience.information.renyi_entropy(p, alpha=2)
     tensor(0.7765)
 
     Notes

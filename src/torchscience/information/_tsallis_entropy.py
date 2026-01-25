@@ -61,12 +61,12 @@ def tsallis_entropy(
     Examples
     --------
     >>> p = torch.tensor([0.25, 0.25, 0.25, 0.25])
-    >>> torchscience.information_theory.tsallis_entropy(p, q=2)
+    >>> torchscience.information.tsallis_entropy(p, q=2)
     tensor(0.75)
 
     >>> # Non-uniform distribution
     >>> p = torch.tensor([0.7, 0.2, 0.1])
-    >>> torchscience.information_theory.tsallis_entropy(p, q=2)
+    >>> torchscience.information.tsallis_entropy(p, q=2)
     tensor(0.46)
 
     Notes

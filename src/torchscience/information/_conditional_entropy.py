@@ -71,12 +71,12 @@ def conditional_entropy(
     >>> p_x = torch.tensor([0.5, 0.5])
     >>> p_y = torch.tensor([0.25, 0.25, 0.25, 0.25])
     >>> joint = p_x.unsqueeze(1) * p_y.unsqueeze(0)  # Independent
-    >>> torchscience.information_theory.conditional_entropy(joint)
+    >>> torchscience.information.conditional_entropy(joint)
     tensor(1.3863)  # = H(Y) = log(4)
 
     >>> # When Y is determined by X, H(Y|X) = 0
     >>> joint = torch.tensor([[0.5, 0.0], [0.0, 0.5]])  # Y = X
-    >>> torchscience.information_theory.conditional_entropy(joint)
+    >>> torchscience.information.conditional_entropy(joint)
     tensor(0.0)
 
     Notes

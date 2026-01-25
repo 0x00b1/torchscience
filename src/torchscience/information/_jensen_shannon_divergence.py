@@ -59,11 +59,11 @@ def jensen_shannon_divergence(
     --------
     >>> p = torch.tensor([0.5, 0.5])
     >>> q = torch.tensor([0.1, 0.9])
-    >>> torchscience.information_theory.jensen_shannon_divergence(p, q)
+    >>> torchscience.information.jensen_shannon_divergence(p, q)
     tensor(0.1927)
 
     >>> # In bits (bounded by 1.0)
-    >>> torchscience.information_theory.jensen_shannon_divergence(p, q, base=2)
+    >>> torchscience.information.jensen_shannon_divergence(p, q, base=2)
     tensor(0.2780)
 
     Notes

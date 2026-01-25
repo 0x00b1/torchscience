@@ -65,13 +65,13 @@ def kullback_leibler_divergence(
     --------
     >>> p = torch.tensor([0.25, 0.25, 0.25, 0.25])
     >>> q = torch.tensor([0.1, 0.2, 0.3, 0.4])
-    >>> torchscience.information_theory.kullback_leibler_divergence(p, q)
+    >>> torchscience.information.kullback_leibler_divergence(p, q)
     tensor(0.1335)
 
     >>> # Batch of distributions
     >>> p = torch.softmax(torch.randn(10, 5), dim=-1)
     >>> q = torch.softmax(torch.randn(10, 5), dim=-1)
-    >>> kl = torchscience.information_theory.kullback_leibler_divergence(
+    >>> kl = torchscience.information.kullback_leibler_divergence(
     ...     p, q, reduction="none"
     ... )
     >>> kl.shape

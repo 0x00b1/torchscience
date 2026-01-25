@@ -73,13 +73,13 @@ def f_divergence(
     ...     return t * torch.log(t)
     >>> p = torch.tensor([0.4, 0.6])
     >>> q = torch.tensor([0.5, 0.5])
-    >>> torchscience.information_theory.f_divergence(p, q, kl_generator)
+    >>> torchscience.information.f_divergence(p, q, kl_generator)
     tensor(0.0204)
 
     >>> # Chi-squared divergence
     >>> def chi_squared_generator(t):
     ...     return (t - 1) ** 2
-    >>> torchscience.information_theory.f_divergence(p, q, chi_squared_generator)
+    >>> torchscience.information.f_divergence(p, q, chi_squared_generator)
     tensor(0.0400)
 
     >>> # Batch of distributions
@@ -87,7 +87,7 @@ def f_divergence(
     >>> q = torch.softmax(torch.randn(10, 5), dim=-1)
     >>> def f(t):
     ...     return t * torch.log(t)
-    >>> d = torchscience.information_theory.f_divergence(p, q, f)
+    >>> d = torchscience.information.f_divergence(p, q, f)
     >>> d.shape
     torch.Size([10])
 

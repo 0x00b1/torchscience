@@ -68,13 +68,13 @@ def joint_entropy(
     >>> p_x = torch.tensor([0.5, 0.5])
     >>> p_y = torch.tensor([0.5, 0.5])
     >>> joint = p_x.unsqueeze(1) * p_y.unsqueeze(0)  # Outer product
-    >>> torchscience.information_theory.joint_entropy(joint)
+    >>> torchscience.information.joint_entropy(joint)
     tensor(1.3863)  # H(X) + H(Y) = 2 * log(2)
 
     >>> # Batched joint distributions
     >>> joint = torch.softmax(torch.randn(10, 4, 5).flatten(-2), dim=-1)
     >>> joint = joint.view(10, 4, 5)
-    >>> H = torchscience.information_theory.joint_entropy(joint)
+    >>> H = torchscience.information.joint_entropy(joint)
     >>> H.shape
     torch.Size([10])
 

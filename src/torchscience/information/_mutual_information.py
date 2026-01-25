@@ -67,12 +67,12 @@ def mutual_information(
     >>> p_x = torch.tensor([0.5, 0.5])
     >>> p_y = torch.tensor([0.25, 0.25, 0.25, 0.25])
     >>> joint = p_x.unsqueeze(1) * p_y.unsqueeze(0)  # Independent
-    >>> torchscience.information_theory.mutual_information(joint)
+    >>> torchscience.information.mutual_information(joint)
     tensor(0.0)
 
     >>> # For perfectly correlated variables, I(X;Y) = H(X) = H(Y)
     >>> joint = torch.tensor([[0.5, 0.0], [0.0, 0.5]])  # Y = X
-    >>> torchscience.information_theory.mutual_information(joint, base=2.0)
+    >>> torchscience.information.mutual_information(joint, base=2.0)
     tensor(1.0)  # 1 bit of information
 
     Notes

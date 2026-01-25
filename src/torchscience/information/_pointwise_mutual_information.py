@@ -75,7 +75,7 @@ def pointwise_mutual_information(
     Examples
     --------
     >>> import torch
-    >>> from torchscience.information_theory import pointwise_mutual_information
+    >>> from torchscience.information import pointwise_mutual_information
     >>> # Joint distribution where X and Y are positively correlated
     >>> joint = torch.tensor([[0.4, 0.1], [0.1, 0.4]])  # p(X, Y)
     >>> pmi = pointwise_mutual_information(joint)
