@@ -198,6 +198,7 @@
 #include "cpu/geometry/transform/matrix_to_quaternion.h"
 #include "cpu/geometry/transform/quaternion_slerp.h"
 #include "cpu/geometry/convex_hull.h"
+#include "cpu/geometry/intersection/ray_plane.h"
 #include "cpu/encryption/chacha20.h"
 #include "cpu/encryption/sha256.h"
 #include "cpu/encryption/sha3.h"
@@ -590,6 +591,7 @@
 #include "autograd/geometry/transform/quaternion_to_matrix.h"
 #include "autograd/geometry/transform/matrix_to_quaternion.h"
 #include "autograd/geometry/transform/quaternion_slerp.h"
+#include "autograd/geometry/intersection/ray_plane.h"
 
 #include "meta/distance/minkowski_distance.h"
 #include "meta/distance/hellinger_distance.h"
@@ -721,6 +723,7 @@
 #include "meta/geometry/transform/matrix_to_quaternion.h"
 #include "meta/geometry/transform/quaternion_slerp.h"
 #include "meta/geometry/convex_hull.h"
+#include "meta/geometry/intersection/ray_plane.h"
 #include "autograd/space_partitioning/k_nearest_neighbors.h"
 #include "autograd/space_partitioning/range_search.h"
 #include "autograd/space_partitioning/octree.h"
