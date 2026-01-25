@@ -121,3 +121,84 @@ def assemble_matrix(
 
     # Coalesce to sum duplicate entries, then convert to CSR
     return sparse_coo.coalesce().to_sparse_csr()
+
+
+def assemble_vector(
+    local_vectors: Tensor,
+    dof_map: DOFMap,
+) -> Tensor:
+    """Assemble global vector from local element vectors.
+
+    Parameters
+    ----------
+    local_vectors : Tensor
+        Local element vectors, shape (num_elements, dofs_per_element).
+    dof_map : DOFMap
+        DOF mapping from local to global indices.
+
+    Returns
+    -------
+    Tensor
+        Global vector, shape (num_global_dofs,).
+
+    Raises
+    ------
+    ValueError
+        If local_vectors shape doesn't match the DOF map dimensions.
+    ValueError
+        If local_vectors and dof_map are on different devices.
+
+    Notes
+    -----
+    Uses scatter_add to accumulate contributions from each element
+    to the global vector efficiently.
+
+    Examples
+    --------
+    >>> from torchscience.geometry.mesh import rectangle_mesh
+    >>> from torchscience.finite_element_method import dof_map, assemble_vector
+    >>> mesh = rectangle_mesh(3, 3, bounds=[[0.0, 1.0], [0.0, 1.0]])
+    >>> dm = dof_map(mesh, order=1)
+    >>> local_f = torch.ones(dm.local_to_global.shape[0], 3, dtype=torch.float64)
+    >>> f = assemble_vector(local_f, dm)
+    >>> f.shape
+    torch.Size([16])
+
+    """
+    num_elements = local_vectors.shape[0]
+    dofs_per_element = local_vectors.shape[1]
+
+    # Validate shapes
+    if num_elements != dof_map.local_to_global.shape[0]:
+        raise ValueError(
+            f"local_vectors has {num_elements} elements, "
+            f"but dof_map has num_elements={dof_map.local_to_global.shape[0]}"
+        )
+    if dofs_per_element != dof_map.dofs_per_element:
+        raise ValueError(
+            f"local_vectors has dofs_per_element={dofs_per_element}, "
+            f"but dof_map has dofs_per_element={dof_map.dofs_per_element}"
+        )
+
+    # Validate device
+    if local_vectors.device != dof_map.local_to_global.device:
+        raise ValueError(
+            f"local_vectors and dof_map must be on the same device, "
+            f"got {local_vectors.device} and {dof_map.local_to_global.device}"
+        )
+
+    # Initialize global vector
+    global_vector = torch.zeros(
+        dof_map.num_global_dofs,
+        dtype=local_vectors.dtype,
+        device=local_vectors.device,
+    )
+
+    # Flatten local_to_global and local_vectors
+    indices = dof_map.local_to_global.reshape(-1)
+    values = local_vectors.reshape(-1)
+
+    # Scatter add
+    global_vector.scatter_add_(0, indices, values)
+
+    return global_vector
