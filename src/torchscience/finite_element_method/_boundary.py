@@ -524,3 +524,155 @@ def apply_dirichlet_elimination(
     f_mod[dofs] = values
 
     return K_dense.to_sparse_csr(), f_mod
+
+
+def apply_neumann(
+    vector: Tensor,
+    mesh: Mesh,
+    dof_map: DOFMap,
+    boundary_facets: Tensor,
+    flux: Tensor | Callable[[Tensor], Tensor],
+) -> Tensor:
+    """Apply Neumann boundary conditions.
+
+    Neumann boundary conditions prescribe the normal derivative (flux) on the
+    boundary. In the weak form, this adds a boundary integral to the right-hand
+    side load vector:
+
+        f[i] += integral_over_boundary(g * N_i) ds
+
+    where g is the prescribed flux and N_i is the basis function for DOF i.
+
+    For P1 elements on a 2D mesh, each boundary edge contributes to its two
+    endpoint DOFs using 2-point Gauss quadrature for accurate integration.
+
+    Parameters
+    ----------
+    vector : Tensor
+        Load vector (dense), shape (n,).
+    mesh : Mesh
+        The mesh.
+    dof_map : DOFMap
+        DOF mapping.
+    boundary_facets : Tensor
+        Boundary facet (edge) indices to apply Neumann BC, shape (num_facets, 2).
+        Each row contains vertex indices of an edge.
+    flux : Tensor or callable
+        Prescribed flux values. Either:
+        - Tensor of shape (num_facets,) with constant flux per facet
+        - Callable taking coordinates (num_points, dim) and returning flux values
+
+    Returns
+    -------
+    Tensor
+        Modified load vector.
+
+    Notes
+    -----
+    For P1 elements, we use 2-point Gauss quadrature on each edge:
+    - Quadrature points at xi = +/- 1/sqrt(3) in reference coordinates [-1, 1]
+    - Weights w1 = w2 = 1.0
+    - Shape functions: N1(xi) = (1-xi)/2, N2(xi) = (1+xi)/2
+
+    The contribution to DOF i from edge with vertices (v1, v2) is:
+        f[i] += (L/2) * sum_q(w_q * g(x_q) * N_i(xi_q))
+
+    where L is the edge length and (L/2) is the Jacobian of the mapping from
+    reference coordinates [-1, 1] to the physical edge.
+
+    Examples
+    --------
+    >>> from torchscience.geometry.mesh import rectangle_mesh, mesh_boundary_facets
+    >>> from torchscience.finite_element_method import dof_map, apply_neumann
+    >>> mesh = rectangle_mesh(2, 2)
+    >>> dm = dof_map(mesh, order=1)
+    >>> f = torch.zeros(dm.num_global_dofs, dtype=torch.float64)
+    >>> boundary_facets = mesh_boundary_facets(mesh)
+    >>> flux = torch.ones(len(boundary_facets), dtype=torch.float64)
+    >>> f_mod = apply_neumann(f, mesh, dm, boundary_facets, flux)
+
+    """
+    # Handle empty boundary_facets case
+    if boundary_facets.numel() == 0:
+        return vector.clone()
+
+    device = vector.device
+    dtype = vector.dtype
+    num_facets = boundary_facets.shape[0]
+
+    # Clone vector to avoid modifying input
+    f_mod = vector.clone()
+
+    # Get vertex coordinates for each edge endpoint
+    # boundary_facets: (num_facets, 2) - each row is [v1_idx, v2_idx]
+    v1_idx = boundary_facets[:, 0]  # (num_facets,)
+    v2_idx = boundary_facets[:, 1]  # (num_facets,)
+
+    v1_coords = mesh.vertices[v1_idx]  # (num_facets, dim)
+    v2_coords = mesh.vertices[v2_idx]  # (num_facets, dim)
+
+    # Compute edge lengths
+    edge_vectors = v2_coords - v1_coords  # (num_facets, dim)
+    edge_lengths = torch.linalg.norm(edge_vectors, dim=-1)  # (num_facets,)
+
+    # 2-point Gauss quadrature on reference interval [-1, 1]
+    # Points: xi = +/- 1/sqrt(3)
+    # Weights: w = 1.0 (each)
+    sqrt3_inv = 1.0 / (3.0**0.5)
+    xi_q = torch.tensor([-sqrt3_inv, sqrt3_inv], dtype=dtype, device=device)
+    w_q = torch.tensor([1.0, 1.0], dtype=dtype, device=device)
+
+    # Shape functions at quadrature points
+    # N1(xi) = (1 - xi) / 2  (value at first vertex)
+    # N2(xi) = (1 + xi) / 2  (value at second vertex)
+    N1_q = (1.0 - xi_q) / 2.0  # (2,)
+    N2_q = (1.0 + xi_q) / 2.0  # (2,)
+
+    # Map quadrature points to physical coordinates
+    # x(xi) = v1 + (v2 - v1) * (xi + 1) / 2 = v1 * (1-xi)/2 + v2 * (1+xi)/2
+    # For each quadrature point and each facet:
+    # quad_coords[q, f, :] = N1(xi_q) * v1_coords[f, :] + N2(xi_q) * v2_coords[f, :]
+    # Shape: (2, num_facets, dim)
+    quad_coords = (
+        N1_q[:, None, None] * v1_coords[None, :, :]
+        + N2_q[:, None, None] * v2_coords[None, :, :]
+    )
+
+    # Evaluate flux at quadrature points
+    if callable(flux):
+        # flux is a function: evaluate at all quadrature points
+        # Reshape to (2 * num_facets, dim) for the call
+        num_quad = xi_q.shape[0]
+        quad_coords_flat = quad_coords.reshape(
+            -1, mesh.dim
+        )  # (2*num_facets, dim)
+        flux_values_flat = flux(quad_coords_flat)  # (2*num_facets,)
+        flux_at_quad = flux_values_flat.reshape(
+            num_quad, num_facets
+        )  # (2, num_facets)
+    else:
+        # flux is a tensor of shape (num_facets,) - constant per facet
+        # Broadcast to all quadrature points
+        flux_at_quad = flux[None, :].expand(2, -1)  # (2, num_facets)
+
+    # Compute contributions to each endpoint DOF
+    # Jacobian of mapping from [-1, 1] to physical edge is L/2
+    jacobian = edge_lengths / 2.0  # (num_facets,)
+
+    # Contribution to first vertex DOF:
+    # f[v1] += sum_q(w_q * jacobian * g(x_q) * N1(xi_q))
+    contrib_v1 = torch.einsum(
+        "q,f,qf,q->f", w_q, jacobian, flux_at_quad, N1_q
+    )  # (num_facets,)
+
+    # Contribution to second vertex DOF:
+    # f[v2] += sum_q(w_q * jacobian * g(x_q) * N2(xi_q))
+    contrib_v2 = torch.einsum(
+        "q,f,qf,q->f", w_q, jacobian, flux_at_quad, N2_q
+    )  # (num_facets,)
+
+    # Accumulate contributions using scatter_add
+    f_mod.scatter_add_(0, v1_idx, contrib_v1.to(dtype))
+    f_mod.scatter_add_(0, v2_idx, contrib_v2.to(dtype))
+
+    return f_mod

@@ -18,6 +18,7 @@ from torchscience.finite_element_method._basis import (
 from torchscience.finite_element_method._boundary import (
     apply_dirichlet_elimination,
     apply_dirichlet_penalty,
+    apply_neumann,
     boundary_dofs,
 )
 from torchscience.finite_element_method._dof_map import DOFMap, dof_map
@@ -31,6 +32,7 @@ __all__ = [
     "DOFMap",
     "apply_dirichlet_elimination",
     "apply_dirichlet_penalty",
+    "apply_neumann",
     "assemble_matrix",
     "assemble_vector",
     "boundary_dofs",
