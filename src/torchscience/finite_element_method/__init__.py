@@ -28,11 +28,17 @@ from torchscience.finite_element_method._local_matrices import (
 )
 from torchscience.finite_element_method._quadrature import quadrature_points
 from torchscience.finite_element_method._solve import solve_cg, solve_direct
-from torchscience.finite_element_method._weak_form import WeakForm
+from torchscience.finite_element_method._weak_form import (
+    BasisValues,
+    WeakForm,
+    assemble_weak_form,
+)
 
 __all__ = [
+    "BasisValues",
     "DOFMap",
     "WeakForm",
+    "assemble_weak_form",
     "apply_dirichlet_elimination",
     "apply_dirichlet_penalty",
     "apply_neumann",

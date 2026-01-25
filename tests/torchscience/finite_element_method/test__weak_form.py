@@ -311,3 +311,351 @@ class TestRobinBoundaryCondition:
         result = weak_form.boundary_form(v, x, n)
         expected = torch.tensor([1.0, 1.0])
         assert torch.allclose(result, expected)
+
+
+class TestAssembleWeakForm:
+    """Tests for assemble_weak_form function."""
+
+    def test_assemble_poisson_weak_form_equals_stiffness(self):
+        """Poisson weak form should produce same matrix as local_stiffness_matrices."""
+        from torchscience.finite_element_method import (
+            WeakForm,
+            assemble_matrix,
+            assemble_weak_form,
+            dof_map,
+            local_stiffness_matrices,
+        )
+        from torchscience.geometry.mesh import rectangle_mesh
+
+        mesh = rectangle_mesh(3, 3, bounds=[[0.0, 1.0], [0.0, 1.0]])
+        dm = dof_map(mesh, order=1)
+
+        # Define Poisson weak form: a(u, v) = integral(grad(u) dot grad(v))
+        def poisson_bilinear(u, v, x):
+            # u.grad and v.grad have shape (num_quad, num_dofs, dim)
+            # We want to compute grad(u) dot grad(v) for all (i, j) combinations
+            # For trial i and test j: grad_u[i] dot grad_v[j]
+            return (u.grad * v.grad).sum(dim=-1)
+
+        def poisson_linear(v, x):
+            return torch.zeros_like(v.value)
+
+        weak_form = WeakForm(
+            bilinear_form=poisson_bilinear,
+            linear_form=poisson_linear,
+        )
+
+        # Assemble using weak form
+        K_weak, f_weak = assemble_weak_form(mesh, dm, weak_form)
+
+        # Assemble using direct method
+        K_local = local_stiffness_matrices(mesh, dm)
+        K_direct = assemble_matrix(K_local, dm)
+
+        # Convert both to dense for comparison
+        K_weak_dense = K_weak.to_dense()
+        K_direct_dense = K_direct.to_dense()
+
+        assert torch.allclose(
+            K_weak_dense, K_direct_dense, rtol=1e-10, atol=1e-12
+        )
+
+    def test_assemble_mass_weak_form_equals_mass_matrices(self):
+        """Mass weak form should produce same matrix as local_mass_matrices."""
+        from torchscience.finite_element_method import (
+            WeakForm,
+            assemble_matrix,
+            assemble_weak_form,
+            dof_map,
+            local_mass_matrices,
+        )
+        from torchscience.geometry.mesh import rectangle_mesh
+
+        mesh = rectangle_mesh(3, 3, bounds=[[0.0, 1.0], [0.0, 1.0]])
+        dm = dof_map(mesh, order=1)
+
+        # Define mass weak form: a(u, v) = integral(u * v)
+        def mass_bilinear(u, v, x):
+            # u.value and v.value have shape (num_quad, num_dofs)
+            return u.value * v.value
+
+        def mass_linear(v, x):
+            return torch.zeros_like(v.value)
+
+        weak_form = WeakForm(
+            bilinear_form=mass_bilinear,
+            linear_form=mass_linear,
+        )
+
+        # Assemble using weak form
+        M_weak, f_weak = assemble_weak_form(mesh, dm, weak_form)
+
+        # Assemble using direct method
+        M_local = local_mass_matrices(mesh, dm)
+        M_direct = assemble_matrix(M_local, dm)
+
+        # Convert both to dense for comparison
+        M_weak_dense = M_weak.to_dense()
+        M_direct_dense = M_direct.to_dense()
+
+        assert torch.allclose(
+            M_weak_dense, M_direct_dense, rtol=1e-10, atol=1e-12
+        )
+
+    def test_assemble_custom_bilinear_form(self):
+        """Test custom bilinear form that combines mass and stiffness."""
+        from torchscience.finite_element_method import (
+            WeakForm,
+            assemble_matrix,
+            assemble_weak_form,
+            dof_map,
+            local_mass_matrices,
+            local_stiffness_matrices,
+        )
+        from torchscience.geometry.mesh import rectangle_mesh
+
+        mesh = rectangle_mesh(3, 3, bounds=[[0.0, 1.0], [0.0, 1.0]])
+        dm = dof_map(mesh, order=1)
+
+        alpha = 2.5  # mass coefficient
+        beta = 0.3  # stiffness coefficient
+
+        # Define combined weak form: a(u, v) = alpha * u * v + beta * grad(u) dot grad(v)
+        def combined_bilinear(u, v, x):
+            mass_term = alpha * u.value * v.value
+            stiffness_term = beta * (u.grad * v.grad).sum(dim=-1)
+            return mass_term + stiffness_term
+
+        def combined_linear(v, x):
+            return torch.zeros_like(v.value)
+
+        weak_form = WeakForm(
+            bilinear_form=combined_bilinear,
+            linear_form=combined_linear,
+        )
+
+        # Assemble using weak form
+        A_weak, _ = assemble_weak_form(mesh, dm, weak_form)
+
+        # Assemble using direct method
+        M_local = local_mass_matrices(mesh, dm)
+        K_local = local_stiffness_matrices(mesh, dm)
+        A_local = alpha * M_local + beta * K_local
+        A_direct = assemble_matrix(A_local, dm)
+
+        A_weak_dense = A_weak.to_dense()
+        A_direct_dense = A_direct.to_dense()
+
+        assert torch.allclose(
+            A_weak_dense, A_direct_dense, rtol=1e-10, atol=1e-12
+        )
+
+    def test_symmetric_bilinear_form_produces_symmetric_matrix(self):
+        """Symmetric weak form should produce symmetric matrix."""
+        from torchscience.finite_element_method import (
+            WeakForm,
+            assemble_weak_form,
+            dof_map,
+        )
+        from torchscience.geometry.mesh import rectangle_mesh
+
+        mesh = rectangle_mesh(3, 3, bounds=[[0.0, 1.0], [0.0, 1.0]])
+        dm = dof_map(mesh, order=1)
+
+        # Stiffness form is symmetric
+        def stiffness_bilinear(u, v, x):
+            return (u.grad * v.grad).sum(dim=-1)
+
+        def zero_linear(v, x):
+            return torch.zeros_like(v.value)
+
+        weak_form = WeakForm(
+            bilinear_form=stiffness_bilinear,
+            linear_form=zero_linear,
+        )
+
+        K, _ = assemble_weak_form(mesh, dm, weak_form)
+        K_dense = K.to_dense()
+
+        # Check symmetry
+        assert torch.allclose(K_dense, K_dense.T, rtol=1e-10, atol=1e-12)
+
+    def test_sparse_csr_output(self):
+        """Output matrix should be in sparse CSR format."""
+        from torchscience.finite_element_method import (
+            WeakForm,
+            assemble_weak_form,
+            dof_map,
+        )
+        from torchscience.geometry.mesh import rectangle_mesh
+
+        mesh = rectangle_mesh(3, 3, bounds=[[0.0, 1.0], [0.0, 1.0]])
+        dm = dof_map(mesh, order=1)
+
+        def bilinear(u, v, x):
+            return (u.grad * v.grad).sum(dim=-1)
+
+        def linear(v, x):
+            return v.value
+
+        weak_form = WeakForm(
+            bilinear_form=bilinear,
+            linear_form=linear,
+        )
+
+        K, f = assemble_weak_form(mesh, dm, weak_form)
+
+        # Check matrix is sparse CSR
+        assert K.is_sparse_csr
+
+        # Check vector is dense
+        assert not f.is_sparse
+
+        # Check shapes
+        assert K.shape == (dm.num_global_dofs, dm.num_global_dofs)
+        assert f.shape == (dm.num_global_dofs,)
+
+    def test_linear_form_with_constant_source(self):
+        """Test linear form with constant source f = 1."""
+        from torchscience.finite_element_method import (
+            WeakForm,
+            assemble_vector,
+            assemble_weak_form,
+            dof_map,
+            local_mass_matrices,
+        )
+        from torchscience.geometry.mesh import rectangle_mesh
+
+        mesh = rectangle_mesh(3, 3, bounds=[[0.0, 1.0], [0.0, 1.0]])
+        dm = dof_map(mesh, order=1)
+
+        # f(v) = integral(1 * v) = M @ ones
+        def zero_bilinear(u, v, x):
+            return torch.zeros_like(u.value)
+
+        def constant_linear(v, x):
+            # f(x) = 1, so L(v) = 1 * v
+            return v.value
+
+        weak_form = WeakForm(
+            bilinear_form=zero_bilinear,
+            linear_form=constant_linear,
+        )
+
+        _, f_weak = assemble_weak_form(mesh, dm, weak_form)
+
+        # Using mass matrix: f = M @ ones
+        M_local = local_mass_matrices(mesh, dm)
+        ones_local = torch.ones(
+            mesh.num_elements, dm.dofs_per_element, dtype=mesh.vertices.dtype
+        )
+        f_direct = assemble_vector(ones_local * M_local.sum(dim=-1), dm)
+
+        # Alternative: sum of local mass row sums
+        # Actually: integral(v_i) = sum_j M_ij which is M @ ones
+        # But our assembly needs local vectors, so let's compute:
+        # integral(v_i) on element e = sum_j M_e[i,j]
+        f_local = M_local.sum(dim=-1)  # (num_elements, dofs_per_element)
+        f_direct = assemble_vector(f_local, dm)
+
+        assert torch.allclose(f_weak, f_direct, rtol=1e-10, atol=1e-12)
+
+    def test_assemble_with_quad_order_parameter(self):
+        """Test that quad_order parameter is respected."""
+        from torchscience.finite_element_method import (
+            WeakForm,
+            assemble_weak_form,
+            dof_map,
+        )
+        from torchscience.geometry.mesh import rectangle_mesh
+
+        mesh = rectangle_mesh(2, 2, bounds=[[0.0, 1.0], [0.0, 1.0]])
+        dm = dof_map(mesh, order=1)
+
+        def bilinear(u, v, x):
+            return (u.grad * v.grad).sum(dim=-1)
+
+        def linear(v, x):
+            return v.value
+
+        weak_form = WeakForm(
+            bilinear_form=bilinear,
+            linear_form=linear,
+        )
+
+        # Different quadrature orders should work
+        K1, f1 = assemble_weak_form(mesh, dm, weak_form, quad_order=2)
+        K2, f2 = assemble_weak_form(mesh, dm, weak_form, quad_order=4)
+
+        # For linear elements with linear source, results should be close
+        assert K1.to_dense().shape == K2.to_dense().shape
+        assert f1.shape == f2.shape
+
+    def test_assemble_with_higher_order_elements(self):
+        """Test weak form assembly with P2 elements."""
+        from torchscience.finite_element_method import (
+            WeakForm,
+            assemble_matrix,
+            assemble_weak_form,
+            dof_map,
+            local_stiffness_matrices,
+        )
+        from torchscience.geometry.mesh import rectangle_mesh
+
+        mesh = rectangle_mesh(2, 2, bounds=[[0.0, 1.0], [0.0, 1.0]])
+        dm = dof_map(mesh, order=2)  # P2 elements
+
+        def poisson_bilinear(u, v, x):
+            return (u.grad * v.grad).sum(dim=-1)
+
+        def poisson_linear(v, x):
+            return torch.zeros_like(v.value)
+
+        weak_form = WeakForm(
+            bilinear_form=poisson_bilinear,
+            linear_form=poisson_linear,
+        )
+
+        # Assemble using weak form
+        K_weak, _ = assemble_weak_form(mesh, dm, weak_form)
+
+        # Assemble using direct method
+        K_local = local_stiffness_matrices(mesh, dm)
+        K_direct = assemble_matrix(K_local, dm)
+
+        K_weak_dense = K_weak.to_dense()
+        K_direct_dense = K_direct.to_dense()
+
+        assert torch.allclose(
+            K_weak_dense, K_direct_dense, rtol=1e-10, atol=1e-12
+        )
+
+
+class TestBasisValues:
+    """Tests for BasisValues helper class."""
+
+    def test_basis_values_creation(self):
+        """Test creating BasisValues with value and grad."""
+        from torchscience.finite_element_method import BasisValues
+
+        value = torch.tensor([[0.5, 0.3, 0.2], [0.3, 0.4, 0.3]])
+        grad = torch.randn(2, 3, 2)
+
+        bv = BasisValues(value=value, grad=grad)
+
+        assert torch.equal(bv.value, value)
+        assert torch.equal(bv.grad, grad)
+
+    def test_basis_values_attributes(self):
+        """Test that BasisValues has expected attributes."""
+        from torchscience.finite_element_method import BasisValues
+
+        value = torch.ones(4, 3)
+        grad = torch.ones(4, 3, 2)
+
+        bv = BasisValues(value=value, grad=grad)
+
+        assert hasattr(bv, "value")
+        assert hasattr(bv, "grad")
+        assert bv.value.shape == (4, 3)
+        assert bv.grad.shape == (4, 3, 2)
