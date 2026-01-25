@@ -1741,6 +1741,17 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("ray_sphere(Tensor origins, Tensor directions, Tensor centers, Tensor radii) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
   module.def("ray_sphere_backward(Tensor grad_t, Tensor grad_hit_point, Tensor grad_normal, Tensor grad_uv, Tensor origins, Tensor directions, Tensor centers, Tensor radii, Tensor t, Tensor hit) -> (Tensor, Tensor, Tensor, Tensor)");
 
+  // geometry.intersection - ray_triangle (Möller-Trumbore algorithm)
+  //   Inputs: ray origins (*, 3), ray directions (*, 3), triangle vertices v0/v1/v2 (*, 3)
+  //   Outputs:
+  //   t: intersection parameter along ray
+  //   hit_point: world-space intersection point
+  //   normal: surface normal (cross product of edges, normalized)
+  //   uv: barycentric coordinates (u, v) where hit = (1-u-v)*v0 + u*v1 + v*v2
+  //   hit: boolean mask indicating valid intersections
+  module.def("ray_triangle(Tensor origins, Tensor directions, Tensor v0, Tensor v1, Tensor v2) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
+  module.def("ray_triangle_backward(Tensor grad_t, Tensor grad_hit_point, Tensor grad_normal, Tensor grad_uv, Tensor origins, Tensor directions, Tensor v0, Tensor v1, Tensor v2, Tensor t, Tensor hit) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
+
   // geometry.transform
   module.def("reflect(Tensor direction, Tensor normal) -> Tensor");
   module.def("reflect_backward(Tensor grad_output, Tensor direction, Tensor normal) -> (Tensor, Tensor)");
