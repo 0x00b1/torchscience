@@ -659,3 +659,214 @@ class TestBasisValues:
         assert hasattr(bv, "grad")
         assert bv.value.shape == (4, 3)
         assert bv.grad.shape == (4, 3, 2)
+
+
+class TestPoissonForm:
+    """Tests for poisson_form helper function."""
+
+    def test_poisson_form_default_diffusivity(self):
+        """Test poisson_form with default diffusivity=1.0."""
+        from torchscience.finite_element_method import poisson_form
+
+        wf = poisson_form()
+        assert callable(wf.bilinear_form)
+        assert callable(wf.linear_form)
+        assert wf.boundary_form is None
+
+    def test_poisson_form_custom_diffusivity(self):
+        """Test poisson_form with custom diffusivity."""
+        from torchscience.finite_element_method import poisson_form
+
+        kappa = 2.5
+        wf = poisson_form(diffusivity=kappa)
+        assert callable(wf.bilinear_form)
+
+    def test_poisson_form_tensor_diffusivity(self):
+        """Test poisson_form with tensor diffusivity."""
+        from torchscience.finite_element_method import poisson_form
+
+        kappa = torch.tensor(3.0)
+        wf = poisson_form(diffusivity=kappa)
+        assert callable(wf.bilinear_form)
+
+    def test_poisson_form_matches_local_stiffness(self):
+        """Verify poisson_form produces same matrix as local_stiffness_matrices."""
+        from torchscience.finite_element_method import (
+            assemble_matrix,
+            assemble_weak_form,
+            dof_map,
+            local_stiffness_matrices,
+            poisson_form,
+        )
+        from torchscience.geometry.mesh import rectangle_mesh
+
+        mesh = rectangle_mesh(3, 3, bounds=[[0.0, 1.0], [0.0, 1.0]])
+        dm = dof_map(mesh, order=1)
+
+        # Using poisson_form helper
+        wf = poisson_form(diffusivity=1.0)
+        K_weak, _ = assemble_weak_form(mesh, dm, wf)
+
+        # Using direct method
+        K_local = local_stiffness_matrices(mesh, dm, material=1.0)
+        K_direct = assemble_matrix(K_local, dm)
+
+        K_weak_dense = K_weak.to_dense()
+        K_direct_dense = K_direct.to_dense()
+
+        assert torch.allclose(
+            K_weak_dense, K_direct_dense, rtol=1e-10, atol=1e-12
+        )
+
+    def test_poisson_form_with_custom_diffusivity_matches(self):
+        """Verify poisson_form with custom diffusivity matches local_stiffness_matrices."""
+        from torchscience.finite_element_method import (
+            assemble_matrix,
+            assemble_weak_form,
+            dof_map,
+            local_stiffness_matrices,
+            poisson_form,
+        )
+        from torchscience.geometry.mesh import rectangle_mesh
+
+        mesh = rectangle_mesh(3, 3, bounds=[[0.0, 1.0], [0.0, 1.0]])
+        dm = dof_map(mesh, order=1)
+        kappa = 2.5
+
+        # Using poisson_form helper
+        wf = poisson_form(diffusivity=kappa)
+        K_weak, _ = assemble_weak_form(mesh, dm, wf)
+
+        # Using direct method
+        K_local = local_stiffness_matrices(mesh, dm, material=kappa)
+        K_direct = assemble_matrix(K_local, dm)
+
+        K_weak_dense = K_weak.to_dense()
+        K_direct_dense = K_direct.to_dense()
+
+        assert torch.allclose(
+            K_weak_dense, K_direct_dense, rtol=1e-10, atol=1e-12
+        )
+
+    def test_poisson_form_linear_form_returns_zeros(self):
+        """Verify poisson_form linear_form returns zeros."""
+        from torchscience.finite_element_method import (
+            BasisValues,
+            poisson_form,
+        )
+
+        wf = poisson_form()
+
+        # Create mock basis values
+        v = BasisValues(
+            value=torch.ones(4, 3),
+            grad=torch.randn(4, 3, 2),
+        )
+        x = torch.randn(4, 3, 2)
+
+        result = wf.linear_form(v, x)
+        assert torch.allclose(result, torch.zeros_like(v.value))
+
+
+class TestMassForm:
+    """Tests for mass_form helper function."""
+
+    def test_mass_form_default_density(self):
+        """Test mass_form with default density=1.0."""
+        from torchscience.finite_element_method import mass_form
+
+        wf = mass_form()
+        assert callable(wf.bilinear_form)
+        assert callable(wf.linear_form)
+        assert wf.boundary_form is None
+
+    def test_mass_form_custom_density(self):
+        """Test mass_form with custom density."""
+        from torchscience.finite_element_method import mass_form
+
+        rho = 7.85  # steel density
+        wf = mass_form(density=rho)
+        assert callable(wf.bilinear_form)
+
+    def test_mass_form_tensor_density(self):
+        """Test mass_form with tensor density."""
+        from torchscience.finite_element_method import mass_form
+
+        rho = torch.tensor(2.7)  # aluminum density
+        wf = mass_form(density=rho)
+        assert callable(wf.bilinear_form)
+
+    def test_mass_form_matches_local_mass(self):
+        """Verify mass_form produces same matrix as local_mass_matrices."""
+        from torchscience.finite_element_method import (
+            assemble_matrix,
+            assemble_weak_form,
+            dof_map,
+            local_mass_matrices,
+            mass_form,
+        )
+        from torchscience.geometry.mesh import rectangle_mesh
+
+        mesh = rectangle_mesh(3, 3, bounds=[[0.0, 1.0], [0.0, 1.0]])
+        dm = dof_map(mesh, order=1)
+
+        # Using mass_form helper
+        wf = mass_form(density=1.0)
+        M_weak, _ = assemble_weak_form(mesh, dm, wf)
+
+        # Using direct method
+        M_local = local_mass_matrices(mesh, dm, density=1.0)
+        M_direct = assemble_matrix(M_local, dm)
+
+        M_weak_dense = M_weak.to_dense()
+        M_direct_dense = M_direct.to_dense()
+
+        assert torch.allclose(
+            M_weak_dense, M_direct_dense, rtol=1e-10, atol=1e-12
+        )
+
+    def test_mass_form_with_custom_density_matches(self):
+        """Verify mass_form with custom density matches local_mass_matrices."""
+        from torchscience.finite_element_method import (
+            assemble_matrix,
+            assemble_weak_form,
+            dof_map,
+            local_mass_matrices,
+            mass_form,
+        )
+        from torchscience.geometry.mesh import rectangle_mesh
+
+        mesh = rectangle_mesh(3, 3, bounds=[[0.0, 1.0], [0.0, 1.0]])
+        dm = dof_map(mesh, order=1)
+        rho = 7.85
+
+        # Using mass_form helper
+        wf = mass_form(density=rho)
+        M_weak, _ = assemble_weak_form(mesh, dm, wf)
+
+        # Using direct method
+        M_local = local_mass_matrices(mesh, dm, density=rho)
+        M_direct = assemble_matrix(M_local, dm)
+
+        M_weak_dense = M_weak.to_dense()
+        M_direct_dense = M_direct.to_dense()
+
+        assert torch.allclose(
+            M_weak_dense, M_direct_dense, rtol=1e-10, atol=1e-12
+        )
+
+    def test_mass_form_linear_form_returns_zeros(self):
+        """Verify mass_form linear_form returns zeros."""
+        from torchscience.finite_element_method import BasisValues, mass_form
+
+        wf = mass_form()
+
+        # Create mock basis values
+        v = BasisValues(
+            value=torch.ones(4, 3),
+            grad=torch.randn(4, 3, 2),
+        )
+        x = torch.randn(4, 3, 2)
+
+        result = wf.linear_form(v, x)
+        assert torch.allclose(result, torch.zeros_like(v.value))

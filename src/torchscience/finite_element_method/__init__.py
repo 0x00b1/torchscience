@@ -32,6 +32,8 @@ from torchscience.finite_element_method._weak_form import (
     BasisValues,
     WeakForm,
     assemble_weak_form,
+    mass_form,
+    poisson_form,
 )
 
 __all__ = [
@@ -50,6 +52,8 @@ __all__ = [
     "lagrange_basis_gradient",
     "local_mass_matrices",
     "local_stiffness_matrices",
+    "mass_form",
+    "poisson_form",
     "quadrature_points",
     "solve_cg",
     "solve_direct",

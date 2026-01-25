@@ -572,6 +572,117 @@ def _assemble_local_matrices(
     return local_matrices
 
 
+def poisson_form(diffusivity: Tensor | float = 1.0) -> WeakForm:
+    """Create weak form for Poisson/Laplace operator.
+
+    Creates a WeakForm representing the bilinear form for the Poisson equation:
+        -nabla cdot (kappa nabla u) = f
+
+    The resulting bilinear form computes:
+        a(u, v) = kappa * nabla u cdot nabla v
+
+    This corresponds to the stiffness matrix in finite element terminology.
+
+    Parameters
+    ----------
+    diffusivity : Tensor or float, optional
+        The diffusivity coefficient kappa. Can be a scalar or tensor.
+        Default is 1.0.
+
+    Returns
+    -------
+    WeakForm
+        A WeakForm instance with:
+        - bilinear_form: kappa * grad(u) cdot grad(v)
+        - linear_form: returns zeros (source term handled separately)
+        - boundary_form: None
+
+    Examples
+    --------
+    >>> from torchscience.finite_element_method import poisson_form, assemble_weak_form
+    >>> from torchscience.geometry.mesh import rectangle_mesh
+    >>> mesh = rectangle_mesh(3, 3, bounds=[[0.0, 1.0], [0.0, 1.0]])
+    >>> dm = dof_map(mesh, order=1)
+    >>> wf = poisson_form(diffusivity=1.0)
+    >>> K, f = assemble_weak_form(mesh, dm, wf)
+
+    See Also
+    --------
+    mass_form : Create weak form for mass operator.
+    local_stiffness_matrices : Direct computation of stiffness matrices.
+    """
+    kappa = diffusivity
+
+    def bilinear_form(u: BasisValues, v: BasisValues, x: Tensor) -> Tensor:
+        """Compute kappa * grad(u) cdot grad(v)."""
+        return kappa * (u.grad * v.grad).sum(dim=-1)
+
+    def linear_form(v: BasisValues, x: Tensor) -> Tensor:
+        """Return zeros (source term handled separately during assembly)."""
+        return torch.zeros_like(v.value)
+
+    return WeakForm(
+        bilinear_form=bilinear_form,
+        linear_form=linear_form,
+    )
+
+
+def mass_form(density: Tensor | float = 1.0) -> WeakForm:
+    """Create weak form for mass operator.
+
+    Creates a WeakForm representing the bilinear form for the mass matrix:
+        M_ij = integral(rho * N_i * N_j) dV
+
+    The resulting bilinear form computes:
+        a(u, v) = rho * u * v
+
+    This corresponds to the mass matrix in finite element terminology,
+    commonly used in time-dependent problems.
+
+    Parameters
+    ----------
+    density : Tensor or float, optional
+        The density coefficient rho. Can be a scalar or tensor.
+        Default is 1.0.
+
+    Returns
+    -------
+    WeakForm
+        A WeakForm instance with:
+        - bilinear_form: rho * u * v
+        - linear_form: returns zeros
+        - boundary_form: None
+
+    Examples
+    --------
+    >>> from torchscience.finite_element_method import mass_form, assemble_weak_form
+    >>> from torchscience.geometry.mesh import rectangle_mesh
+    >>> mesh = rectangle_mesh(3, 3, bounds=[[0.0, 1.0], [0.0, 1.0]])
+    >>> dm = dof_map(mesh, order=1)
+    >>> wf = mass_form(density=1.0)
+    >>> M, f = assemble_weak_form(mesh, dm, wf)
+
+    See Also
+    --------
+    poisson_form : Create weak form for Poisson/Laplace operator.
+    local_mass_matrices : Direct computation of mass matrices.
+    """
+    rho = density
+
+    def bilinear_form(u: BasisValues, v: BasisValues, x: Tensor) -> Tensor:
+        """Compute rho * u * v."""
+        return rho * u.value * v.value
+
+    def linear_form(v: BasisValues, x: Tensor) -> Tensor:
+        """Return zeros."""
+        return torch.zeros_like(v.value)
+
+    return WeakForm(
+        bilinear_form=bilinear_form,
+        linear_form=linear_form,
+    )
+
+
 def _assemble_local_vectors(
     linear_form: Callable,
     basis_values: Tensor,
