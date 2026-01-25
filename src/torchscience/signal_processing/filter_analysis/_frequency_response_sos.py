@@ -6,7 +6,7 @@ from typing import Optional, Tuple, Union
 import torch
 from torch import Tensor
 
-from torchscience.filter_design._exceptions import SOSNormalizationError
+from torchscience.filter._exceptions import SOSNormalizationError
 
 
 def frequency_response_sos(
@@ -61,7 +61,7 @@ def frequency_response_sos(
     Examples
     --------
     >>> import torch
-    >>> from torchscience.filter_design import butterworth_design
+    >>> from torchscience.filter import butterworth_design
     >>> from torchscience.signal_processing.filter_analysis import frequency_response_sos
     >>> sos = butterworth_design(4, 0.3)
     >>> freqs, response = frequency_response_sos(sos)

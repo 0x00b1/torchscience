@@ -1,117 +1,133 @@
-# src/torchscience/signal_processing/filter/_sosfilt.py
-"""Second-order sections filter implementation."""
+"""Second-order sections (SOS) filter implementation."""
 
-from typing import Optional, Tuple, Union
+from __future__ import annotations
+
+from typing import Optional, Union
 
 import torch
 from torch import Tensor
+
+from ._lfilter import lfilter
 
 
 def sosfilt(
     sos: Tensor,
     x: Tensor,
-    dim: int = -1,
+    axis: int = -1,
     zi: Optional[Tensor] = None,
-) -> Union[Tensor, Tuple[Tensor, Tensor]]:
+) -> Union[Tensor, tuple[Tensor, Tensor]]:
     """
     Filter data along one dimension using cascaded second-order sections.
+
+    Second-order sections (SOS) representation provides better numerical
+    stability than direct transfer function (b, a) representation for
+    high-order filters.
 
     Parameters
     ----------
     sos : Tensor
-        Second-order sections, shape (n_sections, 6).
-        Each row is [b0, b1, b2, a0, a1, a2].
+        Second-order sections, shape ``(n_sections, 6)``. Each row contains
+        ``[b0, b1, b2, a0, a1, a2]`` for one biquad section. Typically
+        ``a0 = 1.0`` for each section.
     x : Tensor
-        Input signal.
-    dim : int
-        Dimension along which to filter. Default is -1 (last).
+        Input signal. Can be batched with arbitrary leading dimensions.
+    axis : int, optional
+        Axis along which to filter. Default is -1 (last axis).
     zi : Tensor, optional
-        Initial conditions, shape (n_sections, 2).
-        If None, zero initial conditions are used.
+        Initial conditions for each section, shape
+        ``(..., n_sections, 2)`` where ``...`` matches the batch dimensions
+        of ``x``. If provided, returns ``(y, zf)`` where ``zf`` is the
+        final filter delays.
 
     Returns
     -------
     y : Tensor
-        Filtered signal, same shape as x.
-    zf : Tensor (only if zi is not None)
-        Final filter states, shape (n_sections, 2).
+        Filtered signal, same shape as ``x``.
+    zf : Tensor, optional
+        Final filter delays for each section (only if ``zi`` was provided).
 
     Notes
     -----
-    Implements Direct Form II Transposed structure for each section.
-    Fully differentiable with respect to both sos and x.
-    """
-    # Move filter dimension to last
-    x = x.movedim(dim, -1)
-    original_shape = x.shape
-    n_samples = x.shape[-1]
+    The filter is implemented by cascading biquad sections:
 
-    # Flatten batch dimensions
-    x_flat = x.reshape(-1, n_samples)
-    batch_size = x_flat.shape[0]
+    .. math::
+        y = H_1(H_2(...H_K(x)...))
+
+    where each section :math:`H_i` is a second-order IIR filter:
+
+    .. math::
+        H_i(z) = \\frac{b_{i,0} + b_{i,1} z^{-1} + b_{i,2} z^{-2}}
+                      {a_{i,0} + a_{i,1} z^{-1} + a_{i,2} z^{-2}}
+
+    The SOS representation avoids numerical issues that arise with
+    high-order polynomial representations.
+
+    Fully differentiable with respect to ``sos`` and ``x``.
+
+    Examples
+    --------
+    >>> import torch
+    >>> from torchscience.filter import sosfilt
+    >>> # A 4th-order Butterworth lowpass filter (2 biquad sections)
+    >>> sos = torch.tensor([
+    ...     [0.067, 0.135, 0.067, 1.0, -1.143, 0.413],
+    ...     [1.0, 2.0, 1.0, 1.0, -1.561, 0.641]
+    ... ], dtype=torch.float64)
+    >>> x = torch.randn(100, dtype=torch.float64)
+    >>> y = sosfilt(sos, x)
+
+    >>> # With initial conditions (for smooth continuation)
+    >>> from torchscience.filter import sosfilt_zi
+    >>> zi = sosfilt_zi(sos) * x[0]
+    >>> y, zf = sosfilt(sos, x, zi=zi)
+    """
+    # Validate SOS shape
+    if sos.ndim != 2 or sos.shape[1] != 6:
+        raise ValueError("sos must be shape (n_sections, 6)")
 
     n_sections = sos.shape[0]
 
-    # Initialize states
-    if zi is None:
-        states = torch.zeros(
-            batch_size, n_sections, 2, dtype=x.dtype, device=x.device
-        )
-        return_states = False
-    else:
-        states = zi.unsqueeze(0).expand(batch_size, -1, -1).clone()
-        return_states = True
+    # Get batch shape from x (excluding axis dimension)
+    x_moved = torch.moveaxis(x, axis, -1)
+    batch_shape = x_moved.shape[:-1]
+    n_samples = x_moved.shape[-1]
 
-    # Process each section
-    y = x_flat
-    for section_idx in range(n_sections):
-        b0 = sos[section_idx, 0]
-        b1 = sos[section_idx, 1]
-        b2 = sos[section_idx, 2]
-        a0 = sos[section_idx, 3]
-        a1 = sos[section_idx, 4]
-        a2 = sos[section_idx, 5]
+    # Initialize output and final state storage
+    y = x.clone()
 
-        # Normalize by a0
-        b0 = b0 / a0
-        b1 = b1 / a0
-        b2 = b2 / a0
-        a1 = a1 / a0
-        a2 = a2 / a0
+    if zi is not None:
+        # zi should have shape (..., n_sections, 2)
+        zi_moved = torch.moveaxis(zi, axis if axis != -1 else -1, -1)
+        # After moveaxis, zi_moved should have zi dimensions at end
+        # We expect zi shape to be (batch..., n_sections, 2)
+        expected_zi_shape = batch_shape + (n_sections, 2)
 
-        # Get states for this section
-        s1 = states[:, section_idx, 0]
-        s2 = states[:, section_idx, 1]
+        # For batched input, zi could have shape (batch..., n_sections, 2)
+        # or for unbatched zi with batch input, could be (n_sections, 2)
+        if zi.shape == (n_sections, 2) and len(batch_shape) > 0:
+            # Broadcast zi to batch shape
+            zi_expanded = zi.unsqueeze(0).expand(batch_shape + (n_sections, 2))
+            zi_moved = zi_expanded
+        else:
+            zi_moved = zi
 
-        # Output buffer
-        y_section = torch.zeros_like(y)
+        zf = torch.empty_like(zi_moved)
 
-        # Direct Form II Transposed
-        for i in range(n_samples):
-            x_i = y[:, i]
+    # Cascade through sections
+    for i in range(n_sections):
+        # Extract b and a for this section
+        b = sos[i, :3]
+        a = sos[i, 3:]
 
-            # Output
-            y_i = b0 * x_i + s1
+        if zi is not None:
+            # Extract zi for this section: shape (..., 2)
+            zi_section = zi_moved[..., i, :]
+            y, zf_section = lfilter(b, a, y, axis=axis, zi=zi_section)
+            zf[..., i, :] = zf_section
+        else:
+            y = lfilter(b, a, y, axis=axis)
 
-            # Update states
-            s1_new = b1 * x_i - a1 * y_i + s2
-            s2_new = b2 * x_i - a2 * y_i
+    if zi is not None:
+        return y, zf
 
-            s1 = s1_new
-            s2 = s2_new
-
-            y_section[:, i] = y_i
-
-        # Store final states
-        states[:, section_idx, 0] = s1
-        states[:, section_idx, 1] = s2
-
-        y = y_section
-
-    # Reshape back
-    y = y.reshape(original_shape)
-    y = y.movedim(-1, dim)
-
-    if return_states:
-        return y, states[0]  # Return states for first batch element
     return y

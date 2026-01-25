@@ -62,7 +62,7 @@ def frequency_response_zpk(
     Examples
     --------
     >>> import torch
-    >>> from torchscience.filter_design import butterworth_design
+    >>> from torchscience.filter import butterworth_design
     >>> from torchscience.signal_processing.filter_analysis import frequency_response_zpk
     >>> zeros, poles, gain = butterworth_design(4, 0.3, output="zpk")
     >>> freqs, response = frequency_response_zpk(zeros, poles, gain)

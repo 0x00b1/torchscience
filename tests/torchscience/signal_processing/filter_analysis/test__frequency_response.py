@@ -5,7 +5,7 @@ import pytest
 import torch
 from scipy import signal as scipy_signal
 
-from torchscience.filter_design import (
+from torchscience.filter import (
     SOSNormalizationError,
     bilinear_transform_zpk,
     butterworth_design,

@@ -32,7 +32,7 @@ class TestGroupDelay:
     def test_fir_longer_filter(self):
         """Test group delay for longer FIR filter."""
         # Create a symmetric FIR filter
-        from torchscience.filter_design import firwin
+        from torchscience.filter import firwin
 
         b = firwin(51, 0.3)
         w, gd = group_delay(b)
@@ -67,7 +67,7 @@ class TestGroupDelay:
 
     def test_butterworth_filter(self):
         """Test group delay of Butterworth filter."""
-        from torchscience.filter_design import (
+        from torchscience.filter import (
             butterworth_design,
             zpk_to_ba,
         )
@@ -151,7 +151,7 @@ class TestGroupDelaySOS:
 
     def test_compare_scipy(self):
         """Compare SOS group delay with scipy."""
-        from torchscience.filter_design import (
+        from torchscience.filter import (
             butterworth_design,
             zpk_to_sos,
         )
@@ -271,7 +271,7 @@ class TestImpulseResponseSOS:
 
     def test_compare_scipy(self):
         """Compare SOS impulse response with scipy."""
-        from torchscience.filter_design import (
+        from torchscience.filter import (
             butterworth_design,
             zpk_to_sos,
         )
@@ -331,7 +331,7 @@ class TestStepResponse:
     def test_lowpass_steady_state(self):
         """Test that lowpass filter step response approaches DC gain."""
         # Design a lowpass filter
-        from torchscience.filter_design import (
+        from torchscience.filter import (
             butterworth_design,
             zpk_to_ba,
         )
