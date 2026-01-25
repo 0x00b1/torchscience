@@ -1728,6 +1728,16 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("ray_plane(Tensor origins, Tensor directions, Tensor plane_normals, Tensor plane_offsets) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
   module.def("ray_plane_backward(Tensor grad_t, Tensor grad_hit_point, Tensor grad_normal, Tensor grad_uv, Tensor origins, Tensor directions, Tensor plane_normals, Tensor plane_offsets, Tensor t, Tensor hit) -> (Tensor, Tensor, Tensor, Tensor)");
 
+  // geometry.ray_sphere - Ray-sphere intersection
+  // Returns: (t, hit_point, normal, uv, hit) where:
+  //   t: distance along ray to intersection
+  //   hit_point: 3D intersection point
+  //   normal: surface normal at intersection (outward-facing, flipped to face ray)
+  //   uv: spherical coordinates (theta, phi) normalized to [0,1]
+  //   hit: boolean mask indicating valid intersections
+  module.def("ray_sphere(Tensor origins, Tensor directions, Tensor centers, Tensor radii) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
+  module.def("ray_sphere_backward(Tensor grad_t, Tensor grad_hit_point, Tensor grad_normal, Tensor grad_uv, Tensor origins, Tensor directions, Tensor centers, Tensor radii, Tensor t, Tensor hit) -> (Tensor, Tensor, Tensor, Tensor)");
+
   // geometry.transform
   module.def("reflect(Tensor direction, Tensor normal) -> Tensor");
   module.def("reflect_backward(Tensor grad_output, Tensor direction, Tensor normal) -> (Tensor, Tensor)");
