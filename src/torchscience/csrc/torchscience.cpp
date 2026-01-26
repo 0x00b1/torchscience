@@ -1264,6 +1264,7 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("sphere(Tensor x) -> Tensor");
   module.def("booth(Tensor x1, Tensor x2) -> Tensor");
   module.def("beale(Tensor x1, Tensor x2) -> Tensor");
+  module.def("himmelblau(Tensor x1, Tensor x2) -> Tensor");
 
   // optimization.combinatorial
   module.def("sinkhorn(Tensor C, Tensor a, Tensor b, float epsilon, int maxiter, float tol) -> Tensor");

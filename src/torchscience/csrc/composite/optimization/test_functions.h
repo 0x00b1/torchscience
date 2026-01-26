@@ -93,6 +93,23 @@ inline at::Tensor beale(
     return term1 + term2 + term3;
 }
 
+inline at::Tensor himmelblau(
+    const at::Tensor& x1,
+    const at::Tensor& x2
+) {
+    TORCH_CHECK(
+        at::isFloatingType(x1.scalar_type()) || at::isComplexType(x1.scalar_type()),
+        "himmelblau requires floating-point or complex input for x1, got ",
+        x1.scalar_type()
+    );
+    TORCH_CHECK(
+        at::isFloatingType(x2.scalar_type()) || at::isComplexType(x2.scalar_type()),
+        "himmelblau requires floating-point or complex input for x2, got ",
+        x2.scalar_type()
+    );
+    return at::pow(at::pow(x1, 2) + x2 - 11, 2) + at::pow(x1 + at::pow(x2, 2) - 7, 2);
+}
+
 }  // namespace torchscience::composite::test_functions
 
 TORCH_LIBRARY_IMPL(torchscience, CompositeImplicitAutograd, module) {
@@ -111,5 +128,9 @@ TORCH_LIBRARY_IMPL(torchscience, CompositeImplicitAutograd, module) {
     module.impl(
         "beale",
         &torchscience::composite::test_functions::beale
+    );
+    module.impl(
+        "himmelblau",
+        &torchscience::composite::test_functions::himmelblau
     );
 }
