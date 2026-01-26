@@ -40,11 +40,31 @@ inline at::Tensor rosenbrock(
     return at::sum(term1 + term2, -1);
 }
 
+inline at::Tensor sphere(
+    const at::Tensor& x
+) {
+    TORCH_CHECK(
+        at::isFloatingType(x.scalar_type()) || at::isComplexType(x.scalar_type()),
+        "sphere requires floating-point or complex input, got ",
+        x.scalar_type()
+    );
+    TORCH_CHECK(
+        x.dim() >= 1,
+        "sphere requires at least 1 dimension, got ",
+        x.dim()
+    );
+    return at::sum(at::pow(x, 2), -1);
+}
+
 }  // namespace torchscience::composite::test_functions
 
 TORCH_LIBRARY_IMPL(torchscience, CompositeImplicitAutograd, module) {
     module.impl(
         "rosenbrock",
         &torchscience::composite::test_functions::rosenbrock
+    );
+    module.impl(
+        "sphere",
+        &torchscience::composite::test_functions::sphere
     );
 }
