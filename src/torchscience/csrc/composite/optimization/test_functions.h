@@ -73,6 +73,26 @@ inline at::Tensor booth(
     return at::pow(x1 + 2 * x2 - 7, 2) + at::pow(2 * x1 + x2 - 5, 2);
 }
 
+inline at::Tensor beale(
+    const at::Tensor& x1,
+    const at::Tensor& x2
+) {
+    TORCH_CHECK(
+        at::isFloatingType(x1.scalar_type()) || at::isComplexType(x1.scalar_type()),
+        "beale requires floating-point or complex input for x1, got ",
+        x1.scalar_type()
+    );
+    TORCH_CHECK(
+        at::isFloatingType(x2.scalar_type()) || at::isComplexType(x2.scalar_type()),
+        "beale requires floating-point or complex input for x2, got ",
+        x2.scalar_type()
+    );
+    at::Tensor term1 = at::pow(1.5 - x1 + x1 * x2, 2);
+    at::Tensor term2 = at::pow(2.25 - x1 + x1 * at::pow(x2, 2), 2);
+    at::Tensor term3 = at::pow(2.625 - x1 + x1 * at::pow(x2, 3), 2);
+    return term1 + term2 + term3;
+}
+
 }  // namespace torchscience::composite::test_functions
 
 TORCH_LIBRARY_IMPL(torchscience, CompositeImplicitAutograd, module) {
@@ -87,5 +107,9 @@ TORCH_LIBRARY_IMPL(torchscience, CompositeImplicitAutograd, module) {
     module.impl(
         "booth",
         &torchscience::composite::test_functions::booth
+    );
+    module.impl(
+        "beale",
+        &torchscience::composite::test_functions::beale
     );
 }
