@@ -127,6 +127,27 @@ inline at::Tensor rastrigin(
     return 10.0 * n + at::sum(at::pow(x, 2) - 10.0 * at::cos(2.0 * M_PI * x), -1);
 }
 
+inline at::Tensor ackley(
+    const at::Tensor& x
+) {
+    TORCH_CHECK(
+        at::isFloatingType(x.scalar_type()) || at::isComplexType(x.scalar_type()),
+        "ackley requires floating-point or complex input, got ",
+        x.scalar_type()
+    );
+    TORCH_CHECK(
+        x.dim() >= 1,
+        "ackley requires at least 1 dimension, got ",
+        x.dim()
+    );
+    constexpr double a = 20.0;
+    constexpr double b = 0.2;
+    constexpr double c = 2.0 * M_PI;
+    at::Tensor mean_sq = at::mean(at::pow(x, 2), -1);
+    at::Tensor mean_cos = at::mean(at::cos(c * x), -1);
+    return -a * at::exp(-b * at::sqrt(mean_sq)) - at::exp(mean_cos) + a + M_E;
+}
+
 }  // namespace torchscience::composite::test_functions
 
 TORCH_LIBRARY_IMPL(torchscience, CompositeImplicitAutograd, module) {
@@ -153,5 +174,9 @@ TORCH_LIBRARY_IMPL(torchscience, CompositeImplicitAutograd, module) {
     module.impl(
         "rastrigin",
         &torchscience::composite::test_functions::rastrigin
+    );
+    module.impl(
+        "ackley",
+        &torchscience::composite::test_functions::ackley
     );
 }
