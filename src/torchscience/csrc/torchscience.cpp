@@ -1262,6 +1262,7 @@ TORCH_LIBRARY(torchscience, module) {
   module.def("rosenbrock_backward(Tensor grad_output, Tensor x, Tensor a, Tensor b) -> (Tensor, Tensor, Tensor)");
   module.def("rosenbrock_backward_backward(Tensor gg_x, Tensor gg_a, Tensor gg_b, Tensor grad_output, Tensor x, Tensor a, Tensor b) -> (Tensor, Tensor, Tensor, Tensor)");
   module.def("sphere(Tensor x) -> Tensor");
+  module.def("booth(Tensor x1, Tensor x2) -> Tensor");
 
   // optimization.combinatorial
   module.def("sinkhorn(Tensor C, Tensor a, Tensor b, float epsilon, int maxiter, float tol) -> Tensor");

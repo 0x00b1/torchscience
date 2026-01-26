@@ -56,6 +56,23 @@ inline at::Tensor sphere(
     return at::sum(at::pow(x, 2), -1);
 }
 
+inline at::Tensor booth(
+    const at::Tensor& x1,
+    const at::Tensor& x2
+) {
+    TORCH_CHECK(
+        at::isFloatingType(x1.scalar_type()) || at::isComplexType(x1.scalar_type()),
+        "booth requires floating-point or complex input for x1, got ",
+        x1.scalar_type()
+    );
+    TORCH_CHECK(
+        at::isFloatingType(x2.scalar_type()) || at::isComplexType(x2.scalar_type()),
+        "booth requires floating-point or complex input for x2, got ",
+        x2.scalar_type()
+    );
+    return at::pow(x1 + 2 * x2 - 7, 2) + at::pow(2 * x1 + x2 - 5, 2);
+}
+
 }  // namespace torchscience::composite::test_functions
 
 TORCH_LIBRARY_IMPL(torchscience, CompositeImplicitAutograd, module) {
@@ -66,5 +83,9 @@ TORCH_LIBRARY_IMPL(torchscience, CompositeImplicitAutograd, module) {
     module.impl(
         "sphere",
         &torchscience::composite::test_functions::sphere
+    );
+    module.impl(
+        "booth",
+        &torchscience::composite::test_functions::booth
     );
 }
