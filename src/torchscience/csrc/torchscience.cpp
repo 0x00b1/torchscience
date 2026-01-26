@@ -737,6 +737,12 @@
 #include "meta/geometry/intersection/ray_sphere.h"
 #include "meta/geometry/intersection/ray_triangle.h"
 #include "meta/geometry/intersection/ray_aabb.h"
+#ifdef TORCHSCIENCE_OPTIX
+#include "optix/space_partitioning/bvh.h"
+#include "optix/geometry/ray_intersect.h"
+#include "optix/geometry/ray_occluded.h"
+#include "optix/geometry/closest_point.h"
+#endif
 #include "autograd/space_partitioning/k_nearest_neighbors.h"
 #include "autograd/space_partitioning/range_search.h"
 #include "autograd/space_partitioning/octree.h"
