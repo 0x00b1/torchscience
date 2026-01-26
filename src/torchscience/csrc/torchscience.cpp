@@ -198,6 +198,10 @@
 #include "cpu/geometry/transform/matrix_to_quaternion.h"
 #include "cpu/geometry/transform/quaternion_slerp.h"
 #include "cpu/geometry/convex_hull.h"
+#include "cpu/geometry/intersection/ray_plane.h"
+#include "cpu/geometry/intersection/ray_sphere.h"
+#include "cpu/geometry/intersection/ray_triangle.h"
+#include "cpu/geometry/intersection/ray_aabb.h"
 #include "cpu/encryption/chacha20.h"
 #include "cpu/encryption/sha256.h"
 #include "cpu/encryption/sha3.h"
@@ -590,6 +594,10 @@
 #include "autograd/geometry/transform/quaternion_to_matrix.h"
 #include "autograd/geometry/transform/matrix_to_quaternion.h"
 #include "autograd/geometry/transform/quaternion_slerp.h"
+#include "autograd/geometry/intersection/ray_plane.h"
+#include "autograd/geometry/intersection/ray_sphere.h"
+#include "autograd/geometry/intersection/ray_triangle.h"
+#include "autograd/geometry/intersection/ray_aabb.h"
 
 #include "meta/distance/minkowski_distance.h"
 #include "meta/distance/hellinger_distance.h"
@@ -711,6 +719,7 @@
 #include "meta/space_partitioning/kd_tree.h"
 #include "meta/space_partitioning/k_nearest_neighbors.h"
 #include "meta/space_partitioning/range_search.h"
+#include "meta/space_partitioning/bvh.h"
 #include "meta/geometry/transform/reflect.h"
 #include "meta/geometry/transform/refract.h"
 #include "meta/geometry/transform/quaternion_multiply.h"
@@ -721,6 +730,19 @@
 #include "meta/geometry/transform/matrix_to_quaternion.h"
 #include "meta/geometry/transform/quaternion_slerp.h"
 #include "meta/geometry/convex_hull.h"
+#include "meta/geometry/ray_intersect.h"
+#include "meta/geometry/closest_point.h"
+#include "meta/geometry/ray_occluded.h"
+#include "meta/geometry/intersection/ray_plane.h"
+#include "meta/geometry/intersection/ray_sphere.h"
+#include "meta/geometry/intersection/ray_triangle.h"
+#include "meta/geometry/intersection/ray_aabb.h"
+#ifdef TORCHSCIENCE_OPTIX
+#include "optix/space_partitioning/bvh.h"
+#include "optix/geometry/ray_intersect.h"
+#include "optix/geometry/ray_occluded.h"
+#include "optix/geometry/closest_point.h"
+#endif
 #include "autograd/space_partitioning/k_nearest_neighbors.h"
 #include "autograd/space_partitioning/range_search.h"
 #include "autograd/space_partitioning/octree.h"
@@ -1714,6 +1736,48 @@ TORCH_LIBRARY(torchscience, module) {
 
   // geometry.ray_occluded
   module.def("bvh_ray_occluded(int scene_handle, Tensor origins, Tensor directions) -> Tensor");
+
+  // geometry.ray_plane - Ray-plane intersection
+  // Returns: (t, hit_point, normal, uv, hit) where:
+  //   t: distance along ray to intersection
+  //   hit_point: 3D intersection point
+  //   normal: surface normal at intersection (same as plane normal)
+  //   uv: 2D coordinates on plane surface
+  //   hit: boolean mask indicating valid intersections
+  module.def("ray_plane(Tensor origins, Tensor directions, Tensor plane_normals, Tensor plane_offsets) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
+  module.def("ray_plane_backward(Tensor grad_t, Tensor grad_hit_point, Tensor grad_normal, Tensor grad_uv, Tensor origins, Tensor directions, Tensor plane_normals, Tensor plane_offsets, Tensor t, Tensor hit) -> (Tensor, Tensor, Tensor, Tensor)");
+
+  // geometry.ray_sphere - Ray-sphere intersection
+  // Returns: (t, hit_point, normal, uv, hit) where:
+  //   t: distance along ray to intersection
+  //   hit_point: 3D intersection point
+  //   normal: surface normal at intersection (outward-facing, flipped to face ray)
+  //   uv: spherical coordinates (theta, phi) normalized to [0,1]
+  //   hit: boolean mask indicating valid intersections
+  module.def("ray_sphere(Tensor origins, Tensor directions, Tensor centers, Tensor radii) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
+  module.def("ray_sphere_backward(Tensor grad_t, Tensor grad_hit_point, Tensor grad_normal, Tensor grad_uv, Tensor origins, Tensor directions, Tensor centers, Tensor radii, Tensor t, Tensor hit) -> (Tensor, Tensor, Tensor, Tensor)");
+
+  // geometry.intersection - ray_triangle (Möller-Trumbore algorithm)
+  //   Inputs: ray origins (*, 3), ray directions (*, 3), triangle vertices v0/v1/v2 (*, 3)
+  //   Outputs:
+  //   t: intersection parameter along ray
+  //   hit_point: world-space intersection point
+  //   normal: surface normal (cross product of edges, normalized)
+  //   uv: barycentric coordinates (u, v) where hit = (1-u-v)*v0 + u*v1 + v*v2
+  //   hit: boolean mask indicating valid intersections
+  module.def("ray_triangle(Tensor origins, Tensor directions, Tensor v0, Tensor v1, Tensor v2) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
+  module.def("ray_triangle_backward(Tensor grad_t, Tensor grad_hit_point, Tensor grad_normal, Tensor grad_uv, Tensor origins, Tensor directions, Tensor v0, Tensor v1, Tensor v2, Tensor t, Tensor hit) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
+
+  // geometry.intersection - ray_aabb (slab method)
+  //   Inputs: ray origins (*, 3), ray directions (*, 3), AABB min corner (*, 3), AABB max corner (*, 3)
+  //   Outputs:
+  //   t: intersection parameter (entry point of the box)
+  //   hit_point: world-space entry point
+  //   normal: face normal at entry point (axis-aligned, unit length)
+  //   uv: parametric coordinates on the hit face
+  //   hit: boolean mask indicating valid intersections
+  module.def("ray_aabb(Tensor origins, Tensor directions, Tensor box_min, Tensor box_max) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
+  module.def("ray_aabb_backward(Tensor grad_t, Tensor grad_hit_point, Tensor grad_normal, Tensor grad_uv, Tensor origins, Tensor directions, Tensor box_min, Tensor box_max, Tensor t, Tensor hit) -> (Tensor, Tensor, Tensor, Tensor)");
 
   // geometry.transform
   module.def("reflect(Tensor direction, Tensor normal) -> Tensor");

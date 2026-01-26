@@ -1,6 +1,6 @@
 """Geometric operations and queries."""
 
-from torchscience.geometry import space_partitioning
+from torchscience.geometry import intersection, space_partitioning
 
 from ._closest_point import ClosestPoint, closest_point
 from ._convex_hull import ConvexHull, convex_hull
@@ -34,6 +34,7 @@ __all__ = [
     "closest_point",
     "convex_hull",
     "delaunay_triangulation",
+    "intersection",
     "mesh_quality",
     "ray_intersect",
     "ray_occluded",

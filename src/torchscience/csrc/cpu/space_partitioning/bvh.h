@@ -8,6 +8,8 @@
 #include <embree4/rtcore.h>
 #endif
 
+#include "../../optix/destroy_callback.h"
+
 namespace torchscience::cpu::space_partitioning {
 
 #ifdef TORCHSCIENCE_EMBREE
@@ -74,6 +76,15 @@ inline at::Tensor bvh_build(
 
 inline void bvh_destroy(int64_t scene_handle) {
     if (scene_handle == 0) return;
+
+    // Negative handles belong to OptiX backend
+    if (scene_handle < 0) {
+        if (torchscience::optix::g_scene_destroy) {
+            torchscience::optix::g_scene_destroy(scene_handle);
+        }
+        return;
+    }
+
     RTCScene scene = reinterpret_cast<RTCScene>(scene_handle);
     // Don't release device - it's shared/static
     rtcReleaseScene(scene);
@@ -90,7 +101,17 @@ inline at::Tensor bvh_build(
 }
 
 inline void bvh_destroy(int64_t scene_handle) {
-    // No-op when Embree is not available
+    if (scene_handle == 0) return;
+
+    // Negative handles belong to OptiX backend
+    if (scene_handle < 0) {
+        if (torchscience::optix::g_scene_destroy) {
+            torchscience::optix::g_scene_destroy(scene_handle);
+        }
+        return;
+    }
+
+    // No Embree available for positive handles
     (void)scene_handle;
 }
 

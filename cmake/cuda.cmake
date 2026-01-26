@@ -16,6 +16,10 @@ set(TORCHSCIENCE_CUDA_SOURCES
   src/torchscience/csrc/cuda/statistics/descriptive/kurtosis.cu
   src/torchscience/csrc/cuda/integral_transform/hilbert_transform.cu
   src/torchscience/csrc/cuda/integral_transform/inverse_hilbert_transform.cu
+  src/torchscience/csrc/cuda/geometry/intersection/ray_plane.cu
+  src/torchscience/csrc/cuda/geometry/intersection/ray_sphere.cu
+  src/torchscience/csrc/cuda/geometry/intersection/ray_triangle.cu
+  src/torchscience/csrc/cuda/geometry/intersection/ray_aabb.cu
 )
 
 # Add CUDA sources to target

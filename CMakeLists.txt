@@ -52,6 +52,7 @@ include(cmake/embree.cmake)
 
 if(TORCHSCIENCE_ENABLE_CUDA)
   include(cmake/cuda.cmake)
+  include(cmake/optix.cmake)
 endif()
 
 if(TORCHSCIENCE_ENABLE_MPS)
