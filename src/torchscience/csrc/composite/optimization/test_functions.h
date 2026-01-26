@@ -110,6 +110,23 @@ inline at::Tensor himmelblau(
     return at::pow(at::pow(x1, 2) + x2 - 11, 2) + at::pow(x1 + at::pow(x2, 2) - 7, 2);
 }
 
+inline at::Tensor rastrigin(
+    const at::Tensor& x
+) {
+    TORCH_CHECK(
+        at::isFloatingType(x.scalar_type()) || at::isComplexType(x.scalar_type()),
+        "rastrigin requires floating-point or complex input, got ",
+        x.scalar_type()
+    );
+    TORCH_CHECK(
+        x.dim() >= 1,
+        "rastrigin requires at least 1 dimension, got ",
+        x.dim()
+    );
+    auto n = static_cast<double>(x.size(-1));
+    return 10.0 * n + at::sum(at::pow(x, 2) - 10.0 * at::cos(2.0 * M_PI * x), -1);
+}
+
 }  // namespace torchscience::composite::test_functions
 
 TORCH_LIBRARY_IMPL(torchscience, CompositeImplicitAutograd, module) {
@@ -132,5 +149,9 @@ TORCH_LIBRARY_IMPL(torchscience, CompositeImplicitAutograd, module) {
     module.impl(
         "himmelblau",
         &torchscience::composite::test_functions::himmelblau
+    );
+    module.impl(
+        "rastrigin",
+        &torchscience::composite::test_functions::rastrigin
     );
 }
