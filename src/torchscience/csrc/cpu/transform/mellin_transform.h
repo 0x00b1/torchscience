@@ -57,23 +57,15 @@ inline at::Tensor mellin_transform(
     at::Tensor t_c = t.contiguous();
 
     // Compute weights for integration (dt for trapezoidal rule)
+    // Use tensor operations for dtype-agnostic computation
     at::Tensor dt = at::zeros({n}, t_c.options());
-    auto dt_accessor = dt.accessor<double, 1>();
-    auto t_accessor = t_c.accessor<double, 1>();
+    at::Tensor t_diff = t_c.slice(0, 1, n) - t_c.slice(0, 0, n - 1);
 
-    if (integration_method == 0) {  // trapezoidal
-        dt_accessor[0] = (t_accessor[1] - t_accessor[0]) / 2.0;
-        for (int64_t i = 1; i < n - 1; i++) {
-            dt_accessor[i] = (t_accessor[i + 1] - t_accessor[i - 1]) / 2.0;
-        }
-        dt_accessor[n - 1] = (t_accessor[n - 1] - t_accessor[n - 2]) / 2.0;
-    } else {  // simpson or default to trapezoidal
-        dt_accessor[0] = (t_accessor[1] - t_accessor[0]) / 2.0;
-        for (int64_t i = 1; i < n - 1; i++) {
-            dt_accessor[i] = (t_accessor[i + 1] - t_accessor[i - 1]) / 2.0;
-        }
-        dt_accessor[n - 1] = (t_accessor[n - 1] - t_accessor[n - 2]) / 2.0;
+    dt[0] = t_diff[0] / 2.0;
+    if (n > 2) {
+        dt.slice(0, 1, n - 1) = (t_c.slice(0, 2, n) - t_c.slice(0, 0, n - 2)) / 2.0;
     }
+    dt[n - 1] = t_diff[n - 2] / 2.0;
 
     // Flatten s for computation
     at::Tensor s_flat = s_c.flatten();
@@ -154,16 +146,15 @@ inline at::Tensor mellin_transform_backward(
     int64_t n = t.size(0);
     at::Tensor t_c = t.contiguous();
 
-    // Compute dt weights
+    // Compute dt weights using tensor operations (dtype-agnostic)
     at::Tensor dt = at::zeros({n}, t_c.options());
-    auto dt_accessor = dt.accessor<double, 1>();
-    auto t_accessor = t_c.accessor<double, 1>();
+    at::Tensor t_diff = t_c.slice(0, 1, n) - t_c.slice(0, 0, n - 1);
 
-    dt_accessor[0] = (t_accessor[1] - t_accessor[0]) / 2.0;
-    for (int64_t i = 1; i < n - 1; i++) {
-        dt_accessor[i] = (t_accessor[i + 1] - t_accessor[i - 1]) / 2.0;
+    dt[0] = t_diff[0] / 2.0;
+    if (n > 2) {
+        dt.slice(0, 1, n - 1) = (t_c.slice(0, 2, n) - t_c.slice(0, 0, n - 2)) / 2.0;
     }
-    dt_accessor[n - 1] = (t_accessor[n - 1] - t_accessor[n - 2]) / 2.0;
+    dt[n - 1] = t_diff[n - 2] / 2.0;
 
     at::Tensor s_c = s.contiguous();
     at::Tensor s_flat = s_c.flatten();

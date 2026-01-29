@@ -155,3 +155,46 @@ class TestTwoSidedLaplaceTransformEdgeCases:
             T.two_sided_laplace_transform(
                 f, s, t, integration_method="invalid"
             )
+
+
+class TestTwoSidedLaplaceTransformDtype:
+    """Test two-sided Laplace transform dtype handling."""
+
+    def test_float32_input(self):
+        """Two-sided Laplace transform should work with float32 input."""
+        t = torch.linspace(-10, 10, 100, dtype=torch.float32)
+        f = torch.randn(100, dtype=torch.float32)
+        s = torch.tensor([0.0, 0.5], dtype=torch.float32)
+
+        F = T.two_sided_laplace_transform(f, s, t)
+        assert F.dtype == torch.float32
+
+    def test_float64_input(self):
+        """Two-sided Laplace transform should work with float64 input."""
+        t = torch.linspace(-10, 10, 100, dtype=torch.float64)
+        f = torch.randn(100, dtype=torch.float64)
+        s = torch.tensor([0.0, 0.5], dtype=torch.float64)
+
+        F = T.two_sided_laplace_transform(f, s, t)
+        assert F.dtype == torch.float64
+
+
+class TestTwoSidedLaplaceTransformDevice:
+    """Test two-sided Laplace transform device handling."""
+
+    @pytest.mark.skipif(
+        not torch.cuda.is_available(), reason="CUDA not available"
+    )
+    def test_cuda_tensor(self):
+        """Test that CUDA tensors work (if CUDA backend exists)."""
+        t = torch.linspace(-10, 10, 100, dtype=torch.float64, device="cuda")
+        f = torch.randn(100, dtype=torch.float64, device="cuda")
+        s = torch.tensor([0.0, 0.5], dtype=torch.float64, device="cuda")
+
+        try:
+            F = T.two_sided_laplace_transform(f, s, t)
+            assert F.device.type == "cuda"
+        except RuntimeError as e:
+            if "CUDA" in str(e) or "cuda" in str(e):
+                pytest.skip("CUDA backend not implemented")
+            raise

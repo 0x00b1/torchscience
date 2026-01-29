@@ -136,3 +136,46 @@ class TestMellinTransformEdgeCases:
 
         with pytest.raises(ValueError, match="integration_method"):
             T.mellin_transform(f, s, t, integration_method="invalid")
+
+
+class TestMellinTransformDtype:
+    """Test Mellin transform dtype handling."""
+
+    def test_float32_input(self):
+        """Mellin transform should work with float32 input."""
+        t = torch.linspace(0.1, 5, 50, dtype=torch.float32)
+        f = torch.randn(50, dtype=torch.float32)
+        s = torch.tensor([1.0, 2.0], dtype=torch.float32)
+
+        F = T.mellin_transform(f, s, t)
+        assert F.dtype == torch.float32
+
+    def test_float64_input(self):
+        """Mellin transform should work with float64 input."""
+        t = torch.linspace(0.1, 5, 50, dtype=torch.float64)
+        f = torch.randn(50, dtype=torch.float64)
+        s = torch.tensor([1.0, 2.0], dtype=torch.float64)
+
+        F = T.mellin_transform(f, s, t)
+        assert F.dtype == torch.float64
+
+
+class TestMellinTransformDevice:
+    """Test Mellin transform device handling."""
+
+    @pytest.mark.skipif(
+        not torch.cuda.is_available(), reason="CUDA not available"
+    )
+    def test_cuda_tensor(self):
+        """Test that CUDA tensors work (if CUDA backend exists)."""
+        t = torch.linspace(0.1, 5, 50, dtype=torch.float64, device="cuda")
+        f = torch.randn(50, dtype=torch.float64, device="cuda")
+        s = torch.tensor([1.0, 2.0], dtype=torch.float64, device="cuda")
+
+        try:
+            F = T.mellin_transform(f, s, t)
+            assert F.device.type == "cuda"
+        except RuntimeError as e:
+            if "CUDA" in str(e) or "cuda" in str(e):
+                pytest.skip("CUDA backend not implemented")
+            raise
