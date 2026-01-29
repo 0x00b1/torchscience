@@ -243,3 +243,72 @@ class TestInverseHankelTransformDevice:
             if "CUDA" in str(e) or "cuda" in str(e):
                 pytest.skip("CUDA backend not implemented")
             raise
+
+
+class TestInverseHankelTransformVmap:
+    """Test inverse Hankel transform with vmap."""
+
+    def test_vmap_basic(self):
+        """vmap should batch over first dimension."""
+        k = torch.linspace(0.1, 5, 50, dtype=torch.float64)
+        F = torch.randn(8, 50, dtype=torch.float64)
+        r = torch.tensor([0.5, 1.0], dtype=torch.float64)
+
+        # Manual batching
+        f_batched = T.inverse_hankel_transform(F, r, k, dim=-1, order=0.0)
+
+        # vmap
+        def inv_hankel_single(Fi):
+            return T.inverse_hankel_transform(Fi, r, k, order=0.0)
+
+        f_vmap = torch.vmap(inv_hankel_single)(F)
+
+        assert torch.allclose(f_batched, f_vmap, atol=1e-10)
+
+    def test_vmap_nested(self):
+        """Nested vmap should work."""
+        k = torch.linspace(0.1, 5, 30, dtype=torch.float64)
+        F = torch.randn(4, 4, 30, dtype=torch.float64)
+        r = torch.tensor([1.0], dtype=torch.float64)
+
+        def inv_hankel_single(Fi):
+            return T.inverse_hankel_transform(Fi, r, k, order=0.0)
+
+        f_vmap = torch.vmap(torch.vmap(inv_hankel_single))(F)
+
+        assert f_vmap.shape == torch.Size([4, 4, 1])
+
+
+class TestInverseHankelTransformCompile:
+    """Test inverse Hankel transform with torch.compile."""
+
+    def test_compile_basic(self):
+        """torch.compile should work."""
+        k = torch.linspace(0.1, 5, 50, dtype=torch.float64)
+        F = torch.randn(50, dtype=torch.float64)
+        r = torch.tensor([0.5, 1.0], dtype=torch.float64)
+
+        @torch.compile(fullgraph=True)
+        def compiled_inv_hankel(x):
+            return T.inverse_hankel_transform(x, r, k, order=0.0)
+
+        f_compiled = compiled_inv_hankel(F)
+        f_eager = T.inverse_hankel_transform(F, r, k, order=0.0)
+
+        assert torch.allclose(f_compiled, f_eager, atol=1e-10)
+
+    def test_compile_with_grad(self):
+        """torch.compile should work with gradients."""
+        k = torch.linspace(0.1, 5, 30, dtype=torch.float64)
+        F = torch.randn(30, dtype=torch.float64, requires_grad=True)
+        r = torch.tensor([1.0], dtype=torch.float64)
+
+        @torch.compile(fullgraph=True)
+        def compiled_inv_hankel(x):
+            return T.inverse_hankel_transform(x, r, k, order=0.0)
+
+        f = compiled_inv_hankel(F)
+        f.sum().backward()
+
+        assert F.grad is not None
+        assert F.grad.shape == F.shape

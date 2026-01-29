@@ -225,3 +225,72 @@ class TestInverseAbelTransformDevice:
             if "CUDA" in str(e) or "cuda" in str(e):
                 pytest.skip("CUDA backend not implemented")
             raise
+
+
+class TestInverseAbelTransformVmap:
+    """Test inverse Abel transform with vmap."""
+
+    def test_vmap_basic(self):
+        """vmap should batch over first dimension."""
+        y = torch.linspace(0.1, 5, 50, dtype=torch.float64)
+        F = torch.randn(8, 50, dtype=torch.float64)
+        r = torch.tensor([0.5, 1.0], dtype=torch.float64)
+
+        # Manual batching
+        f_batched = T.inverse_abel_transform(F, r, y, dim=-1)
+
+        # vmap
+        def inv_abel_single(Fi):
+            return T.inverse_abel_transform(Fi, r, y)
+
+        f_vmap = torch.vmap(inv_abel_single)(F)
+
+        assert torch.allclose(f_batched, f_vmap, atol=1e-10)
+
+    def test_vmap_nested(self):
+        """Nested vmap should work."""
+        y = torch.linspace(0.1, 5, 30, dtype=torch.float64)
+        F = torch.randn(4, 4, 30, dtype=torch.float64)
+        r = torch.tensor([1.0], dtype=torch.float64)
+
+        def inv_abel_single(Fi):
+            return T.inverse_abel_transform(Fi, r, y)
+
+        f_vmap = torch.vmap(torch.vmap(inv_abel_single))(F)
+
+        assert f_vmap.shape == torch.Size([4, 4, 1])
+
+
+class TestInverseAbelTransformCompile:
+    """Test inverse Abel transform with torch.compile."""
+
+    def test_compile_basic(self):
+        """torch.compile should work."""
+        y = torch.linspace(0.1, 5, 50, dtype=torch.float64)
+        F = torch.randn(50, dtype=torch.float64)
+        r = torch.tensor([0.5, 1.0], dtype=torch.float64)
+
+        @torch.compile(fullgraph=True)
+        def compiled_inv_abel(x):
+            return T.inverse_abel_transform(x, r, y)
+
+        f_compiled = compiled_inv_abel(F)
+        f_eager = T.inverse_abel_transform(F, r, y)
+
+        assert torch.allclose(f_compiled, f_eager, atol=1e-10)
+
+    def test_compile_with_grad(self):
+        """torch.compile should work with gradients."""
+        y = torch.linspace(0.1, 5, 30, dtype=torch.float64)
+        F = torch.randn(30, dtype=torch.float64, requires_grad=True)
+        r = torch.tensor([1.0], dtype=torch.float64)
+
+        @torch.compile(fullgraph=True)
+        def compiled_inv_abel(x):
+            return T.inverse_abel_transform(x, r, y)
+
+        f = compiled_inv_abel(F)
+        f.sum().backward()
+
+        assert F.grad is not None
+        assert F.grad.shape == F.shape

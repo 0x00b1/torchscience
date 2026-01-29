@@ -220,3 +220,62 @@ class TestInverseMellinTransformDevice:
             if "CUDA" in str(e) or "cuda" in str(e):
                 pytest.skip("CUDA backend not implemented")
             raise
+
+
+class TestInverseMellinTransformVmap:
+    """Test inverse Mellin transform with vmap."""
+
+    def test_vmap_basic(self):
+        """vmap should batch over first dimension."""
+        omega = torch.linspace(-10, 10, 51, dtype=torch.float64)
+        c = 1.0
+        s = c + 1j * omega
+        F = torch.randn(8, 51, dtype=torch.complex128)
+        t = torch.tensor([0.5, 1.0], dtype=torch.float64)
+
+        # Manual batching
+        f_batched = T.inverse_mellin_transform(F, t, s, c=c, dim=-1)
+
+        # vmap
+        def inv_mellin_single(Fi):
+            return T.inverse_mellin_transform(Fi, t, s, c=c)
+
+        f_vmap = torch.vmap(inv_mellin_single)(F)
+
+        assert torch.allclose(f_batched, f_vmap, atol=1e-10)
+
+    def test_vmap_nested(self):
+        """Nested vmap should work."""
+        omega = torch.linspace(-10, 10, 31, dtype=torch.float64)
+        c = 1.0
+        s = c + 1j * omega
+        F = torch.randn(4, 4, 31, dtype=torch.complex128)
+        t = torch.tensor([1.0], dtype=torch.float64)
+
+        def inv_mellin_single(Fi):
+            return T.inverse_mellin_transform(Fi, t, s, c=c)
+
+        f_vmap = torch.vmap(torch.vmap(inv_mellin_single))(F)
+
+        assert f_vmap.shape == torch.Size([4, 4, 1])
+
+
+class TestInverseMellinTransformCompile:
+    """Test inverse Mellin transform with torch.compile."""
+
+    def test_compile_basic(self):
+        """torch.compile should work."""
+        omega = torch.linspace(-10, 10, 51, dtype=torch.float64)
+        c = 1.0
+        s = c + 1j * omega
+        F = torch.randn(51, dtype=torch.complex128)
+        t = torch.tensor([0.5, 1.0], dtype=torch.float64)
+
+        @torch.compile(fullgraph=True)
+        def compiled_inv_mellin(x):
+            return T.inverse_mellin_transform(x, t, s, c=c)
+
+        f_compiled = compiled_inv_mellin(F)
+        f_eager = T.inverse_mellin_transform(F, t, s, c=c)
+
+        assert torch.allclose(f_compiled, f_eager, atol=1e-10)

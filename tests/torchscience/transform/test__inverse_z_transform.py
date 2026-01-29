@@ -220,3 +220,62 @@ class TestInverseZTransformDevice:
             if "CUDA" in str(e) or "cuda" in str(e):
                 pytest.skip("CUDA backend not implemented")
             raise
+
+
+class TestInverseZTransformVmap:
+    """Test inverse Z-transform with vmap."""
+
+    def test_vmap_basic(self):
+        """vmap should batch over first dimension."""
+        N = 16
+        k = torch.arange(N, dtype=torch.float64)
+        z = torch.exp(2j * torch.pi * k / N)
+        X = torch.randn(8, N, dtype=torch.complex128)
+        n = torch.arange(N, dtype=torch.float64)
+
+        # Manual batching
+        x_batched = T.inverse_z_transform(X, n, z, dim=-1)
+
+        # vmap
+        def inv_z_single(Xi):
+            return T.inverse_z_transform(Xi, n, z)
+
+        x_vmap = torch.vmap(inv_z_single)(X)
+
+        assert torch.allclose(x_batched, x_vmap, atol=1e-10)
+
+    def test_vmap_nested(self):
+        """Nested vmap should work."""
+        N = 10
+        k = torch.arange(N, dtype=torch.float64)
+        z = torch.exp(2j * torch.pi * k / N)
+        X = torch.randn(4, 4, N, dtype=torch.complex128)
+        n = torch.arange(N, dtype=torch.float64)
+
+        def inv_z_single(Xi):
+            return T.inverse_z_transform(Xi, n, z)
+
+        x_vmap = torch.vmap(torch.vmap(inv_z_single))(X)
+
+        assert x_vmap.shape == torch.Size([4, 4, N])
+
+
+class TestInverseZTransformCompile:
+    """Test inverse Z-transform with torch.compile."""
+
+    def test_compile_basic(self):
+        """torch.compile should work."""
+        N = 16
+        k = torch.arange(N, dtype=torch.float64)
+        z = torch.exp(2j * torch.pi * k / N)
+        X = torch.randn(N, dtype=torch.complex128)
+        n = torch.arange(N, dtype=torch.float64)
+
+        @torch.compile(fullgraph=True)
+        def compiled_inv_z(x):
+            return T.inverse_z_transform(x, n, z)
+
+        x_compiled = compiled_inv_z(X)
+        x_eager = T.inverse_z_transform(X, n, z)
+
+        assert torch.allclose(x_compiled, x_eager, atol=1e-10)
