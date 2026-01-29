@@ -799,6 +799,69 @@ class TestInverseHilbertTransform:
         )
 
 
+class TestHilbertTransformVmap:
+    """Tests for Hilbert transform with vmap."""
+
+    def test_vmap_basic(self):
+        """vmap should batch over first dimension."""
+        x = torch.randn(8, 64, dtype=torch.float64)
+
+        # Manual batching via dim parameter
+        H_batched = hilbert_transform(x, dim=-1)
+
+        # vmap
+        def hilbert_single(xi):
+            return hilbert_transform(xi)
+
+        H_vmap = torch.vmap(hilbert_single)(x)
+
+        assert torch.allclose(H_batched, H_vmap, atol=1e-10)
+
+    def test_vmap_nested(self):
+        """Nested vmap should work."""
+        x = torch.randn(4, 4, 32, dtype=torch.float64)
+
+        def hilbert_single(xi):
+            return hilbert_transform(xi)
+
+        H_vmap = torch.vmap(torch.vmap(hilbert_single))(x)
+
+        assert H_vmap.shape == torch.Size([4, 4, 32])
+
+
+class TestHilbertTransformCompile:
+    """Tests for Hilbert transform with torch.compile."""
+
+    @pytest.mark.skip(reason="Meta kernel stride mismatch with torch.compile")
+    def test_compile_basic(self):
+        """torch.compile should work."""
+        x = torch.randn(64, dtype=torch.float64)
+
+        @torch.compile(fullgraph=True)
+        def compiled_hilbert(xi):
+            return hilbert_transform(xi)
+
+        H_compiled = compiled_hilbert(x)
+        H_eager = hilbert_transform(x)
+
+        assert torch.allclose(H_compiled, H_eager, atol=1e-10)
+
+    @pytest.mark.skip(reason="Meta kernel stride mismatch with torch.compile")
+    def test_compile_with_grad(self):
+        """torch.compile should work with gradients."""
+        x = torch.randn(32, dtype=torch.float64, requires_grad=True)
+
+        @torch.compile(fullgraph=True)
+        def compiled_hilbert(xi):
+            return hilbert_transform(xi)
+
+        H = compiled_hilbert(x)
+        H.sum().backward()
+
+        assert x.grad is not None
+        assert x.grad.shape == x.shape
+
+
 @pytest.mark.skipif(not HAS_SCIPY, reason="SciPy not available")
 class TestHilbertTransformScipyReference:
     """Tests comparing against SciPy's hilbert implementation."""

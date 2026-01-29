@@ -414,3 +414,70 @@ class TestShortTimeFourierTransformNParameter:
 
         # Should have fewer frames due to truncation
         assert X.is_complex()
+
+
+class TestShortTimeFourierTransformVmap:
+    """Tests for STFT with vmap."""
+
+    def test_vmap_basic(self):
+        """vmap should batch over first dimension."""
+        x = torch.randn(8, 256, dtype=torch.float64)
+        window = torch.hann_window(64, dtype=torch.float64)
+
+        # Manual batching
+        X_batched = short_time_fourier_transform(x, window=window, dim=-1)
+
+        # vmap
+        def stft_single(xi):
+            return short_time_fourier_transform(xi, window=window)
+
+        X_vmap = torch.vmap(stft_single)(x)
+
+        assert torch.allclose(X_batched, X_vmap, atol=1e-10)
+
+    def test_vmap_nested(self):
+        """Nested vmap should work."""
+        x = torch.randn(4, 4, 128, dtype=torch.float64)
+        window = torch.hann_window(32, dtype=torch.float64)
+
+        def stft_single(xi):
+            return short_time_fourier_transform(xi, window=window)
+
+        X_vmap = torch.vmap(torch.vmap(stft_single))(x)
+
+        assert X_vmap.ndim == 4  # batch, batch, freq, frames
+
+
+class TestShortTimeFourierTransformCompile:
+    """Tests for STFT with torch.compile."""
+
+    def test_compile_basic(self):
+        """torch.compile should work."""
+        x = torch.randn(256, dtype=torch.float64)
+        window = torch.hann_window(64, dtype=torch.float64)
+
+        @torch.compile(fullgraph=True)
+        def compiled_stft(xi):
+            return short_time_fourier_transform(xi, window=window)
+
+        X_compiled = compiled_stft(x)
+        X_eager = short_time_fourier_transform(x, window=window)
+
+        assert torch.allclose(X_compiled, X_eager, atol=1e-10)
+
+    def test_compile_with_grad(self):
+        """torch.compile should work with gradients."""
+        x = torch.randn(128, dtype=torch.float64, requires_grad=True)
+        window = torch.hann_window(32, dtype=torch.float64)
+
+        @torch.compile(fullgraph=True)
+        def compiled_stft(xi):
+            return short_time_fourier_transform(
+                xi, window=window, center=False
+            )
+
+        X = compiled_stft(x)
+        X.abs().sum().backward()
+
+        assert x.grad is not None
+        assert x.grad.shape == x.shape

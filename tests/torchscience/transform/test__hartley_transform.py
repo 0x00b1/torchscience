@@ -517,3 +517,64 @@ class TestHartleyTransformOut:
 
         assert result is out
         assert out.shape == torch.Size([64])
+
+
+class TestHartleyTransformVmap:
+    """Tests for Hartley transform with vmap."""
+
+    def test_vmap_basic(self):
+        """vmap should batch over first dimension."""
+        x = torch.randn(8, 64, dtype=torch.float64)
+
+        # Manual batching via dim parameter
+        H_batched = hartley_transform(x, dim=-1)
+
+        # vmap
+        def hartley_single(xi):
+            return hartley_transform(xi)
+
+        H_vmap = torch.vmap(hartley_single)(x)
+
+        assert torch.allclose(H_batched, H_vmap, atol=1e-10)
+
+    def test_vmap_nested(self):
+        """Nested vmap should work."""
+        x = torch.randn(4, 4, 32, dtype=torch.float64)
+
+        def hartley_single(xi):
+            return hartley_transform(xi)
+
+        H_vmap = torch.vmap(torch.vmap(hartley_single))(x)
+
+        assert H_vmap.shape == torch.Size([4, 4, 32])
+
+
+class TestHartleyTransformCompile:
+    """Tests for Hartley transform with torch.compile."""
+
+    def test_compile_basic(self):
+        """torch.compile should work."""
+        x = torch.randn(64, dtype=torch.float64)
+
+        @torch.compile(fullgraph=True)
+        def compiled_hartley(xi):
+            return hartley_transform(xi)
+
+        H_compiled = compiled_hartley(x)
+        H_eager = hartley_transform(x)
+
+        assert torch.allclose(H_compiled, H_eager, atol=1e-10)
+
+    def test_compile_with_grad(self):
+        """torch.compile should work with gradients."""
+        x = torch.randn(32, dtype=torch.float64, requires_grad=True)
+
+        @torch.compile(fullgraph=True)
+        def compiled_hartley(xi):
+            return hartley_transform(xi)
+
+        H = compiled_hartley(x)
+        H.sum().backward()
+
+        assert x.grad is not None
+        assert x.grad.shape == x.shape
