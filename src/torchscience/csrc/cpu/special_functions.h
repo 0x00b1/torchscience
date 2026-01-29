@@ -465,3 +465,9 @@ TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(exponential_integral_e, 
 #include "../kernel/special_functions/sine_integral_si_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(sine_integral_si, x)
+
+#include "../kernel/special_functions/cosine_integral_ci.h"
+#include "../kernel/special_functions/cosine_integral_ci_backward.h"
+#include "../kernel/special_functions/cosine_integral_ci_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(cosine_integral_ci, x)

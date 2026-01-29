@@ -90,3 +90,6 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(exponential_integral_e, Exponent
 
 // Sine integral
 TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(sine_integral_si, SineIntegralSi, x)
+
+// Cosine integral
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(cosine_integral_ci, CosineIntegralCi, x)

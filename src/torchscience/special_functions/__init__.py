@@ -27,6 +27,7 @@ from ._complete_legendre_elliptic_integral_k import (
 from ._complete_legendre_elliptic_integral_pi import (
     complete_legendre_elliptic_integral_pi,
 )
+from ._cosine_integral_ci import cosine_integral_ci
 from ._digamma import digamma
 from ._exponential_integral_e import exponential_integral_e
 from ._exponential_integral_e_1 import exponential_integral_e_1
@@ -117,6 +118,7 @@ __all__ = [
     "complete_legendre_elliptic_integral_e",
     "complete_legendre_elliptic_integral_k",
     "complete_legendre_elliptic_integral_pi",
+    "cosine_integral_ci",
     "incomplete_legendre_elliptic_integral_e",
     "incomplete_legendre_elliptic_integral_pi",
     "jacobi_amplitude_am",
