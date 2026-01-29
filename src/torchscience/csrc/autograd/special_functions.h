@@ -87,3 +87,6 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(exponential_integral_ei, Exponent
 TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(exponential_integral_e_1, ExponentialIntegralE1, x)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(exponential_integral_ein, ExponentialIntegralEin, x)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(exponential_integral_e, ExponentialIntegralE, n, x)
+
+// Sine integral
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(sine_integral_si, SineIntegralSi, x)

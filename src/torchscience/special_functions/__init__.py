@@ -71,6 +71,7 @@ from ._modified_bessel_k_1 import modified_bessel_k_1
 from ._polygamma import polygamma
 from ._regularized_gamma_p import regularized_gamma_p
 from ._regularized_gamma_q import regularized_gamma_q
+from ._sine_integral_si import sine_integral_si
 from ._spherical_bessel_i import spherical_bessel_i
 from ._spherical_bessel_i_0 import spherical_bessel_i_0
 from ._spherical_bessel_i_1 import spherical_bessel_i_1
@@ -156,6 +157,7 @@ __all__ = [
     "polygamma",
     "regularized_gamma_p",
     "regularized_gamma_q",
+    "sine_integral_si",
     "spherical_bessel_i",
     "spherical_bessel_i_0",
     "spherical_bessel_i_1",

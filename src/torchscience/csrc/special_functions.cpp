@@ -352,4 +352,9 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("exponential_integral_e(Tensor n, Tensor x) -> Tensor");
   m.def("exponential_integral_e_backward(Tensor grad_output, Tensor n, Tensor x) -> (Tensor, Tensor)");
   m.def("exponential_integral_e_backward_backward(Tensor gg_n, Tensor gg_x, Tensor grad_output, Tensor n, Tensor x) -> (Tensor, Tensor, Tensor)");
+
+  // Sine integral
+  m.def("sine_integral_si(Tensor x) -> Tensor");
+  m.def("sine_integral_si_backward(Tensor grad_output, Tensor x) -> Tensor");
+  m.def("sine_integral_si_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
 }
