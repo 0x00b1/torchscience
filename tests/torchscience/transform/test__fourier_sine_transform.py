@@ -179,3 +179,39 @@ class TestDSTDevice:
         # Round-trip should work
         x_rec = T.inverse_fourier_sine_transform(y, type=2)
         assert torch.allclose(x_rec.cpu(), x.cpu(), atol=1e-10)
+
+
+class TestDSTVmap:
+    """Tests for vmap compatibility."""
+
+    def test_vmap_basic(self):
+        """Test that DST works with vmap."""
+        x = torch.randn(8, 32, dtype=torch.float64)
+
+        # Direct batched call
+        y_batched = T.fourier_sine_transform(x, type=2)
+
+        # vmap version
+        def dst_single(xi):
+            return T.fourier_sine_transform(xi, type=2)
+
+        y_vmap = torch.vmap(dst_single)(x)
+
+        assert torch.allclose(y_batched, y_vmap, atol=1e-10)
+
+
+class TestDSTCompile:
+    """Tests for torch.compile compatibility."""
+
+    def test_compile_basic(self):
+        """Test that DST works with torch.compile."""
+        x = torch.randn(32, dtype=torch.float64)
+
+        @torch.compile(fullgraph=True)
+        def compiled_dst(x):
+            return T.fourier_sine_transform(x, type=2)
+
+        y_compiled = compiled_dst(x)
+        y_eager = T.fourier_sine_transform(x, type=2)
+
+        assert torch.allclose(y_compiled, y_eager, atol=1e-10)

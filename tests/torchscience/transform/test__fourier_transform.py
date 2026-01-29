@@ -533,3 +533,39 @@ class TestInverseFourierTransformExplicitPadding:
             X, dim=(-2, -1), padding=((4, 4), (4, 4))
         )
         assert x.shape == torch.Size([24, 24])
+
+
+class TestFourierTransformVmap:
+    """Tests for vmap compatibility."""
+
+    def test_vmap_basic(self):
+        """Test that FFT works with vmap."""
+        x = torch.randn(8, 32)
+
+        # Direct batched call
+        y_batched = fourier_transform(x)
+
+        # vmap version
+        def fft_single(xi):
+            return fourier_transform(xi)
+
+        y_vmap = torch.vmap(fft_single)(x)
+
+        assert torch.allclose(y_batched, y_vmap, atol=1e-6)
+
+
+class TestFourierTransformCompile:
+    """Tests for torch.compile compatibility."""
+
+    def test_compile_basic(self):
+        """Test that FFT works with torch.compile."""
+        x = torch.randn(32)
+
+        @torch.compile(fullgraph=True)
+        def compiled_fft(x):
+            return fourier_transform(x)
+
+        y_compiled = compiled_fft(x)
+        y_eager = fourier_transform(x)
+
+        assert torch.allclose(y_compiled, y_eager, atol=1e-10)

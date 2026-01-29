@@ -169,3 +169,41 @@ class TestRadonTransformEdgeCases:
         # Should still work but produce empty output
         sinogram = T.radon_transform(image, angles)
         assert sinogram.shape[0] == 0
+
+
+class TestRadonTransformVmap:
+    """Tests for vmap compatibility."""
+
+    def test_vmap_basic(self):
+        """Test that radon transform works with vmap."""
+        images = torch.randn(4, 16, 16, dtype=torch.float64)
+        angles = torch.linspace(0, torch.pi, 10, dtype=torch.float64)
+
+        # Direct batched call
+        sinogram_batched = T.radon_transform(images, angles)
+
+        # vmap version
+        def radon_single(img):
+            return T.radon_transform(img, angles)
+
+        sinogram_vmap = torch.vmap(radon_single)(images)
+
+        assert torch.allclose(sinogram_batched, sinogram_vmap, atol=1e-6)
+
+
+class TestRadonTransformCompile:
+    """Tests for torch.compile compatibility."""
+
+    def test_compile_basic(self):
+        """Test that radon transform works with torch.compile."""
+        image = torch.randn(16, 16, dtype=torch.float64)
+        angles = torch.linspace(0, torch.pi, 10, dtype=torch.float64)
+
+        @torch.compile(fullgraph=True)
+        def compiled_radon(img, angles):
+            return T.radon_transform(img, angles)
+
+        sinogram_compiled = compiled_radon(image, angles)
+        sinogram_eager = T.radon_transform(image, angles)
+
+        assert torch.allclose(sinogram_compiled, sinogram_eager, atol=1e-10)

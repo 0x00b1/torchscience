@@ -179,3 +179,39 @@ class TestDCTDevice:
         # Round-trip should work
         x_rec = T.inverse_fourier_cosine_transform(y, type=2)
         assert torch.allclose(x_rec.cpu(), x.cpu(), atol=1e-10)
+
+
+class TestDCTVmap:
+    """Tests for vmap compatibility."""
+
+    def test_vmap_basic(self):
+        """Test that DCT works with vmap."""
+        x = torch.randn(8, 32, dtype=torch.float64)
+
+        # Direct batched call
+        y_batched = T.fourier_cosine_transform(x, type=2)
+
+        # vmap version
+        def dct_single(xi):
+            return T.fourier_cosine_transform(xi, type=2)
+
+        y_vmap = torch.vmap(dct_single)(x)
+
+        assert torch.allclose(y_batched, y_vmap, atol=1e-10)
+
+
+class TestDCTCompile:
+    """Tests for torch.compile compatibility."""
+
+    def test_compile_basic(self):
+        """Test that DCT works with torch.compile."""
+        x = torch.randn(32, dtype=torch.float64)
+
+        @torch.compile(fullgraph=True)
+        def compiled_dct(x):
+            return T.fourier_cosine_transform(x, type=2)
+
+        y_compiled = compiled_dct(x)
+        y_eager = T.fourier_cosine_transform(x, type=2)
+
+        assert torch.allclose(y_compiled, y_eager, atol=1e-10)

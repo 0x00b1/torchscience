@@ -191,3 +191,41 @@ class TestConvolutionDevice:
         y = T.convolution(x, h, mode="full")
         assert y.device.type == "cuda"
         assert y.shape == torch.Size([16 + 5 - 1])
+
+
+class TestConvolutionVmap:
+    """Tests for vmap compatibility."""
+
+    def test_vmap_basic(self):
+        """Test that convolution works with vmap."""
+        x = torch.randn(8, 32, dtype=torch.float64)
+        h = torch.randn(5, dtype=torch.float64)
+
+        # Direct batched call
+        y_batched = T.convolution(x, h, mode="full")
+
+        # vmap version
+        def conv_single(xi):
+            return T.convolution(xi, h, mode="full")
+
+        y_vmap = torch.vmap(conv_single)(x)
+
+        assert torch.allclose(y_batched, y_vmap, atol=1e-10)
+
+
+class TestConvolutionCompile:
+    """Tests for torch.compile compatibility."""
+
+    def test_compile_basic(self):
+        """Test that convolution works with torch.compile."""
+        x = torch.randn(32, dtype=torch.float64)
+        h = torch.randn(5, dtype=torch.float64)
+
+        @torch.compile(fullgraph=True)
+        def compiled_conv(x, h):
+            return T.convolution(x, h, mode="full")
+
+        y_compiled = compiled_conv(x, h)
+        y_eager = T.convolution(x, h, mode="full")
+
+        assert torch.allclose(y_compiled, y_eager, atol=1e-10)
