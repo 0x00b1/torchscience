@@ -464,3 +464,57 @@ class TestInverseGaborTransformGaussianWindow:
 
         assert torch.allclose(x, x_same, atol=1e-4)
         assert not torch.allclose(x, x_diff, atol=1e-3)
+
+
+class TestInverseGaborTransformVmap:
+    """Tests for torch.vmap support."""
+
+    def test_vmap_basic(self):
+        """Test vmap batches correctly."""
+        x = torch.randn(8, 256, dtype=torch.float64)
+        G = gabor_transform(x, sigma=0.1, n_fft=64, dim=-1)
+
+        # Batched call
+        x_batched = inverse_gabor_transform(G, sigma=0.1, n_fft=64, length=256)
+
+        # vmap call
+        def igabor_single(gi):
+            return inverse_gabor_transform(gi, sigma=0.1, n_fft=64, length=256)
+
+        x_vmap = torch.vmap(igabor_single)(G)
+
+        assert torch.allclose(x_batched, x_vmap, atol=1e-10)
+
+
+class TestInverseGaborTransformCompile:
+    """Tests for torch.compile support."""
+
+    @pytest.mark.skip(reason="torch.istft has meta kernel stride issues")
+    def test_compile_basic(self):
+        """Test torch.compile works."""
+        G = torch.randn(33, 20, dtype=torch.complex128)
+
+        @torch.compile(fullgraph=True)
+        def compiled_igabor(g):
+            return inverse_gabor_transform(g, sigma=0.1, n_fft=64)
+
+        x_compiled = compiled_igabor(G)
+        x_eager = inverse_gabor_transform(G, sigma=0.1, n_fft=64)
+
+        assert torch.allclose(x_compiled, x_eager, atol=1e-10)
+
+    @pytest.mark.skip(reason="torch.istft has meta kernel stride issues")
+    def test_compile_with_grad(self):
+        """Test torch.compile with gradient computation."""
+        G = torch.randn(33, 20, dtype=torch.complex128, requires_grad=True)
+
+        @torch.compile(fullgraph=True)
+        def compiled_igabor(g):
+            return inverse_gabor_transform(g, sigma=0.1, n_fft=64)
+
+        x = compiled_igabor(G)
+        loss = x.abs().sum()
+        loss.backward()
+
+        assert G.grad is not None
+        assert G.grad.shape == G.shape

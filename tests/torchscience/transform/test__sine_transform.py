@@ -571,3 +571,116 @@ class TestInverseSineTransformExplicitPadding:
         X = torch.randn(16, 16)
         x = inverse_sine_transform(X, dim=(-2, -1), padding=((4, 4), (4, 4)))
         assert x.shape == torch.Size([24, 24])
+
+
+class TestSineTransformVmap:
+    """Tests for torch.vmap support."""
+
+    def test_vmap_basic(self):
+        """Test vmap batches correctly."""
+        x = torch.randn(8, 32, dtype=torch.float64)
+
+        # Batched call
+        y_batched = sine_transform(x, type=2, dim=-1)
+
+        # vmap call
+        def dst_single(xi):
+            return sine_transform(xi, type=2)
+
+        y_vmap = torch.vmap(dst_single)(x)
+
+        assert torch.allclose(y_batched, y_vmap, atol=1e-10)
+
+    def test_vmap_nested(self):
+        """Test nested vmap."""
+        x = torch.randn(4, 3, 16, dtype=torch.float64)
+
+        def dst_single(xi):
+            return sine_transform(xi, type=2)
+
+        y_vmap = torch.vmap(torch.vmap(dst_single))(x)
+
+        assert y_vmap.shape == (4, 3, 16)
+
+
+class TestSineTransformCompile:
+    """Tests for torch.compile support."""
+
+    def test_compile_basic(self):
+        """Test torch.compile works."""
+        x = torch.randn(32, dtype=torch.float64)
+
+        @torch.compile(fullgraph=True)
+        def compiled_dst(x):
+            return sine_transform(x, type=2, norm="ortho")
+
+        y_compiled = compiled_dst(x)
+        y_eager = sine_transform(x, type=2, norm="ortho")
+
+        assert torch.allclose(y_compiled, y_eager, atol=1e-10)
+
+    def test_compile_with_grad(self):
+        """Test torch.compile with gradient computation."""
+        x = torch.randn(16, dtype=torch.float64, requires_grad=True)
+
+        @torch.compile(fullgraph=True)
+        def compiled_dst(x):
+            return sine_transform(x, type=2, norm="ortho")
+
+        y = compiled_dst(x)
+        loss = y.abs().sum()
+        loss.backward()
+
+        assert x.grad is not None
+        assert x.grad.shape == x.shape
+
+
+class TestInverseSineTransformVmap:
+    """Tests for torch.vmap support for inverse transform."""
+
+    def test_vmap_basic(self):
+        """Test vmap batches correctly."""
+        X = torch.randn(8, 32, dtype=torch.float64)
+
+        # Batched call
+        x_batched = inverse_sine_transform(X, type=2, dim=-1)
+
+        # vmap call
+        def idst_single(Xi):
+            return inverse_sine_transform(Xi, type=2)
+
+        x_vmap = torch.vmap(idst_single)(X)
+
+        assert torch.allclose(x_batched, x_vmap, atol=1e-10)
+
+
+class TestInverseSineTransformCompile:
+    """Tests for torch.compile support for inverse transform."""
+
+    def test_compile_basic(self):
+        """Test torch.compile works."""
+        X = torch.randn(32, dtype=torch.float64)
+
+        @torch.compile(fullgraph=True)
+        def compiled_idst(X):
+            return inverse_sine_transform(X, type=2, norm="ortho")
+
+        x_compiled = compiled_idst(X)
+        x_eager = inverse_sine_transform(X, type=2, norm="ortho")
+
+        assert torch.allclose(x_compiled, x_eager, atol=1e-10)
+
+    def test_compile_with_grad(self):
+        """Test torch.compile with gradient computation."""
+        X = torch.randn(16, dtype=torch.float64, requires_grad=True)
+
+        @torch.compile(fullgraph=True)
+        def compiled_idst(X):
+            return inverse_sine_transform(X, type=2, norm="ortho")
+
+        x = compiled_idst(X)
+        loss = x.abs().sum()
+        loss.backward()
+
+        assert X.grad is not None
+        assert X.grad.shape == X.shape

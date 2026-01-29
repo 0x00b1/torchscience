@@ -553,3 +553,83 @@ class TestInverseContinuousWaveletTransformEdgeCases:
 
         assert reconstructed.shape == (256,)
         assert not torch.isnan(reconstructed).any()
+
+
+class TestInverseContinuousWaveletTransformVmap:
+    """Tests for torch.vmap support."""
+
+    def test_vmap_basic(self):
+        """Test vmap batches correctly."""
+        scales = torch.tensor([1.0, 2.0, 4.0], dtype=torch.float64)
+        coeffs = torch.randn(8, 3, 128, dtype=torch.float64)
+
+        # Batched call
+        y_batched = inverse_continuous_wavelet_transform(
+            coeffs, scales, wavelet="mexican_hat", dim=-1
+        )
+
+        # vmap call
+        def icwt_single(ci):
+            return inverse_continuous_wavelet_transform(
+                ci, scales, wavelet="mexican_hat"
+            )
+
+        y_vmap = torch.vmap(icwt_single)(coeffs)
+
+        assert torch.allclose(y_batched, y_vmap, atol=1e-10)
+
+    def test_vmap_nested(self):
+        """Test nested vmap."""
+        scales = torch.tensor([1.0, 2.0], dtype=torch.float64)
+        coeffs = torch.randn(4, 3, 2, 64, dtype=torch.float64)
+
+        def icwt_single(ci):
+            return inverse_continuous_wavelet_transform(
+                ci, scales, wavelet="mexican_hat"
+            )
+
+        y_vmap = torch.vmap(torch.vmap(icwt_single))(coeffs)
+
+        assert y_vmap.shape == (4, 3, 64)
+
+
+class TestInverseContinuousWaveletTransformCompile:
+    """Tests for torch.compile support."""
+
+    @pytest.mark.skip(reason="FFT operations have meta kernel stride issues")
+    def test_compile_basic(self):
+        """Test torch.compile works."""
+        scales = torch.tensor([1.0, 2.0, 4.0], dtype=torch.float64)
+        coeffs = torch.randn(3, 128, dtype=torch.float64)
+
+        @torch.compile(fullgraph=True)
+        def compiled_icwt(c):
+            return inverse_continuous_wavelet_transform(
+                c, scales, wavelet="mexican_hat"
+            )
+
+        y_compiled = compiled_icwt(coeffs)
+        y_eager = inverse_continuous_wavelet_transform(
+            coeffs, scales, wavelet="mexican_hat"
+        )
+
+        assert torch.allclose(y_compiled, y_eager, atol=1e-10)
+
+    @pytest.mark.skip(reason="FFT operations have meta kernel stride issues")
+    def test_compile_with_grad(self):
+        """Test torch.compile with gradient computation."""
+        scales = torch.tensor([1.0, 2.0], dtype=torch.float64)
+        coeffs = torch.randn(2, 64, dtype=torch.float64, requires_grad=True)
+
+        @torch.compile(fullgraph=True)
+        def compiled_icwt(c):
+            return inverse_continuous_wavelet_transform(
+                c, scales, wavelet="mexican_hat"
+            )
+
+        y = compiled_icwt(coeffs)
+        loss = y.abs().sum()
+        loss.backward()
+
+        assert coeffs.grad is not None
+        assert coeffs.grad.shape == coeffs.shape
