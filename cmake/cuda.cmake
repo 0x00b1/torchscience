@@ -22,6 +22,11 @@ set(TORCHSCIENCE_CUDA_SOURCES
   src/torchscience/csrc/cuda/geometry/intersection/ray_aabb.cu
   src/torchscience/csrc/cuda/transform/discrete_wavelet_transform.cu
   src/torchscience/csrc/cuda/transform/inverse_discrete_wavelet_transform.cu
+  src/torchscience/csrc/cuda/transform/fourier_cosine_transform.cu
+  src/torchscience/csrc/cuda/transform/inverse_fourier_cosine_transform.cu
+  src/torchscience/csrc/cuda/transform/fourier_sine_transform.cu
+  src/torchscience/csrc/cuda/transform/inverse_fourier_sine_transform.cu
+  src/torchscience/csrc/cuda/transform/convolution.cu
 )
 
 # Add CUDA sources to target
