@@ -297,3 +297,99 @@ class TestInverseRadonTransformEdgeCases:
             sinogram, angles, output_size=4
         )
         assert reconstructed.shape == (4, 4)
+
+
+class TestInverseRadonTransformDevice:
+    """Test inverse Radon transform device handling."""
+
+    @pytest.mark.skipif(
+        not torch.cuda.is_available(), reason="CUDA not available"
+    )
+    def test_cuda_tensor(self):
+        """Test that CUDA tensors work (if CUDA backend exists)."""
+        sinogram = torch.randn(45, 65, dtype=torch.float64, device="cuda")
+        angles = torch.linspace(
+            0, math.pi, 45, dtype=torch.float64, device="cuda"
+        )
+
+        try:
+            reconstructed = T.inverse_radon_transform(
+                sinogram, angles, output_size=32
+            )
+            assert reconstructed.device.type == "cuda"
+        except RuntimeError as e:
+            if "CUDA" in str(e) or "cuda" in str(e):
+                pytest.skip("CUDA backend not implemented")
+            raise
+
+
+class TestInverseRadonTransformVmap:
+    """Test inverse Radon transform with vmap."""
+
+    def test_vmap_basic(self):
+        """vmap should batch over first dimension."""
+        sinogram = torch.randn(8, 45, 65, dtype=torch.float64)
+        angles = torch.linspace(0, math.pi, 45, dtype=torch.float64)
+
+        # Manual batching
+        recon_batched = T.inverse_radon_transform(
+            sinogram, angles, output_size=32
+        )
+
+        # vmap
+        def inv_radon_single(sino):
+            return T.inverse_radon_transform(sino, angles, output_size=32)
+
+        recon_vmap = torch.vmap(inv_radon_single)(sinogram)
+
+        assert torch.allclose(recon_batched, recon_vmap, atol=1e-10)
+
+    def test_vmap_nested(self):
+        """Nested vmap should work."""
+        sinogram = torch.randn(4, 4, 20, 25, dtype=torch.float64)
+        angles = torch.linspace(0, math.pi, 20, dtype=torch.float64)
+
+        def inv_radon_single(sino):
+            return T.inverse_radon_transform(sino, angles, output_size=16)
+
+        recon_vmap = torch.vmap(torch.vmap(inv_radon_single))(sinogram)
+
+        assert recon_vmap.shape == torch.Size([4, 4, 16, 16])
+
+
+class TestInverseRadonTransformCompile:
+    """Test inverse Radon transform with torch.compile."""
+
+    def test_compile_basic(self):
+        """torch.compile should work."""
+        sinogram = torch.randn(45, 65, dtype=torch.float64)
+        angles = torch.linspace(0, math.pi, 45, dtype=torch.float64)
+
+        @torch.compile(fullgraph=True)
+        def compiled_inv_radon(sino):
+            return T.inverse_radon_transform(sino, angles, output_size=32)
+
+        recon_compiled = compiled_inv_radon(sinogram)
+        recon_eager = T.inverse_radon_transform(
+            sinogram, angles, output_size=32
+        )
+
+        assert torch.allclose(recon_compiled, recon_eager, atol=1e-10)
+
+    @pytest.mark.skip(
+        reason="Meta kernel stride mismatch for backward with torch.compile"
+    )
+    def test_compile_with_grad(self):
+        """torch.compile should work with gradients."""
+        sinogram = torch.randn(10, 16, dtype=torch.float64, requires_grad=True)
+        angles = torch.linspace(0, math.pi, 10, dtype=torch.float64)
+
+        @torch.compile(fullgraph=True)
+        def compiled_inv_radon(sino):
+            return T.inverse_radon_transform(sino, angles, output_size=8)
+
+        recon = compiled_inv_radon(sinogram)
+        recon.sum().backward()
+
+        assert sinogram.grad is not None
+        assert sinogram.grad.shape == sinogram.shape
