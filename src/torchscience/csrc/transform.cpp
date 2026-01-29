@@ -78,6 +78,13 @@
 // Autocast backend
 #include "autocast/transform/fourier_transform.h"
 #include "autocast/transform/inverse_fourier_transform.h"
+#include "autocast/transform/fourier_cosine_transform.h"
+#include "autocast/transform/inverse_fourier_cosine_transform.h"
+#include "autocast/transform/fourier_sine_transform.h"
+#include "autocast/transform/inverse_fourier_sine_transform.h"
+#include "autocast/transform/convolution.h"
+#include "autocast/transform/discrete_wavelet_transform.h"
+#include "autocast/transform/inverse_discrete_wavelet_transform.h"
 
 #ifdef TORCHSCIENCE_CUDA
 #include "cuda/transform/fourier_transform.cu"
