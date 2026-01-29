@@ -1,8 +1,11 @@
 """Hilbert transform implementation."""
 
+from __future__ import annotations
+
 import torch
 from torch import Tensor
 
+import torchscience._csrc  # noqa: F401
 from torchscience.pad import PaddingMode, pad
 
 # Valid padding modes for validation
@@ -17,6 +20,45 @@ _VALID_PADDING_MODES = {
     "spline",
     "smooth",
 }
+
+# Padding modes supported by C++ backend
+_CPP_PADDING_MODES = {
+    "constant": 0,
+    "reflect": 1,
+    "replicate": 2,
+    "circular": 3,
+}
+
+
+def _can_use_cpp_backend(
+    dim: int | tuple[int, ...],
+    padding: int
+    | tuple[int, int]
+    | tuple[int, ...]
+    | tuple[tuple[int, int], ...]
+    | None,
+    padding_mode: str,
+    padding_order: int,
+    out: Tensor | None,
+) -> bool:
+    """Check if we can use the C++ backend for this call."""
+    # C++ backend only supports single dimension
+    if not isinstance(dim, int):
+        return False
+
+    # C++ backend doesn't support explicit padding parameter
+    if padding is not None:
+        return False
+
+    # C++ backend only supports basic padding modes
+    if padding_mode not in _CPP_PADDING_MODES:
+        return False
+
+    # C++ backend doesn't support out parameter
+    if out is not None:
+        return False
+
+    return True
 
 
 def hilbert_transform(
@@ -263,6 +305,78 @@ def hilbert_transform(
             f"got '{padding_mode}'"
         )
 
+    # Try to use C++ backend for simple cases
+    if _can_use_cpp_backend(dim, padding, padding_mode, padding_order, out):
+        # Single dimension, basic padding mode, no explicit padding
+        assert isinstance(dim, int)
+
+        # Normalize n for C++ backend
+        n_param = n if isinstance(n, int) else -1 if n is None else n[0]
+
+        # Normalize dimension for validation
+        ndim = input.ndim
+        norm_dim = dim if dim >= 0 else dim + ndim
+
+        # Validate window before calling C++ to get proper Python errors
+        if window is not None:
+            if window.ndim != 1:
+                raise ValueError(
+                    f"window must be 1-D, got {window.ndim}-D tensor with shape {window.shape}"
+                )
+            # Compute expected size after padding
+            input_size = input.size(norm_dim)
+            expected_size = n_param if n_param > 0 else input_size
+            if window.size(0) != expected_size:
+                raise ValueError(
+                    f"window size ({window.size(0)}) must match signal length along "
+                    f"dimension {dim} ({expected_size})"
+                )
+            if window.device != input.device:
+                raise RuntimeError(
+                    f"window tensor must be on the same device as input tensor. "
+                    f"Input is on {input.device}, window is on {window.device}."
+                )
+
+        return torch.ops.torchscience.hilbert_transform(
+            input,
+            n_param,
+            dim,
+            _CPP_PADDING_MODES[padding_mode],
+            padding_value,
+            window,
+        )
+
+    # Fall back to Python implementation for advanced features
+    return _hilbert_transform_python(
+        input,
+        dim=dim,
+        n=n,
+        padding=padding,
+        padding_mode=padding_mode,
+        padding_value=padding_value,
+        padding_order=padding_order,
+        window=window,
+        out=out,
+    )
+
+
+def _hilbert_transform_python(
+    input: Tensor,
+    *,
+    dim: int | tuple[int, ...] = -1,
+    n: int | tuple[int, ...] | None = None,
+    padding: int
+    | tuple[int, int]
+    | tuple[int, ...]
+    | tuple[tuple[int, int], ...]
+    | None = None,
+    padding_mode: PaddingMode = "constant",
+    padding_value: float = 0.0,
+    padding_order: int = 1,
+    window: Tensor | None = None,
+    out: Tensor | None = None,
+) -> Tensor:
+    """Pure Python implementation for advanced features."""
     # Normalize dim to tuple
     if isinstance(dim, int):
         dim_tuple = (dim,)
