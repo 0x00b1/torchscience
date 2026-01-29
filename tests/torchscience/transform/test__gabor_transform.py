@@ -444,3 +444,64 @@ class TestGaborTransformGaussianWindow:
         assert X.abs().mean() > 0
         assert not torch.isinf(X).any()
         assert not torch.isnan(X).any()
+
+
+class TestGaborTransformVmap:
+    """Tests for Gabor transform with vmap."""
+
+    def test_vmap_basic(self):
+        """vmap should batch over first dimension."""
+        x = torch.randn(8, 256, dtype=torch.float64)
+
+        # Manual batching
+        X_batched = gabor_transform(x, sigma=0.1, n_fft=64, dim=-1)
+
+        # vmap
+        def gabor_single(xi):
+            return gabor_transform(xi, sigma=0.1, n_fft=64)
+
+        X_vmap = torch.vmap(gabor_single)(x)
+
+        assert torch.allclose(X_batched, X_vmap, atol=1e-10)
+
+    def test_vmap_nested(self):
+        """Nested vmap should work."""
+        x = torch.randn(4, 4, 128, dtype=torch.float64)
+
+        def gabor_single(xi):
+            return gabor_transform(xi, sigma=0.1, n_fft=32)
+
+        X_vmap = torch.vmap(torch.vmap(gabor_single))(x)
+
+        assert X_vmap.ndim == 4  # batch, batch, freq, frames
+
+
+class TestGaborTransformCompile:
+    """Tests for Gabor transform with torch.compile."""
+
+    def test_compile_basic(self):
+        """torch.compile should work."""
+        x = torch.randn(256, dtype=torch.float64)
+
+        @torch.compile(fullgraph=True)
+        def compiled_gabor(xi):
+            return gabor_transform(xi, sigma=0.1, n_fft=64)
+
+        X_compiled = compiled_gabor(x)
+        X_eager = gabor_transform(x, sigma=0.1, n_fft=64)
+
+        assert torch.allclose(X_compiled, X_eager, atol=1e-10)
+
+    def test_compile_with_grad(self):
+        """torch.compile should work with gradients."""
+        x = torch.randn(128, dtype=torch.float64, requires_grad=True)
+
+        @torch.compile(fullgraph=True)
+        def compiled_gabor(xi):
+            return gabor_transform(xi, sigma=0.1, n_fft=32, center=False)
+
+        X = compiled_gabor(x)
+        X.abs().sum().backward()
+
+        assert x.grad is not None
+        assert x.grad.shape == x.shape

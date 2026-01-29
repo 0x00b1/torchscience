@@ -422,3 +422,88 @@ class TestInverseShortTimeFourierTransformMatchesTorchISTFT:
         )
 
         assert torch.allclose(x_rec, expected, atol=1e-5)
+
+
+class TestInverseShortTimeFourierTransformVmap:
+    """Tests for ISTFT with vmap."""
+
+    def test_vmap_basic(self):
+        """vmap should batch over first dimension."""
+        x = torch.randn(8, 512, dtype=torch.float64)
+        window = torch.hann_window(128, dtype=torch.float64)
+
+        # Get STFT
+        S = short_time_fourier_transform(x, window=window, dim=-1)
+
+        # Manual batching - ISTFT on batched input
+        x_rec_batched = inverse_short_time_fourier_transform(
+            S, window=window, length=512
+        )
+
+        # vmap
+        def istft_single(Si):
+            return inverse_short_time_fourier_transform(
+                Si, window=window, length=512
+            )
+
+        x_rec_vmap = torch.vmap(istft_single)(S)
+
+        assert torch.allclose(x_rec_batched, x_rec_vmap, atol=1e-10)
+
+    def test_vmap_nested(self):
+        """Nested vmap should work."""
+        x = torch.randn(4, 4, 256, dtype=torch.float64)
+        window = torch.hann_window(64, dtype=torch.float64)
+
+        S = short_time_fourier_transform(x, window=window, dim=-1)
+
+        def istft_single(Si):
+            return inverse_short_time_fourier_transform(
+                Si, window=window, length=256
+            )
+
+        x_rec_vmap = torch.vmap(torch.vmap(istft_single))(S)
+
+        assert x_rec_vmap.shape == x.shape
+
+
+class TestInverseShortTimeFourierTransformCompile:
+    """Tests for ISTFT with torch.compile."""
+
+    def test_compile_basic(self):
+        """torch.compile should work."""
+        x = torch.randn(512, dtype=torch.float64)
+        window = torch.hann_window(128, dtype=torch.float64)
+        S = short_time_fourier_transform(x, window=window)
+
+        @torch.compile(fullgraph=True)
+        def compiled_istft(Si):
+            return inverse_short_time_fourier_transform(
+                Si, window=window, length=512
+            )
+
+        x_rec_compiled = compiled_istft(S)
+        x_rec_eager = inverse_short_time_fourier_transform(
+            S, window=window, length=512
+        )
+
+        assert torch.allclose(x_rec_compiled, x_rec_eager, atol=1e-10)
+
+    def test_compile_with_grad(self):
+        """torch.compile should work with gradients."""
+        x = torch.randn(256, dtype=torch.float64)
+        window = torch.hann_window(64, dtype=torch.float64)
+        S = short_time_fourier_transform(x, window=window)
+        S_input = S.detach().requires_grad_(True)
+
+        @torch.compile(fullgraph=True)
+        def compiled_istft(Si):
+            return inverse_short_time_fourier_transform(
+                Si, window=window, length=256
+            )
+
+        x_rec = compiled_istft(S_input)
+        x_rec.sum().backward()
+
+        assert S_input.grad is not None
+        assert S_input.grad.shape == S_input.shape
