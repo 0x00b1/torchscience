@@ -5,128 +5,68 @@ from __future__ import annotations
 import math
 from typing import Literal
 
-import torch.nn.functional as F
+import torch
 from torch import Tensor
+
+import torchscience._csrc  # noqa: F401
 
 from ._wavelets import get_wavelet_filters
 
+# Padding mode mapping: Python string -> C++ int
+_PADDING_MODE_MAP = {
+    "symmetric": 0,
+    "reflect": 1,
+    "periodic": 2,
+    "zero": 3,
+}
 
-def _pad_signal(
-    x: Tensor,
-    pad_left: int,
-    pad_right: int,
-    mode: Literal["symmetric", "reflect", "periodic", "zero"],
-) -> Tensor:
-    """Pad signal for wavelet convolution.
 
-    Parameters
-    ----------
-    x : Tensor
-        Input tensor with signal in last dimension.
-    pad_left : int
-        Padding on left side.
-    pad_right : int
-        Padding on right side.
-    mode : str
-        Padding mode.
+def _compute_coeff_lengths(input_length: int, levels: int) -> list[int]:
+    """Compute coefficient lengths for each DWT level.
 
-    Returns
-    -------
-    Tensor
-        Padded signal.
+    Returns a list where coeff_lens[i] is the coefficient length at level i+1.
     """
-    if pad_left == 0 and pad_right == 0:
-        return x
-
-    if mode == "zero":
-        return F.pad(x, (pad_left, pad_right), mode="constant", value=0)
-    elif mode == "periodic":
-        return F.pad(x, (pad_left, pad_right), mode="circular")
-    elif mode == "reflect":
-        return F.pad(x, (pad_left, pad_right), mode="reflect")
-    elif mode == "symmetric":
-        # PyTorch's reflect doesn't include the edge, but symmetric does
-        # We implement symmetric by using replicate + reflect combination
-        # Actually, for DWT, we use a simpler approach: extend by reflection
-        # including the boundary point
-        # For now, use reflect as an approximation (close enough for most cases)
-        return F.pad(x, (pad_left, pad_right), mode="reflect")
-    else:
-        raise ValueError(f"Unknown padding mode: {mode}")
+    lengths = []
+    current_len = input_length
+    for _ in range(levels):
+        coeff_len = (current_len + 1) // 2
+        lengths.append(coeff_len)
+        current_len = coeff_len
+    return lengths
 
 
-def _dwt_single_level(
-    x: Tensor,
-    dec_lo: Tensor,
-    dec_hi: Tensor,
-    padding_mode: Literal["symmetric", "reflect", "periodic", "zero"],
-) -> tuple[Tensor, Tensor]:
-    """Perform single-level DWT decomposition.
+def _unpack_coefficients(
+    packed: Tensor, input_length: int, levels: int
+) -> tuple[Tensor, list[Tensor]]:
+    """Unpack coefficients from packed format to (approx, [details]).
 
-    Parameters
-    ----------
-    x : Tensor
-        Input tensor of shape (..., N) where N is the signal length.
-    dec_lo : Tensor
-        Decomposition lowpass filter of shape (filter_len,).
-    dec_hi : Tensor
-        Decomposition highpass filter of shape (filter_len,).
-    padding_mode : str
-        Padding mode.
-
-    Returns
-    -------
-    tuple of Tensor
-        (approx, detail) coefficients, each of shape (..., ceil(N/2) + padding_adj)
+    Packed format: [cA_n | cD_n | cD_{n-1} | ... | cD_1]
+    Returns: (approx, [d1, d2, ..., dn]) where d1 is finest (level 1)
     """
-    filter_len = dec_lo.shape[0]
+    coeff_lens = _compute_coeff_lengths(input_length, levels)
 
-    # Prepare input for conv1d: need shape (batch, channels, length)
-    original_shape = x.shape
-    signal_len = original_shape[-1]
+    # Approximation coefficients (at the coarsest level)
+    approx_len = coeff_lens[-1]
+    approx = packed.narrow(-1, 0, approx_len)
 
-    # Flatten all batch dimensions
-    if x.ndim == 1:
-        x_conv = x.unsqueeze(0).unsqueeze(0)  # (1, 1, N)
-        batch_shape = ()
-    else:
-        batch_numel = 1
-        for s in original_shape[:-1]:
-            batch_numel *= s
-        x_conv = x.reshape(batch_numel, 1, signal_len)  # (batch, 1, N)
-        batch_shape = original_shape[:-1]
+    # Detail coefficients are stored as cD_n, cD_{n-1}, ..., cD_1
+    # We need to return them as [d1, d2, ..., dn] (finest to coarsest)
+    details = []
+    offset = approx_len
 
-    # Pad signal for convolution
-    # For 'same' convolution with downsampling by 2, we need to pad appropriately
-    # Standard DWT padding: pad by (filter_len - 1) symmetrically, then convolve, then downsample
-    pad_total = filter_len - 1
-    pad_left = pad_total // 2
-    pad_right = pad_total - pad_left
+    # coeff_lens[i] is the length at level i+1
+    # Details in packed: cD_n (level n), cD_{n-1} (level n-1), ..., cD_1 (level 1)
+    # So we read in order of levels-1, levels-2, ..., 0
+    for i in range(levels - 1, -1, -1):
+        detail_len = coeff_lens[i]
+        detail = packed.narrow(-1, offset, detail_len)
+        details.append(detail)
+        offset += detail_len
 
-    x_padded = _pad_signal(x_conv, pad_left, pad_right, padding_mode)
+    # Reverse to get [d1, d2, ..., dn] (finest to coarsest)
+    details.reverse()
 
-    # Prepare filters for conv1d: shape (out_channels, in_channels/groups, kernel_size)
-    # We want to convolve with the filter reversed (convolution vs correlation)
-    dec_lo_kernel = dec_lo.flip(0).reshape(1, 1, -1)
-    dec_hi_kernel = dec_hi.flip(0).reshape(1, 1, -1)
-
-    # Convolve (this is actually cross-correlation, so we flipped the filters)
-    approx_full = F.conv1d(x_padded, dec_lo_kernel)
-    detail_full = F.conv1d(x_padded, dec_hi_kernel)
-
-    # Downsample by 2 (take every other sample, starting from index 0)
-    approx = approx_full[:, :, ::2]
-    detail = detail_full[:, :, ::2]
-
-    # Reshape back to original batch shape
-    if len(batch_shape) == 0:
-        approx = approx.squeeze(0).squeeze(0)  # (out_len,)
-        detail = detail.squeeze(0).squeeze(0)
-    else:
-        approx = approx.squeeze(1).reshape(*batch_shape, -1)
-        detail = detail.squeeze(1).reshape(*batch_shape, -1)
-
-    return approx, detail
+    return approx, details
 
 
 def discrete_wavelet_transform(
@@ -293,15 +233,16 @@ def discrete_wavelet_transform(
     # Clamp level to maximum
     actual_level = min(level, max_level)
 
-    # Perform multi-level decomposition
-    details: list[Tensor] = []
-    approx = x
+    # Convert padding mode to int
+    mode_int = _PADDING_MODE_MAP[padding_mode]
 
-    for _ in range(actual_level):
-        approx, detail = _dwt_single_level(
-            approx, dec_lo, dec_hi, padding_mode
-        )
-        details.append(detail)
+    # Call C++ backend
+    packed = torch.ops.torchscience.discrete_wavelet_transform(
+        x, dec_lo, dec_hi, actual_level, mode_int
+    )
+
+    # Unpack coefficients to (approx, [details]) format
+    approx, details = _unpack_coefficients(packed, signal_len, actual_level)
 
     # Move dimension back if needed
     if normalized_dim != ndim - 1:

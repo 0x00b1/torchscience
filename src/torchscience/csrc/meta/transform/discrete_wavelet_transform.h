@@ -9,18 +9,21 @@ namespace torchscience::meta::transform {
 
 /**
  * Compute total output length for packed DWT coefficients.
+ *
+ * The DWT pads the signal, convolves, then downsamples by 2.
+ * After padding and valid convolution, output length = input_len,
+ * then downsampled to (input_len + 1) / 2.
  */
 inline int64_t compute_dwt_output_length(
     int64_t input_length,
-    int64_t filter_length,
+    [[maybe_unused]] int64_t filter_length,
     int64_t levels
 ) {
     int64_t total = 0;
     int64_t current_len = input_length;
 
     for (int64_t i = 0; i < levels; i++) {
-        int64_t padded_len = current_len + filter_length - 1;
-        int64_t coeff_len = (padded_len + 1) / 2;
+        int64_t coeff_len = (current_len + 1) / 2;
         total += coeff_len;  // detail coefficients
         current_len = coeff_len;
     }

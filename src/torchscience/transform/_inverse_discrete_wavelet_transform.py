@@ -4,94 +4,45 @@ from __future__ import annotations
 
 from typing import Literal
 
-import torch.nn.functional as F
+import torch
 from torch import Tensor
+
+import torchscience._csrc  # noqa: F401
 
 from ._wavelets import get_wavelet_filters
 
+# Padding mode mapping: Python string -> C++ int
+_PADDING_MODE_MAP = {
+    "symmetric": 0,
+    "reflect": 1,
+    "periodic": 2,
+    "zero": 3,
+}
 
-def _idwt_single_level(
-    approx: Tensor,
-    detail: Tensor,
-    rec_lo: Tensor,
-    rec_hi: Tensor,
-    output_len: int,
-) -> Tensor:
-    """Perform single-level IDWT reconstruction.
 
-    Uses transposed convolution (conv_transpose1d) for upsampling and filtering,
-    which is the correct way to implement synthesis filter banks for perfect
-    reconstruction.
+def _compute_coeff_lengths(input_length: int, levels: int) -> list[int]:
+    """Compute coefficient lengths for each DWT level."""
+    lengths = []
+    current_len = input_length
+    for _ in range(levels):
+        coeff_len = (current_len + 1) // 2
+        lengths.append(coeff_len)
+        current_len = coeff_len
+    return lengths
 
-    Parameters
-    ----------
-    approx : Tensor
-        Approximation coefficients of shape (..., N_coeff).
-    detail : Tensor
-        Detail coefficients of shape (..., N_coeff).
-    rec_lo : Tensor
-        Reconstruction lowpass filter of shape (filter_len,).
-    rec_hi : Tensor
-        Reconstruction highpass filter of shape (filter_len,).
-    output_len : int
-        Expected output signal length.
 
-    Returns
-    -------
-    Tensor
-        Reconstructed signal of shape (..., output_len).
+def _pack_coefficients(approx: Tensor, details: list[Tensor]) -> Tensor:
+    """Pack (approx, [details]) into packed format.
+
+    Input: (approx, [d1, d2, ..., dn]) where d1 is finest (level 1)
+    Packed format: [cA_n | cD_n | cD_{n-1} | ... | cD_1]
     """
-    # Prepare inputs for conv_transpose1d: need shape (batch, channels, length)
-    original_shape = approx.shape
-    coeff_len = original_shape[-1]
-
-    # Flatten all batch dimensions
-    if approx.ndim == 1:
-        approx_conv = approx.unsqueeze(0).unsqueeze(0)  # (1, 1, N)
-        detail_conv = detail.unsqueeze(0).unsqueeze(0)
-        batch_shape = ()
-    else:
-        batch_numel = 1
-        for s in original_shape[:-1]:
-            batch_numel *= s
-        approx_conv = approx.reshape(
-            batch_numel, 1, coeff_len
-        )  # (batch, 1, N)
-        detail_conv = detail.reshape(batch_numel, 1, coeff_len)
-        batch_shape = original_shape[:-1]
-
-    # Prepare filters for conv_transpose1d: shape (in_channels, out_channels/groups, kernel_size)
-    # Note: conv_transpose1d has shape (in_channels, out_channels, kernel_size)
-    rec_lo_kernel = rec_lo.reshape(1, 1, -1)
-    rec_hi_kernel = rec_hi.reshape(1, 1, -1)
-
-    # Use conv_transpose1d with stride=2 (which does upsampling + convolution)
-    # This is the correct way to implement the synthesis filter bank
-    approx_rec = F.conv_transpose1d(approx_conv, rec_lo_kernel, stride=2)
-    detail_rec = F.conv_transpose1d(detail_conv, rec_hi_kernel, stride=2)
-
-    # Add the lowpass and highpass reconstructions
-    reconstructed = approx_rec + detail_rec
-
-    # Trim to output length if needed
-    # The output of conv_transpose1d with input N, filter L, stride 2 is:
-    # (N - 1) * 2 + L
-    current_len = reconstructed.shape[-1]
-    if current_len > output_len:
-        # Trim from the end
-        reconstructed = reconstructed[:, :, :output_len]
-    elif current_len < output_len:
-        # Pad at the end if needed
-        pad_needed = output_len - current_len
-        reconstructed = F.pad(reconstructed, (0, pad_needed))
-
-    # Reshape back to original batch shape
-    if len(batch_shape) == 0:
-        reconstructed = reconstructed.squeeze(0).squeeze(0)  # (output_len,)
-    else:
-        reconstructed = reconstructed.squeeze(1).reshape(*batch_shape, -1)
-
-    return reconstructed
+    # Details are [d1, d2, ..., dn] (finest to coarsest)
+    # Pack as [approx, dn, d_{n-1}, ..., d1]
+    all_coeffs = [approx]
+    for detail in reversed(details):
+        all_coeffs.append(detail)
+    return torch.cat(all_coeffs, dim=-1)
 
 
 def inverse_discrete_wavelet_transform(
@@ -234,22 +185,22 @@ def inverse_discrete_wavelet_transform(
         approx = approx.movedim(normalized_dim, -1)
         details = [d.movedim(normalized_dim, -1) for d in details]
 
-    # Reconstruct from coarsest to finest level
-    # Details are ordered [d1, d2, ..., dn] (finest to coarsest)
-    # We need to iterate from coarsest to finest: [dn, d_{n-1}, ..., d1]
-    reconstructed = approx
+    # Compute output length: work backwards from finest detail
+    # details[0] is from level 1, which was (input_len + 1) // 2
+    # So input_len = details[0].size(-1) * 2 or details[0].size(-1) * 2 - 1
+    # We use the even case (details[0].size(-1) * 2) by default
+    output_length = details[0].shape[-1] * 2
 
-    for i in range(num_levels - 1, -1, -1):
-        detail = details[i]
+    # Convert padding mode to int
+    mode_int = _PADDING_MODE_MAP[padding_mode]
 
-        # Compute expected output length from this level
-        # The output length should be 2 * coeff_len for perfect reconstruction
-        coeff_len = detail.shape[-1]
-        output_len = coeff_len * 2
+    # Pack coefficients for C++ backend
+    packed = _pack_coefficients(approx, details)
 
-        reconstructed = _idwt_single_level(
-            reconstructed, detail, rec_lo, rec_hi, output_len
-        )
+    # Call C++ backend
+    reconstructed = torch.ops.torchscience.inverse_discrete_wavelet_transform(
+        packed, rec_lo, rec_hi, num_levels, mode_int, output_length
+    )
 
     # Move dimension back if needed
     if normalized_dim != ndim - 1:

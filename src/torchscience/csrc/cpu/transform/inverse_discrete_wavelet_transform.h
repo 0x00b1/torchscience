@@ -97,19 +97,23 @@ inline at::Tensor idwt_single_level(
 
 /**
  * Compute coefficient lengths for each DWT level.
+ *
+ * The DWT pads the signal, convolves, then downsamples by 2.
+ * After padding by (filter_len - 1) and valid convolution,
+ * output length = input_len, then downsampled to (input_len + 1) / 2.
  */
 inline std::vector<int64_t> compute_coeff_lengths(
     int64_t input_length,
     int64_t filter_len,
     int64_t levels
 ) {
+    (void)filter_len;  // Not needed in the actual computation
     std::vector<int64_t> lengths;
     int64_t current_len = input_length;
 
     for (int64_t i = 0; i < levels; i++) {
-        // After convolution and downsampling
-        int64_t padded_len = current_len + filter_len - 1;
-        int64_t coeff_len = (padded_len + 1) / 2;  // ceil division
+        // After convolution (preserves length due to padding) and downsampling by 2
+        int64_t coeff_len = (current_len + 1) / 2;
         lengths.push_back(coeff_len);
         current_len = coeff_len;
     }
