@@ -362,4 +362,9 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("cosine_integral_ci(Tensor x) -> Tensor");
   m.def("cosine_integral_ci_backward(Tensor grad_output, Tensor x) -> Tensor");
   m.def("cosine_integral_ci_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
+
+  // Spherical Hankel functions of the first kind
+  m.def("spherical_hankel_1(Tensor n, Tensor z) -> Tensor");
+  m.def("spherical_hankel_1_backward(Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor)");
+  m.def("spherical_hankel_1_backward_backward(Tensor gg_n, Tensor gg_z, Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor, Tensor)");
 }

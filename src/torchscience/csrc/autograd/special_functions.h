@@ -93,3 +93,6 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(sine_integral_si, SineIntegralSi,
 
 // Cosine integral
 TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(cosine_integral_ci, CosineIntegralCi, x)
+
+// Spherical Hankel functions of the first kind
+TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(spherical_hankel_1, SphericalHankel1, n, z)
