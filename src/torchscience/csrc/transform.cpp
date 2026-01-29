@@ -26,6 +26,8 @@
 #include "cpu/transform/inverse_z_transform.h"
 #include "cpu/transform/radon_transform.h"
 #include "cpu/transform/inverse_radon_transform.h"
+#include "cpu/transform/discrete_wavelet_transform.h"
+#include "cpu/transform/inverse_discrete_wavelet_transform.h"
 
 // Meta backend
 #include "meta/transform/fourier_transform.h"
@@ -47,6 +49,8 @@
 #include "meta/transform/inverse_z_transform.h"
 #include "meta/transform/radon_transform.h"
 #include "meta/transform/inverse_radon_transform.h"
+#include "meta/transform/discrete_wavelet_transform.h"
+#include "meta/transform/inverse_discrete_wavelet_transform.h"
 
 // Autograd backend
 #include "autograd/transform/fourier_transform.h"
@@ -68,6 +72,8 @@
 #include "autograd/transform/inverse_z_transform.h"
 #include "autograd/transform/radon_transform.h"
 #include "autograd/transform/inverse_radon_transform.h"
+#include "autograd/transform/discrete_wavelet_transform.h"
+#include "autograd/transform/inverse_discrete_wavelet_transform.h"
 
 // Autocast backend
 #include "autocast/transform/fourier_transform.h"
@@ -173,4 +179,13 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("inverse_radon_transform(Tensor sinogram, Tensor angles, bool circle, int output_size, int filter_type) -> Tensor");
   m.def("inverse_radon_transform_backward(Tensor grad_output, Tensor sinogram, Tensor angles, bool circle, int output_size, int filter_type) -> Tensor");
   m.def("inverse_radon_transform_backward_backward(Tensor gg_sinogram, Tensor grad_output, Tensor sinogram, Tensor angles, bool circle, int output_size, int filter_type) -> (Tensor, Tensor)");
+
+  // Discrete wavelet transform
+  m.def("discrete_wavelet_transform(Tensor input, Tensor filter_lo, Tensor filter_hi, int levels, int mode) -> Tensor");
+  m.def("discrete_wavelet_transform_backward(Tensor grad_output, Tensor input, Tensor filter_lo, Tensor filter_hi, int levels, int mode, int input_length) -> Tensor");
+  m.def("discrete_wavelet_transform_backward_backward(Tensor gg_input, Tensor grad_output, Tensor input, Tensor filter_lo, Tensor filter_hi, int levels, int mode, int input_length) -> (Tensor, Tensor)");
+
+  m.def("inverse_discrete_wavelet_transform(Tensor coeffs, Tensor filter_lo, Tensor filter_hi, int levels, int mode, int output_length) -> Tensor");
+  m.def("inverse_discrete_wavelet_transform_backward(Tensor grad_output, Tensor coeffs, Tensor filter_lo, Tensor filter_hi, int levels, int mode, int output_length) -> Tensor");
+  m.def("inverse_discrete_wavelet_transform_backward_backward(Tensor gg_coeffs, Tensor grad_output, Tensor coeffs, Tensor filter_lo, Tensor filter_hi, int levels, int mode, int output_length) -> (Tensor, Tensor)");
 }
