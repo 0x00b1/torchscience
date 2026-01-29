@@ -18,6 +18,66 @@
 namespace torchscience::cpu::transform {
 
 // Padding mode enum: 0=symmetric, 1=reflect, 2=periodic, 3=zero
+//
+// Symmetric extension (mode 0): reflects including boundary
+//   [a, b, c, d] with pad_left=2 -> [b, a, a, b, c, d]
+//   This matches PyWavelets' 'symmetric' mode
+//
+// Reflect extension (mode 1): reflects excluding boundary
+//   [a, b, c, d] with pad_left=2 -> [c, b, a, b, c, d]
+//   This matches PyTorch's 'reflect' mode
+
+inline at::Tensor symmetric_pad_1d(
+    const at::Tensor& input,
+    int64_t pad_left,
+    int64_t pad_right
+) {
+    // Symmetric extension includes the boundary point
+    // For signal [a, b, c, d]:
+    //   Left symmetric pad by 2: [b, a | a, b, c, d]
+    //   Right symmetric pad by 2: [a, b, c, d | d, c]
+
+    int64_t n = input.size(-1);
+    std::vector<at::Tensor> parts;
+
+    // Left padding: take first pad_left elements and flip
+    if (pad_left > 0) {
+        // Handle case where pad_left > n by repeating
+        int64_t remaining = pad_left;
+        std::vector<at::Tensor> left_parts;
+
+        while (remaining > 0) {
+            int64_t take = std::min(remaining, n);
+            at::Tensor chunk = input.narrow(-1, 0, take);
+            chunk = at::flip(chunk, {-1});
+            left_parts.insert(left_parts.begin(), chunk);
+            remaining -= take;
+        }
+
+        for (auto& p : left_parts) {
+            parts.push_back(p);
+        }
+    }
+
+    // Original signal
+    parts.push_back(input);
+
+    // Right padding: take last pad_right elements and flip
+    if (pad_right > 0) {
+        int64_t remaining = pad_right;
+
+        while (remaining > 0) {
+            int64_t take = std::min(remaining, n);
+            at::Tensor chunk = input.narrow(-1, n - take, take);
+            chunk = at::flip(chunk, {-1});
+            parts.push_back(chunk);
+            remaining -= take;
+        }
+    }
+
+    return at::cat(parts, -1);
+}
+
 inline at::Tensor pad_for_dwt(
     const at::Tensor& input,
     int64_t pad_left,
@@ -28,17 +88,26 @@ inline at::Tensor pad_for_dwt(
         return input;
     }
 
-    std::string pad_mode;
-    if (mode == 0 || mode == 1) {  // symmetric or reflect
-        pad_mode = "reflect";
+    if (mode == 0) {  // symmetric (PyWavelets-compatible)
+        return symmetric_pad_1d(input, pad_left, pad_right);
+    } else if (mode == 1) {  // reflect (PyTorch-style)
+        return at::pad(input, {pad_left, pad_right}, "reflect");
     } else if (mode == 2) {  // periodic
-        pad_mode = "circular";
+        return at::pad(input, {pad_left, pad_right}, "circular");
     } else {  // zero
-        pad_mode = "constant";
+        return at::pad(input, {pad_left, pad_right}, "constant");
     }
+}
 
-    // F.pad expects (left, right) for 1D, applied to last dim
-    return at::pad(input, {pad_left, pad_right}, pad_mode);
+// Compute DWT output length matching PyWavelets behavior
+// For symmetric/reflect modes: floor((input_len + filter_len - 1) / 2)
+inline int64_t dwt_coeff_len(int64_t input_len, int64_t filter_len, int64_t mode) {
+    if (mode == 2) {  // periodic
+        return (input_len + 1) / 2;
+    } else {
+        // symmetric, reflect, zero: include boundary effects
+        return (input_len + filter_len - 1) / 2;
+    }
 }
 
 inline at::Tensor dwt_single_level(
@@ -69,10 +138,20 @@ inline at::Tensor dwt_single_level(
         x_conv = x.reshape({batch_numel, 1, signal_len});
     }
 
-    // Pad signal for convolution
-    int64_t pad_total = filter_len - 1;
-    int64_t pad_left = pad_total / 2;
+    // Compute output coefficient length
+    int64_t out_len = dwt_coeff_len(signal_len, filter_len, mode);
+
+    // Pad signal for convolution - enough for the desired output length after downsampling
+    // After convolution (valid mode) and downsampling, we need 2*out_len samples
+    // So padded length must be: 2*out_len + filter_len - 1
+    int64_t needed_len = 2 * out_len + filter_len - 1;
+    int64_t pad_total = needed_len - signal_len;
+    int64_t pad_left = (filter_len - 1) / 2;
     int64_t pad_right = pad_total - pad_left;
+
+    // Ensure non-negative padding
+    if (pad_left < 0) pad_left = 0;
+    if (pad_right < 0) pad_right = 0;
 
     at::Tensor x_padded = pad_for_dwt(x_conv, pad_left, pad_right, mode);
 
@@ -81,17 +160,15 @@ inline at::Tensor dwt_single_level(
     at::Tensor lo_kernel = at::flip(filter_lo, {0}).reshape({1, 1, -1});
     at::Tensor hi_kernel = at::flip(filter_hi, {0}).reshape({1, 1, -1});
 
-    // Convolve
+    // Convolve (valid mode - no padding in conv1d)
     at::Tensor approx_full = at::conv1d(x_padded, lo_kernel);
     at::Tensor detail_full = at::conv1d(x_padded, hi_kernel);
 
-    // Downsample by 2
-    at::Tensor approx = approx_full.slice(2, 0, c10::nullopt, 2);
-    at::Tensor detail = detail_full.slice(2, 0, c10::nullopt, 2);
+    // Downsample by 2, taking first out_len coefficients
+    at::Tensor approx = approx_full.slice(2, 0, 2 * out_len, 2);
+    at::Tensor detail = detail_full.slice(2, 0, 2 * out_len, 2);
 
     // Reshape back to original batch shape
-    int64_t out_len = approx.size(-1);
-
     if (ndim == 1) {
         approx = approx.squeeze(0).squeeze(0);
         detail = detail.squeeze(0).squeeze(0);

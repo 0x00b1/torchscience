@@ -95,25 +95,25 @@ inline at::Tensor idwt_single_level(
     return result;
 }
 
+// dwt_coeff_len is defined in discrete_wavelet_transform.h which is included first
+
 /**
  * Compute coefficient lengths for each DWT level.
  *
  * The DWT pads the signal, convolves, then downsamples by 2.
- * After padding by (filter_len - 1) and valid convolution,
- * output length = input_len, then downsampled to (input_len + 1) / 2.
+ * The output length depends on the padding mode and filter length.
  */
 inline std::vector<int64_t> compute_coeff_lengths(
     int64_t input_length,
     int64_t filter_len,
-    int64_t levels
+    int64_t levels,
+    int64_t mode = 0
 ) {
-    (void)filter_len;  // Not needed in the actual computation
     std::vector<int64_t> lengths;
     int64_t current_len = input_length;
 
     for (int64_t i = 0; i < levels; i++) {
-        // After convolution (preserves length due to padding) and downsampling by 2
-        int64_t coeff_len = (current_len + 1) / 2;
+        int64_t coeff_len = dwt_coeff_len(current_len, filter_len, mode);
         lengths.push_back(coeff_len);
         current_len = coeff_len;
     }
@@ -148,7 +148,7 @@ inline at::Tensor inverse_discrete_wavelet_transform(
     int64_t filter_len = filter_lo.size(0);
 
     // Compute expected coefficient lengths at each level
-    std::vector<int64_t> coeff_lens = compute_coeff_lengths(output_length, filter_len, levels);
+    std::vector<int64_t> coeff_lens = compute_coeff_lengths(output_length, filter_len, levels, mode);
 
     // Unpack coefficients: [cA_n | cD_n | cD_{n-1} | ... | cD_1]
     int64_t total_len = coeffs.size(-1);

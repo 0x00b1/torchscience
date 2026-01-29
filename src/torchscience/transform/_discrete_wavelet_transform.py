@@ -21,7 +21,18 @@ _PADDING_MODE_MAP = {
 }
 
 
-def _compute_coeff_lengths(input_length: int, levels: int) -> list[int]:
+def _dwt_coeff_len(input_len: int, filter_len: int, mode: int) -> int:
+    """Compute DWT output length matching PyWavelets behavior."""
+    if mode == 2:  # periodic
+        return (input_len + 1) // 2
+    else:
+        # symmetric, reflect, zero: include boundary effects
+        return (input_len + filter_len - 1) // 2
+
+
+def _compute_coeff_lengths(
+    input_length: int, filter_len: int, levels: int, mode: int = 0
+) -> list[int]:
     """Compute coefficient lengths for each DWT level.
 
     Returns a list where coeff_lens[i] is the coefficient length at level i+1.
@@ -29,21 +40,25 @@ def _compute_coeff_lengths(input_length: int, levels: int) -> list[int]:
     lengths = []
     current_len = input_length
     for _ in range(levels):
-        coeff_len = (current_len + 1) // 2
+        coeff_len = _dwt_coeff_len(current_len, filter_len, mode)
         lengths.append(coeff_len)
         current_len = coeff_len
     return lengths
 
 
 def _unpack_coefficients(
-    packed: Tensor, input_length: int, levels: int
+    packed: Tensor,
+    input_length: int,
+    filter_len: int,
+    levels: int,
+    mode: int = 0,
 ) -> tuple[Tensor, list[Tensor]]:
     """Unpack coefficients from packed format to (approx, [details]).
 
     Packed format: [cA_n | cD_n | cD_{n-1} | ... | cD_1]
     Returns: (approx, [d1, d2, ..., dn]) where d1 is finest (level 1)
     """
-    coeff_lens = _compute_coeff_lengths(input_length, levels)
+    coeff_lens = _compute_coeff_lengths(input_length, filter_len, levels, mode)
 
     # Approximation coefficients (at the coarsest level)
     approx_len = coeff_lens[-1]
@@ -242,7 +257,9 @@ def discrete_wavelet_transform(
     )
 
     # Unpack coefficients to (approx, [details]) format
-    approx, details = _unpack_coefficients(packed, signal_len, actual_level)
+    approx, details = _unpack_coefficients(
+        packed, signal_len, filter_len, actual_level, mode_int
+    )
 
     # Move dimension back if needed
     if normalized_dim != ndim - 1:

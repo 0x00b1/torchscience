@@ -20,15 +20,53 @@ _PADDING_MODE_MAP = {
 }
 
 
-def _compute_coeff_lengths(input_length: int, levels: int) -> list[int]:
+def _dwt_coeff_len(input_len: int, filter_len: int, mode: int) -> int:
+    """Compute DWT output length matching PyWavelets behavior."""
+    if mode == 2:  # periodic
+        return (input_len + 1) // 2
+    else:
+        # symmetric, reflect, zero: include boundary effects
+        return (input_len + filter_len - 1) // 2
+
+
+def _compute_coeff_lengths(
+    input_length: int, filter_len: int, levels: int, mode: int = 0
+) -> list[int]:
     """Compute coefficient lengths for each DWT level."""
     lengths = []
     current_len = input_length
     for _ in range(levels):
-        coeff_len = (current_len + 1) // 2
+        coeff_len = _dwt_coeff_len(current_len, filter_len, mode)
         lengths.append(coeff_len)
         current_len = coeff_len
     return lengths
+
+
+def _infer_output_length(coeff_len: int, filter_len: int, mode: int) -> int:
+    """Infer the input length from a coefficient length.
+
+    For coeff_len = (input_len + filter_len - 1) // 2
+    We solve for input_len, taking the larger of two possible values (even case).
+
+    Examples:
+    - filter_len=2 (Haar): coeff_len=64 -> input_len=128 (since (128+1)//2=64)
+    - filter_len=4 (db2): coeff_len=65 -> input_len=128 (since (128+3)//2=65)
+    """
+    if mode == 2:  # periodic
+        # coeff_len = (input_len + 1) // 2
+        # input_len = coeff_len * 2 or coeff_len * 2 - 1
+        return coeff_len * 2
+    else:
+        # coeff_len = (input_len + filter_len - 1) // 2
+        # 2 * coeff_len <= input_len + filter_len - 1 < 2 * coeff_len + 2
+        # 2 * coeff_len - filter_len + 1 <= input_len < 2 * coeff_len - filter_len + 3
+        # We take the even value in this range (or the larger one)
+        min_len = 2 * coeff_len - filter_len + 1
+        # Return even length (preferred for DWT)
+        if min_len % 2 == 0:
+            return min_len
+        else:
+            return min_len + 1
 
 
 def _pack_coefficients(approx: Tensor, details: list[Tensor]) -> Tensor:
@@ -185,14 +223,18 @@ def inverse_discrete_wavelet_transform(
         approx = approx.movedim(normalized_dim, -1)
         details = [d.movedim(normalized_dim, -1) for d in details]
 
-    # Compute output length: work backwards from finest detail
-    # details[0] is from level 1, which was (input_len + 1) // 2
-    # So input_len = details[0].size(-1) * 2 or details[0].size(-1) * 2 - 1
-    # We use the even case (details[0].size(-1) * 2) by default
-    output_length = details[0].shape[-1] * 2
-
     # Convert padding mode to int
     mode_int = _PADDING_MODE_MAP[padding_mode]
+
+    # Get filter length for output length computation
+    filter_len = rec_lo.shape[0]
+
+    # Compute output length: work backwards from finest detail
+    # details[0] is from level 1, which was _dwt_coeff_len(input_len, filter_len, mode)
+    # We need to infer the input_len from this
+    output_length = _infer_output_length(
+        details[0].shape[-1], filter_len, mode_int
+    )
 
     # Pack coefficients for C++ backend
     packed = _pack_coefficients(approx, details)
