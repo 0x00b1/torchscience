@@ -14,6 +14,9 @@
 #include <ATen/ops/zeros.h>
 #include <torch/library.h>
 
+// Include forward DWT header for dwt_coeff_len function
+#include "discrete_wavelet_transform.h"
+
 namespace torchscience::cpu::transform {
 
 /**
@@ -94,8 +97,6 @@ inline at::Tensor idwt_single_level(
 
     return result;
 }
-
-// dwt_coeff_len is defined in discrete_wavelet_transform.h which is included first
 
 /**
  * Compute coefficient lengths for each DWT level.

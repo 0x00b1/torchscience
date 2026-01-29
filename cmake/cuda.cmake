@@ -20,6 +20,8 @@ set(TORCHSCIENCE_CUDA_SOURCES
   src/torchscience/csrc/cuda/geometry/intersection/ray_sphere.cu
   src/torchscience/csrc/cuda/geometry/intersection/ray_triangle.cu
   src/torchscience/csrc/cuda/geometry/intersection/ray_aabb.cu
+  src/torchscience/csrc/cuda/transform/discrete_wavelet_transform.cu
+  src/torchscience/csrc/cuda/transform/inverse_discrete_wavelet_transform.cu
 )
 
 # Add CUDA sources to target
