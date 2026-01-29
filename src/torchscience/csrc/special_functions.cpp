@@ -357,4 +357,9 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("sine_integral_si(Tensor x) -> Tensor");
   m.def("sine_integral_si_backward(Tensor grad_output, Tensor x) -> Tensor");
   m.def("sine_integral_si_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
+
+  // Cosine integral
+  m.def("cosine_integral_ci(Tensor x) -> Tensor");
+  m.def("cosine_integral_ci_backward(Tensor grad_output, Tensor x) -> Tensor");
+  m.def("cosine_integral_ci_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
 }

@@ -90,3 +90,6 @@ TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(exponential_integral_e, n, x)
 
 // Sine integral
 TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(sine_integral_si, x)
+
+// Cosine integral
+TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(cosine_integral_ci, x)
