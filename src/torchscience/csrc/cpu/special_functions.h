@@ -453,3 +453,9 @@ TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(exponential_integral_e_1,
 #include "../kernel/special_functions/exponential_integral_ein_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(exponential_integral_ein, x)
+
+#include "../kernel/special_functions/exponential_integral_e.h"
+#include "../kernel/special_functions/exponential_integral_e_backward.h"
+#include "../kernel/special_functions/exponential_integral_e_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(exponential_integral_e, n, x)
