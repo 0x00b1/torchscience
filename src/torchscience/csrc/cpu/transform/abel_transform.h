@@ -66,20 +66,24 @@ inline at::Tensor abel_transform(
         batch_shape.push_back(input_moved.size(i));
     }
 
-    // Flatten batch dimensions
-    at::Tensor input_flat = input_moved.flatten(0, -2);  // [batch, n_r]
+    // Flatten batch dimensions (handle 1D input specially)
+    at::Tensor input_flat;
+    if (input_moved.dim() == 1) {
+        // 1D input: add batch dimension
+        input_flat = input_moved.unsqueeze(0);  // [1, n_r]
+    } else {
+        input_flat = input_moved.flatten(0, -2);  // [batch, n_r]
+    }
     int64_t batch_size = input_flat.size(0);
 
-    // Compute dr weights
+    // Compute dr weights using tensor operations (dtype-agnostic)
     at::Tensor dr = at::zeros({n_r}, r_c.options());
-    auto dr_accessor = dr.accessor<double, 1>();
-    auto r_accessor = r_c.accessor<double, 1>();
-
-    dr_accessor[0] = (r_accessor[1] - r_accessor[0]) / 2.0;
-    for (int64_t i = 1; i < n_r - 1; i++) {
-        dr_accessor[i] = (r_accessor[i + 1] - r_accessor[i - 1]) / 2.0;
+    at::Tensor r_diff = r_c.slice(0, 1, n_r) - r_c.slice(0, 0, n_r - 1);
+    dr[0] = r_diff[0] / 2.0;
+    if (n_r > 2) {
+        dr.slice(0, 1, n_r - 1) = (r_c.slice(0, 2, n_r) - r_c.slice(0, 0, n_r - 2)) / 2.0;
     }
-    dr_accessor[n_r - 1] = (r_accessor[n_r - 1] - r_accessor[n_r - 2]) / 2.0;
+    dr[n_r - 1] = r_diff[n_r - 2] / 2.0;
 
     // Allocate output
     at::Tensor result = at::zeros({batch_size, n_y}, input_c.options());
@@ -93,6 +97,8 @@ inline at::Tensor abel_transform(
         auto result_accessor = result.accessor<scalar_t, 2>();
         auto input_accessor = input_flat.accessor<scalar_t, 2>();
         auto y_accessor = y_flat.accessor<scalar_t, 1>();
+        auto r_accessor = r_c.accessor<scalar_t, 1>();
+        auto dr_accessor = dr.accessor<scalar_t, 1>();
 
         for (int64_t b = 0; b < batch_size; b++) {
             for (int64_t j = 0; j < n_y; j++) {
@@ -175,23 +181,27 @@ inline at::Tensor abel_transform_backward(
     at::Tensor y_flat = y_c.flatten();
     int64_t n_y = y_flat.size(0);
 
-    // Compute dr weights
+    // Compute dr weights using tensor operations (dtype-agnostic)
     at::Tensor dr = at::zeros({n_r}, r_c.options());
-    auto dr_accessor = dr.accessor<double, 1>();
-    auto r_accessor = r_c.accessor<double, 1>();
-
-    dr_accessor[0] = (r_accessor[1] - r_accessor[0]) / 2.0;
-    for (int64_t i = 1; i < n_r - 1; i++) {
-        dr_accessor[i] = (r_accessor[i + 1] - r_accessor[i - 1]) / 2.0;
+    at::Tensor r_diff = r_c.slice(0, 1, n_r) - r_c.slice(0, 0, n_r - 1);
+    dr[0] = r_diff[0] / 2.0;
+    if (n_r > 2) {
+        dr.slice(0, 1, n_r - 1) = (r_c.slice(0, 2, n_r) - r_c.slice(0, 0, n_r - 2)) / 2.0;
     }
-    dr_accessor[n_r - 1] = (r_accessor[n_r - 1] - r_accessor[n_r - 2]) / 2.0;
+    dr[n_r - 1] = r_diff[n_r - 2] / 2.0;
 
     // Move grad_output's dim to the last position
     at::Tensor grad_out_moved = grad_output.movedim(dim, -1);
 
-    // Flatten batch and y dimensions
+    // Flatten batch and y dimensions (handle 1D specially)
     int64_t y_ndim = y_c.dim();
-    at::Tensor grad_flat = grad_out_moved.flatten(0, -y_ndim - 1).flatten(-y_ndim);
+    at::Tensor grad_flat;
+    if (grad_out_moved.dim() <= y_ndim) {
+        // No batch dimensions: just flatten y dims and add batch dim
+        grad_flat = grad_out_moved.flatten().unsqueeze(0);
+    } else {
+        grad_flat = grad_out_moved.flatten(0, -y_ndim - 1).flatten(-y_ndim);
+    }
 
     int64_t batch_size = grad_flat.size(0);
 
@@ -205,6 +215,8 @@ inline at::Tensor abel_transform_backward(
         auto grad_input_accessor = grad_input.accessor<scalar_t, 2>();
         auto grad_flat_accessor = grad_flat.accessor<scalar_t, 2>();
         auto y_accessor = y_flat.accessor<scalar_t, 1>();
+        auto r_accessor = r_c.accessor<scalar_t, 1>();
+        auto dr_accessor = dr.accessor<scalar_t, 1>();
 
         for (int64_t b = 0; b < batch_size; b++) {
             for (int64_t i = 0; i < n_r; i++) {

@@ -55,66 +55,37 @@ inline at::Tensor laplace_transform(
     at::Tensor t_c = t.contiguous();
 
     // Compute weights for integration (dt for trapezoidal rule)
-    at::Tensor dt;
-    if (integration_method == 0) {  // trapezoidal
+    // Use tensor operations instead of accessors to support all floating point types
+    at::Tensor dt = at::zeros({n}, t_c.options());
+
+    // Compute spacing using tensor operations
+    at::Tensor t_diff = t_c.slice(0, 1, n) - t_c.slice(0, 0, n - 1);  // [n-1]
+
+    if (integration_method == 0 || integration_method == 2) {  // trapezoidal (or gauss_legendre fallback)
         // Weights: dt[i] = (t[i+1] - t[i-1]) / 2 for interior points
         // dt[0] = (t[1] - t[0]) / 2, dt[n-1] = (t[n-1] - t[n-2]) / 2
-        dt = at::zeros({n}, t_c.options());
-        auto dt_accessor = dt.accessor<double, 1>();
-        auto t_accessor = t_c.accessor<double, 1>();
-
-        dt_accessor[0] = (t_accessor[1] - t_accessor[0]) / 2.0;
-        for (int64_t i = 1; i < n - 1; i++) {
-            dt_accessor[i] = (t_accessor[i + 1] - t_accessor[i - 1]) / 2.0;
+        dt[0] = t_diff[0] / 2.0;
+        if (n > 2) {
+            dt.slice(0, 1, n - 1) = (t_c.slice(0, 2, n) - t_c.slice(0, 0, n - 2)) / 2.0;
         }
-        dt_accessor[n - 1] = (t_accessor[n - 1] - t_accessor[n - 2]) / 2.0;
+        dt[n - 1] = t_diff[n - 2] / 2.0;
     } else if (integration_method == 1) {  // simpson
-        // Simpson's rule requires odd number of points (even intervals)
-        if (n % 2 == 0) {
-            // Fall back to trapezoidal for last interval
-            dt = at::zeros({n}, t_c.options());
-            auto dt_accessor = dt.accessor<double, 1>();
-            auto t_accessor = t_c.accessor<double, 1>();
+        // Simpson's rule with uniform spacing assumption
+        // Weights: 1, 4, 2, 4, 2, ..., 4, 1 scaled by h/3
+        at::Tensor h = t_diff[0];  // Assume uniform spacing
+        at::Tensor h_over_3 = h / 3.0;
 
-            // Simpson's weights: 1, 4, 2, 4, 2, ..., 4, 1 scaled by h/3
-            // But with non-uniform spacing, we need to adapt
-            // For simplicity, use trapezoidal with Simpson correction
-            double h = t_accessor[1] - t_accessor[0];
-            dt_accessor[0] = h / 3.0;
-            for (int64_t i = 1; i < n - 2; i += 2) {
-                dt_accessor[i] = 4.0 * h / 3.0;
-                if (i + 1 < n - 1) {
-                    dt_accessor[i + 1] = 2.0 * h / 3.0;
-                }
-            }
-            if ((n - 1) % 2 == 1) {
-                dt_accessor[n - 2] = 4.0 * h / 3.0;
-            }
-            dt_accessor[n - 1] = h / 3.0;
-        } else {
-            dt = at::zeros({n}, t_c.options());
-            auto dt_accessor = dt.accessor<double, 1>();
-            auto t_accessor = t_c.accessor<double, 1>();
-            double h = t_accessor[1] - t_accessor[0];
-            dt_accessor[0] = h / 3.0;
-            for (int64_t i = 1; i < n - 1; i++) {
-                if (i % 2 == 1) {
-                    dt_accessor[i] = 4.0 * h / 3.0;
-                } else {
-                    dt_accessor[i] = 2.0 * h / 3.0;
-                }
-            }
-            dt_accessor[n - 1] = h / 3.0;
-        }
-    } else {  // gauss_legendre (not implemented, fall back to trapezoidal)
-        dt = at::zeros({n}, t_c.options());
-        auto dt_accessor = dt.accessor<double, 1>();
-        auto t_accessor = t_c.accessor<double, 1>();
-        dt_accessor[0] = (t_accessor[1] - t_accessor[0]) / 2.0;
+        dt[0] = h_over_3;
+        dt[n - 1] = h_over_3;
+
+        // Fill interior points
         for (int64_t i = 1; i < n - 1; i++) {
-            dt_accessor[i] = (t_accessor[i + 1] - t_accessor[i - 1]) / 2.0;
+            if (i % 2 == 1) {
+                dt[i] = 4.0 * h_over_3;
+            } else {
+                dt[i] = 2.0 * h_over_3;
+            }
         }
-        dt_accessor[n - 1] = (t_accessor[n - 1] - t_accessor[n - 2]) / 2.0;
     }
 
     // Reshape t and dt for broadcasting with input
@@ -232,16 +203,15 @@ inline at::Tensor laplace_transform_backward(
     int64_t n = t.size(0);
     at::Tensor t_c = t.contiguous();
 
-    // Compute dt weights (same as forward)
+    // Compute dt weights (same as forward) using tensor operations
     at::Tensor dt = at::zeros({n}, t_c.options());
-    auto dt_accessor = dt.accessor<double, 1>();
-    auto t_accessor = t_c.accessor<double, 1>();
+    at::Tensor t_diff = t_c.slice(0, 1, n) - t_c.slice(0, 0, n - 1);  // [n-1]
 
-    dt_accessor[0] = (t_accessor[1] - t_accessor[0]) / 2.0;
-    for (int64_t i = 1; i < n - 1; i++) {
-        dt_accessor[i] = (t_accessor[i + 1] - t_accessor[i - 1]) / 2.0;
+    dt[0] = t_diff[0] / 2.0;
+    if (n > 2) {
+        dt.slice(0, 1, n - 1) = (t_c.slice(0, 2, n) - t_c.slice(0, 0, n - 2)) / 2.0;
     }
-    dt_accessor[n - 1] = (t_accessor[n - 1] - t_accessor[n - 2]) / 2.0;
+    dt[n - 1] = t_diff[n - 2] / 2.0;
 
     at::Tensor s_c = s.contiguous();
     at::Tensor s_flat = s_c.flatten();

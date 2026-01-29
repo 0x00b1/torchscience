@@ -54,24 +54,14 @@ inline at::Tensor hankel_transform(
     at::Tensor k_c = k_out.contiguous();
     at::Tensor r_c = r_in.contiguous();
 
-    // Compute weights for integration (dr for trapezoidal rule)
+    // Compute weights for integration (dr for trapezoidal rule) using tensor operations
     at::Tensor dr = at::zeros({n}, r_c.options());
-    auto dr_accessor = dr.accessor<double, 1>();
-    auto r_accessor = r_c.accessor<double, 1>();
-
-    if (integration_method == 0) {  // trapezoidal
-        dr_accessor[0] = (r_accessor[1] - r_accessor[0]) / 2.0;
-        for (int64_t i = 1; i < n - 1; i++) {
-            dr_accessor[i] = (r_accessor[i + 1] - r_accessor[i - 1]) / 2.0;
-        }
-        dr_accessor[n - 1] = (r_accessor[n - 1] - r_accessor[n - 2]) / 2.0;
-    } else {  // simpson or default to trapezoidal
-        dr_accessor[0] = (r_accessor[1] - r_accessor[0]) / 2.0;
-        for (int64_t i = 1; i < n - 1; i++) {
-            dr_accessor[i] = (r_accessor[i + 1] - r_accessor[i - 1]) / 2.0;
-        }
-        dr_accessor[n - 1] = (r_accessor[n - 1] - r_accessor[n - 2]) / 2.0;
+    at::Tensor r_diff = r_c.slice(0, 1, n) - r_c.slice(0, 0, n - 1);
+    dr[0] = r_diff[0] / 2.0;
+    if (n > 2) {
+        dr.slice(0, 1, n - 1) = (r_c.slice(0, 2, n) - r_c.slice(0, 0, n - 2)) / 2.0;
     }
+    dr[n - 1] = r_diff[n - 2] / 2.0;
 
     // Flatten k_out for computation
     at::Tensor k_flat = k_c.flatten();
@@ -159,16 +149,14 @@ inline at::Tensor hankel_transform_backward(
     int64_t n = r_in.size(0);
     at::Tensor r_c = r_in.contiguous();
 
-    // Compute dr weights
+    // Compute dr weights using tensor operations (dtype-agnostic)
     at::Tensor dr = at::zeros({n}, r_c.options());
-    auto dr_accessor = dr.accessor<double, 1>();
-    auto r_accessor = r_c.accessor<double, 1>();
-
-    dr_accessor[0] = (r_accessor[1] - r_accessor[0]) / 2.0;
-    for (int64_t i = 1; i < n - 1; i++) {
-        dr_accessor[i] = (r_accessor[i + 1] - r_accessor[i - 1]) / 2.0;
+    at::Tensor r_diff = r_c.slice(0, 1, n) - r_c.slice(0, 0, n - 1);
+    dr[0] = r_diff[0] / 2.0;
+    if (n > 2) {
+        dr.slice(0, 1, n - 1) = (r_c.slice(0, 2, n) - r_c.slice(0, 0, n - 2)) / 2.0;
     }
-    dr_accessor[n - 1] = (r_accessor[n - 1] - r_accessor[n - 2]) / 2.0;
+    dr[n - 1] = r_diff[n - 2] / 2.0;
 
     at::Tensor k_c = k_out.contiguous();
     at::Tensor k_flat = k_c.flatten();
