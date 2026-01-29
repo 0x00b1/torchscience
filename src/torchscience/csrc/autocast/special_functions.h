@@ -93,3 +93,6 @@ TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(sine_integral_si, x)
 
 // Cosine integral
 TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(cosine_integral_ci, x)
+
+// Spherical Hankel functions of the first kind
+TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(spherical_hankel_1, n, z)
