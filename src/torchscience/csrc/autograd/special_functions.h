@@ -85,3 +85,4 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(spherical_bessel_k, SphericalBes
 // Exponential integrals
 TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(exponential_integral_ei, ExponentialIntegralEi, x)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(exponential_integral_e_1, ExponentialIntegralE1, x)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(exponential_integral_ein, ExponentialIntegralEin, x)
