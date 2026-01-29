@@ -219,3 +219,72 @@ class TestAbelTransformDevice:
             if "CUDA" in str(e) or "cuda" in str(e):
                 pytest.skip("CUDA backend not implemented")
             raise
+
+
+class TestAbelTransformVmap:
+    """Test Abel transform with vmap."""
+
+    def test_vmap_basic(self):
+        """vmap should batch over first dimension."""
+        r = torch.linspace(0.1, 5, 50, dtype=torch.float64)
+        f = torch.randn(8, 50, dtype=torch.float64)
+        y = torch.tensor([0.5, 1.0], dtype=torch.float64)
+
+        # Manual batching
+        F_batched = T.abel_transform(f, y, r, dim=-1)
+
+        # vmap
+        def abel_single(fi):
+            return T.abel_transform(fi, y, r)
+
+        F_vmap = torch.vmap(abel_single)(f)
+
+        assert torch.allclose(F_batched, F_vmap, atol=1e-10)
+
+    def test_vmap_nested(self):
+        """Nested vmap should work."""
+        r = torch.linspace(0.1, 5, 30, dtype=torch.float64)
+        f = torch.randn(4, 4, 30, dtype=torch.float64)
+        y = torch.tensor([1.0], dtype=torch.float64)
+
+        def abel_single(fi):
+            return T.abel_transform(fi, y, r)
+
+        F_vmap = torch.vmap(torch.vmap(abel_single))(f)
+
+        assert F_vmap.shape == torch.Size([4, 4, 1])
+
+
+class TestAbelTransformCompile:
+    """Test Abel transform with torch.compile."""
+
+    def test_compile_basic(self):
+        """torch.compile should work."""
+        r = torch.linspace(0.1, 5, 50, dtype=torch.float64)
+        f = torch.randn(50, dtype=torch.float64)
+        y = torch.tensor([0.5, 1.0], dtype=torch.float64)
+
+        @torch.compile(fullgraph=True)
+        def compiled_abel(x):
+            return T.abel_transform(x, y, r)
+
+        F_compiled = compiled_abel(f)
+        F_eager = T.abel_transform(f, y, r)
+
+        assert torch.allclose(F_compiled, F_eager, atol=1e-10)
+
+    def test_compile_with_grad(self):
+        """torch.compile should work with gradients."""
+        r = torch.linspace(0.1, 5, 30, dtype=torch.float64)
+        f = torch.randn(30, dtype=torch.float64, requires_grad=True)
+        y = torch.tensor([1.0], dtype=torch.float64)
+
+        @torch.compile(fullgraph=True)
+        def compiled_abel(x):
+            return T.abel_transform(x, y, r)
+
+        F = compiled_abel(f)
+        F.sum().backward()
+
+        assert f.grad is not None
+        assert f.grad.shape == f.shape

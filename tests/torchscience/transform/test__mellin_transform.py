@@ -179,3 +179,72 @@ class TestMellinTransformDevice:
             if "CUDA" in str(e) or "cuda" in str(e):
                 pytest.skip("CUDA backend not implemented")
             raise
+
+
+class TestMellinTransformVmap:
+    """Test Mellin transform with vmap."""
+
+    def test_vmap_basic(self):
+        """vmap should batch over first dimension."""
+        t = torch.linspace(0.1, 10, 100, dtype=torch.float64)
+        f = torch.randn(8, 100, dtype=torch.float64)
+        s = torch.tensor([1.0, 2.0], dtype=torch.float64)
+
+        # Manual batching
+        y_batched = T.mellin_transform(f, s, t, dim=-1)
+
+        # vmap
+        def mellin_single(fi):
+            return T.mellin_transform(fi, s, t)
+
+        y_vmap = torch.vmap(mellin_single)(f)
+
+        assert torch.allclose(y_batched, y_vmap, atol=1e-10)
+
+    def test_vmap_nested(self):
+        """Nested vmap should work."""
+        t = torch.linspace(0.1, 5, 50, dtype=torch.float64)
+        f = torch.randn(4, 4, 50, dtype=torch.float64)
+        s = torch.tensor([1.0], dtype=torch.float64)
+
+        def mellin_single(fi):
+            return T.mellin_transform(fi, s, t)
+
+        y_vmap = torch.vmap(torch.vmap(mellin_single))(f)
+
+        assert y_vmap.shape == torch.Size([4, 4, 1])
+
+
+class TestMellinTransformCompile:
+    """Test Mellin transform with torch.compile."""
+
+    def test_compile_basic(self):
+        """torch.compile should work."""
+        t = torch.linspace(0.1, 5, 50, dtype=torch.float64)
+        f = torch.randn(50, dtype=torch.float64)
+        s = torch.tensor([1.0, 2.0], dtype=torch.float64)
+
+        @torch.compile(fullgraph=True)
+        def compiled_mellin(x):
+            return T.mellin_transform(x, s, t)
+
+        y_compiled = compiled_mellin(f)
+        y_eager = T.mellin_transform(f, s, t)
+
+        assert torch.allclose(y_compiled, y_eager, atol=1e-10)
+
+    def test_compile_with_grad(self):
+        """torch.compile should work with gradients."""
+        t = torch.linspace(0.1, 5, 50, dtype=torch.float64)
+        f = torch.randn(50, dtype=torch.float64, requires_grad=True)
+        s = torch.tensor([1.0], dtype=torch.float64)
+
+        @torch.compile(fullgraph=True)
+        def compiled_mellin(x):
+            return T.mellin_transform(x, s, t)
+
+        y = compiled_mellin(f)
+        y.sum().backward()
+
+        assert f.grad is not None
+        assert f.grad.shape == f.shape

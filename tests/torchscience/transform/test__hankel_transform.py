@@ -145,3 +145,115 @@ class TestHankelTransformEdgeCases:
 
         with pytest.raises(ValueError, match="integration_method"):
             T.hankel_transform(f, k, r, integration_method="invalid")
+
+
+class TestHankelTransformDtype:
+    """Test Hankel transform dtype handling."""
+
+    def test_float32_input(self):
+        """Hankel transform should work with float32 input."""
+        r = torch.linspace(0.1, 5, 50, dtype=torch.float32)
+        f = torch.randn(50, dtype=torch.float32)
+        k = torch.tensor([0.5, 1.0], dtype=torch.float32)
+
+        F = T.hankel_transform(f, k, r)
+        assert F.dtype == torch.float32
+
+    def test_float64_input(self):
+        """Hankel transform should work with float64 input."""
+        r = torch.linspace(0.1, 5, 50, dtype=torch.float64)
+        f = torch.randn(50, dtype=torch.float64)
+        k = torch.tensor([0.5, 1.0], dtype=torch.float64)
+
+        F = T.hankel_transform(f, k, r)
+        assert F.dtype == torch.float64
+
+
+class TestHankelTransformDevice:
+    """Test Hankel transform device handling."""
+
+    @pytest.mark.skipif(
+        not torch.cuda.is_available(), reason="CUDA not available"
+    )
+    def test_cuda_tensor(self):
+        """Test that CUDA tensors work (if CUDA backend exists)."""
+        r = torch.linspace(0.1, 5, 50, dtype=torch.float64, device="cuda")
+        f = torch.randn(50, dtype=torch.float64, device="cuda")
+        k = torch.tensor([0.5, 1.0], dtype=torch.float64, device="cuda")
+
+        try:
+            F = T.hankel_transform(f, k, r)
+            assert F.device.type == "cuda"
+        except RuntimeError as e:
+            if "CUDA" in str(e) or "cuda" in str(e):
+                pytest.skip("CUDA backend not implemented")
+            raise
+
+
+class TestHankelTransformVmap:
+    """Test Hankel transform with vmap."""
+
+    def test_vmap_basic(self):
+        """vmap should batch over first dimension."""
+        r = torch.linspace(0.1, 10, 100, dtype=torch.float64)
+        f = torch.randn(8, 100, dtype=torch.float64)
+        k = torch.tensor([0.5, 1.0], dtype=torch.float64)
+
+        # Manual batching
+        y_batched = T.hankel_transform(f, k, r, dim=-1)
+
+        # vmap
+        def hankel_single(fi):
+            return T.hankel_transform(fi, k, r)
+
+        y_vmap = torch.vmap(hankel_single)(f)
+
+        assert torch.allclose(y_batched, y_vmap, atol=1e-10)
+
+    def test_vmap_nested(self):
+        """Nested vmap should work."""
+        r = torch.linspace(0.1, 5, 50, dtype=torch.float64)
+        f = torch.randn(4, 4, 50, dtype=torch.float64)
+        k = torch.tensor([1.0], dtype=torch.float64)
+
+        def hankel_single(fi):
+            return T.hankel_transform(fi, k, r)
+
+        y_vmap = torch.vmap(torch.vmap(hankel_single))(f)
+
+        assert y_vmap.shape == torch.Size([4, 4, 1])
+
+
+class TestHankelTransformCompile:
+    """Test Hankel transform with torch.compile."""
+
+    def test_compile_basic(self):
+        """torch.compile should work."""
+        r = torch.linspace(0.1, 5, 50, dtype=torch.float64)
+        f = torch.randn(50, dtype=torch.float64)
+        k = torch.tensor([0.5, 1.0], dtype=torch.float64)
+
+        @torch.compile(fullgraph=True)
+        def compiled_hankel(x):
+            return T.hankel_transform(x, k, r)
+
+        y_compiled = compiled_hankel(f)
+        y_eager = T.hankel_transform(f, k, r)
+
+        assert torch.allclose(y_compiled, y_eager, atol=1e-10)
+
+    def test_compile_with_grad(self):
+        """torch.compile should work with gradients."""
+        r = torch.linspace(0.1, 5, 50, dtype=torch.float64)
+        f = torch.randn(50, dtype=torch.float64, requires_grad=True)
+        k = torch.tensor([1.0], dtype=torch.float64)
+
+        @torch.compile(fullgraph=True)
+        def compiled_hankel(x):
+            return T.hankel_transform(x, k, r)
+
+        y = compiled_hankel(f)
+        y.sum().backward()
+
+        assert f.grad is not None
+        assert f.grad.shape == f.shape

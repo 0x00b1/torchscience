@@ -198,3 +198,72 @@ class TestTwoSidedLaplaceTransformDevice:
             if "CUDA" in str(e) or "cuda" in str(e):
                 pytest.skip("CUDA backend not implemented")
             raise
+
+
+class TestTwoSidedLaplaceTransformVmap:
+    """Test two-sided Laplace transform with vmap."""
+
+    def test_vmap_basic(self):
+        """vmap should batch over first dimension."""
+        t = torch.linspace(-10, 10, 100, dtype=torch.float64)
+        f = torch.randn(8, 100, dtype=torch.float64)
+        s = torch.tensor([0.0, 0.5], dtype=torch.float64)
+
+        # Manual batching
+        y_batched = T.two_sided_laplace_transform(f, s, t, dim=-1)
+
+        # vmap
+        def laplace_single(fi):
+            return T.two_sided_laplace_transform(fi, s, t)
+
+        y_vmap = torch.vmap(laplace_single)(f)
+
+        assert torch.allclose(y_batched, y_vmap, atol=1e-10)
+
+    def test_vmap_nested(self):
+        """Nested vmap should work."""
+        t = torch.linspace(-5, 5, 50, dtype=torch.float64)
+        f = torch.randn(4, 4, 50, dtype=torch.float64)
+        s = torch.tensor([0.0], dtype=torch.float64)
+
+        def laplace_single(fi):
+            return T.two_sided_laplace_transform(fi, s, t)
+
+        y_vmap = torch.vmap(torch.vmap(laplace_single))(f)
+
+        assert y_vmap.shape == torch.Size([4, 4, 1])
+
+
+class TestTwoSidedLaplaceTransformCompile:
+    """Test two-sided Laplace transform with torch.compile."""
+
+    def test_compile_basic(self):
+        """torch.compile should work."""
+        t = torch.linspace(-5, 5, 50, dtype=torch.float64)
+        f = torch.randn(50, dtype=torch.float64)
+        s = torch.tensor([0.0, 0.5], dtype=torch.float64)
+
+        @torch.compile(fullgraph=True)
+        def compiled_laplace(x):
+            return T.two_sided_laplace_transform(x, s, t)
+
+        y_compiled = compiled_laplace(f)
+        y_eager = T.two_sided_laplace_transform(f, s, t)
+
+        assert torch.allclose(y_compiled, y_eager, atol=1e-10)
+
+    def test_compile_with_grad(self):
+        """torch.compile should work with gradients."""
+        t = torch.linspace(-5, 5, 50, dtype=torch.float64)
+        f = torch.randn(50, dtype=torch.float64, requires_grad=True)
+        s = torch.tensor([0.0], dtype=torch.float64)
+
+        @torch.compile(fullgraph=True)
+        def compiled_laplace(x):
+            return T.two_sided_laplace_transform(x, s, t)
+
+        y = compiled_laplace(f)
+        y.sum().backward()
+
+        assert f.grad is not None
+        assert f.grad.shape == f.shape

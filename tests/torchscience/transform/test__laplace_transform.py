@@ -158,3 +158,110 @@ class TestLaplaceTransformEdgeCases:
         # Should not raise
         F = T.laplace_transform(f, s, t)
         assert F.shape == torch.Size([2])
+
+
+class TestLaplaceTransformDtype:
+    """Test Laplace transform with different dtypes."""
+
+    def test_float32_input(self):
+        """Should work with float32."""
+        t = torch.linspace(0, 10, 100, dtype=torch.float32)
+        f = torch.randn(100, dtype=torch.float32)
+        s = torch.tensor([1.0, 2.0], dtype=torch.float32)
+
+        F = T.laplace_transform(f, s, t)
+        assert F.dtype == torch.float32
+
+    def test_float64_input(self):
+        """Should work with float64."""
+        t = torch.linspace(0, 10, 100, dtype=torch.float64)
+        f = torch.randn(100, dtype=torch.float64)
+        s = torch.tensor([1.0, 2.0], dtype=torch.float64)
+
+        F = T.laplace_transform(f, s, t)
+        assert F.dtype == torch.float64
+
+
+class TestLaplaceTransformVmap:
+    """Test Laplace transform with vmap."""
+
+    def test_vmap_basic(self):
+        """vmap should batch over first dimension."""
+        t = torch.linspace(0, 10, 100, dtype=torch.float64)
+        f = torch.randn(8, 100, dtype=torch.float64)
+        s = torch.tensor([1.0, 2.0], dtype=torch.float64)
+
+        # Manual batching
+        y_batched = T.laplace_transform(f, s, t, dim=-1)
+
+        # vmap
+        def laplace_single(fi):
+            return T.laplace_transform(fi, s, t)
+
+        y_vmap = torch.vmap(laplace_single)(f)
+
+        assert torch.allclose(y_batched, y_vmap, atol=1e-10)
+
+    def test_vmap_nested(self):
+        """Nested vmap should work."""
+        t = torch.linspace(0, 10, 50, dtype=torch.float64)
+        f = torch.randn(4, 4, 50, dtype=torch.float64)
+        s = torch.tensor([1.0], dtype=torch.float64)
+
+        def laplace_single(fi):
+            return T.laplace_transform(fi, s, t)
+
+        y_vmap = torch.vmap(torch.vmap(laplace_single))(f)
+
+        assert y_vmap.shape == torch.Size([4, 4, 1])
+
+
+class TestLaplaceTransformCompile:
+    """Test Laplace transform with torch.compile."""
+
+    def test_compile_basic(self):
+        """torch.compile should work."""
+        t = torch.linspace(0, 10, 100, dtype=torch.float64)
+        f = torch.randn(100, dtype=torch.float64)
+        s = torch.tensor([1.0, 2.0], dtype=torch.float64)
+
+        @torch.compile(fullgraph=True)
+        def compiled_laplace(x):
+            return T.laplace_transform(x, s, t)
+
+        y_compiled = compiled_laplace(f)
+        y_eager = T.laplace_transform(f, s, t)
+
+        assert torch.allclose(y_compiled, y_eager, atol=1e-10)
+
+    def test_compile_with_grad(self):
+        """torch.compile should work with gradients."""
+        t = torch.linspace(0, 10, 50, dtype=torch.float64)
+        f = torch.randn(50, dtype=torch.float64, requires_grad=True)
+        s = torch.tensor([1.0], dtype=torch.float64)
+
+        @torch.compile(fullgraph=True)
+        def compiled_laplace(x):
+            return T.laplace_transform(x, s, t)
+
+        y = compiled_laplace(f)
+        y.sum().backward()
+
+        assert f.grad is not None
+        assert f.grad.shape == f.shape
+
+
+class TestLaplaceTransformDevice:
+    """Test Laplace transform on different devices."""
+
+    @pytest.mark.skipif(
+        not torch.cuda.is_available(), reason="CUDA not available"
+    )
+    def test_cuda_tensor(self):
+        """Should work on CUDA."""
+        t = torch.linspace(0, 10, 100, dtype=torch.float64, device="cuda")
+        f = torch.randn(100, dtype=torch.float64, device="cuda")
+        s = torch.tensor([1.0, 2.0], dtype=torch.float64, device="cuda")
+
+        F = T.laplace_transform(f, s, t)
+        assert F.device.type == "cuda"

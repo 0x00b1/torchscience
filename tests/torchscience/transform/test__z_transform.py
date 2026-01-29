@@ -235,3 +235,53 @@ class TestZTransformDevice:
             if "CUDA" in str(e) or "cuda" in str(e):
                 pytest.skip("CUDA backend not implemented")
             raise
+
+
+class TestZTransformVmap:
+    """Test Z-transform with vmap."""
+
+    def test_vmap_basic(self):
+        """vmap should batch over first dimension."""
+        x = torch.randn(8, 20, dtype=torch.float64)
+        z = torch.tensor([0.5 + 0j, 1.0 + 0j], dtype=torch.complex128)
+
+        # Manual batching
+        y_batched = T.z_transform(x, z, dim=-1)
+
+        # vmap
+        def z_single(xi):
+            return T.z_transform(xi, z)
+
+        y_vmap = torch.vmap(z_single)(x)
+
+        assert torch.allclose(y_batched, y_vmap, atol=1e-10)
+
+    def test_vmap_nested(self):
+        """Nested vmap should work."""
+        x = torch.randn(4, 4, 20, dtype=torch.float64)
+        z = torch.tensor([1.0 + 0j], dtype=torch.complex128)
+
+        def z_single(xi):
+            return T.z_transform(xi, z)
+
+        y_vmap = torch.vmap(torch.vmap(z_single))(x)
+
+        assert y_vmap.shape == torch.Size([4, 4, 1])
+
+
+class TestZTransformCompile:
+    """Test Z-transform with torch.compile."""
+
+    def test_compile_basic(self):
+        """torch.compile should work."""
+        x = torch.randn(20, dtype=torch.float64)
+        z = torch.tensor([0.5 + 0j, 1.0 + 0j], dtype=torch.complex128)
+
+        @torch.compile(fullgraph=True)
+        def compiled_z(xi):
+            return T.z_transform(xi, z)
+
+        y_compiled = compiled_z(x)
+        y_eager = T.z_transform(x, z)
+
+        assert torch.allclose(y_compiled, y_eager, atol=1e-10)
