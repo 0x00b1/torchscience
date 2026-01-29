@@ -344,4 +344,8 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("exponential_integral_e_1(Tensor x) -> Tensor");
   m.def("exponential_integral_e_1_backward(Tensor grad_output, Tensor x) -> Tensor");
   m.def("exponential_integral_e_1_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
+
+  m.def("exponential_integral_ein(Tensor x) -> Tensor");
+  m.def("exponential_integral_ein_backward(Tensor grad_output, Tensor x) -> Tensor");
+  m.def("exponential_integral_ein_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
 }

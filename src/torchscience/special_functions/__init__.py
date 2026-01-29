@@ -30,6 +30,7 @@ from ._complete_legendre_elliptic_integral_pi import (
 from ._digamma import digamma
 from ._exponential_integral_e_1 import exponential_integral_e_1
 from ._exponential_integral_ei import exponential_integral_ei
+from ._exponential_integral_ein import exponential_integral_ein
 from ._gamma import gamma
 from ._hypergeometric_2_f_1 import hypergeometric_2_f_1
 from ._incomplete_beta import incomplete_beta
@@ -138,6 +139,7 @@ __all__ = [
     "digamma",
     "exponential_integral_e_1",
     "exponential_integral_ei",
+    "exponential_integral_ein",
     "gamma",
     "hypergeometric_2_f_1",
     "incomplete_beta",
