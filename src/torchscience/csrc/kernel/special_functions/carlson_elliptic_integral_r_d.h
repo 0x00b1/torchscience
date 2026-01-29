@@ -43,7 +43,7 @@ T carlson_elliptic_integral_r_d(T x, T y, T z) {
         z = (z + lambda) / T(4);
 
         T mu = (x + y + T(3) * z) / T(5);
-        T max_dev = std::max({std::abs(x - mu), std::abs(y - mu), std::abs(z - mu)}) / mu;
+        T max_dev = std::max({static_cast<T>(std::abs(x - mu)), static_cast<T>(std::abs(y - mu)), static_cast<T>(std::abs(z - mu))}) / mu;
 
         if (max_dev < tolerance) {
             T X = (mu - x) / mu;
@@ -94,7 +94,7 @@ c10::complex<T> carlson_elliptic_integral_r_d(
         z = (z + lambda) / T(4);
 
         c10::complex<T> mu = (x + y + c10::complex<T>(T(3), T(0)) * z) / T(5);
-        T max_dev = std::max({std::abs(x - mu), std::abs(y - mu), std::abs(z - mu)}) / std::abs(mu);
+        T max_dev = std::max({static_cast<T>(std::abs(x - mu)), static_cast<T>(std::abs(y - mu)), static_cast<T>(std::abs(z - mu))}) / static_cast<T>(std::abs(mu));
 
         if (max_dev < tolerance) {
             c10::complex<T> X = (mu - x) / mu;

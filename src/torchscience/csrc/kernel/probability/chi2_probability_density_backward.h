@@ -21,7 +21,7 @@ T chi2_probability_density_grad_x(T x, T df) {
 template <typename T>
 T chi2_probability_density_grad_df(T x, T df) {
   if (x <= T(0)) return T(0);
-  T eps = std::sqrt(std::numeric_limits<T>::epsilon()) * std::max(T(1), std::abs(df));
+  T eps = std::sqrt(std::numeric_limits<T>::epsilon()) * std::max(T(1), static_cast<T>(std::abs(df)));
   T pdf_plus = chi2_probability_density(x, df + eps);
   T pdf_minus = chi2_probability_density(x, df - eps);
   return (pdf_plus - pdf_minus) / (T(2) * eps);

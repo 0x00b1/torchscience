@@ -20,7 +20,7 @@ T f_cumulative_distribution_grad_f(T f, T d1, T d2) {
 template <typename T>
 T f_cumulative_distribution_grad_d1(T f, T d1, T d2) {
   if (f <= T(0)) return T(0);
-  T eps = std::sqrt(std::numeric_limits<T>::epsilon()) * std::max(T(1), std::abs(d1));
+  T eps = std::sqrt(std::numeric_limits<T>::epsilon()) * std::max(T(1), static_cast<T>(std::abs(d1)));
   T cdf_plus = f_cumulative_distribution(f, d1 + eps, d2);
   T cdf_minus = f_cumulative_distribution(f, d1 - eps, d2);
   return (cdf_plus - cdf_minus) / (T(2) * eps);
@@ -31,7 +31,7 @@ T f_cumulative_distribution_grad_d1(T f, T d1, T d2) {
 template <typename T>
 T f_cumulative_distribution_grad_d2(T f, T d1, T d2) {
   if (f <= T(0)) return T(0);
-  T eps = std::sqrt(std::numeric_limits<T>::epsilon()) * std::max(T(1), std::abs(d2));
+  T eps = std::sqrt(std::numeric_limits<T>::epsilon()) * std::max(T(1), static_cast<T>(std::abs(d2)));
   T cdf_plus = f_cumulative_distribution(f, d1, d2 + eps);
   T cdf_minus = f_cumulative_distribution(f, d1, d2 - eps);
   return (cdf_plus - cdf_minus) / (T(2) * eps);

@@ -13,8 +13,8 @@ template <typename T>
 std::tuple<T, T, T> regularized_gamma_p_backward_backward(
     T grad_grad_a, T grad_grad_x, T grad, T a, T x) {
 
-  T eps = std::sqrt(std::numeric_limits<T>::epsilon()) * std::max(T(1), std::abs(a));
-  T eps_x = std::sqrt(std::numeric_limits<T>::epsilon()) * std::max(T(1), std::abs(x));
+  T eps = std::sqrt(std::numeric_limits<T>::epsilon()) * std::max(T(1), static_cast<T>(std::abs(a)));
+  T eps_x = std::sqrt(std::numeric_limits<T>::epsilon()) * std::max(T(1), static_cast<T>(std::abs(x)));
 
   // d^2P/da^2 (numerical)
   auto [grad_a_plus, grad_x_plus] = regularized_gamma_p_backward(T(1), a + eps, x);

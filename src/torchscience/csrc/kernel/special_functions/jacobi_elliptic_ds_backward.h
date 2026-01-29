@@ -25,7 +25,7 @@ template <typename T>
 T jacobi_elliptic_ds_du(T u, T m) {
     // Use 5-point stencil for numerical derivative
     const T h_rel = std::cbrt(std::numeric_limits<T>::epsilon());
-    T h = h_rel * std::max(std::abs(u), T(1));
+    T h = h_rel * std::max(static_cast<T>(std::abs(u)), T(1));
     h = std::max(h, T(1e-8));
 
     // 5-point stencil: f'(x) = (-f(x+2h) + 8f(x+h) - 8f(x-h) + f(x-2h)) / (12h)
@@ -40,7 +40,7 @@ T jacobi_elliptic_ds_du(T u, T m) {
 template <typename T>
 c10::complex<T> jacobi_elliptic_ds_du(c10::complex<T> u, c10::complex<T> m) {
     const T h_rel = std::cbrt(std::numeric_limits<T>::epsilon());
-    T h = h_rel * std::max(std::abs(u), T(1));
+    T h = h_rel * std::max(static_cast<T>(std::abs(u)), T(1));
     h = std::max(h, T(1e-8));
     c10::complex<T> ch(h, T(0));
 
@@ -58,7 +58,7 @@ c10::complex<T> jacobi_elliptic_ds_du(c10::complex<T> u, c10::complex<T> m) {
 template <typename T>
 T jacobi_elliptic_ds_dm(T u, T m) {
     const T h_rel = std::cbrt(std::numeric_limits<T>::epsilon());
-    T h = h_rel * std::max(std::abs(m), T(0.1));
+    T h = h_rel * std::max(static_cast<T>(std::abs(m)), T(0.1));
 
     // Clamp h to stay within valid domain [0, 1]
     if (m < T(0.5)) {
@@ -82,7 +82,7 @@ T jacobi_elliptic_ds_dm(T u, T m) {
 template <typename T>
 c10::complex<T> jacobi_elliptic_ds_dm(c10::complex<T> u, c10::complex<T> m) {
     const T h_rel = std::cbrt(std::numeric_limits<T>::epsilon());
-    T h = h_rel * std::max(std::abs(m), T(0.1));
+    T h = h_rel * std::max(static_cast<T>(std::abs(m)), T(0.1));
     h = std::max(h, T(1e-8));
     c10::complex<T> ch(h, T(0));
 

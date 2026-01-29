@@ -165,7 +165,7 @@ T jacobi_elliptic_cn_dm(T u, T m) {
     // Use a relative step size that balances truncation and round-off errors
     // For numerical differentiation, h ~ eps^(1/3) is optimal for central difference
     const T h_rel = std::cbrt(std::numeric_limits<T>::epsilon());
-    T h = h_rel * std::max(std::abs(m), T(0.1));
+    T h = h_rel * std::max(static_cast<T>(std::abs(m)), T(0.1));
 
     // Clamp h to stay within valid domain [0, 1]
     if (m < T(0.5)) {
@@ -193,7 +193,7 @@ template <typename T>
 c10::complex<T> jacobi_elliptic_cn_dm(c10::complex<T> u, c10::complex<T> m) {
     // Use 5-point stencil in the complex plane for better accuracy
     const T h_rel = std::cbrt(std::numeric_limits<T>::epsilon());
-    T h = h_rel * std::max(std::abs(m), T(0.1));
+    T h = h_rel * std::max(static_cast<T>(std::abs(m)), T(0.1));
     h = std::max(h, T(1e-8));
     c10::complex<T> ch(h, T(0));
 

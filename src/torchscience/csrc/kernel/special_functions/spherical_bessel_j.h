@@ -56,7 +56,7 @@ template <typename T>
 T spherical_bessel_j_backward_recurrence(int n_int, T z) {
     // Start from large m and recur downward
     // Use normalization with j_0
-    int m = n_int + static_cast<int>(std::sqrt(T(40) * std::max(T(n_int), std::abs(z))) + std::abs(z));
+    int m = n_int + static_cast<int>(std::sqrt(T(40) * std::max(T(n_int), static_cast<T>(std::abs(z)))) + std::abs(z));
     if (m < n_int + 20) m = n_int + 20;
 
     T j_next = T(0);

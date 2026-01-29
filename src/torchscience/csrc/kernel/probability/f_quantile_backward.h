@@ -22,7 +22,7 @@ T f_quantile_grad_p(T p, T d1, T d2) {
 template <typename T>
 T f_quantile_grad_d1(T p, T d1, T d2) {
   if (p <= T(0) || p >= T(1)) return T(0);
-  T eps = std::sqrt(std::numeric_limits<T>::epsilon()) * std::max(T(1), std::abs(d1));
+  T eps = std::sqrt(std::numeric_limits<T>::epsilon()) * std::max(T(1), static_cast<T>(std::abs(d1)));
   T ppf_plus = f_quantile(p, d1 + eps, d2);
   T ppf_minus = f_quantile(p, d1 - eps, d2);
   return (ppf_plus - ppf_minus) / (T(2) * eps);
@@ -32,7 +32,7 @@ T f_quantile_grad_d1(T p, T d1, T d2) {
 template <typename T>
 T f_quantile_grad_d2(T p, T d1, T d2) {
   if (p <= T(0) || p >= T(1)) return T(0);
-  T eps = std::sqrt(std::numeric_limits<T>::epsilon()) * std::max(T(1), std::abs(d2));
+  T eps = std::sqrt(std::numeric_limits<T>::epsilon()) * std::max(T(1), static_cast<T>(std::abs(d2)));
   T ppf_plus = f_quantile(p, d1, d2 + eps);
   T ppf_minus = f_quantile(p, d1, d2 - eps);
   return (ppf_plus - ppf_minus) / (T(2) * eps);

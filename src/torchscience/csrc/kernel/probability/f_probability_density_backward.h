@@ -11,7 +11,7 @@ namespace torchscience::kernel::probability {
 template <typename T>
 T f_probability_density_grad_x(T x, T d1, T d2) {
   if (x <= T(0)) return T(0);
-  T eps = std::sqrt(std::numeric_limits<T>::epsilon()) * std::max(T(1), std::abs(x));
+  T eps = std::sqrt(std::numeric_limits<T>::epsilon()) * std::max(T(1), static_cast<T>(std::abs(x)));
   T pdf_plus = f_probability_density(x + eps, d1, d2);
   T pdf_minus = f_probability_density(x - eps, d1, d2);
   return (pdf_plus - pdf_minus) / (T(2) * eps);
@@ -21,7 +21,7 @@ T f_probability_density_grad_x(T x, T d1, T d2) {
 template <typename T>
 T f_probability_density_grad_d1(T x, T d1, T d2) {
   if (x <= T(0)) return T(0);
-  T eps = std::sqrt(std::numeric_limits<T>::epsilon()) * std::max(T(1), std::abs(d1));
+  T eps = std::sqrt(std::numeric_limits<T>::epsilon()) * std::max(T(1), static_cast<T>(std::abs(d1)));
   T pdf_plus = f_probability_density(x, d1 + eps, d2);
   T pdf_minus = f_probability_density(x, d1 - eps, d2);
   return (pdf_plus - pdf_minus) / (T(2) * eps);
@@ -31,7 +31,7 @@ T f_probability_density_grad_d1(T x, T d1, T d2) {
 template <typename T>
 T f_probability_density_grad_d2(T x, T d1, T d2) {
   if (x <= T(0)) return T(0);
-  T eps = std::sqrt(std::numeric_limits<T>::epsilon()) * std::max(T(1), std::abs(d2));
+  T eps = std::sqrt(std::numeric_limits<T>::epsilon()) * std::max(T(1), static_cast<T>(std::abs(d2)));
   T pdf_plus = f_probability_density(x, d1, d2 + eps);
   T pdf_minus = f_probability_density(x, d1, d2 - eps);
   return (pdf_plus - pdf_minus) / (T(2) * eps);

@@ -69,8 +69,8 @@ T carlson_elliptic_integral_r_j(T x, T y, T z, T p) {
         T mu = (x + y + z + T(2) * p) / T(5);
 
         // Check convergence
-        T max_dev = std::max({std::abs(x - mu), std::abs(y - mu),
-                             std::abs(z - mu), std::abs(p - mu)}) / std::abs(mu);
+        T max_dev = std::max({static_cast<T>(std::abs(x - mu)), static_cast<T>(std::abs(y - mu)),
+                             static_cast<T>(std::abs(z - mu)), static_cast<T>(std::abs(p - mu))}) / static_cast<T>(std::abs(mu));
 
         if (max_dev < tolerance) {
             // Compute the series expansion near convergence
@@ -146,8 +146,8 @@ c10::complex<T> carlson_elliptic_integral_r_j(
         c10::complex<T> mu = (x + y + z + two * p) / T(5);
 
         // Check convergence
-        T max_dev = std::max({std::abs(x - mu), std::abs(y - mu),
-                             std::abs(z - mu), std::abs(p - mu)}) / std::abs(mu);
+        T max_dev = std::max({static_cast<T>(std::abs(x - mu)), static_cast<T>(std::abs(y - mu)),
+                             static_cast<T>(std::abs(z - mu)), static_cast<T>(std::abs(p - mu))}) / static_cast<T>(std::abs(mu));
 
         if (max_dev < tolerance) {
             // Compute the series expansion near convergence

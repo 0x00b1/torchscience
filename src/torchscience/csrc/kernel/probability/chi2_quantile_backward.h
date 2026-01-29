@@ -23,7 +23,7 @@ T chi2_quantile_grad_p(T p, T df) {
 template <typename T>
 T chi2_quantile_grad_df(T p, T df) {
   if (p <= T(0) || p >= T(1)) return T(0);
-  T eps = std::sqrt(std::numeric_limits<T>::epsilon()) * std::max(T(1), std::abs(df));
+  T eps = std::sqrt(std::numeric_limits<T>::epsilon()) * std::max(T(1), static_cast<T>(std::abs(df)));
   T ppf_plus = chi2_quantile(p, df + eps);
   T ppf_minus = chi2_quantile(p, df - eps);
   return (ppf_plus - ppf_minus) / (T(2) * eps);
