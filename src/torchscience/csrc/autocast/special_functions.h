@@ -84,3 +84,4 @@ TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(spherical_bessel_k, n, z)
 
 // Exponential integrals
 TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(exponential_integral_ei, x)
+TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(exponential_integral_e_1, x)
