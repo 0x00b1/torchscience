@@ -335,4 +335,9 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("theta_4(Tensor z, Tensor q) -> Tensor");
   m.def("theta_4_backward(Tensor grad_output, Tensor z, Tensor q) -> (Tensor, Tensor)");
   m.def("theta_4_backward_backward(Tensor gg_z, Tensor gg_q, Tensor grad_output, Tensor z, Tensor q) -> (Tensor, Tensor, Tensor)");
+
+  // Exponential integrals
+  m.def("exponential_integral_ei(Tensor x) -> Tensor");
+  m.def("exponential_integral_ei_backward(Tensor grad_output, Tensor x) -> Tensor");
+  m.def("exponential_integral_ei_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
 }

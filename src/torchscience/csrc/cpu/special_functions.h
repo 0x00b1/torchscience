@@ -435,3 +435,9 @@ TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(spherical_bessel_k_1, z)
 #include "../kernel/special_functions/spherical_bessel_k_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(spherical_bessel_k, n, z)
+
+#include "../kernel/special_functions/exponential_integral_ei.h"
+#include "../kernel/special_functions/exponential_integral_ei_backward.h"
+#include "../kernel/special_functions/exponential_integral_ei_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(exponential_integral_ei, x)
