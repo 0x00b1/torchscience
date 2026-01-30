@@ -175,15 +175,15 @@ public:
       torch::autograd::AutogradContext* ctx,
       const std::vector<at::Tensor>& grad_outputs
   ) {
-    const torch::autograd::variable_list saved = ctx->get_saved_variables();
-    at::Tensor k = saved[0];
-    at::Tensor rate = saved[1];
-
     at::Tensor grad_output = grad_outputs[0];
 
     if (!grad_output.defined()) {
       return {at::Tensor(), at::Tensor()};
     }
+
+    const torch::autograd::variable_list saved = ctx->get_saved_variables();
+    at::Tensor k = saved[0];
+    at::Tensor rate = saved[1];
 
     at::AutoDispatchBelowAutograd guard;
 
