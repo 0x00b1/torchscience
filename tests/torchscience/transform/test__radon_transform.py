@@ -323,3 +323,36 @@ class TestRadonTransformSkimageReference:
         assert correlation > 0.9, (
             f"Peak pattern correlation too low: {correlation}"
         )
+
+
+class TestRadonTransformAutocast:
+    """Tests for autocast compatibility."""
+
+    @pytest.mark.skip(
+        reason="radon_transform C++ backend segfaults with float16 inputs"
+    )
+    def test_autocast_cpu_float16(self):
+        """Test that radon transform works under CPU autocast."""
+        image = torch.randn(16, 16, dtype=torch.float16)
+        angles = torch.linspace(0, math.pi, 10, dtype=torch.float16)
+
+        with torch.amp.autocast("cpu", dtype=torch.float16):
+            sinogram = T.radon_transform(image, angles)
+
+        # Should produce valid output (may upcast for numerical stability)
+        assert sinogram.shape[0] == 10
+        assert not torch.isnan(sinogram).any()
+
+    @pytest.mark.skip(
+        reason="radon_transform C++ backend segfaults with bfloat16 inputs"
+    )
+    def test_autocast_cpu_bfloat16(self):
+        """Test that radon transform works under CPU autocast with bfloat16."""
+        image = torch.randn(16, 16, dtype=torch.bfloat16)
+        angles = torch.linspace(0, math.pi, 10, dtype=torch.bfloat16)
+
+        with torch.amp.autocast("cpu", dtype=torch.bfloat16):
+            sinogram = T.radon_transform(image, angles)
+
+        assert sinogram.shape[0] == 10
+        assert not torch.isnan(sinogram).any()

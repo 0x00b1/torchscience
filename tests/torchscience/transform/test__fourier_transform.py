@@ -569,3 +569,41 @@ class TestFourierTransformCompile:
         y_eager = fourier_transform(x)
 
         assert torch.allclose(y_compiled, y_eager, atol=1e-10)
+
+
+class TestFourierTransformAutocast:
+    """Tests for autocast compatibility."""
+
+    def test_autocast_cpu_float16(self):
+        """Test that FFT works under CPU autocast with float16."""
+        x = torch.randn(32, dtype=torch.float16)
+
+        with torch.amp.autocast("cpu", dtype=torch.float16):
+            y = fourier_transform(x)
+
+        # FFT should preserve or upcast dtype for numerical stability
+        assert y.is_complex()
+        assert y.shape == x.shape
+
+    def test_autocast_cpu_bfloat16(self):
+        """Test that FFT works under CPU autocast with bfloat16."""
+        x = torch.randn(32, dtype=torch.bfloat16)
+
+        with torch.amp.autocast("cpu", dtype=torch.bfloat16):
+            y = fourier_transform(x)
+
+        assert y.is_complex()
+        assert y.shape == x.shape
+
+    @pytest.mark.skipif(
+        not torch.cuda.is_available(), reason="CUDA not available"
+    )
+    def test_autocast_cuda_float16(self):
+        """Test that FFT works under CUDA autocast with float16."""
+        x = torch.randn(32, dtype=torch.float16, device="cuda")
+
+        with torch.amp.autocast("cuda", dtype=torch.float16):
+            y = fourier_transform(x)
+
+        assert y.is_complex()
+        assert y.shape == x.shape
