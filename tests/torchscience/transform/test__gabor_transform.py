@@ -275,6 +275,22 @@ class TestGaborTransformDevice:
         assert X.is_complex()
 
 
+class TestGaborTransformDtype:
+    """Test Gabor transform dtype handling."""
+
+    def test_float32_input(self):
+        """Gabor transform should work with float32 input."""
+        x = torch.randn(128, dtype=torch.float32)
+        X = gabor_transform(x, sigma=0.1, n_fft=32)
+        assert X.dtype == torch.complex64
+
+    def test_float64_input(self):
+        """Gabor transform should work with float64 input."""
+        x = torch.randn(128, dtype=torch.float64)
+        X = gabor_transform(x, sigma=0.1, n_fft=32)
+        assert X.dtype == torch.complex128
+
+
 class TestGaborTransformParameterOrder:
     """Tests for parameter ordering (keyword-only)."""
 

@@ -193,6 +193,24 @@ class TestConvolutionDevice:
         assert y.shape == torch.Size([16 + 5 - 1])
 
 
+class TestConvolutionDtype:
+    """Test convolution dtype handling."""
+
+    def test_float32_input(self):
+        """Convolution should work with float32 input."""
+        x = torch.randn(16, dtype=torch.float32)
+        h = torch.randn(5, dtype=torch.float32)
+        y = T.convolution(x, h, mode="full")
+        assert y.dtype == torch.float32
+
+    def test_float64_input(self):
+        """Convolution should work with float64 input."""
+        x = torch.randn(16, dtype=torch.float64)
+        h = torch.randn(5, dtype=torch.float64)
+        y = T.convolution(x, h, mode="full")
+        assert y.dtype == torch.float64
+
+
 class TestConvolutionVmap:
     """Tests for vmap compatibility."""
 

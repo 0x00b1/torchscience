@@ -298,6 +298,24 @@ class TestShortTimeFourierTransformDevice:
         assert X.is_complex()
 
 
+class TestShortTimeFourierTransformDtype:
+    """Test STFT dtype handling."""
+
+    def test_float32_input(self):
+        """STFT should work with float32 input."""
+        x = torch.randn(128, dtype=torch.float32)
+        window = torch.hann_window(32, dtype=torch.float32)
+        X = short_time_fourier_transform(x, window=window)
+        assert X.dtype == torch.complex64
+
+    def test_float64_input(self):
+        """STFT should work with float64 input."""
+        x = torch.randn(128, dtype=torch.float64)
+        window = torch.hann_window(32, dtype=torch.float64)
+        X = short_time_fourier_transform(x, window=window)
+        assert X.dtype == torch.complex128
+
+
 class TestShortTimeFourierTransformParameterOrder:
     """Tests for parameter ordering (keyword-only)."""
 

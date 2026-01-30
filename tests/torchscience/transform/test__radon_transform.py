@@ -170,6 +170,40 @@ class TestRadonTransformMeta:
         assert sinogram.shape[1] == 45
 
 
+class TestRadonTransformDtype:
+    """Test Radon transform dtype handling."""
+
+    def test_float32_input(self):
+        """Radon transform should work with float32 input."""
+        image = torch.randn(16, 16, dtype=torch.float32)
+        angles = torch.linspace(0, math.pi, 10, dtype=torch.float32)
+        sinogram = T.radon_transform(image, angles)
+        assert sinogram.dtype == torch.float32
+
+    def test_float64_input(self):
+        """Radon transform should work with float64 input."""
+        image = torch.randn(16, 16, dtype=torch.float64)
+        angles = torch.linspace(0, math.pi, 10, dtype=torch.float64)
+        sinogram = T.radon_transform(image, angles)
+        assert sinogram.dtype == torch.float64
+
+
+class TestRadonTransformDevice:
+    """Test Radon transform device handling."""
+
+    @pytest.mark.skipif(
+        not torch.cuda.is_available(), reason="CUDA not available"
+    )
+    def test_cuda_tensor(self):
+        """Radon transform should work on CUDA tensors."""
+        image = torch.randn(16, 16, dtype=torch.float64, device="cuda")
+        angles = torch.linspace(
+            0, math.pi, 10, dtype=torch.float64, device="cuda"
+        )
+        sinogram = T.radon_transform(image, angles)
+        assert sinogram.device.type == "cuda"
+
+
 class TestRadonTransformEdgeCases:
     """Test edge cases and error handling."""
 
