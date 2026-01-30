@@ -121,3 +121,6 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(kelvin_ker, KelvinKer, x)
 
 // Kelvin function kei (imaginary part of K_0 at rotated argument)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(kelvin_kei, KelvinKei, x)
+
+// Riemann zeta function (s > 1 only)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(zeta, Zeta, s)
