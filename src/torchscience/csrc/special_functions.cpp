@@ -367,4 +367,9 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("spherical_hankel_1(Tensor n, Tensor z) -> Tensor");
   m.def("spherical_hankel_1_backward(Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor)");
   m.def("spherical_hankel_1_backward_backward(Tensor gg_n, Tensor gg_z, Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor, Tensor)");
+
+  // Spherical Hankel functions of the second kind
+  m.def("spherical_hankel_2(Tensor n, Tensor z) -> Tensor");
+  m.def("spherical_hankel_2_backward(Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor)");
+  m.def("spherical_hankel_2_backward_backward(Tensor gg_n, Tensor gg_z, Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor, Tensor)");
 }
