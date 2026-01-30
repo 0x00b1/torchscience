@@ -33,6 +33,7 @@ from ._binomial import (
 )
 from ._chi2 import (
     chi2_cumulative_distribution,
+    chi2_log_probability_density,
     chi2_probability_density,
     chi2_quantile,
     chi2_survival,
@@ -40,6 +41,7 @@ from ._chi2 import (
 from ._exceptions import DomainError, ProbabilityError
 from ._f import (
     f_cumulative_distribution,
+    f_log_probability_density,
     f_probability_density,
     f_quantile,
     f_survival,
@@ -77,11 +79,13 @@ __all__ = [
     "binomial_probability_mass",
     # Chi-squared distribution
     "chi2_cumulative_distribution",
+    "chi2_log_probability_density",
     "chi2_probability_density",
     "chi2_quantile",
     "chi2_survival",
     # F distribution
     "f_cumulative_distribution",
+    "f_log_probability_density",
     "f_probability_density",
     "f_quantile",
     "f_survival",

@@ -18,7 +18,7 @@ std::tuple<T, T> chi2_log_probability_density_backward(T gradient, T x, T df) {
     return {T(0), T(0)};
   }
 
-  constexpr T log_2 = T(0.6931471805599453);  // log(2)
+  const T log_2 = T(0.6931471805599453);  // log(2)
   T k_half = df / T(2);
 
   // d(logpdf)/dx = (df/2 - 1)/x - 0.5
