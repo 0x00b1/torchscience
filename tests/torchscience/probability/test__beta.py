@@ -175,3 +175,112 @@ class TestBetaPpfForward:
         x_recovered = torch.ops.torchscience.beta_quantile(p, a, b)
 
         assert torch.allclose(x, x_recovered, atol=1e-5)
+
+
+class TestBetaLogPdfForward:
+    """Test beta_log_probability_density forward correctness."""
+
+    def test_scipy_comparison(self):
+        """Compare against scipy.stats.beta.logpdf."""
+        x = torch.linspace(0.01, 0.99, 100)
+        a = torch.tensor(2.0)
+        b = torch.tensor(5.0)
+
+        result = torch.ops.torchscience.beta_log_probability_density(x, a, b)
+        expected = torch.tensor(
+            scipy.stats.beta.logpdf(x.numpy(), a=2, b=5),
+            dtype=torch.float32,
+        )
+        assert torch.allclose(result, expected, atol=1e-5)
+
+    def test_consistency_with_pdf(self):
+        """log(pdf(x)) should equal logpdf(x)."""
+        x = torch.linspace(0.1, 0.9, 50)
+        a = torch.tensor(2.0)
+        b = torch.tensor(5.0)
+
+        log_pdf = torch.ops.torchscience.beta_log_probability_density(x, a, b)
+        pdf = torch.ops.torchscience.beta_probability_density(x, a, b)
+
+        assert torch.allclose(log_pdf, torch.log(pdf), atol=1e-5)
+
+    def test_boundary_values(self):
+        """Log PDF returns -inf at boundaries x=0 and x=1."""
+        a = torch.tensor(2.0)
+        b = torch.tensor(3.0)
+
+        # At x=0 and x=1, log PDF should be -inf
+        result_0 = torch.ops.torchscience.beta_log_probability_density(
+            torch.tensor([0.0]), a, b
+        )
+        result_1 = torch.ops.torchscience.beta_log_probability_density(
+            torch.tensor([1.0]), a, b
+        )
+
+        assert torch.isinf(result_0).all()
+        assert torch.isinf(result_1).all()
+        assert (result_0 < 0).all()
+        assert (result_1 < 0).all()
+
+    @pytest.mark.parametrize(
+        "a,b", [(0.5, 0.5), (1, 1), (2, 5), (5, 2), (10, 10)]
+    )
+    def test_various_parameters(self, a, b):
+        """Test various parameter combinations."""
+        x = torch.linspace(0.01, 0.99, 50)
+        a_t = torch.tensor(float(a))
+        b_t = torch.tensor(float(b))
+
+        result = torch.ops.torchscience.beta_log_probability_density(
+            x, a_t, b_t
+        )
+        expected = torch.tensor(
+            scipy.stats.beta.logpdf(x.numpy(), a=a, b=b),
+            dtype=torch.float32,
+        )
+        assert torch.allclose(result, expected, atol=1e-5)
+
+
+class TestBetaLogPdfGradients:
+    """Test beta_log_probability_density gradient computation."""
+
+    def test_gradcheck_x(self):
+        """Gradient check for x parameter."""
+        x = torch.tensor(
+            [0.2, 0.5, 0.8], dtype=torch.float64, requires_grad=True
+        )
+        a = torch.tensor(2.0, dtype=torch.float64)
+        b = torch.tensor(3.0, dtype=torch.float64)
+
+        def fn(x_):
+            return torch.ops.torchscience.beta_log_probability_density(
+                x_, a, b
+            )
+
+        assert torch.autograd.gradcheck(fn, (x,), eps=1e-6, atol=1e-4)
+
+    def test_gradcheck_a(self):
+        """Gradient check for a parameter."""
+        x = torch.tensor([0.2, 0.5, 0.8], dtype=torch.float64)
+        a = torch.tensor(2.0, dtype=torch.float64, requires_grad=True)
+        b = torch.tensor(3.0, dtype=torch.float64)
+
+        def fn(a_):
+            return torch.ops.torchscience.beta_log_probability_density(
+                x, a_, b
+            )
+
+        assert torch.autograd.gradcheck(fn, (a,), eps=1e-6, atol=1e-3)
+
+    def test_gradcheck_b(self):
+        """Gradient check for b parameter."""
+        x = torch.tensor([0.2, 0.5, 0.8], dtype=torch.float64)
+        a = torch.tensor(2.0, dtype=torch.float64)
+        b = torch.tensor(3.0, dtype=torch.float64, requires_grad=True)
+
+        def fn(b_):
+            return torch.ops.torchscience.beta_log_probability_density(
+                x, a, b_
+            )
+
+        assert torch.autograd.gradcheck(fn, (b,), eps=1e-6, atol=1e-3)

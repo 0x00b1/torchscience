@@ -22,6 +22,7 @@ Example
 
 from ._beta import (
     beta_cumulative_distribution,
+    beta_log_probability_density,
     beta_probability_density,
     beta_quantile,
 )
@@ -66,6 +67,7 @@ __all__ = [
     "ProbabilityError",
     # Beta distribution
     "beta_cumulative_distribution",
+    "beta_log_probability_density",
     "beta_probability_density",
     "beta_quantile",
     # Binomial distribution
