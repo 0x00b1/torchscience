@@ -86,6 +86,7 @@ from ._spherical_bessel_y import spherical_bessel_y
 from ._spherical_bessel_y_0 import spherical_bessel_y_0
 from ._spherical_bessel_y_1 import spherical_bessel_y_1
 from ._spherical_hankel_1 import spherical_hankel_1
+from ._spherical_hankel_2 import spherical_hankel_2
 from ._spherical_harmonic_y import (
     spherical_harmonic_y,
     spherical_harmonic_y_all,
@@ -174,6 +175,7 @@ __all__ = [
     "spherical_bessel_y_0",
     "spherical_bessel_y_1",
     "spherical_hankel_1",
+    "spherical_hankel_2",
     "spherical_harmonic_y",
     "spherical_harmonic_y_all",
     "spherical_harmonic_y_cartesian",

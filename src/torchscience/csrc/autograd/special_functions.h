@@ -96,3 +96,6 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(cosine_integral_ci, CosineIntegra
 
 // Spherical Hankel functions of the first kind
 TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(spherical_hankel_1, SphericalHankel1, n, z)
+
+// Spherical Hankel functions of the second kind
+TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(spherical_hankel_2, SphericalHankel2, n, z)
