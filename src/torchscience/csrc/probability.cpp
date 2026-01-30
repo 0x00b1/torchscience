@@ -104,4 +104,8 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("poisson_cumulative_distribution_backward(Tensor grad, Tensor k, Tensor rate) -> (Tensor, Tensor)");
   m.def("poisson_probability_mass(Tensor k, Tensor rate) -> Tensor");
   m.def("poisson_probability_mass_backward(Tensor grad, Tensor k, Tensor rate) -> (Tensor, Tensor)");
+  m.def("poisson_log_probability_mass(Tensor k, Tensor rate) -> Tensor");
+  m.def("poisson_log_probability_mass_backward(Tensor grad, Tensor k, Tensor rate) -> (Tensor, Tensor)");
+  m.def("poisson_survival(Tensor k, Tensor rate) -> Tensor");
+  m.def("poisson_survival_backward(Tensor grad, Tensor k, Tensor rate) -> (Tensor, Tensor)");
 }
