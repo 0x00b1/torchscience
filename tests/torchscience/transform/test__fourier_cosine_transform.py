@@ -221,7 +221,7 @@ class TestDCTAutocast:
     """Tests for autocast compatibility."""
 
     @pytest.mark.skip(
-        reason="fourier_cosine_transform C++ backend segfaults with float16 inputs"
+        reason="C++ dispatcher segfaults with float16 inputs - requires investigation"
     )
     @pytest.mark.parametrize("dct_type", [2, 4])
     def test_autocast_cpu_float16(self, dct_type):
@@ -231,12 +231,13 @@ class TestDCTAutocast:
         with torch.amp.autocast("cpu", dtype=torch.float16):
             y = T.fourier_cosine_transform(x, type=dct_type)
 
-        # Should produce valid output
+        # Should upcast to float32 for numerical stability
+        assert y.dtype == torch.float32
         assert y.shape == x.shape
         assert not torch.isnan(y).any()
 
     @pytest.mark.skip(
-        reason="fourier_cosine_transform C++ backend segfaults with bfloat16 inputs"
+        reason="C++ dispatcher segfaults with bfloat16 inputs - requires investigation"
     )
     @pytest.mark.parametrize("dct_type", [2, 4])
     def test_autocast_cpu_bfloat16(self, dct_type):
@@ -246,5 +247,7 @@ class TestDCTAutocast:
         with torch.amp.autocast("cpu", dtype=torch.bfloat16):
             y = T.fourier_cosine_transform(x, type=dct_type)
 
+        # Should upcast to float32 for numerical stability
+        assert y.dtype == torch.float32
         assert y.shape == x.shape
         assert not torch.isnan(y).any()

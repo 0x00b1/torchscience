@@ -329,7 +329,7 @@ class TestRadonTransformAutocast:
     """Tests for autocast compatibility."""
 
     @pytest.mark.skip(
-        reason="radon_transform C++ backend segfaults with float16 inputs"
+        reason="C++ dispatcher segfaults with float16 inputs - requires investigation"
     )
     def test_autocast_cpu_float16(self):
         """Test that radon transform works under CPU autocast."""
@@ -339,12 +339,13 @@ class TestRadonTransformAutocast:
         with torch.amp.autocast("cpu", dtype=torch.float16):
             sinogram = T.radon_transform(image, angles)
 
-        # Should produce valid output (may upcast for numerical stability)
+        # Should upcast to float32 for numerical stability
+        assert sinogram.dtype == torch.float32
         assert sinogram.shape[0] == 10
         assert not torch.isnan(sinogram).any()
 
     @pytest.mark.skip(
-        reason="radon_transform C++ backend segfaults with bfloat16 inputs"
+        reason="C++ dispatcher segfaults with bfloat16 inputs - requires investigation"
     )
     def test_autocast_cpu_bfloat16(self):
         """Test that radon transform works under CPU autocast with bfloat16."""
@@ -354,5 +355,7 @@ class TestRadonTransformAutocast:
         with torch.amp.autocast("cpu", dtype=torch.bfloat16):
             sinogram = T.radon_transform(image, angles)
 
+        # Should upcast to float32 for numerical stability
+        assert sinogram.dtype == torch.float32
         assert sinogram.shape[0] == 10
         assert not torch.isnan(sinogram).any()

@@ -555,7 +555,7 @@ class TestDiscreteWaveletTransformAutocast:
     """Tests for autocast compatibility."""
 
     @pytest.mark.skip(
-        reason="discrete_wavelet_transform C++ backend segfaults with float16 inputs"
+        reason="C++ dispatcher segfaults with float16 inputs - requires investigation"
     )
     def test_autocast_cpu_float16(self):
         """Test that DWT works under CPU autocast with float16."""
@@ -564,13 +564,14 @@ class TestDiscreteWaveletTransformAutocast:
         with torch.amp.autocast("cpu", dtype=torch.float16):
             approx, details = discrete_wavelet_transform(x, wavelet="haar")
 
-        # Should produce valid output
+        # Should upcast to float32 for numerical stability
+        assert approx.dtype == torch.float32
         assert approx.shape[0] == 32
         assert not torch.isnan(approx).any()
         assert not torch.isnan(details[0]).any()
 
     @pytest.mark.skip(
-        reason="discrete_wavelet_transform C++ backend segfaults with bfloat16 inputs"
+        reason="C++ dispatcher segfaults with bfloat16 inputs - requires investigation"
     )
     def test_autocast_cpu_bfloat16(self):
         """Test that DWT works under CPU autocast with bfloat16."""
@@ -579,6 +580,8 @@ class TestDiscreteWaveletTransformAutocast:
         with torch.amp.autocast("cpu", dtype=torch.bfloat16):
             approx, details = discrete_wavelet_transform(x, wavelet="haar")
 
+        # Should upcast to float32 for numerical stability
+        assert approx.dtype == torch.float32
         assert approx.shape[0] == 32
         assert not torch.isnan(approx).any()
         assert not torch.isnan(details[0]).any()
