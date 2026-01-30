@@ -17,7 +17,7 @@ T chi2_log_probability_density(T x, T df) {
     return -std::numeric_limits<T>::infinity();
   }
 
-  constexpr T log_2 = T(0.6931471805599453);  // log(2)
+  const T log_2 = T(0.6931471805599453);  // log(2)
   T k_half = df / T(2);
 
   return (k_half - T(1)) * std::log(x) - x / T(2)
