@@ -39,6 +39,8 @@ set(TORCHSCIENCE_CUDA_SOURCES
   src/torchscience/csrc/cuda/transform/inverse_hankel_transform.cu
   src/torchscience/csrc/cuda/transform/abel_transform.cu
   src/torchscience/csrc/cuda/transform/inverse_abel_transform.cu
+  src/torchscience/csrc/cuda/transform/radon_transform.cu
+  src/torchscience/csrc/cuda/transform/inverse_radon_transform.cu
 )
 
 # Add CUDA sources to target
