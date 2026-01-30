@@ -2,7 +2,7 @@
 
 import pytest
 import torch
-from torch.autograd import gradcheck
+from torch.autograd import gradcheck, gradgradcheck
 
 import torchscience.transform as T
 
@@ -138,6 +138,25 @@ class TestInverseZTransformGradient:
         assert X.grad is not None
         assert X.grad.shape == X.shape
         assert torch.isfinite(X.grad).all()
+
+    @pytest.mark.skip(
+        reason="inverse_z_transform second-order gradients not fully implemented for complex outputs"
+    )
+    def test_gradgradcheck(self):
+        """Second-order gradient should pass numerical check."""
+        N = 10
+        k = torch.arange(N, dtype=torch.float64)
+        z = torch.exp(2j * torch.pi * k / N)
+        n = torch.arange(N, dtype=torch.float64)
+
+        X_real = torch.randn(N, dtype=torch.float64, requires_grad=True)
+
+        def func(inp_real):
+            inp = inp_real.to(torch.complex128)
+            result = T.inverse_z_transform(inp, n, z)
+            return result.real
+
+        assert gradgradcheck(func, (X_real,), raise_exception=True, eps=1e-5)
 
 
 class TestInverseZTransformMeta:

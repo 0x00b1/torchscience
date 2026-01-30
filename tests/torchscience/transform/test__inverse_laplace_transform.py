@@ -2,7 +2,7 @@
 
 import pytest
 import torch
-from torch.autograd import gradcheck
+from torch.autograd import gradcheck, gradgradcheck
 
 import torchscience.transform as T
 
@@ -151,6 +151,25 @@ class TestInverseLaplaceTransformGradient:
         except RuntimeError:
             # Backward may not be implemented
             pytest.skip("backward not implemented for complex inputs")
+
+    @pytest.mark.skip(
+        reason="inverse_laplace_transform second-order gradients not implemented for complex inputs"
+    )
+    def test_gradgradcheck(self):
+        """Second-order gradient should pass numerical check."""
+        omega = torch.linspace(-10, 10, 51, dtype=torch.float64)
+        sigma = 1.0
+        s = sigma + 1j * omega
+        t = torch.tensor([0.5, 1.0], dtype=torch.float64)
+
+        F_real = torch.randn(51, dtype=torch.float64, requires_grad=True)
+
+        def func(inp_real):
+            inp = inp_real.to(torch.complex128)
+            result = T.inverse_laplace_transform(inp, t, s, sigma=sigma)
+            return result.real
+
+        assert gradgradcheck(func, (F_real,), raise_exception=True, eps=1e-5)
 
 
 class TestInverseLaplaceTransformMeta:
