@@ -762,3 +762,10 @@ TORCH_LIBRARY_IMPL(torchscience, CPU, module) {
 #include "../kernel/special_functions/airy_ai_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(airy_ai, x)
+
+// Airy function of the second kind
+#include "../kernel/special_functions/airy_bi.h"
+#include "../kernel/special_functions/airy_bi_backward.h"
+#include "../kernel/special_functions/airy_bi_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(airy_bi, x)

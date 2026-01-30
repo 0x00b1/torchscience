@@ -381,4 +381,9 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("airy_ai(Tensor x) -> Tensor");
   m.def("airy_ai_backward(Tensor grad_output, Tensor x) -> Tensor");
   m.def("airy_ai_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
+
+  // Airy function of the second kind
+  m.def("airy_bi(Tensor x) -> Tensor");
+  m.def("airy_bi_backward(Tensor grad_output, Tensor x) -> Tensor");
+  m.def("airy_bi_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
 }
