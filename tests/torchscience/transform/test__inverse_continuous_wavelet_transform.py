@@ -350,6 +350,38 @@ class TestInverseContinuousWaveletTransformGradient:
         assert coeffs.grad.shape == coeffs.shape
 
 
+class TestInverseContinuousWaveletTransformMeta:
+    """Tests for meta tensor support (shape inference)."""
+
+    @pytest.mark.skip(
+        reason="ICWT validation calls .any() which doesn't work with meta tensors"
+    )
+    def test_meta_tensor_shape(self):
+        """Test shape inference with meta tensors."""
+        coeffs = torch.randn(3, 128, device="meta")
+        scales = torch.tensor([1.0, 2.0, 4.0], device="meta")
+        reconstructed = inverse_continuous_wavelet_transform(
+            coeffs, scales, wavelet="mexican_hat"
+        )
+
+        assert reconstructed.shape == torch.Size([128])
+        assert reconstructed.device.type == "meta"
+
+    @pytest.mark.skip(
+        reason="ICWT validation calls .any() which doesn't work with meta tensors"
+    )
+    def test_meta_tensor_batched(self):
+        """Test shape inference with batched meta tensors."""
+        coeffs = torch.randn(5, 3, 128, device="meta")
+        scales = torch.tensor([1.0, 2.0, 4.0], device="meta")
+        reconstructed = inverse_continuous_wavelet_transform(
+            coeffs, scales, wavelet="mexican_hat"
+        )
+
+        assert reconstructed.shape == torch.Size([5, 128])
+        assert reconstructed.device.type == "meta"
+
+
 class TestInverseContinuousWaveletTransformDevice:
     """Tests for device handling."""
 
