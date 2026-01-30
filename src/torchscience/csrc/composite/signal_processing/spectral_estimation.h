@@ -337,6 +337,117 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> spectrogram(
     return std::make_tuple(freqs, times, Sxx);
 }
 
+// ============================================================================
+// cross_spectral_density
+// ============================================================================
+//
+// Cross spectral density using Welch's method.
+//
+//   P_xy(f) = (1/K) * sum_k conj(FFT(x_k * w)) * FFT(y_k * w) / (fs * S)
+//
+// Parameters:
+//   x, y     - Input signals (..., N) - must be broadcastable
+//   window   - Window tensor (nperseg,)
+//   nperseg  - Segment length
+//   noverlap - Overlap
+//   fs       - Sampling frequency
+//   scaling  - 0='density', 1='spectrum'
+//
+// Returns: (freqs, Pxy) where Pxy is complex
+
+inline std::tuple<at::Tensor, at::Tensor> cross_spectral_density(
+    const at::Tensor& x,
+    const at::Tensor& y,
+    const at::Tensor& window,
+    int64_t nperseg,
+    int64_t noverlap,
+    double fs,
+    int64_t scaling
+) {
+    TORCH_CHECK(
+        at::isFloatingType(x.scalar_type()),
+        "cross_spectral_density requires real floating-point input for x, got ",
+        x.scalar_type()
+    );
+    TORCH_CHECK(
+        at::isFloatingType(y.scalar_type()),
+        "cross_spectral_density requires real floating-point input for y, got ",
+        y.scalar_type()
+    );
+    TORCH_CHECK(
+        x.dim() >= 1 && y.dim() >= 1,
+        "cross_spectral_density requires at least 1 dimension"
+    );
+    TORCH_CHECK(
+        window.dim() == 1 && window.size(0) == nperseg,
+        "cross_spectral_density window must be 1-D with length nperseg (",
+        nperseg, "), got shape ", window.sizes()
+    );
+    TORCH_CHECK(
+        noverlap >= 0 && noverlap < nperseg,
+        "cross_spectral_density noverlap must be in [0, nperseg), got ",
+        noverlap
+    );
+    TORCH_CHECK(
+        scaling == 0 || scaling == 1,
+        "cross_spectral_density scaling must be 0 or 1, got ", scaling
+    );
+
+    int64_t step = nperseg - noverlap;
+
+    // Segment both signals
+    at::Tensor x_seg = x.unfold(-1, nperseg, step);
+    at::Tensor y_seg = y.unfold(-1, nperseg, step);
+
+    // Apply window
+    at::Tensor xw = x_seg * window;
+    at::Tensor yw = y_seg * window;
+
+    // FFT each segment
+    at::Tensor Xf = at::fft_rfft(xw, /*n=*/c10::nullopt, /*dim=*/-1);
+    at::Tensor Yf = at::fft_rfft(yw, /*n=*/c10::nullopt, /*dim=*/-1);
+
+    // Cross spectrum: conj(X) * Y
+    at::Tensor Pxy = at::conj(Xf) * Yf;
+
+    // Normalization
+    at::Tensor scale;
+    if (scaling == 0) {
+        scale = fs * at::sum(at::pow(window, 2));
+    } else {
+        scale = at::pow(at::sum(window), 2);
+    }
+    Pxy = Pxy / scale;
+
+    // Double non-DC, non-Nyquist bins (one-sided)
+    int64_t n_freqs = Pxy.size(-1);
+    if (nperseg % 2 == 0) {
+        auto inner = Pxy.narrow(-1, 1, n_freqs - 2);
+        Pxy = at::cat({
+            Pxy.narrow(-1, 0, 1),
+            inner * 2.0,
+            Pxy.narrow(-1, n_freqs - 1, 1)
+        }, -1);
+    } else {
+        auto inner = Pxy.narrow(-1, 1, n_freqs - 1);
+        Pxy = at::cat({
+            Pxy.narrow(-1, 0, 1),
+            inner * 2.0
+        }, -1);
+    }
+
+    // Average over segments
+    Pxy = at::mean(Pxy, -2);
+
+    // Frequency bins
+    at::Tensor freqs = at::fft_rfftfreq(
+        nperseg, /*d=*/1.0 / fs,
+        x.options().dtype(at::kDouble)
+    );
+
+    return std::make_tuple(freqs, Pxy);
+}
+
 }  // namespace torchscience::composite::spectral_estimation
 
 // =============================================================================
@@ -356,5 +467,9 @@ TORCH_LIBRARY_IMPL(torchscience, CompositeImplicitAutograd, m) {
     m.impl(
         "spectrogram_psd",
         &torchscience::composite::spectral_estimation::spectrogram
+    );
+    m.impl(
+        "cross_spectral_density",
+        &torchscience::composite::spectral_estimation::cross_spectral_density
     );
 }
