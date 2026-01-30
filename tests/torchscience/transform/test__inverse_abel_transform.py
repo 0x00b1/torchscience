@@ -240,6 +240,67 @@ class TestInverseAbelTransformDevice:
             raise
 
 
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+class TestInverseAbelTransformCUDA:
+    """Test inverse Abel transform CUDA backend."""
+
+    def test_cuda_forward_matches_cpu(self):
+        """CUDA forward should match CPU output."""
+        y_cpu = torch.linspace(0.1, 5, 50, dtype=torch.float64)
+        F_cpu = torch.randn(50, dtype=torch.float64)
+        r_cpu = torch.tensor([0.5, 1.0, 1.5], dtype=torch.float64)
+
+        y_cuda = y_cpu.cuda()
+        F_cuda = F_cpu.cuda()
+        r_cuda = r_cpu.cuda()
+
+        f_cpu = T.inverse_abel_transform(F_cpu, r_cpu, y_cpu)
+        f_cuda = T.inverse_abel_transform(F_cuda, r_cuda, y_cuda)
+
+        assert torch.allclose(f_cpu, f_cuda.cpu(), rtol=1e-10, atol=1e-10)
+
+    def test_cuda_gradient(self):
+        """Gradient should work on CUDA."""
+        y = torch.linspace(0.1, 5, 50, dtype=torch.float64, device="cuda")
+        F = torch.randn(
+            50, dtype=torch.float64, device="cuda", requires_grad=True
+        )
+        r = torch.tensor([0.5, 1.0], dtype=torch.float64, device="cuda")
+
+        f = T.inverse_abel_transform(F, r, y)
+        loss = f.sum()
+        loss.backward()
+
+        assert F.grad is not None
+        assert F.grad.device.type == "cuda"
+
+    def test_cuda_gradcheck(self):
+        """Gradient check on CUDA."""
+        y = torch.linspace(0.1, 5, 30, dtype=torch.float64, device="cuda")
+        F = torch.randn(
+            30, dtype=torch.float64, device="cuda", requires_grad=True
+        )
+        r = torch.tensor([0.5, 1.0], dtype=torch.float64, device="cuda")
+
+        def func(inp):
+            return T.inverse_abel_transform(inp, r, y)
+
+        assert gradcheck(
+            func, (F,), raise_exception=True, eps=1e-5, atol=1e-3, rtol=1e-3
+        )
+
+    def test_cuda_batched(self):
+        """Batched inverse Abel transform on CUDA."""
+        y = torch.linspace(0.1, 5, 50, dtype=torch.float64, device="cuda")
+        F = torch.randn(5, 50, dtype=torch.float64, device="cuda")
+        r = torch.tensor([0.5, 1.0], dtype=torch.float64, device="cuda")
+
+        f = T.inverse_abel_transform(F, r, y, dim=-1)
+
+        assert f.shape == torch.Size([5, 2])
+        assert f.device.type == "cuda"
+
+
 class TestInverseAbelTransformVmap:
     """Test inverse Abel transform with vmap."""
 

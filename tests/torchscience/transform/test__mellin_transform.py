@@ -250,6 +250,65 @@ class TestMellinTransformDevice:
             raise
 
 
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+class TestMellinTransformCUDA:
+    """Test Mellin transform CUDA backend."""
+
+    def test_cuda_forward_matches_cpu(self):
+        """CUDA forward should match CPU output."""
+        t_cpu = torch.linspace(0.1, 5, 50, dtype=torch.float64)
+        f_cpu = torch.randn(50, dtype=torch.float64)
+        s_cpu = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float64)
+
+        t_cuda = t_cpu.cuda()
+        f_cuda = f_cpu.cuda()
+        s_cuda = s_cpu.cuda()
+
+        F_cpu = T.mellin_transform(f_cpu, s_cpu, t_cpu)
+        F_cuda = T.mellin_transform(f_cuda, s_cuda, t_cuda)
+
+        assert torch.allclose(F_cpu, F_cuda.cpu(), rtol=1e-10, atol=1e-10)
+
+    def test_cuda_gradient(self):
+        """Gradient should work on CUDA."""
+        t = torch.linspace(0.1, 5, 50, dtype=torch.float64, device="cuda")
+        f = torch.randn(
+            50, dtype=torch.float64, device="cuda", requires_grad=True
+        )
+        s = torch.tensor([1.0, 2.0], dtype=torch.float64, device="cuda")
+
+        F = T.mellin_transform(f, s, t)
+        loss = F.sum()
+        loss.backward()
+
+        assert f.grad is not None
+        assert f.grad.device.type == "cuda"
+
+    def test_cuda_gradcheck(self):
+        """Gradient check on CUDA."""
+        t = torch.linspace(0.1, 5, 30, dtype=torch.float64, device="cuda")
+        f = torch.randn(
+            30, dtype=torch.float64, device="cuda", requires_grad=True
+        )
+        s = torch.tensor([1.0, 2.0], dtype=torch.float64, device="cuda")
+
+        def func(inp):
+            return T.mellin_transform(inp, s, t)
+
+        assert gradcheck(func, (f,), raise_exception=True)
+
+    def test_cuda_batched(self):
+        """Batched Mellin transform on CUDA."""
+        t = torch.linspace(0.1, 5, 50, dtype=torch.float64, device="cuda")
+        f = torch.randn(5, 50, dtype=torch.float64, device="cuda")
+        s = torch.tensor([1.0, 2.0], dtype=torch.float64, device="cuda")
+
+        F = T.mellin_transform(f, s, t, dim=-1)
+
+        assert F.shape == torch.Size([5, 2])
+        assert F.device.type == "cuda"
+
+
 class TestMellinTransformVmap:
     """Test Mellin transform with vmap."""
 
