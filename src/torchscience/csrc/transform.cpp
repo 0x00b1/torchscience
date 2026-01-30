@@ -100,9 +100,21 @@
 #include "autocast/transform/discrete_wavelet_transform.h"
 #include "autocast/transform/inverse_discrete_wavelet_transform.h"
 
+// Sparse COO backend
+#include "sparse/coo/cpu/transform/discrete_wavelet_transform.h"
+
+// Sparse CSR backend
+#include "sparse/csr/cpu/transform/discrete_wavelet_transform.h"
+
 #ifdef TORCHSCIENCE_CUDA
 #include "cuda/transform/fourier_transform.cu"
 #include "cuda/transform/inverse_fourier_transform.cu"
+
+// Sparse COO CUDA backend
+#include "sparse/coo/cuda/transform/discrete_wavelet_transform.h"
+
+// Sparse CSR CUDA backend
+#include "sparse/csr/cuda/transform/discrete_wavelet_transform.h"
 #endif
 
 TORCH_LIBRARY_FRAGMENT(torchscience, m) {
