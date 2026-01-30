@@ -309,6 +309,22 @@ class TestInverseGaborTransformDevice:
         assert not x_rec.is_complex()
 
 
+class TestInverseGaborTransformDtype:
+    """Test inverse Gabor transform dtype handling."""
+
+    def test_complex64_input(self):
+        """Inverse Gabor should work with complex64 input."""
+        G = torch.randn(17, 10, dtype=torch.complex64)
+        x = inverse_gabor_transform(G, sigma=0.1, n_fft=32)
+        assert x.dtype == torch.float32
+
+    def test_complex128_input(self):
+        """Inverse Gabor should work with complex128 input."""
+        G = torch.randn(17, 10, dtype=torch.complex128)
+        x = inverse_gabor_transform(G, sigma=0.1, n_fft=32)
+        assert x.dtype == torch.float64
+
+
 class TestInverseGaborTransformParameterOrder:
     """Tests for parameter ordering (keyword-only)."""
 

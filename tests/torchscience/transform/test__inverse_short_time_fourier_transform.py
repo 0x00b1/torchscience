@@ -398,6 +398,24 @@ class TestInverseShortTimeFourierTransformDevice:
         assert not x_rec.is_complex()
 
 
+class TestInverseShortTimeFourierTransformDtype:
+    """Test inverse STFT dtype handling."""
+
+    def test_complex64_input(self):
+        """Inverse STFT should work with complex64 input."""
+        window = torch.hann_window(32, dtype=torch.float32)
+        S = torch.randn(17, 10, dtype=torch.complex64)
+        x = inverse_short_time_fourier_transform(S, window=window)
+        assert x.dtype == torch.float32
+
+    def test_complex128_input(self):
+        """Inverse STFT should work with complex128 input."""
+        window = torch.hann_window(32, dtype=torch.float64)
+        S = torch.randn(17, 10, dtype=torch.complex128)
+        x = inverse_short_time_fourier_transform(S, window=window)
+        assert x.dtype == torch.float64
+
+
 class TestInverseShortTimeFourierTransformMatchesTorchISTFT:
     """Tests that verify output matches torch.istft."""
 

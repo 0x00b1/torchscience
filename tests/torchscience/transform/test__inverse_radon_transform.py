@@ -343,6 +343,28 @@ class TestInverseRadonTransformDevice:
             raise
 
 
+class TestInverseRadonTransformDtype:
+    """Test inverse Radon transform dtype handling."""
+
+    def test_float32_input(self):
+        """Inverse Radon should work with float32 input."""
+        sinogram = torch.randn(45, 65, dtype=torch.float32)
+        angles = torch.linspace(0, math.pi, 45, dtype=torch.float32)
+        reconstructed = T.inverse_radon_transform(
+            sinogram, angles, output_size=32
+        )
+        assert reconstructed.dtype == torch.float32
+
+    def test_float64_input(self):
+        """Inverse Radon should work with float64 input."""
+        sinogram = torch.randn(45, 65, dtype=torch.float64)
+        angles = torch.linspace(0, math.pi, 45, dtype=torch.float64)
+        reconstructed = T.inverse_radon_transform(
+            sinogram, angles, output_size=32
+        )
+        assert reconstructed.dtype == torch.float64
+
+
 class TestInverseRadonTransformVmap:
     """Test inverse Radon transform with vmap."""
 
