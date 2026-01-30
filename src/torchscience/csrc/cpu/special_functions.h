@@ -769,3 +769,10 @@ TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(airy_ai, x)
 #include "../kernel/special_functions/airy_bi_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(airy_bi, x)
+
+// Lambert W function (product logarithm)
+#include "../kernel/special_functions/lambert_w.h"
+#include "../kernel/special_functions/lambert_w_backward.h"
+#include "../kernel/special_functions/lambert_w_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(lambert_w, k, z)

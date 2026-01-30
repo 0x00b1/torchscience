@@ -106,3 +106,6 @@ TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(airy_ai, x)
 
 // Airy function of the second kind
 TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(airy_bi, x)
+
+// Lambert W function (product logarithm)
+TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(lambert_w, k, z)
