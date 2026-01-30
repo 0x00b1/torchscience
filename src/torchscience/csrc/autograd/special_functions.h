@@ -100,3 +100,6 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(spherical_hankel_1, SphericalHan
 
 // Spherical Hankel functions of the second kind
 TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(spherical_hankel_2, SphericalHankel2, n, z)
+
+// Airy function of the first kind
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(airy_ai, AiryAi, x)

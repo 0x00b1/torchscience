@@ -376,4 +376,9 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("spherical_hankel_2(Tensor n, Tensor z) -> Tensor");
   m.def("spherical_hankel_2_backward(Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor)");
   m.def("spherical_hankel_2_backward_backward(Tensor gg_n, Tensor gg_z, Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor, Tensor)");
+
+  // Airy function of the first kind
+  m.def("airy_ai(Tensor x) -> Tensor");
+  m.def("airy_ai_backward(Tensor grad_output, Tensor x) -> Tensor");
+  m.def("airy_ai_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
 }
