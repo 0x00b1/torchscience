@@ -233,6 +233,10 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("incomplete_legendre_elliptic_integral_e_backward(Tensor grad_output, Tensor phi, Tensor m) -> (Tensor, Tensor)");
   m.def("incomplete_legendre_elliptic_integral_e_backward_backward(Tensor gg_phi, Tensor gg_m, Tensor grad_output, Tensor phi, Tensor m) -> (Tensor, Tensor, Tensor)");
 
+  m.def("incomplete_legendre_elliptic_integral_f(Tensor phi, Tensor m) -> Tensor");
+  m.def("incomplete_legendre_elliptic_integral_f_backward(Tensor grad_output, Tensor phi, Tensor m) -> (Tensor, Tensor)");
+  m.def("incomplete_legendre_elliptic_integral_f_backward_backward(Tensor gg_phi, Tensor gg_m, Tensor grad_output, Tensor phi, Tensor m) -> (Tensor, Tensor, Tensor)");
+
   m.def("complete_legendre_elliptic_integral_pi(Tensor n, Tensor m) -> Tensor");
   m.def("complete_legendre_elliptic_integral_pi_backward(Tensor grad_output, Tensor n, Tensor m) -> (Tensor, Tensor)");
   m.def("complete_legendre_elliptic_integral_pi_backward_backward(Tensor gg_n, Tensor gg_m, Tensor grad_output, Tensor n, Tensor m) -> (Tensor, Tensor, Tensor)");
