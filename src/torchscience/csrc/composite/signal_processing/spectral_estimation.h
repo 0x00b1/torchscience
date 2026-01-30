@@ -119,6 +119,114 @@ inline std::tuple<at::Tensor, at::Tensor> periodogram(
     return std::make_tuple(freqs, Pxx);
 }
 
+// ============================================================================
+// welch
+// ============================================================================
+//
+// Welch's method: average modified periodograms of overlapping segments.
+//
+//   P_welch(f) = (1/K) * sum_k periodogram(x_k * w)
+//
+// Parameters:
+//   x        - Input signal (..., N)
+//   window   - Window tensor (nperseg,)
+//   nperseg  - Segment length (int, equals window.size(0))
+//   noverlap - Overlap between segments (int)
+//   fs       - Sampling frequency (double)
+//   scaling  - 0='density', 1='spectrum'
+//
+// Returns: (freqs, Pxx)
+
+inline std::tuple<at::Tensor, at::Tensor> welch(
+    const at::Tensor& x,
+    const at::Tensor& window,
+    int64_t nperseg,
+    int64_t noverlap,
+    double fs,
+    int64_t scaling
+) {
+    TORCH_CHECK(
+        at::isFloatingType(x.scalar_type()),
+        "welch requires real floating-point input, got ", x.scalar_type()
+    );
+    TORCH_CHECK(
+        x.dim() >= 1,
+        "welch requires at least 1 dimension, got ", x.dim()
+    );
+    TORCH_CHECK(
+        window.dim() == 1 && window.size(0) == nperseg,
+        "welch window must be 1-D with length nperseg (", nperseg,
+        "), got shape ", window.sizes()
+    );
+    TORCH_CHECK(
+        noverlap >= 0 && noverlap < nperseg,
+        "welch noverlap must be in [0, nperseg), got ", noverlap
+    );
+    TORCH_CHECK(
+        scaling == 0 || scaling == 1,
+        "welch scaling must be 0 ('density') or 1 ('spectrum'), got ", scaling
+    );
+
+    int64_t n = x.size(-1);
+    int64_t step = nperseg - noverlap;
+    int64_t n_segments = (n - nperseg) / step + 1;
+
+    TORCH_CHECK(
+        n_segments >= 1,
+        "welch: signal length (", n, ") too short for nperseg=", nperseg,
+        " with noverlap=", noverlap
+    );
+
+    // Extract overlapping segments: shape (..., n_segments, nperseg)
+    at::Tensor segments = x.unfold(-1, nperseg, step);
+
+    // Apply window: broadcast (nperseg,) over (..., n_segments, nperseg)
+    at::Tensor windowed = segments * window;
+
+    // FFT each segment
+    at::Tensor X = at::fft_rfft(windowed, /*n=*/c10::nullopt, /*dim=*/-1);
+
+    // Power: |X|^2
+    at::Tensor Pxx = at::real(X * at::conj(X));
+
+    // Normalization
+    at::Tensor scale;
+    if (scaling == 0) {
+        scale = fs * at::sum(at::pow(window, 2));
+    } else {
+        scale = at::pow(at::sum(window), 2);
+    }
+    Pxx = Pxx / scale;
+
+    // Double non-DC, non-Nyquist bins (one-sided)
+    int64_t n_freqs = Pxx.size(-1);
+    if (nperseg % 2 == 0) {
+        auto inner = Pxx.narrow(-1, 1, n_freqs - 2);
+        Pxx = at::cat({
+            Pxx.narrow(-1, 0, 1),
+            inner * 2.0,
+            Pxx.narrow(-1, n_freqs - 1, 1)
+        }, -1);
+    } else {
+        auto inner = Pxx.narrow(-1, 1, n_freqs - 1);
+        Pxx = at::cat({
+            Pxx.narrow(-1, 0, 1),
+            inner * 2.0
+        }, -1);
+    }
+
+    // Average over segments (dim=-2 is the segment dimension)
+    Pxx = at::mean(Pxx, -2);
+
+    // Frequency bins
+    at::Tensor freqs = at::fft_rfftfreq(
+        nperseg, /*d=*/1.0 / fs,
+        x.options().dtype(at::kDouble)
+    );
+
+    return std::make_tuple(freqs, Pxx);
+}
+
 }  // namespace torchscience::composite::spectral_estimation
 
 // =============================================================================
@@ -130,5 +238,9 @@ TORCH_LIBRARY_IMPL(torchscience, CompositeImplicitAutograd, m) {
     m.impl(
         "periodogram",
         &torchscience::composite::spectral_estimation::periodogram
+    );
+    m.impl(
+        "welch",
+        &torchscience::composite::spectral_estimation::welch
     );
 }
