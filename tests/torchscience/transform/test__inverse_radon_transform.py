@@ -5,7 +5,7 @@ import math
 import numpy as np
 import pytest
 import torch
-from torch.autograd import gradcheck
+from torch.autograd import gradcheck, gradgradcheck
 
 import torchscience.transform as T
 
@@ -193,6 +193,16 @@ class TestInverseRadonTransformGradient:
             return T.inverse_radon_transform(sino, angles, output_size=8)
 
         assert gradcheck(func, (sinograms,), raise_exception=True)
+
+    def test_gradgradcheck(self):
+        """Second-order gradient should pass numerical check."""
+        sinogram = torch.randn(8, 12, dtype=torch.float64, requires_grad=True)
+        angles = torch.linspace(0, math.pi, 8, dtype=torch.float64)
+
+        def func(sino):
+            return T.inverse_radon_transform(sino, angles, output_size=6)
+
+        assert gradgradcheck(func, (sinogram,), raise_exception=True)
 
     def test_gradient_with_different_filters(self):
         """Gradient should work with different filter types."""

@@ -4,7 +4,7 @@ import math
 
 import pytest
 import torch
-from torch.autograd import gradcheck
+from torch.autograd import gradcheck, gradgradcheck
 
 from torchscience.transform import continuous_wavelet_transform
 
@@ -293,6 +293,18 @@ class TestContinuousWaveletTransformGradient:
             return cwt.real, cwt.imag
 
         assert gradcheck(cwt_wrapper, (x,), eps=1e-6, atol=1e-4, rtol=1e-3)
+
+    def test_gradgradcheck_real_wavelet(self):
+        """Test second-order gradient correctness with Mexican hat wavelet."""
+        x = torch.randn(32, dtype=torch.float64, requires_grad=True)
+        scales = torch.tensor([1.0, 2.0], dtype=torch.float64)
+
+        def cwt_wrapper(x):
+            return continuous_wavelet_transform(
+                x, scales, wavelet="mexican_hat"
+            )
+
+        assert gradgradcheck(cwt_wrapper, (x,), eps=1e-6, atol=1e-4, rtol=1e-3)
 
     def test_backward_pass(self):
         """Test that backward pass works."""

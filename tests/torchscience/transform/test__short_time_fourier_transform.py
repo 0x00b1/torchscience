@@ -2,7 +2,7 @@
 
 import pytest
 import torch
-from torch.autograd import gradcheck
+from torch.autograd import gradcheck, gradgradcheck
 
 from torchscience.transform import short_time_fourier_transform
 
@@ -233,6 +233,18 @@ class TestShortTimeFourierTransformGradient:
             return short_time_fourier_transform(x, window=window, center=False)
 
         assert gradcheck(stft_wrapper, (x,), eps=1e-6, atol=1e-4, rtol=1e-3)
+
+    def test_gradgradcheck_real_input(self):
+        """Test second-order gradient correctness for real input."""
+        x = torch.randn(32, dtype=torch.float64, requires_grad=True)
+        window = torch.hann_window(16, dtype=torch.float64)
+
+        def stft_wrapper(x):
+            return short_time_fourier_transform(x, window=window, center=False)
+
+        assert gradgradcheck(
+            stft_wrapper, (x,), eps=1e-6, atol=1e-4, rtol=1e-3
+        )
 
     def test_backward_pass(self):
         """Test that backward pass works."""

@@ -2,7 +2,7 @@
 
 import pytest
 import torch
-from torch.autograd import gradcheck
+from torch.autograd import gradcheck, gradgradcheck
 
 from torchscience.transform import (
     gabor_transform,
@@ -215,6 +215,17 @@ class TestGaborTransformGradient:
             return gabor_transform(x, sigma=0.1, n_fft=16, center=False)
 
         assert gradcheck(gabor_wrapper, (x,), eps=1e-6, atol=1e-4, rtol=1e-3)
+
+    def test_gradgradcheck_real_input(self):
+        """Test second-order gradient correctness for real input."""
+        x = torch.randn(32, dtype=torch.float64, requires_grad=True)
+
+        def gabor_wrapper(x):
+            return gabor_transform(x, sigma=0.1, n_fft=16, center=False)
+
+        assert gradgradcheck(
+            gabor_wrapper, (x,), eps=1e-6, atol=1e-4, rtol=1e-3
+        )
 
     def test_backward_pass(self):
         """Test that backward pass works."""

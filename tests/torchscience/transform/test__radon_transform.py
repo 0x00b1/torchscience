@@ -5,7 +5,7 @@ import math
 import numpy as np
 import pytest
 import torch
-from torch.autograd import gradcheck
+from torch.autograd import gradcheck, gradgradcheck
 
 import torchscience.transform as T
 
@@ -130,6 +130,16 @@ class TestRadonTransformGradient:
             return T.radon_transform(inp, angles)
 
         assert gradcheck(func, (images,), raise_exception=True)
+
+    def test_gradgradcheck(self):
+        """Second-order gradient should pass numerical check."""
+        image = torch.randn(12, 12, dtype=torch.float64, requires_grad=True)
+        angles = torch.tensor([0.0, math.pi / 2], dtype=torch.float64)
+
+        def func(inp):
+            return T.radon_transform(inp, angles)
+
+        assert gradgradcheck(func, (image,), raise_exception=True)
 
 
 class TestRadonTransformMeta:
