@@ -112,3 +112,6 @@ TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(lambert_w, k, z)
 
 // Kelvin function ber (real part of J_0 at rotated argument)
 TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(kelvin_ber, x)
+
+// Kelvin function bei (imaginary part of J_0 at rotated argument)
+TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(kelvin_bei, x)

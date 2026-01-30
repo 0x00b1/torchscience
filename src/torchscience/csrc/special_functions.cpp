@@ -396,4 +396,9 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("kelvin_ber(Tensor x) -> Tensor");
   m.def("kelvin_ber_backward(Tensor grad_output, Tensor x) -> Tensor");
   m.def("kelvin_ber_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
+
+  // Kelvin function bei (imaginary part of J_0 at rotated argument)
+  m.def("kelvin_bei(Tensor x) -> Tensor");
+  m.def("kelvin_bei_backward(Tensor grad_output, Tensor x) -> Tensor");
+  m.def("kelvin_bei_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
 }
