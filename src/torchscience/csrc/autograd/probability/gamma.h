@@ -216,6 +216,59 @@ inline at::Tensor gamma_log_probability_density(
   return GammaLogPdfFunction::apply(x, shape, scale);
 }
 
+class GammaSurvivalFunction : public torch::autograd::Function<GammaSurvivalFunction> {
+public:
+  static at::Tensor forward(
+      torch::autograd::AutogradContext* ctx,
+      const at::Tensor& x,
+      const at::Tensor& shape,
+      const at::Tensor& scale
+  ) {
+    ctx->save_for_backward({x, shape, scale});
+
+    at::AutoDispatchBelowAutograd guard;
+
+    return c10::Dispatcher::singleton()
+        .findSchemaOrThrow("torchscience::gamma_survival", "")
+        .typed<at::Tensor(const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
+        .call(x, shape, scale);
+  }
+
+  static std::vector<at::Tensor> backward(
+      torch::autograd::AutogradContext* ctx,
+      const std::vector<at::Tensor>& grad_outputs
+  ) {
+    const torch::autograd::variable_list saved = ctx->get_saved_variables();
+    at::Tensor x = saved[0];
+    at::Tensor shape = saved[1];
+    at::Tensor scale = saved[2];
+
+    at::Tensor grad_output = grad_outputs[0];
+
+    if (!grad_output.defined()) {
+      return {at::Tensor(), at::Tensor(), at::Tensor()};
+    }
+
+    at::AutoDispatchBelowAutograd guard;
+
+    auto result = c10::Dispatcher::singleton()
+        .findSchemaOrThrow("torchscience::gamma_survival_backward", "")
+        .typed<std::tuple<at::Tensor, at::Tensor, at::Tensor>(
+            const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
+        .call(grad_output, x, shape, scale);
+
+    return {std::get<0>(result), std::get<1>(result), std::get<2>(result)};
+  }
+};
+
+inline at::Tensor gamma_survival(
+    const at::Tensor& x,
+    const at::Tensor& shape,
+    const at::Tensor& scale
+) {
+  return GammaSurvivalFunction::apply(x, shape, scale);
+}
+
 }  // namespace torchscience::autograd::probability
 
 TORCH_LIBRARY_IMPL(torchscience, Autograd, m) {
@@ -223,4 +276,5 @@ TORCH_LIBRARY_IMPL(torchscience, Autograd, m) {
   m.impl("gamma_probability_density", &torchscience::autograd::probability::gamma_probability_density);
   m.impl("gamma_quantile", &torchscience::autograd::probability::gamma_quantile);
   m.impl("gamma_log_probability_density", &torchscience::autograd::probability::gamma_log_probability_density);
+  m.impl("gamma_survival", &torchscience::autograd::probability::gamma_survival);
 }

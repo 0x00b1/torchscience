@@ -82,6 +82,8 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("gamma_quantile_backward(Tensor grad, Tensor p, Tensor shape, Tensor scale) -> (Tensor, Tensor, Tensor)");
   m.def("gamma_log_probability_density(Tensor x, Tensor shape, Tensor scale) -> Tensor");
   m.def("gamma_log_probability_density_backward(Tensor grad, Tensor x, Tensor shape, Tensor scale) -> (Tensor, Tensor, Tensor)");
+  m.def("gamma_survival(Tensor x, Tensor shape, Tensor scale) -> Tensor");
+  m.def("gamma_survival_backward(Tensor grad, Tensor x, Tensor shape, Tensor scale) -> (Tensor, Tensor, Tensor)");
 
   // Binomial distribution
   m.def("binomial_cumulative_distribution(Tensor k, Tensor n, Tensor p) -> Tensor");
