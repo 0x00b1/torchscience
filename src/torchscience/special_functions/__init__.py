@@ -66,6 +66,7 @@ from ._jacobi_elliptic_ns import jacobi_elliptic_ns
 from ._jacobi_elliptic_sc import jacobi_elliptic_sc
 from ._jacobi_elliptic_sd import jacobi_elliptic_sd
 from ._jacobi_elliptic_sn import jacobi_elliptic_sn
+from ._kelvin_bei import kelvin_bei
 from ._kelvin_ber import kelvin_ber
 from ._lambert_w import lambert_w
 from ._log_beta import log_beta
@@ -146,6 +147,7 @@ __all__ = [
     "jacobi_elliptic_dc",
     "jacobi_elliptic_ds",
     "jacobi_elliptic_cs",
+    "kelvin_bei",
     "kelvin_ber",
     "lambert_w",
     "inverse_jacobi_elliptic_cd",
