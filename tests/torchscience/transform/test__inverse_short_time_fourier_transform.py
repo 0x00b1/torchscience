@@ -523,3 +523,14 @@ class TestInverseShortTimeFourierTransformCompile:
 
         assert S_input.grad is not None
         assert S_input.grad.shape == S_input.shape
+
+
+class TestInverseShortTimeFourierTransformEdgeCases:
+    """Test edge cases and error handling."""
+
+    def test_zeros_input(self):
+        """Inverse STFT of zeros should return zeros."""
+        window = torch.hann_window(64, dtype=torch.float64)
+        S = torch.zeros(33, 20, dtype=torch.complex128)
+        x = inverse_short_time_fourier_transform(S, window=window)
+        assert torch.allclose(x, torch.zeros_like(x))

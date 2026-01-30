@@ -955,3 +955,50 @@ class TestHilbertTransformScipyReference:
         np.testing.assert_allclose(
             scipy_result, torch_result, rtol=1e-10, atol=1e-10
         )
+
+
+class TestHilbertTransformEdgeCases:
+    """Test edge cases and error handling."""
+
+    def test_single_element_input(self):
+        """Hilbert transform of single element should work."""
+        x = torch.tensor([3.0], dtype=torch.float64)
+        H = hilbert_transform(x)
+        assert H.shape == torch.Size([1])
+
+    def test_zeros_input(self):
+        """Hilbert transform of zeros should return zeros."""
+        x = torch.zeros(64, dtype=torch.float64)
+        H = hilbert_transform(x)
+        assert torch.allclose(H, torch.zeros_like(H))
+
+    def test_constant_input(self):
+        """Hilbert transform of constant should be near zero."""
+        x = torch.ones(64, dtype=torch.float64)
+        H = hilbert_transform(x)
+        # Hilbert of constant is approximately zero (DC has no phase shift)
+        assert H.abs().max() < 1e-10
+
+    def test_sinusoid_phase_shift(self):
+        """Hilbert transform should phase-shift sinusoid by 90 degrees."""
+        t = torch.linspace(0, 2 * torch.pi, 128, dtype=torch.float64)
+        x = torch.sin(t)  # sin(t)
+        H = hilbert_transform(x)
+        # Hilbert of sin(t) should be -cos(t)
+        expected = -torch.cos(t)
+        # Check middle portion to avoid edge effects
+        assert torch.allclose(H[20:-20], expected[20:-20], atol=1e-2)
+
+    def test_power_of_two_size(self):
+        """Hilbert should work with power-of-two sizes."""
+        for n in [4, 8, 16, 32, 64, 128]:
+            x = torch.randn(n, dtype=torch.float64)
+            H = hilbert_transform(x)
+            assert H.shape == torch.Size([n])
+
+    def test_non_power_of_two_size(self):
+        """Hilbert should work with non-power-of-two sizes."""
+        for n in [5, 7, 11, 13, 17, 19, 23]:
+            x = torch.randn(n, dtype=torch.float64)
+            H = hilbert_transform(x)
+            assert H.shape == torch.Size([n])

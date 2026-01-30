@@ -533,3 +533,13 @@ class TestInverseGaborTransformCompile:
 
         assert G.grad is not None
         assert G.grad.shape == G.shape
+
+
+class TestInverseGaborTransformEdgeCases:
+    """Test edge cases and error handling."""
+
+    def test_zeros_input(self):
+        """Inverse Gabor of zeros should return zeros."""
+        G = torch.zeros(33, 20, dtype=torch.complex128)
+        x = inverse_gabor_transform(G, sigma=0.1, n_fft=64)
+        assert torch.allclose(x, torch.zeros_like(x))
