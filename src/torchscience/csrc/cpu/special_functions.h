@@ -776,3 +776,10 @@ TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(airy_bi, x)
 #include "../kernel/special_functions/lambert_w_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(lambert_w, k, z)
+
+// Kelvin function ber (real part of J_0 at rotated argument)
+#include "../kernel/special_functions/kelvin_ber.h"
+#include "../kernel/special_functions/kelvin_ber_backward.h"
+#include "../kernel/special_functions/kelvin_ber_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(kelvin_ber, x)

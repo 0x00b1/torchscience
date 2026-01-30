@@ -109,3 +109,6 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(airy_bi, AiryBi, x)
 
 // Lambert W function (product logarithm)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(lambert_w, LambertW, k, z)
+
+// Kelvin function ber (real part of J_0 at rotated argument)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(kelvin_ber, KelvinBer, x)
