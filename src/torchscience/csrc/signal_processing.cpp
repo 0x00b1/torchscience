@@ -6,6 +6,9 @@
 
 // Window functions
 #include "composite/signal_processing/window_functions.h"
+
+// Spectral estimation
+#include "composite/signal_processing/spectral_estimation.h"
 #include "cpu/signal_processing/window_functions.h"
 #include "meta/signal_processing/window_functions.h"
 #include "autograd/signal_processing/window_functions.h"
@@ -239,4 +242,7 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("poisson_noise(int[] size, Tensor rate, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, Generator? generator=None) -> Tensor");
   m.def("shot_noise(int[] size, Tensor rate, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, bool requires_grad=False, Generator? generator=None) -> Tensor");
   m.def("impulse_noise(int[] size, Tensor p_salt, Tensor p_pepper, float salt_value, float pepper_value, *, ScalarType? dtype=None, Layout? layout=None, Device? device=None, Generator? generator=None) -> Tensor");
+
+  // Spectral estimation
+  m.def("periodogram(Tensor x, Tensor window, float fs, int scaling) -> (Tensor, Tensor)");
 }
