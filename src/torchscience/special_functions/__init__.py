@@ -1,3 +1,4 @@
+from ._airy_ai import airy_ai
 from ._associated_legendre_polynomial_p import (
     associated_legendre_polynomial_p,
     associated_legendre_polynomial_p_all,
@@ -102,6 +103,7 @@ from ._theta_4 import theta_4
 from ._trigamma import trigamma
 
 __all__ = [
+    "airy_ai",
     "associated_legendre_polynomial_p",
     "associated_legendre_polynomial_p_all",
     "bessel_j",
