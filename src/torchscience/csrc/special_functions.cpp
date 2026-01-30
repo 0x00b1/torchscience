@@ -416,4 +416,9 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("zeta(Tensor s) -> Tensor");
   m.def("zeta_backward(Tensor grad_output, Tensor s) -> Tensor");
   m.def("zeta_backward_backward(Tensor gg_s, Tensor grad_output, Tensor s) -> (Tensor, Tensor)");
+
+  // Polylogarithm function Li_s(z)
+  m.def("polylogarithm_li(Tensor s, Tensor z) -> Tensor");
+  m.def("polylogarithm_li_backward(Tensor grad_output, Tensor s, Tensor z) -> (Tensor, Tensor)");
+  m.def("polylogarithm_li_backward_backward(Tensor gg_s, Tensor gg_z, Tensor grad_output, Tensor s, Tensor z) -> (Tensor, Tensor, Tensor)");
 }
