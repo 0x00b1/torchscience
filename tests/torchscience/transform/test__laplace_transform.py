@@ -2,7 +2,7 @@
 
 import pytest
 import torch
-from torch.autograd import gradcheck
+from torch.autograd import gradcheck, gradgradcheck
 
 import torchscience.transform as T
 
@@ -96,6 +96,17 @@ class TestLaplaceTransformGradient:
             return T.laplace_transform(inp, s, t)
 
         assert gradcheck(func, (f,), raise_exception=True)
+
+    def test_gradgradcheck(self):
+        """Second-order gradient should pass numerical check."""
+        t = torch.linspace(0, 5, 30, dtype=torch.float64)
+        f = torch.randn(30, dtype=torch.float64, requires_grad=True)
+        s = torch.tensor([1.0], dtype=torch.float64)
+
+        def func(inp):
+            return T.laplace_transform(inp, s, t)
+
+        assert gradgradcheck(func, (f,), raise_exception=True)
 
     def test_gradient_batched(self):
         """Gradient should work with batched inputs."""

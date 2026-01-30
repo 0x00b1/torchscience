@@ -2,7 +2,7 @@
 
 import pytest
 import torch
-from torch.autograd import gradcheck
+from torch.autograd import gradcheck, gradgradcheck
 
 from torchscience.transform import (
     discrete_wavelet_transform,
@@ -220,6 +220,27 @@ class TestInverseDiscreteWaveletTransformGradient:
             ).sum()
 
         assert gradcheck(
+            idwt_wrapper,
+            (approx_in, details_in[0]),
+            eps=1e-6,
+            atol=1e-4,
+            rtol=1e-3,
+        )
+
+    def test_gradgradcheck_haar(self):
+        """Test second-order gradient correctness for Haar wavelet."""
+        x = torch.randn(32, dtype=torch.float64, requires_grad=True)
+        approx, details = discrete_wavelet_transform(x, wavelet="haar")
+
+        approx_in = approx.detach().clone().requires_grad_(True)
+        details_in = [d.detach().clone().requires_grad_(True) for d in details]
+
+        def idwt_wrapper(approx, detail):
+            return inverse_discrete_wavelet_transform(
+                (approx, [detail]), wavelet="haar"
+            ).sum()
+
+        assert gradgradcheck(
             idwt_wrapper,
             (approx_in, details_in[0]),
             eps=1e-6,

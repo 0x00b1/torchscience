@@ -2,7 +2,7 @@
 
 import pytest
 import torch
-from torch.autograd import gradcheck
+from torch.autograd import gradcheck, gradgradcheck
 
 import torchscience.transform as T
 
@@ -96,6 +96,17 @@ class TestHankelTransformGradient:
             return T.hankel_transform(inp, k, r)
 
         assert gradcheck(func, (f,), raise_exception=True)
+
+    def test_gradgradcheck(self):
+        """Second-order gradient should pass numerical check."""
+        r = torch.linspace(0.1, 5, 30, dtype=torch.float64)
+        f = torch.randn(30, dtype=torch.float64, requires_grad=True)
+        k = torch.tensor([1.0], dtype=torch.float64)
+
+        def func(inp):
+            return T.hankel_transform(inp, k, r)
+
+        assert gradgradcheck(func, (f,), raise_exception=True)
 
     def test_gradient_batched(self):
         """Gradient should work with batched inputs."""
