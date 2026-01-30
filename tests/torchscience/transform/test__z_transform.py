@@ -419,3 +419,65 @@ class TestZTransformEdgeCases:
         # Should converge to z/(z-a) = 10/(10-0.5) = 10/9.5
         expected = z / (z - a)
         assert torch.allclose(X, expected, rtol=1e-3)
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+class TestZTransformCUDA:
+    """Test Z-transform CUDA backend."""
+
+    def test_cuda_forward_matches_cpu(self):
+        """CUDA forward should match CPU output."""
+        x_cpu = torch.randn(20, dtype=torch.float64)
+        z_cpu = torch.tensor(
+            [0.5 + 0j, 1.0 + 1j, 2.0 + 0j], dtype=torch.complex128
+        )
+
+        x_cuda = x_cpu.cuda()
+        z_cuda = z_cpu.cuda()
+
+        X_cpu = T.z_transform(x_cpu, z_cpu)
+        X_cuda = T.z_transform(x_cuda, z_cuda)
+
+        assert torch.allclose(X_cpu, X_cuda.cpu(), rtol=1e-10, atol=1e-10)
+
+    def test_cuda_gradient(self):
+        """Gradient should work on CUDA."""
+        x = torch.randn(
+            10, dtype=torch.float64, device="cuda", requires_grad=True
+        )
+        z = torch.tensor(
+            [0.5 + 0j, 1.0 + 0j], dtype=torch.complex128, device="cuda"
+        )
+
+        X = T.z_transform(x, z)
+        loss = X.abs().sum()
+        loss.backward()
+
+        assert x.grad is not None
+        assert x.grad.device.type == "cuda"
+
+    def test_cuda_gradcheck(self):
+        """Gradient check on CUDA."""
+        x = torch.randn(
+            8, dtype=torch.float64, device="cuda", requires_grad=True
+        )
+        z = torch.tensor(
+            [0.5 + 0j, 1.5 + 0j], dtype=torch.complex128, device="cuda"
+        )
+
+        def func(inp):
+            return T.z_transform(inp, z)
+
+        assert gradcheck(func, (x,), raise_exception=True)
+
+    def test_cuda_batched(self):
+        """Batched Z-transform on CUDA."""
+        x = torch.randn(5, 20, dtype=torch.float64, device="cuda")
+        z = torch.tensor(
+            [0.5 + 0j, 1.0 + 0j], dtype=torch.complex128, device="cuda"
+        )
+
+        X = T.z_transform(x, z, dim=-1)
+
+        assert X.shape == torch.Size([5, 2])
+        assert X.device.type == "cuda"
