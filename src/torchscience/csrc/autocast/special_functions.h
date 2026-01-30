@@ -124,3 +124,6 @@ TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(kelvin_kei, x)
 
 // Riemann zeta function (s > 1 only)
 TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(zeta, s)
+
+// Polylogarithm function Li_s(z)
+TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(polylogarithm_li, s, z)

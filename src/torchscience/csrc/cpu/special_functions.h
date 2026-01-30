@@ -811,3 +811,10 @@ TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(kelvin_kei, x)
 #include "../kernel/special_functions/zeta_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(zeta, s)
+
+// Polylogarithm function Li_s(z)
+#include "../kernel/special_functions/polylogarithm_li.h"
+#include "../kernel/special_functions/polylogarithm_li_backward.h"
+#include "../kernel/special_functions/polylogarithm_li_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(polylogarithm_li, s, z)
