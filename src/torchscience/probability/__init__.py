@@ -25,6 +25,7 @@ from ._beta import (
     beta_log_probability_density,
     beta_probability_density,
     beta_quantile,
+    beta_survival,
 )
 from ._binomial import (
     binomial_cumulative_distribution,
@@ -70,6 +71,7 @@ __all__ = [
     "beta_log_probability_density",
     "beta_probability_density",
     "beta_quantile",
+    "beta_survival",
     # Binomial distribution
     "binomial_cumulative_distribution",
     "binomial_probability_mass",
