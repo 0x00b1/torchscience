@@ -44,6 +44,7 @@ from ._f import (
 )
 from ._gamma import (
     gamma_cumulative_distribution,
+    gamma_log_probability_density,
     gamma_probability_density,
     gamma_quantile,
 )
@@ -81,6 +82,7 @@ __all__ = [
     "f_survival",
     # Gamma distribution
     "gamma_cumulative_distribution",
+    "gamma_log_probability_density",
     "gamma_probability_density",
     "gamma_quantile",
     # Normal distribution
