@@ -216,6 +216,34 @@ class TestFourierTransformDevice:
         assert X.device == x.device
 
 
+class TestFourierTransformDtype:
+    """Test Fourier transform dtype handling."""
+
+    def test_float32_input(self):
+        """FFT should work with float32 input."""
+        x = torch.randn(32, dtype=torch.float32)
+        X = fourier_transform(x)
+        assert X.dtype == torch.complex64
+
+    def test_float64_input(self):
+        """FFT should work with float64 input."""
+        x = torch.randn(32, dtype=torch.float64)
+        X = fourier_transform(x)
+        assert X.dtype == torch.complex128
+
+    def test_complex64_input(self):
+        """FFT should work with complex64 input."""
+        x = torch.randn(32, dtype=torch.complex64)
+        X = fourier_transform(x)
+        assert X.dtype == torch.complex64
+
+    def test_complex128_input(self):
+        """FFT should work with complex128 input."""
+        x = torch.randn(32, dtype=torch.complex128)
+        X = fourier_transform(x)
+        assert X.dtype == torch.complex128
+
+
 class TestFourierTransformMeta:
     """Tests for meta tensor support (shape inference)."""
 

@@ -181,6 +181,22 @@ class TestDSTDevice:
         assert torch.allclose(x_rec.cpu(), x.cpu(), atol=1e-10)
 
 
+class TestDSTDtype:
+    """Test DST dtype handling."""
+
+    def test_float32_input(self):
+        """DST should work with float32 input."""
+        x = torch.randn(16, dtype=torch.float32)
+        y = T.fourier_sine_transform(x, type=2)
+        assert y.dtype == torch.float32
+
+    def test_float64_input(self):
+        """DST should work with float64 input."""
+        x = torch.randn(16, dtype=torch.float64)
+        y = T.fourier_sine_transform(x, type=2)
+        assert y.dtype == torch.float64
+
+
 class TestDSTVmap:
     """Tests for vmap compatibility."""
 
