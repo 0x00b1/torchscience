@@ -96,8 +96,12 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   // Binomial distribution
   m.def("binomial_cumulative_distribution(Tensor k, Tensor n, Tensor p) -> Tensor");
   m.def("binomial_cumulative_distribution_backward(Tensor grad, Tensor k, Tensor n, Tensor p) -> (Tensor, Tensor, Tensor)");
+  m.def("binomial_log_probability_mass(Tensor k, Tensor n, Tensor p) -> Tensor");
+  m.def("binomial_log_probability_mass_backward(Tensor grad, Tensor k, Tensor n, Tensor p) -> (Tensor, Tensor, Tensor)");
   m.def("binomial_probability_mass(Tensor k, Tensor n, Tensor p) -> Tensor");
   m.def("binomial_probability_mass_backward(Tensor grad, Tensor k, Tensor n, Tensor p) -> (Tensor, Tensor, Tensor)");
+  m.def("binomial_survival(Tensor k, Tensor n, Tensor p) -> Tensor");
+  m.def("binomial_survival_backward(Tensor grad, Tensor k, Tensor n, Tensor p) -> (Tensor, Tensor, Tensor)");
 
   // Poisson distribution
   m.def("poisson_cumulative_distribution(Tensor k, Tensor rate) -> Tensor");
