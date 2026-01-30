@@ -411,4 +411,9 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("kelvin_kei(Tensor x) -> Tensor");
   m.def("kelvin_kei_backward(Tensor grad_output, Tensor x) -> Tensor");
   m.def("kelvin_kei_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
+
+  // Riemann zeta function (s > 1 only)
+  m.def("zeta(Tensor s) -> Tensor");
+  m.def("zeta_backward(Tensor grad_output, Tensor s) -> Tensor");
+  m.def("zeta_backward_backward(Tensor gg_s, Tensor grad_output, Tensor s) -> (Tensor, Tensor)");
 }

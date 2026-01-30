@@ -804,3 +804,10 @@ TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(kelvin_ker, x)
 #include "../kernel/special_functions/kelvin_kei_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(kelvin_kei, x)
+
+// Riemann zeta function (s > 1 only)
+#include "../kernel/special_functions/zeta.h"
+#include "../kernel/special_functions/zeta_backward.h"
+#include "../kernel/special_functions/zeta_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(zeta, s)
