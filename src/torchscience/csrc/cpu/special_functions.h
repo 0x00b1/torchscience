@@ -211,6 +211,12 @@ TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(complete_legendre_ellipti
 
 TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(incomplete_legendre_elliptic_integral_e, phi, m)
 
+#include "../kernel/special_functions/incomplete_legendre_elliptic_integral_f.h"
+#include "../kernel/special_functions/incomplete_legendre_elliptic_integral_f_backward.h"
+#include "../kernel/special_functions/incomplete_legendre_elliptic_integral_f_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(incomplete_legendre_elliptic_integral_f, phi, m)
+
 #include "../kernel/special_functions/complete_legendre_elliptic_integral_pi.h"
 #include "../kernel/special_functions/complete_legendre_elliptic_integral_pi_backward.h"
 #include "../kernel/special_functions/complete_legendre_elliptic_integral_pi_backward_backward.h"
@@ -435,3 +441,380 @@ TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(spherical_bessel_k_1, z)
 #include "../kernel/special_functions/spherical_bessel_k_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(spherical_bessel_k, n, z)
+
+#include "../kernel/special_functions/exponential_integral_ei.h"
+#include "../kernel/special_functions/exponential_integral_ei_backward.h"
+#include "../kernel/special_functions/exponential_integral_ei_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(exponential_integral_ei, x)
+
+#include "../kernel/special_functions/exponential_integral_e_1.h"
+#include "../kernel/special_functions/exponential_integral_e_1_backward.h"
+#include "../kernel/special_functions/exponential_integral_e_1_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(exponential_integral_e_1, x)
+
+#include "../kernel/special_functions/exponential_integral_ein.h"
+#include "../kernel/special_functions/exponential_integral_ein_backward.h"
+#include "../kernel/special_functions/exponential_integral_ein_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(exponential_integral_ein, x)
+
+#include "../kernel/special_functions/exponential_integral_e.h"
+#include "../kernel/special_functions/exponential_integral_e_backward.h"
+#include "../kernel/special_functions/exponential_integral_e_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(exponential_integral_e, n, x)
+
+#include "../kernel/special_functions/sine_integral_si.h"
+#include "../kernel/special_functions/sine_integral_si_backward.h"
+#include "../kernel/special_functions/sine_integral_si_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(sine_integral_si, x)
+
+#include "../kernel/special_functions/cosine_integral_ci.h"
+#include "../kernel/special_functions/cosine_integral_ci_backward.h"
+#include "../kernel/special_functions/cosine_integral_ci_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(cosine_integral_ci, x)
+
+#include "../kernel/special_functions/spherical_hankel_1.h"
+#include "../kernel/special_functions/spherical_hankel_1_backward.h"
+#include "../kernel/special_functions/spherical_hankel_1_backward_backward.h"
+
+// Custom implementation for spherical_hankel_1 since it requires complex output
+// The Python wrapper ensures inputs are complex, so we only dispatch to complex types
+namespace torchscience::cpu::special_functions {
+
+inline at::Tensor spherical_hankel_1(
+    const at::Tensor &n_input,
+    const at::Tensor &z_input
+) {
+    at::Tensor output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(output)
+        .add_const_input(n_input)
+        .add_const_input(z_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_COMPLEX_TYPES(
+        iterator.common_dtype(),
+        "spherical_hankel_1",
+        [&] {
+            at::native::cpu_kernel(
+                iterator,
+                [] (scalar_t n, scalar_t z) -> scalar_t {
+                    return kernel::special_functions::spherical_hankel_1(n, z);
+                }
+            );
+        }
+    );
+
+    return iterator.output();
+}
+
+inline std::tuple<at::Tensor, at::Tensor> spherical_hankel_1_backward(
+    const at::Tensor &gradient_input,
+    const at::Tensor &n_input,
+    const at::Tensor &z_input
+) {
+    at::Tensor n_gradient_output;
+    at::Tensor z_gradient_output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(n_gradient_output)
+        .add_output(z_gradient_output)
+        .add_const_input(gradient_input)
+        .add_const_input(n_input)
+        .add_const_input(z_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_COMPLEX_TYPES(
+        iterator.common_dtype(),
+        "spherical_hankel_1_backward",
+        [&] {
+            at::native::cpu_kernel_multiple_outputs(
+                iterator,
+                [] (scalar_t gradient, scalar_t n, scalar_t z) -> std::tuple<scalar_t, scalar_t> {
+                    return kernel::special_functions::spherical_hankel_1_backward(gradient, n, z);
+                }
+            );
+        }
+    );
+
+    return {iterator.output(0), iterator.output(1)};
+}
+
+inline std::tuple<at::Tensor, at::Tensor, at::Tensor> spherical_hankel_1_backward_backward(
+    const at::Tensor &n_gradient_gradient_input,
+    const at::Tensor &z_gradient_gradient_input,
+    const at::Tensor &gradient_input,
+    const at::Tensor &n_input,
+    const at::Tensor &z_input
+) {
+    if (!n_gradient_gradient_input.defined() && !z_gradient_gradient_input.defined()) {
+        return {at::Tensor(), at::Tensor(), at::Tensor()};
+    }
+
+    at::Tensor gradient_gradient_output;
+    at::Tensor n_gradient_output;
+    at::Tensor z_gradient_output;
+
+    auto n_gg = n_gradient_gradient_input.defined()
+        ? n_gradient_gradient_input
+        : at::zeros_like(n_input);
+    auto z_gg = z_gradient_gradient_input.defined()
+        ? z_gradient_gradient_input
+        : at::zeros_like(z_input);
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(gradient_gradient_output)
+        .add_output(n_gradient_output)
+        .add_output(z_gradient_output)
+        .add_const_input(n_gg)
+        .add_const_input(z_gg)
+        .add_const_input(gradient_input)
+        .add_const_input(n_input)
+        .add_const_input(z_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_COMPLEX_TYPES(
+        iterator.common_dtype(),
+        "spherical_hankel_1_backward_backward",
+        [&] {
+            at::native::cpu_kernel_multiple_outputs(
+                iterator,
+                [] (
+                    scalar_t n_gradient_gradient,
+                    scalar_t z_gradient_gradient,
+                    scalar_t gradient,
+                    scalar_t n,
+                    scalar_t z
+                ) -> std::tuple<scalar_t, scalar_t, scalar_t> {
+                    return kernel::special_functions::spherical_hankel_1_backward_backward(
+                        n_gradient_gradient, z_gradient_gradient, gradient, n, z
+                    );
+                }
+            );
+        }
+    );
+
+    return {iterator.output(0), iterator.output(1), iterator.output(2)};
+}
+
+} // namespace torchscience::cpu::special_functions
+
+TORCH_LIBRARY_IMPL(torchscience, CPU, module) {
+    module.impl("spherical_hankel_1", torchscience::cpu::special_functions::spherical_hankel_1);
+    module.impl("spherical_hankel_1_backward", torchscience::cpu::special_functions::spherical_hankel_1_backward);
+    module.impl("spherical_hankel_1_backward_backward", torchscience::cpu::special_functions::spherical_hankel_1_backward_backward);
+}
+
+#include "../kernel/special_functions/spherical_hankel_2.h"
+#include "../kernel/special_functions/spherical_hankel_2_backward.h"
+#include "../kernel/special_functions/spherical_hankel_2_backward_backward.h"
+
+// Custom implementation for spherical_hankel_2 since it requires complex output
+// The Python wrapper ensures inputs are complex, so we only dispatch to complex types
+namespace torchscience::cpu::special_functions {
+
+inline at::Tensor spherical_hankel_2(
+    const at::Tensor &n_input,
+    const at::Tensor &z_input
+) {
+    at::Tensor output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(output)
+        .add_const_input(n_input)
+        .add_const_input(z_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_COMPLEX_TYPES(
+        iterator.common_dtype(),
+        "spherical_hankel_2",
+        [&] {
+            at::native::cpu_kernel(
+                iterator,
+                [] (scalar_t n, scalar_t z) -> scalar_t {
+                    return kernel::special_functions::spherical_hankel_2(n, z);
+                }
+            );
+        }
+    );
+
+    return iterator.output();
+}
+
+inline std::tuple<at::Tensor, at::Tensor> spherical_hankel_2_backward(
+    const at::Tensor &gradient_input,
+    const at::Tensor &n_input,
+    const at::Tensor &z_input
+) {
+    at::Tensor n_gradient_output;
+    at::Tensor z_gradient_output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(n_gradient_output)
+        .add_output(z_gradient_output)
+        .add_const_input(gradient_input)
+        .add_const_input(n_input)
+        .add_const_input(z_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_COMPLEX_TYPES(
+        iterator.common_dtype(),
+        "spherical_hankel_2_backward",
+        [&] {
+            at::native::cpu_kernel_multiple_outputs(
+                iterator,
+                [] (scalar_t gradient, scalar_t n, scalar_t z) -> std::tuple<scalar_t, scalar_t> {
+                    return kernel::special_functions::spherical_hankel_2_backward(gradient, n, z);
+                }
+            );
+        }
+    );
+
+    return {iterator.output(0), iterator.output(1)};
+}
+
+inline std::tuple<at::Tensor, at::Tensor, at::Tensor> spherical_hankel_2_backward_backward(
+    const at::Tensor &n_gradient_gradient_input,
+    const at::Tensor &z_gradient_gradient_input,
+    const at::Tensor &gradient_input,
+    const at::Tensor &n_input,
+    const at::Tensor &z_input
+) {
+    if (!n_gradient_gradient_input.defined() && !z_gradient_gradient_input.defined()) {
+        return {at::Tensor(), at::Tensor(), at::Tensor()};
+    }
+
+    at::Tensor gradient_gradient_output;
+    at::Tensor n_gradient_output;
+    at::Tensor z_gradient_output;
+
+    auto n_gg = n_gradient_gradient_input.defined()
+        ? n_gradient_gradient_input
+        : at::zeros_like(n_input);
+    auto z_gg = z_gradient_gradient_input.defined()
+        ? z_gradient_gradient_input
+        : at::zeros_like(z_input);
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(gradient_gradient_output)
+        .add_output(n_gradient_output)
+        .add_output(z_gradient_output)
+        .add_const_input(n_gg)
+        .add_const_input(z_gg)
+        .add_const_input(gradient_input)
+        .add_const_input(n_input)
+        .add_const_input(z_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_COMPLEX_TYPES(
+        iterator.common_dtype(),
+        "spherical_hankel_2_backward_backward",
+        [&] {
+            at::native::cpu_kernel_multiple_outputs(
+                iterator,
+                [] (
+                    scalar_t n_gradient_gradient,
+                    scalar_t z_gradient_gradient,
+                    scalar_t gradient,
+                    scalar_t n,
+                    scalar_t z
+                ) -> std::tuple<scalar_t, scalar_t, scalar_t> {
+                    return kernel::special_functions::spherical_hankel_2_backward_backward(
+                        n_gradient_gradient, z_gradient_gradient, gradient, n, z
+                    );
+                }
+            );
+        }
+    );
+
+    return {iterator.output(0), iterator.output(1), iterator.output(2)};
+}
+
+} // namespace torchscience::cpu::special_functions
+
+TORCH_LIBRARY_IMPL(torchscience, CPU, module) {
+    module.impl("spherical_hankel_2", torchscience::cpu::special_functions::spherical_hankel_2);
+    module.impl("spherical_hankel_2_backward", torchscience::cpu::special_functions::spherical_hankel_2_backward);
+    module.impl("spherical_hankel_2_backward_backward", torchscience::cpu::special_functions::spherical_hankel_2_backward_backward);
+}
+
+// Airy function of the first kind
+#include "../kernel/special_functions/airy_ai.h"
+#include "../kernel/special_functions/airy_ai_backward.h"
+#include "../kernel/special_functions/airy_ai_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(airy_ai, x)
+
+// Airy function of the second kind
+#include "../kernel/special_functions/airy_bi.h"
+#include "../kernel/special_functions/airy_bi_backward.h"
+#include "../kernel/special_functions/airy_bi_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(airy_bi, x)
+
+// Lambert W function (product logarithm)
+#include "../kernel/special_functions/lambert_w.h"
+#include "../kernel/special_functions/lambert_w_backward.h"
+#include "../kernel/special_functions/lambert_w_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(lambert_w, k, z)
+
+// Kelvin function ber (real part of J_0 at rotated argument)
+#include "../kernel/special_functions/kelvin_ber.h"
+#include "../kernel/special_functions/kelvin_ber_backward.h"
+#include "../kernel/special_functions/kelvin_ber_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(kelvin_ber, x)
+
+// Kelvin function bei (imaginary part of J_0 at rotated argument)
+#include "../kernel/special_functions/kelvin_bei.h"
+#include "../kernel/special_functions/kelvin_bei_backward.h"
+#include "../kernel/special_functions/kelvin_bei_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(kelvin_bei, x)
+
+// Kelvin function ker (real part of K_0 at rotated argument)
+#include "../kernel/special_functions/kelvin_ker.h"
+#include "../kernel/special_functions/kelvin_ker_backward.h"
+#include "../kernel/special_functions/kelvin_ker_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(kelvin_ker, x)
+
+// Kelvin function kei (imaginary part of K_0 at rotated argument)
+#include "../kernel/special_functions/kelvin_kei.h"
+#include "../kernel/special_functions/kelvin_kei_backward.h"
+#include "../kernel/special_functions/kelvin_kei_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(kelvin_kei, x)
+
+// Riemann zeta function (s > 1 only)
+#include "../kernel/special_functions/zeta.h"
+#include "../kernel/special_functions/zeta_backward.h"
+#include "../kernel/special_functions/zeta_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(zeta, s)
+
+// Polylogarithm function Li_s(z)
+#include "../kernel/special_functions/polylogarithm_li.h"
+#include "../kernel/special_functions/polylogarithm_li_backward.h"
+#include "../kernel/special_functions/polylogarithm_li_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(polylogarithm_li, s, z)

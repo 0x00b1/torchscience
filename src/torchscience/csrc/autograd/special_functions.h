@@ -37,6 +37,7 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(carlson_elliptic_integral_r_k, C
 TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(complete_legendre_elliptic_integral_k, CompleteLegendreEllipticIntegralK, m)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(complete_legendre_elliptic_integral_e, CompleteLegendreEllipticIntegralE, m)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(incomplete_legendre_elliptic_integral_e, IncompleteLegendreEllipticIntegralE, phi, m)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(incomplete_legendre_elliptic_integral_f, IncompleteLegendreEllipticIntegralF, phi, m)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(complete_legendre_elliptic_integral_pi, CompleteLegendreEllipticIntegralPi, n, m)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_TERNARY_OPERATOR(incomplete_legendre_elliptic_integral_pi, IncompleteLegendreEllipticIntegralPi, n, phi, m)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(jacobi_amplitude_am, JacobiAmplitudeAm, u, m)
@@ -81,3 +82,48 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(spherical_bessel_i, SphericalBes
 TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(spherical_bessel_k_0, SphericalBesselK0, z)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(spherical_bessel_k_1, SphericalBesselK1, z)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(spherical_bessel_k, SphericalBesselK, n, z)
+
+// Exponential integrals
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(exponential_integral_ei, ExponentialIntegralEi, x)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(exponential_integral_e_1, ExponentialIntegralE1, x)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(exponential_integral_ein, ExponentialIntegralEin, x)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(exponential_integral_e, ExponentialIntegralE, n, x)
+
+// Sine integral
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(sine_integral_si, SineIntegralSi, x)
+
+// Cosine integral
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(cosine_integral_ci, CosineIntegralCi, x)
+
+// Spherical Hankel functions of the first kind
+TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(spherical_hankel_1, SphericalHankel1, n, z)
+
+// Spherical Hankel functions of the second kind
+TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(spherical_hankel_2, SphericalHankel2, n, z)
+
+// Airy function of the first kind
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(airy_ai, AiryAi, x)
+
+// Airy function of the second kind
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(airy_bi, AiryBi, x)
+
+// Lambert W function (product logarithm)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(lambert_w, LambertW, k, z)
+
+// Kelvin function ber (real part of J_0 at rotated argument)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(kelvin_ber, KelvinBer, x)
+
+// Kelvin function bei (imaginary part of J_0 at rotated argument)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(kelvin_bei, KelvinBei, x)
+
+// Kelvin function ker (real part of K_0 at rotated argument)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(kelvin_ker, KelvinKer, x)
+
+// Kelvin function kei (imaginary part of K_0 at rotated argument)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(kelvin_kei, KelvinKei, x)
+
+// Riemann zeta function (s > 1 only)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(zeta, Zeta, s)
+
+// Polylogarithm function Li_s(z)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(polylogarithm_li, PolylogarithmLi, s, z)

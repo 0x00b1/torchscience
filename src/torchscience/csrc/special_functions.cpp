@@ -233,6 +233,10 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("incomplete_legendre_elliptic_integral_e_backward(Tensor grad_output, Tensor phi, Tensor m) -> (Tensor, Tensor)");
   m.def("incomplete_legendre_elliptic_integral_e_backward_backward(Tensor gg_phi, Tensor gg_m, Tensor grad_output, Tensor phi, Tensor m) -> (Tensor, Tensor, Tensor)");
 
+  m.def("incomplete_legendre_elliptic_integral_f(Tensor phi, Tensor m) -> Tensor");
+  m.def("incomplete_legendre_elliptic_integral_f_backward(Tensor grad_output, Tensor phi, Tensor m) -> (Tensor, Tensor)");
+  m.def("incomplete_legendre_elliptic_integral_f_backward_backward(Tensor gg_phi, Tensor gg_m, Tensor grad_output, Tensor phi, Tensor m) -> (Tensor, Tensor, Tensor)");
+
   m.def("complete_legendre_elliptic_integral_pi(Tensor n, Tensor m) -> Tensor");
   m.def("complete_legendre_elliptic_integral_pi_backward(Tensor grad_output, Tensor n, Tensor m) -> (Tensor, Tensor)");
   m.def("complete_legendre_elliptic_integral_pi_backward_backward(Tensor gg_n, Tensor gg_m, Tensor grad_output, Tensor n, Tensor m) -> (Tensor, Tensor, Tensor)");
@@ -335,4 +339,86 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("theta_4(Tensor z, Tensor q) -> Tensor");
   m.def("theta_4_backward(Tensor grad_output, Tensor z, Tensor q) -> (Tensor, Tensor)");
   m.def("theta_4_backward_backward(Tensor gg_z, Tensor gg_q, Tensor grad_output, Tensor z, Tensor q) -> (Tensor, Tensor, Tensor)");
+
+  // Exponential integrals
+  m.def("exponential_integral_ei(Tensor x) -> Tensor");
+  m.def("exponential_integral_ei_backward(Tensor grad_output, Tensor x) -> Tensor");
+  m.def("exponential_integral_ei_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
+
+  m.def("exponential_integral_e_1(Tensor x) -> Tensor");
+  m.def("exponential_integral_e_1_backward(Tensor grad_output, Tensor x) -> Tensor");
+  m.def("exponential_integral_e_1_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
+
+  m.def("exponential_integral_ein(Tensor x) -> Tensor");
+  m.def("exponential_integral_ein_backward(Tensor grad_output, Tensor x) -> Tensor");
+  m.def("exponential_integral_ein_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
+
+  m.def("exponential_integral_e(Tensor n, Tensor x) -> Tensor");
+  m.def("exponential_integral_e_backward(Tensor grad_output, Tensor n, Tensor x) -> (Tensor, Tensor)");
+  m.def("exponential_integral_e_backward_backward(Tensor gg_n, Tensor gg_x, Tensor grad_output, Tensor n, Tensor x) -> (Tensor, Tensor, Tensor)");
+
+  // Sine integral
+  m.def("sine_integral_si(Tensor x) -> Tensor");
+  m.def("sine_integral_si_backward(Tensor grad_output, Tensor x) -> Tensor");
+  m.def("sine_integral_si_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
+
+  // Cosine integral
+  m.def("cosine_integral_ci(Tensor x) -> Tensor");
+  m.def("cosine_integral_ci_backward(Tensor grad_output, Tensor x) -> Tensor");
+  m.def("cosine_integral_ci_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
+
+  // Spherical Hankel functions of the first kind
+  m.def("spherical_hankel_1(Tensor n, Tensor z) -> Tensor");
+  m.def("spherical_hankel_1_backward(Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor)");
+  m.def("spherical_hankel_1_backward_backward(Tensor gg_n, Tensor gg_z, Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor, Tensor)");
+
+  // Spherical Hankel functions of the second kind
+  m.def("spherical_hankel_2(Tensor n, Tensor z) -> Tensor");
+  m.def("spherical_hankel_2_backward(Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor)");
+  m.def("spherical_hankel_2_backward_backward(Tensor gg_n, Tensor gg_z, Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor, Tensor)");
+
+  // Airy function of the first kind
+  m.def("airy_ai(Tensor x) -> Tensor");
+  m.def("airy_ai_backward(Tensor grad_output, Tensor x) -> Tensor");
+  m.def("airy_ai_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
+
+  // Airy function of the second kind
+  m.def("airy_bi(Tensor x) -> Tensor");
+  m.def("airy_bi_backward(Tensor grad_output, Tensor x) -> Tensor");
+  m.def("airy_bi_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
+
+  // Lambert W function (product logarithm)
+  m.def("lambert_w(Tensor k, Tensor z) -> Tensor");
+  m.def("lambert_w_backward(Tensor grad_output, Tensor k, Tensor z) -> (Tensor, Tensor)");
+  m.def("lambert_w_backward_backward(Tensor gg_k, Tensor gg_z, Tensor grad_output, Tensor k, Tensor z) -> (Tensor, Tensor, Tensor)");
+
+  // Kelvin function ber (real part of J_0 at rotated argument)
+  m.def("kelvin_ber(Tensor x) -> Tensor");
+  m.def("kelvin_ber_backward(Tensor grad_output, Tensor x) -> Tensor");
+  m.def("kelvin_ber_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
+
+  // Kelvin function bei (imaginary part of J_0 at rotated argument)
+  m.def("kelvin_bei(Tensor x) -> Tensor");
+  m.def("kelvin_bei_backward(Tensor grad_output, Tensor x) -> Tensor");
+  m.def("kelvin_bei_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
+
+  // Kelvin function ker (real part of K_0 at rotated argument)
+  m.def("kelvin_ker(Tensor x) -> Tensor");
+  m.def("kelvin_ker_backward(Tensor grad_output, Tensor x) -> Tensor");
+  m.def("kelvin_ker_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
+
+  // Kelvin function kei (imaginary part of K_0 at rotated argument)
+  m.def("kelvin_kei(Tensor x) -> Tensor");
+  m.def("kelvin_kei_backward(Tensor grad_output, Tensor x) -> Tensor");
+  m.def("kelvin_kei_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
+
+  // Riemann zeta function (s > 1 only)
+  m.def("zeta(Tensor s) -> Tensor");
+  m.def("zeta_backward(Tensor grad_output, Tensor s) -> Tensor");
+  m.def("zeta_backward_backward(Tensor gg_s, Tensor grad_output, Tensor s) -> (Tensor, Tensor)");
+
+  // Polylogarithm function Li_s(z)
+  m.def("polylogarithm_li(Tensor s, Tensor z) -> Tensor");
+  m.def("polylogarithm_li_backward(Tensor grad_output, Tensor s, Tensor z) -> (Tensor, Tensor)");
+  m.def("polylogarithm_li_backward_backward(Tensor gg_s, Tensor gg_z, Tensor grad_output, Tensor s, Tensor z) -> (Tensor, Tensor, Tensor)");
 }

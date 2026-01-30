@@ -37,6 +37,7 @@ TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(carlson_elliptic_integral_r_k, x
 TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(complete_legendre_elliptic_integral_k, m)
 TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(complete_legendre_elliptic_integral_e, m)
 TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(incomplete_legendre_elliptic_integral_e, phi, m)
+TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(incomplete_legendre_elliptic_integral_f, phi, m)
 TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(complete_legendre_elliptic_integral_pi, n, m)
 TORCHSCIENCE_AUTOCAST_POINTWISE_TERNARY_OPERATOR(incomplete_legendre_elliptic_integral_pi, n, phi, m)
 TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(jacobi_amplitude_am, u, m)
@@ -81,3 +82,48 @@ TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(spherical_bessel_i, n, z)
 TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(spherical_bessel_k_0, z)
 TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(spherical_bessel_k_1, z)
 TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(spherical_bessel_k, n, z)
+
+// Exponential integrals
+TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(exponential_integral_ei, x)
+TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(exponential_integral_e_1, x)
+TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(exponential_integral_ein, x)
+TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(exponential_integral_e, n, x)
+
+// Sine integral
+TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(sine_integral_si, x)
+
+// Cosine integral
+TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(cosine_integral_ci, x)
+
+// Spherical Hankel functions of the first kind
+TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(spherical_hankel_1, n, z)
+
+// Spherical Hankel functions of the second kind
+TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(spherical_hankel_2, n, z)
+
+// Airy function of the first kind
+TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(airy_ai, x)
+
+// Airy function of the second kind
+TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(airy_bi, x)
+
+// Lambert W function (product logarithm)
+TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(lambert_w, k, z)
+
+// Kelvin function ber (real part of J_0 at rotated argument)
+TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(kelvin_ber, x)
+
+// Kelvin function bei (imaginary part of J_0 at rotated argument)
+TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(kelvin_bei, x)
+
+// Kelvin function ker (real part of K_0 at rotated argument)
+TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(kelvin_ker, x)
+
+// Kelvin function kei (imaginary part of K_0 at rotated argument)
+TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(kelvin_kei, x)
+
+// Riemann zeta function (s > 1 only)
+TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(zeta, s)
+
+// Polylogarithm function Li_s(z)
+TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(polylogarithm_li, s, z)
