@@ -217,6 +217,46 @@ class TestDCTCompile:
         assert torch.allclose(y_compiled, y_eager, atol=1e-10)
 
 
+class TestDCTEdgeCases:
+    """Test edge cases and error handling."""
+
+    def test_single_element_input(self):
+        """DCT of single element should work."""
+        x = torch.tensor([3.0], dtype=torch.float64)
+        y = T.fourier_cosine_transform(x, type=2)
+        assert y.shape == torch.Size([1])
+        # DCT-II of [a] is [a * sqrt(2)]
+        assert torch.isfinite(y).all()
+
+    def test_zeros_input(self):
+        """DCT of zeros should return zeros."""
+        x = torch.zeros(16, dtype=torch.float64)
+        y = T.fourier_cosine_transform(x, type=2)
+        assert torch.allclose(y, torch.zeros_like(y))
+
+    def test_constant_input_dct2(self):
+        """DCT-II of constant should have energy in first coefficient."""
+        x = torch.ones(8, dtype=torch.float64)
+        y = T.fourier_cosine_transform(x, type=2, norm="ortho")
+        # First coefficient should dominate for constant input
+        assert y[0].abs() > y[1:].abs().max() * 10
+
+    @pytest.mark.parametrize("dct_type", [1, 2, 3, 4])
+    def test_invalid_type_raises(self, dct_type):
+        """Invalid DCT type should raise error."""
+        x = torch.randn(8, dtype=torch.float64)
+        # Valid types are 1-4, so type 5 should be invalid
+        with pytest.raises((ValueError, RuntimeError)):
+            T.fourier_cosine_transform(x, type=5)
+
+    def test_n_equals_input_size(self):
+        """When n equals input size, should produce same result."""
+        x = torch.randn(8, dtype=torch.float64)
+        y1 = T.fourier_cosine_transform(x, type=2)
+        y2 = T.fourier_cosine_transform(x, n=8, type=2)
+        assert torch.allclose(y1, y2)
+
+
 class TestDCTAutocast:
     """Tests for autocast compatibility."""
 

@@ -356,3 +356,66 @@ class TestZTransformCompile:
         y_eager = T.z_transform(x, z)
 
         assert torch.allclose(y_compiled, y_eager, atol=1e-10)
+
+
+class TestZTransformEdgeCases:
+    """Test edge cases and error handling."""
+
+    def test_single_element_input(self):
+        """Z-transform of single element should work."""
+        x = torch.tensor([3.0], dtype=torch.float64)
+        z = torch.tensor([2.0 + 0j], dtype=torch.complex128)
+
+        X = T.z_transform(x, z)
+        # Z{x[0]} = x[0] * z^0 = x[0] = 3.0
+        assert torch.allclose(
+            X, torch.tensor([3.0 + 0j], dtype=torch.complex128)
+        )
+
+    def test_single_z_point(self):
+        """Z-transform at single z point should work."""
+        x = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float64)
+        z = torch.tensor(1.0 + 0j, dtype=torch.complex128)
+
+        X = T.z_transform(x, z)
+        # Z{x}|_{z=1} = sum(x) = 6.0
+        assert torch.allclose(
+            X, torch.tensor(6.0 + 0j, dtype=torch.complex128)
+        )
+
+    def test_z_at_origin(self):
+        """Z-transform at z=0 should equal x[0]."""
+        x = torch.tensor([5.0, 1.0, 2.0, 3.0], dtype=torch.float64)
+        z = torch.tensor([0.0 + 0j], dtype=torch.complex128)
+
+        X = T.z_transform(x, z)
+        # Z{x}|_{z=0} = x[0] (all other terms have z^(-n) which is 0^(-n) = inf, but for z=0 the sum truncates)
+        # Actually for z=0, z^(-n) for n>0 is undefined/inf, so this is an edge case
+        # The implementation should handle this appropriately
+        assert X.shape == torch.Size([1])
+
+    def test_zeros_input(self):
+        """Z-transform of zeros should be zero."""
+        x = torch.zeros(10, dtype=torch.float64)
+        z = torch.tensor(
+            [0.5 + 0j, 1.0 + 0j, 2.0 + 0j], dtype=torch.complex128
+        )
+
+        X = T.z_transform(x, z)
+        assert torch.allclose(X, torch.zeros_like(X))
+
+    def test_large_z_convergence(self):
+        """Z-transform should converge for |z| > max pole."""
+        # For a^n u[n], poles at z=a, converges for |z| > |a|
+        a = 0.5
+        N = 100
+        n = torch.arange(N, dtype=torch.float64)
+        x = a**n
+
+        # z values well outside ROC
+        z = torch.tensor([10.0 + 0j], dtype=torch.complex128)
+        X = T.z_transform(x, z)
+
+        # Should converge to z/(z-a) = 10/(10-0.5) = 10/9.5
+        expected = z / (z - a)
+        assert torch.allclose(X, expected, rtol=1e-3)

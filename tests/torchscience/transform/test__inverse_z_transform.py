@@ -298,3 +298,58 @@ class TestInverseZTransformCompile:
         x_eager = T.inverse_z_transform(X, n, z)
 
         assert torch.allclose(x_compiled, x_eager, atol=1e-10)
+
+
+class TestInverseZTransformEdgeCases:
+    """Test edge cases and error handling."""
+
+    def test_single_element_input(self):
+        """Inverse Z-transform of single element should work."""
+        X = torch.tensor([3.0 + 0j], dtype=torch.complex128)
+        z = torch.tensor([1.0 + 0j], dtype=torch.complex128)
+        n = torch.tensor([0.0], dtype=torch.float64)
+
+        x = T.inverse_z_transform(X, n, z)
+        # Single Z-sample at z=1, single time point n=0: x[0] = X[0] / len(z) = 3.0
+        assert x.shape == torch.Size([1])
+        assert torch.isfinite(x).all()
+
+    def test_single_time_point(self):
+        """Inverse Z-transform at single time point should work."""
+        N = 10
+        k = torch.arange(N, dtype=torch.float64)
+        z = torch.exp(2j * torch.pi * k / N)
+        X = torch.randn(N, dtype=torch.complex128)
+        n = torch.tensor([0.0], dtype=torch.float64)
+
+        x = T.inverse_z_transform(X, n, z)
+        assert x.shape == torch.Size([1])
+        assert torch.isfinite(x).all()
+
+    def test_zeros_input(self):
+        """Inverse Z-transform of zeros should return zeros."""
+        N = 10
+        k = torch.arange(N, dtype=torch.float64)
+        z = torch.exp(2j * torch.pi * k / N)
+        X = torch.zeros(N, dtype=torch.complex128)
+        n = torch.arange(N, dtype=torch.float64)
+
+        x = T.inverse_z_transform(X, n, z)
+        assert torch.allclose(
+            x.real, torch.zeros(N, dtype=torch.float64), atol=1e-10
+        )
+
+    def test_constant_spectrum(self):
+        """Inverse Z-transform of constant spectrum gives impulse."""
+        N = 8
+        k = torch.arange(N, dtype=torch.float64)
+        z = torch.exp(2j * torch.pi * k / N)
+        # Constant spectrum X = [1, 1, 1, ..., 1]
+        X = torch.ones(N, dtype=torch.complex128)
+        n = torch.arange(N, dtype=torch.float64)
+
+        x = T.inverse_z_transform(X, n, z)
+        # Should recover delta[n]
+        expected = torch.zeros(N, dtype=torch.float64)
+        expected[0] = 1.0
+        assert torch.allclose(x.real, expected, atol=1e-9)

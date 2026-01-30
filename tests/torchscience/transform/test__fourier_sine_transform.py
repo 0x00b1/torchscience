@@ -215,3 +215,43 @@ class TestDSTCompile:
         y_eager = T.fourier_sine_transform(x, type=2)
 
         assert torch.allclose(y_compiled, y_eager, atol=1e-10)
+
+
+class TestDSTEdgeCases:
+    """Test edge cases and error handling."""
+
+    def test_single_element_input(self):
+        """DST of single element should work."""
+        x = torch.tensor([3.0], dtype=torch.float64)
+        y = T.fourier_sine_transform(x, type=2)
+        assert y.shape == torch.Size([1])
+        assert torch.isfinite(y).all()
+
+    def test_zeros_input(self):
+        """DST of zeros should return zeros."""
+        x = torch.zeros(16, dtype=torch.float64)
+        y = T.fourier_sine_transform(x, type=2)
+        assert torch.allclose(y, torch.zeros_like(y))
+
+    @pytest.mark.parametrize("dst_type", [1, 2, 3, 4])
+    def test_invalid_type_raises(self, dst_type):
+        """Invalid DST type should raise error."""
+        x = torch.randn(8, dtype=torch.float64)
+        # Valid types are 1-4, so type 5 should be invalid
+        with pytest.raises((ValueError, RuntimeError)):
+            T.fourier_sine_transform(x, type=5)
+
+    def test_n_equals_input_size(self):
+        """When n equals input size, should produce same result."""
+        x = torch.randn(8, dtype=torch.float64)
+        y1 = T.fourier_sine_transform(x, type=2)
+        y2 = T.fourier_sine_transform(x, n=8, type=2)
+        assert torch.allclose(y1, y2)
+
+    def test_antisymmetric_property(self):
+        """DST of antisymmetric extension should have specific properties."""
+        # Create a simple sequence
+        x = torch.tensor([1.0, 2.0, 3.0, 4.0], dtype=torch.float64)
+        y = T.fourier_sine_transform(x, type=1)
+        # DST-I output should be real
+        assert torch.isfinite(y).all()

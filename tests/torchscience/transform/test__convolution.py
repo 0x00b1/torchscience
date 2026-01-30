@@ -229,3 +229,56 @@ class TestConvolutionCompile:
         y_eager = T.convolution(x, h, mode="full")
 
         assert torch.allclose(y_compiled, y_eager, atol=1e-10)
+
+
+class TestConvolutionEdgeCases:
+    """Test edge cases and error handling."""
+
+    def test_invalid_mode_raises(self):
+        """Should raise error for invalid mode."""
+        x = torch.randn(10, dtype=torch.float64)
+        h = torch.randn(3, dtype=torch.float64)
+
+        with pytest.raises(ValueError, match="mode"):
+            T.convolution(x, h, mode="invalid")
+
+    def test_single_element_input(self):
+        """Should work with single element input."""
+        x = torch.tensor([3.0], dtype=torch.float64)
+        h = torch.tensor([2.0], dtype=torch.float64)
+
+        y = T.convolution(x, h, mode="full")
+        assert torch.allclose(y, torch.tensor([6.0], dtype=torch.float64))
+
+    def test_single_element_kernel(self):
+        """Convolution with single element kernel should scale."""
+        x = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float64)
+        h = torch.tensor([2.0], dtype=torch.float64)
+
+        y = T.convolution(x, h, mode="same")
+        assert torch.allclose(y, x * 2.0)
+
+    def test_kernel_longer_than_input_valid_raises(self):
+        """Valid mode with kernel longer than input should raise error."""
+        x = torch.randn(3, dtype=torch.float64)
+        h = torch.randn(5, dtype=torch.float64)
+
+        # Valid mode requires input >= kernel length
+        with pytest.raises(RuntimeError, match="valid.*mode.*input.*kernel"):
+            T.convolution(x, h, mode="valid")
+
+    def test_zeros_input(self):
+        """Convolution of zeros should return zeros."""
+        x = torch.zeros(10, dtype=torch.float64)
+        h = torch.randn(3, dtype=torch.float64)
+
+        y = T.convolution(x, h, mode="full")
+        assert torch.allclose(y, torch.zeros_like(y))
+
+    def test_zeros_kernel(self):
+        """Convolution with zero kernel should return zeros."""
+        x = torch.randn(10, dtype=torch.float64)
+        h = torch.zeros(3, dtype=torch.float64)
+
+        y = T.convolution(x, h, mode="full")
+        assert torch.allclose(y, torch.zeros_like(y))
