@@ -684,3 +684,33 @@ class TestInverseSineTransformCompile:
 
         assert X.grad is not None
         assert X.grad.shape == X.shape
+
+
+class TestSineTransformEdgeCases:
+    """Test edge cases and error handling."""
+
+    def test_single_element_input(self):
+        """Sine transform of single element should work."""
+        x = torch.tensor([3.0], dtype=torch.float64)
+        X = sine_transform(x, type=2)
+        assert X.shape == torch.Size([1])
+        assert torch.isfinite(X).all()
+
+    def test_zeros_input(self):
+        """Sine transform of zeros should return zeros."""
+        x = torch.zeros(16, dtype=torch.float64)
+        X = sine_transform(x, type=2)
+        assert torch.allclose(X, torch.zeros_like(X))
+
+    @pytest.mark.parametrize("dst_type", [1, 2, 3, 4])
+    def test_all_types_work(self, dst_type):
+        """All DST types should work."""
+        x = torch.randn(16, dtype=torch.float64)
+        X = sine_transform(x, type=dst_type)
+        assert X.shape == x.shape
+
+    def test_output_is_real(self):
+        """Sine transform output should be real."""
+        x = torch.randn(16, dtype=torch.float64)
+        X = sine_transform(x, type=2)
+        assert not X.is_complex()

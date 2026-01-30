@@ -688,3 +688,34 @@ class TestInverseCosineTransformCompile:
 
         assert X.grad is not None
         assert X.grad.shape == X.shape
+
+
+class TestCosineTransformEdgeCases:
+    """Test edge cases and error handling."""
+
+    def test_single_element_input(self):
+        """Cosine transform of single element should work."""
+        x = torch.tensor([3.0], dtype=torch.float64)
+        X = cosine_transform(x, type=2)
+        assert X.shape == torch.Size([1])
+        assert torch.isfinite(X).all()
+
+    def test_zeros_input(self):
+        """Cosine transform of zeros should return zeros."""
+        x = torch.zeros(16, dtype=torch.float64)
+        X = cosine_transform(x, type=2)
+        assert torch.allclose(X, torch.zeros_like(X))
+
+    @pytest.mark.parametrize("dct_type", [1, 2, 3, 4])
+    def test_all_types_work(self, dct_type):
+        """All DCT types should work."""
+        x = torch.randn(16, dtype=torch.float64)
+        X = cosine_transform(x, type=dct_type)
+        assert X.shape == x.shape
+
+    def test_constant_input(self):
+        """Cosine transform of constant has energy at DC."""
+        x = torch.ones(16, dtype=torch.float64)
+        X = cosine_transform(x, type=2, norm="ortho")
+        # First coefficient should dominate
+        assert X[0].abs() > X[1:].abs().max() * 10
