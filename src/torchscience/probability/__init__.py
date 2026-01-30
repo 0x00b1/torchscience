@@ -29,7 +29,9 @@ from ._beta import (
 )
 from ._binomial import (
     binomial_cumulative_distribution,
+    binomial_log_probability_mass,
     binomial_probability_mass,
+    binomial_survival,
 )
 from ._chi2 import (
     chi2_cumulative_distribution,
@@ -78,7 +80,9 @@ __all__ = [
     "beta_survival",
     # Binomial distribution
     "binomial_cumulative_distribution",
+    "binomial_log_probability_mass",
     "binomial_probability_mass",
+    "binomial_survival",
     # Chi-squared distribution
     "chi2_cumulative_distribution",
     "chi2_log_probability_density",
