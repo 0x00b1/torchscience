@@ -160,6 +160,64 @@ class TestMellinTransformDtype:
         assert F.dtype == torch.float64
 
 
+class TestMellinTransformComplex:
+    """Test Mellin transform with complex tensors."""
+
+    @pytest.mark.skip(
+        reason="Complex input not yet implemented for integral transforms"
+    )
+    def test_complex64_input(self):
+        """Mellin transform should work with complex64 input."""
+        t = torch.linspace(0.1, 5, 50, dtype=torch.float32)
+        f = torch.randn(50, dtype=torch.complex64)
+        s = torch.tensor([1.0, 2.0], dtype=torch.float32)
+
+        F = T.mellin_transform(f, s, t)
+        assert F.dtype == torch.complex64
+        assert F.shape == torch.Size([2])
+
+    @pytest.mark.skip(
+        reason="Complex input not yet implemented for integral transforms"
+    )
+    def test_complex128_input(self):
+        """Mellin transform should work with complex128 input."""
+        t = torch.linspace(0.1, 5, 50, dtype=torch.float64)
+        f = torch.randn(50, dtype=torch.complex128)
+        s = torch.tensor([1.0, 2.0], dtype=torch.float64)
+
+        F = T.mellin_transform(f, s, t)
+        assert F.dtype == torch.complex128
+        assert F.shape == torch.Size([2])
+
+    @pytest.mark.skip(
+        reason="Complex input not yet implemented for integral transforms"
+    )
+    def test_complex_input_batched(self):
+        """Mellin transform should work with batched complex input."""
+        t = torch.linspace(0.1, 5, 50, dtype=torch.float64)
+        f = torch.randn(5, 50, dtype=torch.complex128)
+        s = torch.tensor([1.0, 2.0], dtype=torch.float64)
+
+        F = T.mellin_transform(f, s, t, dim=-1)
+        assert F.dtype == torch.complex128
+        assert F.shape == torch.Size([5, 2])
+
+    @pytest.mark.skip(
+        reason="Complex input not yet implemented for integral transforms"
+    )
+    def test_complex_gradcheck(self):
+        """Gradient for complex input should pass numerical check."""
+        t = torch.linspace(0.1, 5, 50, dtype=torch.float64)
+        f = torch.randn(50, dtype=torch.complex128, requires_grad=True)
+        s = torch.tensor([1.0, 2.0], dtype=torch.float64)
+
+        def func(inp):
+            result = T.mellin_transform(inp, s, t)
+            return result.real, result.imag
+
+        assert gradcheck(func, (f,), raise_exception=True)
+
+
 class TestMellinTransformDevice:
     """Test Mellin transform device handling."""
 

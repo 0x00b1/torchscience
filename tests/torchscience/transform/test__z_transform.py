@@ -215,6 +215,63 @@ class TestZTransformDtype:
         assert X.dtype == torch.complex128
 
 
+class TestZTransformComplex:
+    """Test Z-transform with complex input tensors."""
+
+    @pytest.mark.skip(
+        reason="Complex input not yet implemented for integral transforms"
+    )
+    def test_complex64_input(self):
+        """Z-transform should work with complex64 input."""
+        x = torch.randn(20, dtype=torch.complex64)
+        z = torch.tensor([0.5 + 0j, 1.0 + 0j], dtype=torch.complex64)
+
+        X = T.z_transform(x, z)
+        assert X.dtype == torch.complex64
+        assert X.shape == torch.Size([2])
+
+    @pytest.mark.skip(
+        reason="Complex input not yet implemented for integral transforms"
+    )
+    def test_complex128_input(self):
+        """Z-transform should work with complex128 input."""
+        x = torch.randn(20, dtype=torch.complex128)
+        z = torch.tensor([0.5 + 0j, 1.0 + 0j], dtype=torch.complex128)
+
+        X = T.z_transform(x, z)
+        assert X.dtype == torch.complex128
+        assert X.shape == torch.Size([2])
+
+    @pytest.mark.skip(
+        reason="Complex input not yet implemented for integral transforms"
+    )
+    def test_complex_input_batched(self):
+        """Z-transform should work with batched complex input."""
+        x = torch.randn(5, 20, dtype=torch.complex128)
+        z = torch.tensor([0.5 + 0j, 1.0 + 0j], dtype=torch.complex128)
+
+        X = T.z_transform(x, z, dim=-1)
+        assert X.dtype == torch.complex128
+        assert X.shape == torch.Size([5, 2])
+
+    @pytest.mark.skip(
+        reason="Complex input not yet implemented for integral transforms"
+    )
+    def test_complex_unit_circle_matches_fft(self):
+        """Complex input Z-transform on unit circle should match FFT."""
+        x = torch.randn(16, dtype=torch.complex128)
+
+        # Sample on unit circle (DFT frequencies)
+        N = len(x)
+        k = torch.arange(N, dtype=torch.float64)
+        z_unit = torch.exp(2j * torch.pi * k / N)
+
+        X_z = T.z_transform(x, z_unit)
+        X_fft = torch.fft.fft(x)
+
+        assert torch.allclose(X_z, X_fft, rtol=1e-10, atol=1e-10)
+
+
 class TestZTransformDevice:
     """Test Z-transform device handling."""
 

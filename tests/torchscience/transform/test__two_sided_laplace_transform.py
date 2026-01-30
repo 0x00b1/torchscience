@@ -179,6 +179,64 @@ class TestTwoSidedLaplaceTransformDtype:
         assert F.dtype == torch.float64
 
 
+class TestTwoSidedLaplaceTransformComplex:
+    """Test two-sided Laplace transform with complex tensors."""
+
+    @pytest.mark.skip(
+        reason="Complex input not yet implemented for integral transforms"
+    )
+    def test_complex64_input(self):
+        """Two-sided Laplace transform should work with complex64 input."""
+        t = torch.linspace(-10, 10, 100, dtype=torch.float32)
+        f = torch.randn(100, dtype=torch.complex64)
+        s = torch.tensor([0.0, 0.5], dtype=torch.float32)
+
+        F = T.two_sided_laplace_transform(f, s, t)
+        assert F.dtype == torch.complex64
+        assert F.shape == torch.Size([2])
+
+    @pytest.mark.skip(
+        reason="Complex input not yet implemented for integral transforms"
+    )
+    def test_complex128_input(self):
+        """Two-sided Laplace transform should work with complex128 input."""
+        t = torch.linspace(-10, 10, 100, dtype=torch.float64)
+        f = torch.randn(100, dtype=torch.complex128)
+        s = torch.tensor([0.0, 0.5], dtype=torch.float64)
+
+        F = T.two_sided_laplace_transform(f, s, t)
+        assert F.dtype == torch.complex128
+        assert F.shape == torch.Size([2])
+
+    @pytest.mark.skip(
+        reason="Complex input not yet implemented for integral transforms"
+    )
+    def test_complex_input_batched(self):
+        """Two-sided Laplace transform should work with batched complex input."""
+        t = torch.linspace(-10, 10, 100, dtype=torch.float64)
+        f = torch.randn(5, 100, dtype=torch.complex128)
+        s = torch.tensor([0.0, 0.5], dtype=torch.float64)
+
+        F = T.two_sided_laplace_transform(f, s, t, dim=-1)
+        assert F.dtype == torch.complex128
+        assert F.shape == torch.Size([5, 2])
+
+    @pytest.mark.skip(
+        reason="Complex input not yet implemented for integral transforms"
+    )
+    def test_complex_gradcheck(self):
+        """Gradient for complex input should pass numerical check."""
+        t = torch.linspace(-5, 5, 50, dtype=torch.float64)
+        f = torch.randn(50, dtype=torch.complex128, requires_grad=True)
+        s = torch.tensor([0.0, 0.5], dtype=torch.float64)
+
+        def func(inp):
+            result = T.two_sided_laplace_transform(inp, s, t)
+            return result.real, result.imag
+
+        assert gradcheck(func, (f,), raise_exception=True)
+
+
 class TestTwoSidedLaplaceTransformDevice:
     """Test two-sided Laplace transform device handling."""
 
