@@ -284,6 +284,59 @@ class TestInverseMellinTransformDevice:
             raise
 
 
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+class TestInverseMellinTransformCUDA:
+    """Test inverse Mellin transform CUDA backend."""
+
+    def test_cuda_forward_matches_cpu(self):
+        """CUDA forward should match CPU output."""
+        omega_cpu = torch.linspace(-10, 10, 51, dtype=torch.float64)
+        c = 1.0
+        s_cpu = c + 1j * omega_cpu
+        F_cpu = torch.randn(51, dtype=torch.complex128)
+        t_cpu = torch.tensor([0.5, 1.0, 1.5], dtype=torch.float64)
+
+        omega_cuda = omega_cpu.cuda()
+        s_cuda = c + 1j * omega_cuda
+        F_cuda = F_cpu.cuda()
+        t_cuda = t_cpu.cuda()
+
+        f_cpu = T.inverse_mellin_transform(F_cpu, t_cpu, s_cpu, c=c)
+        f_cuda = T.inverse_mellin_transform(F_cuda, t_cuda, s_cuda, c=c)
+
+        assert torch.allclose(f_cpu, f_cuda.cpu(), rtol=1e-10, atol=1e-10)
+
+    def test_cuda_gradient(self):
+        """Gradient should work on CUDA."""
+        omega = torch.linspace(-10, 10, 51, dtype=torch.float64, device="cuda")
+        c = 1.0
+        s = c + 1j * omega
+        F = torch.randn(
+            51, dtype=torch.complex128, device="cuda", requires_grad=True
+        )
+        t = torch.tensor([0.5, 1.0], dtype=torch.float64, device="cuda")
+
+        f = T.inverse_mellin_transform(F, t, s, c=c)
+        loss = f.abs().sum()
+        loss.backward()
+
+        assert F.grad is not None
+        assert F.grad.device.type == "cuda"
+
+    def test_cuda_batched(self):
+        """Batched inverse Mellin transform on CUDA."""
+        omega = torch.linspace(-10, 10, 51, dtype=torch.float64, device="cuda")
+        c = 1.0
+        s = c + 1j * omega
+        F = torch.randn(5, 51, dtype=torch.complex128, device="cuda")
+        t = torch.tensor([0.5, 1.0], dtype=torch.float64, device="cuda")
+
+        f = T.inverse_mellin_transform(F, t, s, c=c, dim=-1)
+
+        assert f.shape == torch.Size([5, 2])
+        assert f.device.type == "cuda"
+
+
 class TestInverseMellinTransformVmap:
     """Test inverse Mellin transform with vmap."""
 

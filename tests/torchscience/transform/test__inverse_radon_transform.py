@@ -343,6 +343,77 @@ class TestInverseRadonTransformDevice:
             raise
 
 
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+class TestInverseRadonTransformCUDA:
+    """Test inverse Radon transform CUDA backend."""
+
+    def test_cuda_forward_matches_cpu(self):
+        """CUDA forward should match CPU output."""
+        sinogram_cpu = torch.randn(20, 30, dtype=torch.float64)
+        angles_cpu = torch.linspace(0, math.pi, 20, dtype=torch.float64)
+
+        sinogram_cuda = sinogram_cpu.cuda()
+        angles_cuda = angles_cpu.cuda()
+
+        recon_cpu = T.inverse_radon_transform(
+            sinogram_cpu, angles_cpu, output_size=16
+        )
+        recon_cuda = T.inverse_radon_transform(
+            sinogram_cuda, angles_cuda, output_size=16
+        )
+
+        assert torch.allclose(
+            recon_cpu, recon_cuda.cpu(), rtol=1e-10, atol=1e-10
+        )
+
+    def test_cuda_gradient(self):
+        """Gradient should work on CUDA."""
+        sinogram = torch.randn(
+            20, 30, dtype=torch.float64, device="cuda", requires_grad=True
+        )
+        angles = torch.linspace(
+            0, math.pi, 20, dtype=torch.float64, device="cuda"
+        )
+
+        recon = T.inverse_radon_transform(sinogram, angles, output_size=16)
+        loss = recon.sum()
+        loss.backward()
+
+        assert sinogram.grad is not None
+        assert sinogram.grad.device.type == "cuda"
+
+    def test_cuda_gradcheck(self):
+        """Gradient check on CUDA."""
+        sinogram = torch.randn(
+            10, 16, dtype=torch.float64, device="cuda", requires_grad=True
+        )
+        angles = torch.linspace(
+            0, math.pi, 10, dtype=torch.float64, device="cuda"
+        )
+
+        def func(sino):
+            return T.inverse_radon_transform(
+                sino, angles, output_size=8, filter_type="ramp"
+            )
+
+        assert gradcheck(func, (sinogram,), raise_exception=True)
+
+    def test_cuda_batched(self):
+        """Batched inverse Radon transform on CUDA."""
+        sinograms = torch.randn(5, 20, 30, dtype=torch.float64, device="cuda")
+        angles = torch.linspace(
+            0, math.pi, 20, dtype=torch.float64, device="cuda"
+        )
+
+        recon = T.inverse_radon_transform(sinograms, angles, output_size=16)
+
+        assert recon.dim() == 3
+        assert recon.shape[0] == 5
+        assert recon.shape[1] == 16
+        assert recon.shape[2] == 16
+        assert recon.device.type == "cuda"
+
+
 class TestInverseRadonTransformDtype:
     """Test inverse Radon transform dtype handling."""
 

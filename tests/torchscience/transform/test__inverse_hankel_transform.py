@@ -258,6 +258,67 @@ class TestInverseHankelTransformDevice:
             raise
 
 
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+class TestInverseHankelTransformCUDA:
+    """Test inverse Hankel transform CUDA backend."""
+
+    def test_cuda_forward_matches_cpu(self):
+        """CUDA forward should match CPU output."""
+        k_cpu = torch.linspace(0.1, 5, 50, dtype=torch.float64)
+        F_cpu = torch.randn(50, dtype=torch.float64)
+        r_cpu = torch.tensor([0.5, 1.0, 1.5], dtype=torch.float64)
+
+        k_cuda = k_cpu.cuda()
+        F_cuda = F_cpu.cuda()
+        r_cuda = r_cpu.cuda()
+
+        f_cpu = T.inverse_hankel_transform(F_cpu, r_cpu, k_cpu, order=0.0)
+        f_cuda = T.inverse_hankel_transform(F_cuda, r_cuda, k_cuda, order=0.0)
+
+        assert torch.allclose(f_cpu, f_cuda.cpu(), rtol=1e-10, atol=1e-10)
+
+    def test_cuda_gradient(self):
+        """Gradient should work on CUDA."""
+        k = torch.linspace(0.1, 5, 50, dtype=torch.float64, device="cuda")
+        F = torch.randn(
+            50, dtype=torch.float64, device="cuda", requires_grad=True
+        )
+        r = torch.tensor([0.5, 1.0], dtype=torch.float64, device="cuda")
+
+        f = T.inverse_hankel_transform(F, r, k, order=0.0)
+        loss = f.sum()
+        loss.backward()
+
+        assert F.grad is not None
+        assert F.grad.device.type == "cuda"
+
+    def test_cuda_gradcheck(self):
+        """Gradient check on CUDA."""
+        k = torch.linspace(0.1, 5, 30, dtype=torch.float64, device="cuda")
+        F = torch.randn(
+            30, dtype=torch.float64, device="cuda", requires_grad=True
+        )
+        r = torch.tensor([0.5, 1.0], dtype=torch.float64, device="cuda")
+
+        def func(inp):
+            return T.inverse_hankel_transform(inp, r, k, order=0.0)
+
+        assert gradcheck(
+            func, (F,), raise_exception=True, eps=1e-5, atol=1e-3, rtol=1e-3
+        )
+
+    def test_cuda_batched(self):
+        """Batched inverse Hankel transform on CUDA."""
+        k = torch.linspace(0.1, 5, 50, dtype=torch.float64, device="cuda")
+        F = torch.randn(5, 50, dtype=torch.float64, device="cuda")
+        r = torch.tensor([0.5, 1.0], dtype=torch.float64, device="cuda")
+
+        f = T.inverse_hankel_transform(F, r, k, dim=-1, order=0.0)
+
+        assert f.shape == torch.Size([5, 2])
+        assert f.device.type == "cuda"
+
+
 class TestInverseHankelTransformVmap:
     """Test inverse Hankel transform with vmap."""
 

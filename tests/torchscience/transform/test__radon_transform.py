@@ -204,6 +204,70 @@ class TestRadonTransformDevice:
         assert sinogram.device.type == "cuda"
 
 
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+class TestRadonTransformCUDA:
+    """Test Radon transform CUDA backend."""
+
+    def test_cuda_forward_matches_cpu(self):
+        """CUDA forward should match CPU output."""
+        image_cpu = torch.randn(16, 16, dtype=torch.float64)
+        angles_cpu = torch.linspace(0, math.pi, 10, dtype=torch.float64)
+
+        image_cuda = image_cpu.cuda()
+        angles_cuda = angles_cpu.cuda()
+
+        sinogram_cpu = T.radon_transform(image_cpu, angles_cpu)
+        sinogram_cuda = T.radon_transform(image_cuda, angles_cuda)
+
+        assert torch.allclose(
+            sinogram_cpu, sinogram_cuda.cpu(), rtol=1e-10, atol=1e-10
+        )
+
+    def test_cuda_gradient(self):
+        """Gradient should work on CUDA."""
+        image = torch.randn(
+            16, 16, dtype=torch.float64, device="cuda", requires_grad=True
+        )
+        angles = torch.linspace(
+            0, math.pi, 10, dtype=torch.float64, device="cuda"
+        )
+
+        sinogram = T.radon_transform(image, angles)
+        loss = sinogram.sum()
+        loss.backward()
+
+        assert image.grad is not None
+        assert image.grad.device.type == "cuda"
+
+    def test_cuda_gradcheck(self):
+        """Gradient check on CUDA."""
+        image = torch.randn(
+            12, 12, dtype=torch.float64, device="cuda", requires_grad=True
+        )
+        angles = torch.tensor(
+            [0.0, math.pi / 2], dtype=torch.float64, device="cuda"
+        )
+
+        def func(inp):
+            return T.radon_transform(inp, angles)
+
+        assert gradcheck(func, (image,), raise_exception=True)
+
+    def test_cuda_batched(self):
+        """Batched Radon transform on CUDA."""
+        images = torch.randn(5, 16, 16, dtype=torch.float64, device="cuda")
+        angles = torch.linspace(
+            0, math.pi, 10, dtype=torch.float64, device="cuda"
+        )
+
+        sinogram = T.radon_transform(images, angles)
+
+        assert sinogram.dim() == 3
+        assert sinogram.shape[0] == 5
+        assert sinogram.shape[1] == 10
+        assert sinogram.device.type == "cuda"
+
+
 class TestRadonTransformEdgeCases:
     """Test edge cases and error handling."""
 
