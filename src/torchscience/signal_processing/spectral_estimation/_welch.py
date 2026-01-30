@@ -4,6 +4,7 @@ import torch
 from torch import Tensor
 
 import torchscience._csrc  # noqa: F401 - Load C++ operators
+from torchscience.window_function import hann_window
 
 
 def welch(
@@ -81,10 +82,18 @@ def welch(
         noverlap = nperseg // 2
 
     if window is None:
-        window = torch.hann_window(nperseg, dtype=x.dtype, device=x.device)
+        window = hann_window(nperseg, dtype=x.dtype, device=x.device)
 
-    scaling_int = 0 if scaling == "density" else 1
+    if scaling == "density":
+        scaling_int = 0
+    else:
+        scaling_int = 1
 
     return torch.ops.torchscience.welch(
-        x, window, nperseg, noverlap, fs, scaling_int
+        x,
+        window,
+        nperseg,
+        noverlap,
+        fs,
+        scaling_int,
     )
