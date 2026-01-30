@@ -227,6 +227,116 @@ inline std::tuple<at::Tensor, at::Tensor> welch(
     return std::make_tuple(freqs, Pxx);
 }
 
+// ============================================================================
+// spectrogram
+// ============================================================================
+//
+// Computes the spectrogram: a time-frequency representation using
+// short-time Fourier transform magnitudes.
+//
+// Returns (freqs, times, Sxx):
+//   freqs - (nperseg/2+1,)
+//   times - (n_segments,)
+//   Sxx   - (..., nperseg/2+1, n_segments)
+
+inline std::tuple<at::Tensor, at::Tensor, at::Tensor> spectrogram(
+    const at::Tensor& x,
+    const at::Tensor& window,
+    int64_t nperseg,
+    int64_t noverlap,
+    double fs,
+    int64_t scaling
+) {
+    TORCH_CHECK(
+        at::isFloatingType(x.scalar_type()),
+        "spectrogram requires real floating-point input, got ", x.scalar_type()
+    );
+    TORCH_CHECK(
+        x.dim() >= 1,
+        "spectrogram requires at least 1 dimension, got ", x.dim()
+    );
+    TORCH_CHECK(
+        window.dim() == 1 && window.size(0) == nperseg,
+        "spectrogram window must be 1-D with length nperseg (", nperseg,
+        "), got shape ", window.sizes()
+    );
+    TORCH_CHECK(
+        noverlap >= 0 && noverlap < nperseg,
+        "spectrogram noverlap must be in [0, nperseg), got ", noverlap
+    );
+    TORCH_CHECK(
+        scaling == 0 || scaling == 1,
+        "spectrogram scaling must be 0 ('density') or 1 ('spectrum'), got ",
+        scaling
+    );
+
+    int64_t n = x.size(-1);
+    int64_t step = nperseg - noverlap;
+    int64_t n_segments = (n - nperseg) / step + 1;
+
+    TORCH_CHECK(
+        n_segments >= 1,
+        "spectrogram: signal length (", n, ") too short for nperseg=", nperseg,
+        " with noverlap=", noverlap
+    );
+
+    // Extract segments: (..., n_segments, nperseg)
+    at::Tensor segments = x.unfold(-1, nperseg, step);
+
+    // Apply window
+    at::Tensor windowed = segments * window;
+
+    // FFT each segment
+    at::Tensor X = at::fft_rfft(windowed, /*n=*/c10::nullopt, /*dim=*/-1);
+
+    // Power spectrum
+    at::Tensor Sxx = at::real(X * at::conj(X));
+
+    // Normalization
+    at::Tensor scale;
+    if (scaling == 0) {
+        scale = fs * at::sum(at::pow(window, 2));
+    } else {
+        scale = at::pow(at::sum(window), 2);
+    }
+    Sxx = Sxx / scale;
+
+    // Double non-DC, non-Nyquist bins
+    int64_t n_freqs = Sxx.size(-1);
+    if (nperseg % 2 == 0) {
+        auto inner = Sxx.narrow(-1, 1, n_freqs - 2);
+        Sxx = at::cat({
+            Sxx.narrow(-1, 0, 1),
+            inner * 2.0,
+            Sxx.narrow(-1, n_freqs - 1, 1)
+        }, -1);
+    } else {
+        auto inner = Sxx.narrow(-1, 1, n_freqs - 1);
+        Sxx = at::cat({
+            Sxx.narrow(-1, 0, 1),
+            inner * 2.0
+        }, -1);
+    }
+
+    // Transpose last two dims to get (..., n_freqs, n_segments)
+    // Current shape is (..., n_segments, n_freqs)
+    int64_t ndim = Sxx.dim();
+    Sxx = Sxx.transpose(ndim - 2, ndim - 1);
+
+    // Frequency bins
+    at::Tensor freqs = at::fft_rfftfreq(
+        nperseg, /*d=*/1.0 / fs,
+        x.options().dtype(at::kDouble)
+    );
+
+    // Time bins: center of each segment
+    at::Tensor times = at::arange(n_segments, x.options().dtype(at::kDouble))
+        * static_cast<double>(step) / fs
+        + static_cast<double>(nperseg) / (2.0 * fs);
+
+    return std::make_tuple(freqs, times, Sxx);
+}
+
 }  // namespace torchscience::composite::spectral_estimation
 
 // =============================================================================
@@ -242,5 +352,9 @@ TORCH_LIBRARY_IMPL(torchscience, CompositeImplicitAutograd, m) {
     m.impl(
         "welch",
         &torchscience::composite::spectral_estimation::welch
+    );
+    m.impl(
+        "spectrogram_psd",
+        &torchscience::composite::spectral_estimation::spectrogram
     );
 }

@@ -246,4 +246,5 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   // Spectral estimation
   m.def("periodogram(Tensor x, Tensor window, float fs, int scaling) -> (Tensor, Tensor)");
   m.def("welch(Tensor x, Tensor window, int nperseg, int noverlap, float fs, int scaling) -> (Tensor, Tensor)");
+  m.def("spectrogram_psd(Tensor x, Tensor window, int nperseg, int noverlap, float fs, int scaling) -> (Tensor, Tensor, Tensor)");
 }
