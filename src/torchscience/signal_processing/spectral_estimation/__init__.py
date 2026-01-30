@@ -1,3 +1,7 @@
 """Spectral estimation operations."""
 
-__all__ = []
+from ._periodogram import periodogram
+
+__all__ = [
+    "periodogram",
+]
