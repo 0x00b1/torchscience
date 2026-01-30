@@ -2,11 +2,21 @@
 
 import math
 
+import numpy as np
 import pytest
 import torch
 from torch.autograd import gradcheck
 
 import torchscience.transform as T
+
+# Check if skimage is available for reference tests
+try:
+    from skimage.transform import iradon as skimage_iradon
+    from skimage.transform import radon as skimage_radon
+
+    HAS_SKIMAGE = True
+except ImportError:
+    HAS_SKIMAGE = False
 
 
 class TestInverseRadonTransformForward:
@@ -393,3 +403,131 @@ class TestInverseRadonTransformCompile:
 
         assert sinogram.grad is not None
         assert sinogram.grad.shape == sinogram.shape
+
+
+@pytest.mark.skipif(not HAS_SKIMAGE, reason="scikit-image not available")
+class TestInverseRadonTransformSkimageReference:
+    """Tests comparing against scikit-image's iradon implementation."""
+
+    def test_round_trip_reconstruction_quality(self):
+        """Test that round-trip produces similar quality as skimage."""
+        # Create a simple disk phantom
+        size = 64
+        y, x = np.ogrid[:size, :size]
+        center = size // 2
+        radius = size // 4
+        phantom = ((x - center) ** 2 + (y - center) ** 2 <= radius**2).astype(
+            np.float64
+        )
+
+        # Forward Radon with skimage
+        angles_deg = np.linspace(0, 180, 90, endpoint=False)
+        sinogram_skimage = skimage_radon(
+            phantom, theta=angles_deg, circle=True
+        )
+
+        # Reconstruct with both
+        skimage_recon = skimage_iradon(
+            sinogram_skimage, theta=angles_deg, circle=True, filter_name="ramp"
+        )
+
+        # Use skimage sinogram for torch (need to transpose)
+        sinogram_torch = torch.from_numpy(sinogram_skimage.T)
+        angles_rad = torch.from_numpy(np.deg2rad(angles_deg))
+
+        torch_recon = T.inverse_radon_transform(
+            sinogram_torch,
+            angles_rad,
+            circle=True,
+            output_size=size,
+            filter_type="ramp",
+        ).numpy()
+
+        # Both reconstructions should capture the original structure
+        # Check correlation with original phantom
+        phantom_flat = phantom.flatten()
+        skimage_corr = np.corrcoef(phantom_flat, skimage_recon.flatten())[0, 1]
+        torch_corr = np.corrcoef(phantom_flat, torch_recon.flatten())[0, 1]
+
+        # Both should have reasonable correlation with original
+        assert skimage_corr > 0.8, (
+            f"skimage correlation too low: {skimage_corr}"
+        )
+        assert torch_corr > 0.7, f"torch correlation too low: {torch_corr}"
+
+    def test_filter_types_produce_valid_output(self):
+        """Test that different filters produce valid reconstructions."""
+        size = 32
+        y, x = np.ogrid[:size, :size]
+        center = size // 2
+        radius = size // 4
+        phantom = ((x - center) ** 2 + (y - center) ** 2 <= radius**2).astype(
+            np.float64
+        )
+
+        angles_deg = np.linspace(0, 180, 45, endpoint=False)
+        sinogram = skimage_radon(phantom, theta=angles_deg, circle=True)
+
+        sinogram_torch = torch.from_numpy(sinogram.T)
+        angles_rad = torch.from_numpy(np.deg2rad(angles_deg))
+
+        # Test all our filter types
+        for filter_type in [
+            "ramp",
+            "shepp-logan",
+            "cosine",
+            "hamming",
+            "hann",
+        ]:
+            recon = T.inverse_radon_transform(
+                sinogram_torch,
+                angles_rad,
+                circle=True,
+                output_size=size,
+                filter_type=filter_type,
+            ).numpy()
+
+            # Should produce finite values
+            assert np.isfinite(recon).all(), (
+                f"Filter {filter_type} produced non-finite"
+            )
+
+            # Should have positive correlation with original
+            correlation = np.corrcoef(phantom.flatten(), recon.flatten())[0, 1]
+            assert correlation > 0.5, (
+                f"Filter {filter_type} correlation too low: {correlation}"
+            )
+
+    def test_structure_preservation(self):
+        """Test that reconstruction preserves main structural features."""
+        # Create phantom with distinct features
+        size = 48
+        phantom = np.zeros((size, size), dtype=np.float64)
+        # Central disk
+        y, x = np.ogrid[:size, :size]
+        center = size // 2
+        phantom[(x - center) ** 2 + (y - center) ** 2 <= 100] = 1.0
+        # Inner disk
+        phantom[(x - center) ** 2 + (y - center) ** 2 <= 25] = 0.5
+
+        angles_deg = np.linspace(0, 180, 90, endpoint=False)
+        sinogram = skimage_radon(phantom, theta=angles_deg, circle=True)
+
+        sinogram_torch = torch.from_numpy(sinogram.T)
+        angles_rad = torch.from_numpy(np.deg2rad(angles_deg))
+
+        recon = T.inverse_radon_transform(
+            sinogram_torch,
+            angles_rad,
+            circle=True,
+            output_size=size,
+            filter_type="ramp",
+        ).numpy()
+
+        # Center should be brighter than edge
+        center_val = recon[
+            size // 2 - 2 : size // 2 + 2, size // 2 - 2 : size // 2 + 2
+        ].mean()
+        edge_val = recon[0:4, 0:4].mean()
+
+        assert center_val > edge_val, "Center should be brighter than edge"

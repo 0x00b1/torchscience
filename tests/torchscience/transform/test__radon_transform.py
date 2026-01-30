@@ -2,10 +2,20 @@
 
 import math
 
+import numpy as np
+import pytest
 import torch
 from torch.autograd import gradcheck
 
 import torchscience.transform as T
+
+# Check if skimage is available for reference tests
+try:
+    from skimage.transform import radon as skimage_radon
+
+    HAS_SKIMAGE = True
+except ImportError:
+    HAS_SKIMAGE = False
 
 
 class TestRadonTransformForward:
@@ -207,3 +217,99 @@ class TestRadonTransformCompile:
         sinogram_eager = T.radon_transform(image, angles)
 
         assert torch.allclose(sinogram_compiled, sinogram_eager, atol=1e-10)
+
+
+@pytest.mark.skipif(not HAS_SKIMAGE, reason="scikit-image not available")
+class TestRadonTransformSkimageReference:
+    """Tests comparing against scikit-image's radon implementation."""
+
+    def test_matches_skimage_basic(self):
+        """Test basic case matches scikit-image."""
+        np.random.seed(42)
+        image_np = np.random.randn(32, 32)
+        image_torch = torch.from_numpy(image_np)
+
+        # Angles in degrees for skimage, radians for torchscience
+        angles_deg = np.linspace(0, 180, 45, endpoint=False)
+        angles_rad = torch.from_numpy(np.deg2rad(angles_deg))
+
+        skimage_result = skimage_radon(image_np, theta=angles_deg, circle=True)
+        torch_result = T.radon_transform(
+            image_torch, angles_rad, circle=True
+        ).numpy()
+
+        # Note: skimage returns (num_bins, num_angles), we return (num_angles, num_bins)
+        skimage_result = skimage_result.T
+
+        # Results should be close (implementation differences may cause some variation)
+        # Use correlation to verify similar structure
+        correlation = np.corrcoef(
+            skimage_result.flatten(), torch_result.flatten()
+        )[0, 1]
+        assert correlation > 0.9, f"Correlation too low: {correlation}"
+
+    def test_matches_skimage_shepp_logan(self):
+        """Test with Shepp-Logan phantom-like structure."""
+        # Create a simple disk phantom
+        size = 64
+        y, x = np.ogrid[:size, :size]
+        center = size // 2
+        radius = size // 4
+        disk = ((x - center) ** 2 + (y - center) ** 2 <= radius**2).astype(
+            np.float64
+        )
+
+        image_torch = torch.from_numpy(disk)
+
+        angles_deg = np.linspace(0, 180, 90, endpoint=False)
+        angles_rad = torch.from_numpy(np.deg2rad(angles_deg))
+
+        skimage_result = skimage_radon(disk, theta=angles_deg, circle=True)
+        torch_result = T.radon_transform(
+            image_torch, angles_rad, circle=True
+        ).numpy()
+
+        # skimage returns (num_bins, num_angles)
+        skimage_result = skimage_result.T
+
+        # For simple geometric phantoms, results should be very similar
+        correlation = np.corrcoef(
+            skimage_result.flatten(), torch_result.flatten()
+        )[0, 1]
+        assert correlation > 0.95, f"Correlation too low: {correlation}"
+
+    def test_sinogram_structure_matches(self):
+        """Test that sinogram has similar structure (max positions)."""
+        # Point source creates sinusoidal pattern
+        size = 32
+        phantom = np.zeros((size, size), dtype=np.float64)
+        phantom[size // 2, size // 2 + 5] = 1.0  # Off-center point
+
+        image_torch = torch.from_numpy(phantom)
+
+        angles_deg = np.linspace(0, 180, 45, endpoint=False)
+        angles_rad = torch.from_numpy(np.deg2rad(angles_deg))
+
+        skimage_result = skimage_radon(phantom, theta=angles_deg, circle=True)
+        torch_result = T.radon_transform(
+            image_torch, angles_rad, circle=True
+        ).numpy()
+
+        # skimage returns (num_bins, num_angles)
+        skimage_result = skimage_result.T
+
+        # Find peak positions for each angle
+        skimage_peaks = np.argmax(skimage_result, axis=1)
+        torch_peaks = np.argmax(torch_result, axis=1)
+
+        # Peaks should follow similar pattern (allowing for different centering)
+        # Normalize to center
+        skimage_peaks_centered = skimage_peaks - skimage_peaks.mean()
+        torch_peaks_centered = torch_peaks - torch_peaks.mean()
+
+        correlation = np.corrcoef(
+            skimage_peaks_centered, torch_peaks_centered
+        )[0, 1]
+        assert correlation > 0.9, (
+            f"Peak pattern correlation too low: {correlation}"
+        )
