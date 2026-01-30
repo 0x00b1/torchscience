@@ -62,7 +62,9 @@ from ._normal import (
 )
 from ._poisson import (
     poisson_cumulative_distribution,
+    poisson_log_probability_mass,
     poisson_probability_mass,
+    poisson_survival,
 )
 
 __all__ = [
@@ -103,5 +105,7 @@ __all__ = [
     "normal_survival",
     # Poisson distribution
     "poisson_cumulative_distribution",
+    "poisson_log_probability_mass",
     "poisson_probability_mass",
+    "poisson_survival",
 ]
