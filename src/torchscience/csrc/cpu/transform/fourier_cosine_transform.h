@@ -234,31 +234,11 @@ inline at::Tensor fourier_cosine_transform(
         // DCT-IV: Half-sample symmetric
         // X[k] = 2 * sum_{n=0}^{N-1} x[n] * cos(pi * (2k+1) * (2n+1) / (4N))
         //
-        // Direct O(N^2) implementation for correctness.
-        // TODO: Implement O(N log N) FFT-based algorithm.
+        // Direct O(N^2) implementation using matrix multiplication.
+        // Note: An FFT-based O(N log N) algorithm exists but requires careful
+        // handling of half-sample shifts and is deferred to future optimization.
 
         double pi = M_PI;
-
-        // Build cos table for efficiency
-        std::vector<int64_t> result_shape(x.sizes().begin(), x.sizes().end());
-        result = at::zeros(result_shape, x.options());
-
-        // Create indices for broadcasting
-        std::vector<int64_t> k_shape(ndim, 1);
-        k_shape[dim] = n;
-        std::vector<int64_t> m_shape(ndim, 1);
-        m_shape[dim] = n;
-
-        at::Tensor k_idx = at::arange(n, x.options()).view(k_shape);  // [1, ..., 1, n, 1, ..., 1]
-        at::Tensor m_idx = at::arange(n, x.options()).view(m_shape);  // same shape
-
-        // For each k, compute: sum_m x[m] * cos(pi*(2k+1)*(2m+1)/(4N))
-        // We can vectorize this using broadcasting:
-        // angles[k, m] = pi * (2k+1) * (2m+1) / (4N)
-
-        // Reshape for broadcasting: k along dim, m along a new dimension
-        // x has shape [..., n, ...], we want to compute x[..., m, ...] * cos_table[k, m]
-        // Then sum over m dimension
 
         // Move dim to last position for easier manipulation
         at::Tensor x_perm = x.movedim(dim, -1);  // [..., n]
@@ -287,7 +267,6 @@ inline at::Tensor fourier_cosine_transform(
 
         if (norm == 1) {
             // Ortho normalization: scale by sqrt(1/(2N))
-            // Note: scipy ortho scales by sqrt(1/(2N)) = 1/sqrt(2N)
             result = result * std::sqrt(1.0 / (2.0 * n));
         }
     }
