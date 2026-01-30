@@ -209,3 +209,61 @@ class TestKaiserWindow:
         return torch.i0(arg) / torch.i0(
             torch.tensor(beta, dtype=torch.float64)
         )
+
+
+class TestKaiserWindowCompile:
+    """Test torch.compile compatibility for kaiser_window."""
+
+    def test_compile_basic(self):
+        """Test basic torch.compile compatibility."""
+        compiled_fn = torch.compile(wf.kaiser_window)
+        beta = torch.tensor(6.0, dtype=torch.float64)
+        result = compiled_fn(64, beta, dtype=torch.float64)
+        expected = wf.kaiser_window(64, beta, dtype=torch.float64)
+        torch.testing.assert_close(result, expected)
+
+    def test_compile_periodic(self):
+        """Test torch.compile for periodic variant."""
+        compiled_fn = torch.compile(wf.periodic_kaiser_window)
+        beta = torch.tensor(6.0, dtype=torch.float64)
+        result = compiled_fn(64, beta, dtype=torch.float64)
+        expected = wf.periodic_kaiser_window(64, beta, dtype=torch.float64)
+        torch.testing.assert_close(result, expected)
+
+    def test_compile_with_different_beta(self):
+        """Test torch.compile with various beta values."""
+        compiled_fn = torch.compile(wf.kaiser_window)
+        for beta_val in [0.0, 4.0, 8.6, 14.0]:
+            beta = torch.tensor(beta_val, dtype=torch.float64)
+            result = compiled_fn(64, beta, dtype=torch.float64)
+            expected = wf.kaiser_window(64, beta, dtype=torch.float64)
+            torch.testing.assert_close(result, expected)
+
+    def test_compile_in_larger_function(self):
+        """Test torch.compile when kaiser_window is used in a larger function."""
+
+        def windowed_fft(
+            signal: torch.Tensor, beta: torch.Tensor
+        ) -> torch.Tensor:
+            n = signal.shape[-1]
+            window = wf.kaiser_window(
+                n, beta, dtype=signal.dtype, device=signal.device
+            )
+            return torch.fft.fft(signal * window)
+
+        compiled_fn = torch.compile(windowed_fft)
+        signal = torch.randn(64, dtype=torch.float64)
+        beta = torch.tensor(6.0, dtype=torch.float64)
+        result = compiled_fn(signal, beta)
+        expected = windowed_fft(signal, beta)
+        torch.testing.assert_close(result, expected)
+
+    def test_compile_dynamic_shapes(self):
+        """Test torch.compile with dynamic shapes."""
+        compiled_fn = torch.compile(wf.kaiser_window, dynamic=True)
+        beta = torch.tensor(6.0, dtype=torch.float64)
+        for n in [16, 32, 64, 128]:
+            result = compiled_fn(n, beta, dtype=torch.float64)
+            expected = wf.kaiser_window(n, beta, dtype=torch.float64)
+            torch.testing.assert_close(result, expected)
+            assert result.shape == (n,)

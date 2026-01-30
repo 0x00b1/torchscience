@@ -205,3 +205,61 @@ class TestGaussianWindow:
         k = torch.arange(n, dtype=torch.float64)
         x = (k - center) / sigma
         return torch.exp(-0.5 * x * x)
+
+
+class TestGaussianWindowCompile:
+    """Test torch.compile compatibility for gaussian_window."""
+
+    def test_compile_basic(self):
+        """Test basic torch.compile compatibility."""
+        compiled_fn = torch.compile(wf.gaussian_window)
+        std = torch.tensor(0.4, dtype=torch.float64)
+        result = compiled_fn(64, std, dtype=torch.float64)
+        expected = wf.gaussian_window(64, std, dtype=torch.float64)
+        torch.testing.assert_close(result, expected)
+
+    def test_compile_periodic(self):
+        """Test torch.compile for periodic variant."""
+        compiled_fn = torch.compile(wf.periodic_gaussian_window)
+        std = torch.tensor(0.4, dtype=torch.float64)
+        result = compiled_fn(64, std, dtype=torch.float64)
+        expected = wf.periodic_gaussian_window(64, std, dtype=torch.float64)
+        torch.testing.assert_close(result, expected)
+
+    def test_compile_with_different_std(self):
+        """Test torch.compile with various std values."""
+        compiled_fn = torch.compile(wf.gaussian_window)
+        for std_val in [0.2, 0.4, 0.6, 1.0]:
+            std = torch.tensor(std_val, dtype=torch.float64)
+            result = compiled_fn(64, std, dtype=torch.float64)
+            expected = wf.gaussian_window(64, std, dtype=torch.float64)
+            torch.testing.assert_close(result, expected)
+
+    def test_compile_in_larger_function(self):
+        """Test torch.compile when gaussian_window is used in a larger function."""
+
+        def windowed_fft(
+            signal: torch.Tensor, std: torch.Tensor
+        ) -> torch.Tensor:
+            n = signal.shape[-1]
+            window = wf.gaussian_window(
+                n, std, dtype=signal.dtype, device=signal.device
+            )
+            return torch.fft.fft(signal * window)
+
+        compiled_fn = torch.compile(windowed_fft)
+        signal = torch.randn(64, dtype=torch.float64)
+        std = torch.tensor(0.4, dtype=torch.float64)
+        result = compiled_fn(signal, std)
+        expected = windowed_fft(signal, std)
+        torch.testing.assert_close(result, expected)
+
+    def test_compile_dynamic_shapes(self):
+        """Test torch.compile with dynamic shapes."""
+        compiled_fn = torch.compile(wf.gaussian_window, dynamic=True)
+        std = torch.tensor(0.4, dtype=torch.float64)
+        for n in [16, 32, 64, 128]:
+            result = compiled_fn(n, std, dtype=torch.float64)
+            expected = wf.gaussian_window(n, std, dtype=torch.float64)
+            torch.testing.assert_close(result, expected)
+            assert result.shape == (n,)

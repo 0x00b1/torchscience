@@ -146,3 +146,55 @@ class TestHannWindow:
         denom = n if periodic else n - 1
         k = torch.arange(n, dtype=torch.float64)
         return 0.5 * (1 - torch.cos(2 * math.pi * k / denom))
+
+
+class TestHannWindowCompile:
+    """Test torch.compile compatibility for hann_window."""
+
+    def test_compile_basic(self):
+        """Test basic torch.compile compatibility."""
+        compiled_fn = torch.compile(wf.hann_window)
+        result = compiled_fn(64)
+        expected = wf.hann_window(64)
+        torch.testing.assert_close(result, expected)
+
+    def test_compile_periodic(self):
+        """Test torch.compile for periodic variant."""
+        compiled_fn = torch.compile(wf.periodic_hann_window)
+        result = compiled_fn(64)
+        expected = wf.periodic_hann_window(64)
+        torch.testing.assert_close(result, expected)
+
+    def test_compile_with_dtype(self):
+        """Test torch.compile with explicit dtype."""
+        compiled_fn = torch.compile(wf.hann_window)
+        for dtype in [torch.float32, torch.float64]:
+            result = compiled_fn(64, dtype=dtype)
+            expected = wf.hann_window(64, dtype=dtype)
+            torch.testing.assert_close(result, expected)
+            assert result.dtype == dtype
+
+    def test_compile_in_larger_function(self):
+        """Test torch.compile when hann_window is used in a larger function."""
+
+        def windowed_fft(signal: torch.Tensor) -> torch.Tensor:
+            n = signal.shape[-1]
+            window = wf.hann_window(
+                n, dtype=signal.dtype, device=signal.device
+            )
+            return torch.fft.fft(signal * window)
+
+        compiled_fn = torch.compile(windowed_fft)
+        signal = torch.randn(64, dtype=torch.float64)
+        result = compiled_fn(signal)
+        expected = windowed_fft(signal)
+        torch.testing.assert_close(result, expected)
+
+    def test_compile_dynamic_shapes(self):
+        """Test torch.compile with dynamic shapes."""
+        compiled_fn = torch.compile(wf.hann_window, dynamic=True)
+        for n in [16, 32, 64, 128]:
+            result = compiled_fn(n)
+            expected = wf.hann_window(n)
+            torch.testing.assert_close(result, expected)
+            assert result.shape == (n,)

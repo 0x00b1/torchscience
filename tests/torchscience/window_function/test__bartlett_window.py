@@ -169,3 +169,55 @@ class TestBartlettWindow:
         denom = n if periodic else n - 1
         k = torch.arange(n, dtype=torch.float64)
         return 1 - torch.abs(k - denom / 2) / (denom / 2)
+
+
+class TestBartlettWindowCompile:
+    """Test torch.compile compatibility for bartlett_window."""
+
+    def test_compile_basic(self):
+        """Test basic torch.compile compatibility."""
+        compiled_fn = torch.compile(wf.bartlett_window)
+        result = compiled_fn(64)
+        expected = wf.bartlett_window(64)
+        torch.testing.assert_close(result, expected)
+
+    def test_compile_periodic(self):
+        """Test torch.compile for periodic variant."""
+        compiled_fn = torch.compile(wf.periodic_bartlett_window)
+        result = compiled_fn(64)
+        expected = wf.periodic_bartlett_window(64)
+        torch.testing.assert_close(result, expected)
+
+    def test_compile_with_dtype(self):
+        """Test torch.compile with explicit dtype."""
+        compiled_fn = torch.compile(wf.bartlett_window)
+        for dtype in [torch.float32, torch.float64]:
+            result = compiled_fn(64, dtype=dtype)
+            expected = wf.bartlett_window(64, dtype=dtype)
+            torch.testing.assert_close(result, expected)
+            assert result.dtype == dtype
+
+    def test_compile_in_larger_function(self):
+        """Test torch.compile when bartlett_window is used in a larger function."""
+
+        def windowed_fft(signal: torch.Tensor) -> torch.Tensor:
+            n = signal.shape[-1]
+            window = wf.bartlett_window(
+                n, dtype=signal.dtype, device=signal.device
+            )
+            return torch.fft.fft(signal * window)
+
+        compiled_fn = torch.compile(windowed_fft)
+        signal = torch.randn(64, dtype=torch.float64)
+        result = compiled_fn(signal)
+        expected = windowed_fft(signal)
+        torch.testing.assert_close(result, expected)
+
+    def test_compile_dynamic_shapes(self):
+        """Test torch.compile with dynamic shapes."""
+        compiled_fn = torch.compile(wf.bartlett_window, dynamic=True)
+        for n in [16, 32, 64, 128]:
+            result = compiled_fn(n)
+            expected = wf.bartlett_window(n)
+            torch.testing.assert_close(result, expected)
+            assert result.shape == (n,)

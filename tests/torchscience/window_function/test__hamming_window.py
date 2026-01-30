@@ -142,3 +142,55 @@ class TestHammingWindow:
         denom = n if periodic else n - 1
         k = torch.arange(n, dtype=torch.float64)
         return 0.54 - 0.46 * torch.cos(2 * math.pi * k / denom)
+
+
+class TestHammingWindowCompile:
+    """Test torch.compile compatibility for hamming_window."""
+
+    def test_compile_basic(self):
+        """Test basic torch.compile compatibility."""
+        compiled_fn = torch.compile(wf.hamming_window)
+        result = compiled_fn(64)
+        expected = wf.hamming_window(64)
+        torch.testing.assert_close(result, expected)
+
+    def test_compile_periodic(self):
+        """Test torch.compile for periodic variant."""
+        compiled_fn = torch.compile(wf.periodic_hamming_window)
+        result = compiled_fn(64)
+        expected = wf.periodic_hamming_window(64)
+        torch.testing.assert_close(result, expected)
+
+    def test_compile_with_dtype(self):
+        """Test torch.compile with explicit dtype."""
+        compiled_fn = torch.compile(wf.hamming_window)
+        for dtype in [torch.float32, torch.float64]:
+            result = compiled_fn(64, dtype=dtype)
+            expected = wf.hamming_window(64, dtype=dtype)
+            torch.testing.assert_close(result, expected)
+            assert result.dtype == dtype
+
+    def test_compile_in_larger_function(self):
+        """Test torch.compile when hamming_window is used in a larger function."""
+
+        def windowed_fft(signal: torch.Tensor) -> torch.Tensor:
+            n = signal.shape[-1]
+            window = wf.hamming_window(
+                n, dtype=signal.dtype, device=signal.device
+            )
+            return torch.fft.fft(signal * window)
+
+        compiled_fn = torch.compile(windowed_fft)
+        signal = torch.randn(64, dtype=torch.float64)
+        result = compiled_fn(signal)
+        expected = windowed_fft(signal)
+        torch.testing.assert_close(result, expected)
+
+    def test_compile_dynamic_shapes(self):
+        """Test torch.compile with dynamic shapes."""
+        compiled_fn = torch.compile(wf.hamming_window, dynamic=True)
+        for n in [16, 32, 64, 128]:
+            result = compiled_fn(n)
+            expected = wf.hamming_window(n)
+            torch.testing.assert_close(result, expected)
+            assert result.shape == (n,)

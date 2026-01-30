@@ -225,3 +225,61 @@ class TestTukeyWindow:
                 result[i] = 0.5 * (1 - math.cos(math.pi * (denom - x) / width))
 
         return result
+
+
+class TestTukeyWindowCompile:
+    """Test torch.compile compatibility for tukey_window."""
+
+    def test_compile_basic(self):
+        """Test basic torch.compile compatibility."""
+        compiled_fn = torch.compile(wf.tukey_window)
+        alpha = torch.tensor(0.5, dtype=torch.float64)
+        result = compiled_fn(64, alpha, dtype=torch.float64)
+        expected = wf.tukey_window(64, alpha, dtype=torch.float64)
+        torch.testing.assert_close(result, expected)
+
+    def test_compile_periodic(self):
+        """Test torch.compile for periodic variant."""
+        compiled_fn = torch.compile(wf.periodic_tukey_window)
+        alpha = torch.tensor(0.5, dtype=torch.float64)
+        result = compiled_fn(64, alpha, dtype=torch.float64)
+        expected = wf.periodic_tukey_window(64, alpha, dtype=torch.float64)
+        torch.testing.assert_close(result, expected)
+
+    def test_compile_with_different_alpha(self):
+        """Test torch.compile with various alpha values."""
+        compiled_fn = torch.compile(wf.tukey_window)
+        for alpha_val in [0.0, 0.25, 0.5, 1.0]:
+            alpha = torch.tensor(alpha_val, dtype=torch.float64)
+            result = compiled_fn(64, alpha, dtype=torch.float64)
+            expected = wf.tukey_window(64, alpha, dtype=torch.float64)
+            torch.testing.assert_close(result, expected)
+
+    def test_compile_in_larger_function(self):
+        """Test torch.compile when tukey_window is used in a larger function."""
+
+        def windowed_fft(
+            signal: torch.Tensor, alpha: torch.Tensor
+        ) -> torch.Tensor:
+            n = signal.shape[-1]
+            window = wf.tukey_window(
+                n, alpha, dtype=signal.dtype, device=signal.device
+            )
+            return torch.fft.fft(signal * window)
+
+        compiled_fn = torch.compile(windowed_fft)
+        signal = torch.randn(64, dtype=torch.float64)
+        alpha = torch.tensor(0.5, dtype=torch.float64)
+        result = compiled_fn(signal, alpha)
+        expected = windowed_fft(signal, alpha)
+        torch.testing.assert_close(result, expected)
+
+    def test_compile_dynamic_shapes(self):
+        """Test torch.compile with dynamic shapes."""
+        compiled_fn = torch.compile(wf.tukey_window, dynamic=True)
+        alpha = torch.tensor(0.5, dtype=torch.float64)
+        for n in [16, 32, 64, 128]:
+            result = compiled_fn(n, alpha, dtype=torch.float64)
+            expected = wf.tukey_window(n, alpha, dtype=torch.float64)
+            torch.testing.assert_close(result, expected)
+            assert result.shape == (n,)
