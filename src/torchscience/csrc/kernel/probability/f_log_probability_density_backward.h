@@ -12,11 +12,18 @@ namespace torchscience::kernel::probability {
 //                      - ((dfn + dfd)/2) * log(1 + dfn*x/dfd)
 //                      - log_beta(dfn/2, dfd/2)
 //
+// where log_beta(a,b) = lgamma(a) + lgamma(b) - lgamma(a+b)
+//
+// Derivatives computed term by term:
 // d/dx = (dfn/2 - 1)/x - ((dfn + dfd)/2) * (dfn/dfd) / (1 + dfn*x/dfd)
-// d/ddfn = 0.5 * (log(dfn/dfd) + 1/dfn + log(x) - log(1 + dfn*x/dfd) - x/(dfd + dfn*x))
-//          - 0.5 * (digamma(dfn/2) - digamma((dfn+dfd)/2))
-// d/ddfd = 0.5 * (-dfn/dfd + dfn*x/(dfd*(dfd + dfn*x)) - log(1 + dfn*x/dfd))
-//          - 0.5 * (digamma(dfd/2) - digamma((dfn+dfd)/2))
+//
+// d/ddfn = 0.5 * (log(dfn/dfd) + 1 + log(x) - log(1 + dfn*x/dfd)
+//                 - (dfn + dfd) * x / (dfd + dfn*x)
+//                 - digamma(dfn/2) + digamma((dfn+dfd)/2))
+//
+// d/ddfd = 0.5 * (-dfn/dfd + (dfn + dfd) * dfn * x / (dfd * (dfd + dfn*x))
+//                 - log(1 + dfn*x/dfd)
+//                 - digamma(dfd/2) + digamma((dfn+dfd)/2))
 template <typename T>
 std::tuple<T, T, T> f_log_probability_density_backward(T gradient, T x, T dfn, T dfd) {
   if (x <= T(0)) {
@@ -39,16 +46,19 @@ std::tuple<T, T, T> f_log_probability_density_backward(T gradient, T x, T dfn, T
   T psi_half_dfd = special_functions::digamma(half_dfd);
   T psi_half_sum = special_functions::digamma(half_sum);
 
-  // d/ddfn = 0.5 * (log(dfn/dfd) + 1/dfn + log(x) - log(1 + dfn*x/dfd) - x/(dfd + dfn*x))
-  //          - 0.5 * (digamma(dfn/2) - digamma((dfn+dfd)/2))
-  T grad_dfn = gradient * (T(0.5) * (std::log(dfn / dfd) + T(1) / dfn + std::log(x)
-                                     - log_one_plus_ratio - x / denom)
-                          - T(0.5) * (psi_half_dfn - psi_half_sum));
+  // d/ddfn = 0.5 * (log(dfn/dfd) + 1 + log(x) - log(1 + dfn*x/dfd)
+  //                 - (dfn + dfd) * x / (dfd + dfn*x)
+  //                 - digamma(dfn/2) + digamma((dfn+dfd)/2))
+  T grad_dfn = gradient * T(0.5) * (std::log(dfn / dfd) + T(1) + std::log(x)
+                                    - log_one_plus_ratio - (dfn + dfd) * x / denom
+                                    - psi_half_dfn + psi_half_sum);
 
-  // d/ddfd = 0.5 * (-dfn/dfd + dfn*x/(dfd*(dfd + dfn*x)) - log(1 + dfn*x/dfd))
-  //          - 0.5 * (digamma(dfd/2) - digamma((dfn+dfd)/2))
-  T grad_dfd = gradient * (T(0.5) * (-dfn / dfd + dfn * x / (dfd * denom) - log_one_plus_ratio)
-                          - T(0.5) * (psi_half_dfd - psi_half_sum));
+  // d/ddfd = 0.5 * (-dfn/dfd + (dfn + dfd) * dfn * x / (dfd * (dfd + dfn*x))
+  //                 - log(1 + dfn*x/dfd)
+  //                 - digamma(dfd/2) + digamma((dfn+dfd)/2))
+  T grad_dfd = gradient * T(0.5) * (-dfn / dfd + (dfn + dfd) * dfn * x / (dfd * denom)
+                                    - log_one_plus_ratio
+                                    - psi_half_dfd + psi_half_sum);
 
   return {grad_x, grad_dfn, grad_dfd};
 }
