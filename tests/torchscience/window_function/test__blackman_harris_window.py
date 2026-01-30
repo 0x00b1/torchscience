@@ -178,3 +178,55 @@ class TestBlackmanHarrisWindow:
             + a2 * torch.cos(4 * math.pi * k / denom)
             - a3 * torch.cos(6 * math.pi * k / denom)
         )
+
+
+class TestBlackmanHarrisWindowCompile:
+    """Test torch.compile compatibility for blackman_harris_window."""
+
+    def test_compile_basic(self):
+        """Test basic torch.compile compatibility."""
+        compiled_fn = torch.compile(wf.blackman_harris_window)
+        result = compiled_fn(64)
+        expected = wf.blackman_harris_window(64)
+        torch.testing.assert_close(result, expected)
+
+    def test_compile_periodic(self):
+        """Test torch.compile for periodic variant."""
+        compiled_fn = torch.compile(wf.periodic_blackman_harris_window)
+        result = compiled_fn(64)
+        expected = wf.periodic_blackman_harris_window(64)
+        torch.testing.assert_close(result, expected)
+
+    def test_compile_with_dtype(self):
+        """Test torch.compile with explicit dtype."""
+        compiled_fn = torch.compile(wf.blackman_harris_window)
+        for dtype in [torch.float32, torch.float64]:
+            result = compiled_fn(64, dtype=dtype)
+            expected = wf.blackman_harris_window(64, dtype=dtype)
+            torch.testing.assert_close(result, expected)
+            assert result.dtype == dtype
+
+    def test_compile_in_larger_function(self):
+        """Test torch.compile when blackman_harris_window is used in FFT."""
+
+        def windowed_fft(signal: torch.Tensor) -> torch.Tensor:
+            n = signal.shape[-1]
+            window = wf.blackman_harris_window(
+                n, dtype=signal.dtype, device=signal.device
+            )
+            return torch.fft.fft(signal * window)
+
+        compiled_fn = torch.compile(windowed_fft)
+        signal = torch.randn(64, dtype=torch.float64)
+        result = compiled_fn(signal)
+        expected = windowed_fft(signal)
+        torch.testing.assert_close(result, expected)
+
+    def test_compile_dynamic_shapes(self):
+        """Test torch.compile with dynamic shapes."""
+        compiled_fn = torch.compile(wf.blackman_harris_window, dynamic=True)
+        for n in [16, 32, 64, 128]:
+            result = compiled_fn(n)
+            expected = wf.blackman_harris_window(n)
+            torch.testing.assert_close(result, expected)
+            assert result.shape == (n,)

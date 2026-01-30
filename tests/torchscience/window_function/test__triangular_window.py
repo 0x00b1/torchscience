@@ -209,3 +209,55 @@ class TestTriangularWindow:
                     result[i] = (2 * (L - i) - 1) / L
 
         return result
+
+
+class TestTriangularWindowCompile:
+    """Test torch.compile compatibility for triangular_window."""
+
+    def test_compile_basic(self):
+        """Test basic torch.compile compatibility."""
+        compiled_fn = torch.compile(wf.triangular_window)
+        result = compiled_fn(64)
+        expected = wf.triangular_window(64)
+        torch.testing.assert_close(result, expected)
+
+    def test_compile_periodic(self):
+        """Test torch.compile for periodic variant."""
+        compiled_fn = torch.compile(wf.periodic_triangular_window)
+        result = compiled_fn(64)
+        expected = wf.periodic_triangular_window(64)
+        torch.testing.assert_close(result, expected)
+
+    def test_compile_with_dtype(self):
+        """Test torch.compile with explicit dtype."""
+        compiled_fn = torch.compile(wf.triangular_window)
+        for dtype in [torch.float32, torch.float64]:
+            result = compiled_fn(64, dtype=dtype)
+            expected = wf.triangular_window(64, dtype=dtype)
+            torch.testing.assert_close(result, expected)
+            assert result.dtype == dtype
+
+    def test_compile_in_larger_function(self):
+        """Test torch.compile when triangular_window is used in FFT."""
+
+        def windowed_fft(signal: torch.Tensor) -> torch.Tensor:
+            n = signal.shape[-1]
+            window = wf.triangular_window(
+                n, dtype=signal.dtype, device=signal.device
+            )
+            return torch.fft.fft(signal * window)
+
+        compiled_fn = torch.compile(windowed_fft)
+        signal = torch.randn(64, dtype=torch.float64)
+        result = compiled_fn(signal)
+        expected = windowed_fft(signal)
+        torch.testing.assert_close(result, expected)
+
+    def test_compile_dynamic_shapes(self):
+        """Test torch.compile with dynamic shapes."""
+        compiled_fn = torch.compile(wf.triangular_window, dynamic=True)
+        for n in [16, 32, 64, 128]:
+            result = compiled_fn(n)
+            expected = wf.triangular_window(n)
+            torch.testing.assert_close(result, expected)
+            assert result.shape == (n,)
