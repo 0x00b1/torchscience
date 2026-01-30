@@ -493,3 +493,38 @@ class TestShortTimeFourierTransformCompile:
 
         assert x.grad is not None
         assert x.grad.shape == x.shape
+
+
+class TestShortTimeFourierTransformEdgeCases:
+    """Test edge cases and error handling."""
+
+    def test_zeros_input(self):
+        """STFT of zeros should return zeros."""
+        x = torch.zeros(256, dtype=torch.float64)
+        window = torch.hann_window(64, dtype=torch.float64)
+        X = short_time_fourier_transform(x, window=window, center=False)
+        assert torch.allclose(X, torch.zeros_like(X))
+
+    def test_constant_input(self):
+        """STFT of constant should have energy at DC."""
+        x = torch.ones(256, dtype=torch.float64)
+        window = torch.hann_window(64, dtype=torch.float64)
+        X = short_time_fourier_transform(x, window=window, center=False)
+        # DC component (index 0) should dominate in each frame
+        assert X[0, :].abs().mean() > X[1:, :].abs().mean() * 10
+
+    def test_minimum_length_input(self):
+        """STFT should work with minimum valid input length."""
+        window = torch.hann_window(32, dtype=torch.float64)
+        x = torch.randn(32, dtype=torch.float64)
+        X = short_time_fourier_transform(x, window=window, center=False)
+        assert X.ndim == 2
+
+    def test_single_frame(self):
+        """STFT with hop_length >= signal length should give single frame."""
+        window = torch.hann_window(64, dtype=torch.float64)
+        x = torch.randn(64, dtype=torch.float64)
+        X = short_time_fourier_transform(
+            x, window=window, hop_length=64, center=False
+        )
+        assert X.shape[-1] == 1  # Single time frame

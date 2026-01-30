@@ -578,3 +578,57 @@ class TestHartleyTransformCompile:
 
         assert x.grad is not None
         assert x.grad.shape == x.shape
+
+
+class TestHartleyTransformEdgeCases:
+    """Test edge cases and error handling."""
+
+    def test_single_element_input(self):
+        """Hartley transform of single element should work."""
+        x = torch.tensor([3.0], dtype=torch.float64)
+        H = hartley_transform(x)
+        assert H.shape == torch.Size([1])
+        # Hartley of single element is itself
+        assert torch.allclose(H, x)
+
+    def test_zeros_input(self):
+        """Hartley transform of zeros should return zeros."""
+        x = torch.zeros(32, dtype=torch.float64)
+        H = hartley_transform(x)
+        assert torch.allclose(H, torch.zeros_like(H))
+
+    def test_constant_input(self):
+        """Hartley transform of constant should have energy at DC."""
+        x = torch.ones(32, dtype=torch.float64)
+        H = hartley_transform(x)
+        # DC component should dominate
+        assert H[0].abs() > H[1:].abs().max() * 100
+
+    def test_impulse_input(self):
+        """Hartley transform of impulse should be constant."""
+        x = torch.zeros(32, dtype=torch.float64)
+        x[0] = 1.0
+        H = hartley_transform(x)
+        # All Hartley components should be equal (to 1)
+        assert torch.allclose(H, torch.ones_like(H), atol=1e-10)
+
+    def test_power_of_two_size(self):
+        """Hartley should work with power-of-two sizes."""
+        for n in [2, 4, 8, 16, 32, 64, 128]:
+            x = torch.randn(n, dtype=torch.float64)
+            H = hartley_transform(x)
+            assert H.shape == torch.Size([n])
+
+    def test_non_power_of_two_size(self):
+        """Hartley should work with non-power-of-two sizes."""
+        for n in [3, 5, 7, 11, 13, 17, 19, 23]:
+            x = torch.randn(n, dtype=torch.float64)
+            H = hartley_transform(x)
+            assert H.shape == torch.Size([n])
+
+    def test_output_is_real(self):
+        """Hartley transform output should always be real."""
+        x = torch.randn(32, dtype=torch.float64)
+        H = hartley_transform(x)
+        assert not H.is_complex()
+        assert H.dtype == torch.float64

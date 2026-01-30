@@ -516,3 +516,34 @@ class TestGaborTransformCompile:
 
         assert x.grad is not None
         assert x.grad.shape == x.shape
+
+
+class TestGaborTransformEdgeCases:
+    """Test edge cases and error handling."""
+
+    def test_zeros_input(self):
+        """Gabor transform of zeros should return zeros."""
+        x = torch.zeros(256, dtype=torch.float64)
+        X = gabor_transform(x, sigma=0.1, n_fft=64, center=False)
+        assert torch.allclose(X, torch.zeros_like(X))
+
+    def test_constant_input(self):
+        """Gabor transform of constant should have energy at DC."""
+        x = torch.ones(256, dtype=torch.float64)
+        X = gabor_transform(x, sigma=0.1, n_fft=64, center=False)
+        # DC component should dominate in each frame
+        assert X[0, :].abs().mean() > X[1:, :].abs().mean() * 10
+
+    def test_sigma_parameter(self):
+        """Different sigma values should produce different results."""
+        x = torch.randn(256, dtype=torch.float64)
+        X1 = gabor_transform(x, sigma=0.05, n_fft=64, center=False)
+        X2 = gabor_transform(x, sigma=0.2, n_fft=64, center=False)
+        # Results should differ due to different window widths
+        assert not torch.allclose(X1, X2)
+
+    def test_minimum_length_input(self):
+        """Gabor transform should work with minimum valid input length."""
+        x = torch.randn(32, dtype=torch.float64)
+        X = gabor_transform(x, sigma=0.1, n_fft=32, center=False)
+        assert X.ndim == 2

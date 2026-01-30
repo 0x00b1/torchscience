@@ -607,3 +607,58 @@ class TestFourierTransformAutocast:
 
         assert y.is_complex()
         assert y.shape == x.shape
+
+
+class TestFourierTransformEdgeCases:
+    """Test edge cases and error handling."""
+
+    def test_single_element_input(self):
+        """FFT of single element should work."""
+        x = torch.tensor([3.0 + 2j], dtype=torch.complex64)
+        y = fourier_transform(x)
+        assert y.shape == torch.Size([1])
+        # FFT of single element is itself
+        assert torch.allclose(y, x)
+
+    def test_zeros_input(self):
+        """FFT of zeros should return zeros."""
+        x = torch.zeros(32, dtype=torch.complex64)
+        y = fourier_transform(x)
+        assert torch.allclose(y, torch.zeros_like(y))
+
+    def test_real_input_hermitian_output(self):
+        """FFT of real input should have Hermitian symmetry."""
+        x = torch.randn(32, dtype=torch.float64)
+        y = fourier_transform(x)
+        # Y[k] = conj(Y[N-k]) for real input
+        for k in range(1, 16):
+            assert torch.allclose(y[k], y[32 - k].conj(), atol=1e-10)
+
+    def test_constant_input(self):
+        """FFT of constant should have energy only at DC."""
+        x = torch.ones(32, dtype=torch.float64)
+        y = fourier_transform(x)
+        # DC component should be N (or normalized)
+        assert y[0].abs() > y[1:].abs().max() * 1000
+
+    def test_impulse_input(self):
+        """FFT of impulse should be constant."""
+        x = torch.zeros(32, dtype=torch.float64)
+        x[0] = 1.0
+        y = fourier_transform(x)
+        # All frequency components should be equal (to 1)
+        assert torch.allclose(y.abs(), torch.ones_like(y.abs()), atol=1e-10)
+
+    def test_power_of_two_size(self):
+        """FFT should work optimally with power-of-two sizes."""
+        for n in [2, 4, 8, 16, 32, 64, 128]:
+            x = torch.randn(n, dtype=torch.float64)
+            y = fourier_transform(x)
+            assert y.shape == torch.Size([n])
+
+    def test_non_power_of_two_size(self):
+        """FFT should work with non-power-of-two sizes."""
+        for n in [3, 5, 7, 11, 13, 17, 19, 23]:
+            x = torch.randn(n, dtype=torch.float64)
+            y = fourier_transform(x)
+            assert y.shape == torch.Size([n])
