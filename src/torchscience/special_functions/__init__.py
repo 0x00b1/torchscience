@@ -66,6 +66,7 @@ from ._jacobi_elliptic_ns import jacobi_elliptic_ns
 from ._jacobi_elliptic_sc import jacobi_elliptic_sc
 from ._jacobi_elliptic_sd import jacobi_elliptic_sd
 from ._jacobi_elliptic_sn import jacobi_elliptic_sn
+from ._lambert_w import lambert_w
 from ._log_beta import log_beta
 from ._log_gamma import log_gamma
 from ._modified_bessel_i import modified_bessel_i
@@ -144,6 +145,7 @@ __all__ = [
     "jacobi_elliptic_dc",
     "jacobi_elliptic_ds",
     "jacobi_elliptic_cs",
+    "lambert_w",
     "inverse_jacobi_elliptic_cd",
     "inverse_jacobi_elliptic_cn",
     "inverse_jacobi_elliptic_dn",

@@ -106,3 +106,6 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(airy_ai, AiryAi, x)
 
 // Airy function of the second kind
 TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(airy_bi, AiryBi, x)
+
+// Lambert W function (product logarithm)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(lambert_w, LambertW, k, z)
