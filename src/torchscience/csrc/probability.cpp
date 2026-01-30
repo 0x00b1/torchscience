@@ -72,6 +72,8 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("beta_probability_density_backward(Tensor grad, Tensor x, Tensor a, Tensor b) -> (Tensor, Tensor, Tensor)");
   m.def("beta_quantile(Tensor p, Tensor a, Tensor b) -> Tensor");
   m.def("beta_quantile_backward(Tensor grad, Tensor p, Tensor a, Tensor b) -> (Tensor, Tensor, Tensor)");
+  m.def("beta_log_probability_density(Tensor x, Tensor a, Tensor b) -> Tensor");
+  m.def("beta_log_probability_density_backward(Tensor grad, Tensor x, Tensor a, Tensor b) -> (Tensor, Tensor, Tensor)");
 
   // Gamma distribution
   m.def("gamma_cumulative_distribution(Tensor x, Tensor shape, Tensor scale) -> Tensor");
