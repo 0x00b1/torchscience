@@ -54,6 +54,8 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("chi2_quantile_backward(Tensor grad, Tensor p, Tensor df) -> (Tensor, Tensor)");
   m.def("chi2_survival(Tensor x, Tensor df) -> Tensor");
   m.def("chi2_survival_backward(Tensor grad, Tensor x, Tensor df) -> (Tensor, Tensor)");
+  m.def("chi2_log_probability_density(Tensor x, Tensor df) -> Tensor");
+  m.def("chi2_log_probability_density_backward(Tensor grad, Tensor x, Tensor df) -> (Tensor, Tensor)");
 
   // F-distribution
   m.def("f_cumulative_distribution(Tensor x, Tensor dfn, Tensor dfd) -> Tensor");
@@ -64,6 +66,8 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("f_quantile_backward(Tensor grad, Tensor p, Tensor dfn, Tensor dfd) -> (Tensor, Tensor, Tensor)");
   m.def("f_survival(Tensor x, Tensor dfn, Tensor dfd) -> Tensor");
   m.def("f_survival_backward(Tensor grad, Tensor x, Tensor dfn, Tensor dfd) -> (Tensor, Tensor, Tensor)");
+  m.def("f_log_probability_density(Tensor x, Tensor dfn, Tensor dfd) -> Tensor");
+  m.def("f_log_probability_density_backward(Tensor grad, Tensor x, Tensor dfn, Tensor dfd) -> (Tensor, Tensor, Tensor)");
 
   // Beta distribution
   m.def("beta_cumulative_distribution(Tensor x, Tensor a, Tensor b) -> Tensor");
