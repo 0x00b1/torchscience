@@ -211,6 +211,12 @@ TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(complete_legendre_ellipti
 
 TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(incomplete_legendre_elliptic_integral_e, phi, m)
 
+#include "../kernel/special_functions/incomplete_legendre_elliptic_integral_f.h"
+#include "../kernel/special_functions/incomplete_legendre_elliptic_integral_f_backward.h"
+#include "../kernel/special_functions/incomplete_legendre_elliptic_integral_f_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(incomplete_legendre_elliptic_integral_f, phi, m)
+
 #include "../kernel/special_functions/complete_legendre_elliptic_integral_pi.h"
 #include "../kernel/special_functions/complete_legendre_elliptic_integral_pi_backward.h"
 #include "../kernel/special_functions/complete_legendre_elliptic_integral_pi_backward_backward.h"

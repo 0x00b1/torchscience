@@ -39,6 +39,9 @@ from ._incomplete_beta import incomplete_beta
 from ._incomplete_legendre_elliptic_integral_e import (
     incomplete_legendre_elliptic_integral_e,
 )
+from ._incomplete_legendre_elliptic_integral_f import (
+    incomplete_legendre_elliptic_integral_f,
+)
 from ._incomplete_legendre_elliptic_integral_pi import (
     incomplete_legendre_elliptic_integral_pi,
 )
@@ -122,6 +125,7 @@ __all__ = [
     "complete_legendre_elliptic_integral_pi",
     "cosine_integral_ci",
     "incomplete_legendre_elliptic_integral_e",
+    "incomplete_legendre_elliptic_integral_f",
     "incomplete_legendre_elliptic_integral_pi",
     "jacobi_amplitude_am",
     "jacobi_elliptic_cd",
