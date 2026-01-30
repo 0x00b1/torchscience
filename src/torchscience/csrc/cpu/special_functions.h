@@ -797,3 +797,10 @@ TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(kelvin_bei, x)
 #include "../kernel/special_functions/kelvin_ker_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(kelvin_ker, x)
+
+// Kelvin function kei (imaginary part of K_0 at rotated argument)
+#include "../kernel/special_functions/kelvin_kei.h"
+#include "../kernel/special_functions/kelvin_kei_backward.h"
+#include "../kernel/special_functions/kelvin_kei_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(kelvin_kei, x)

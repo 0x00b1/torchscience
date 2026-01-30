@@ -118,3 +118,6 @@ TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(kelvin_bei, x)
 
 // Kelvin function ker (real part of K_0 at rotated argument)
 TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(kelvin_ker, x)
+
+// Kelvin function kei (imaginary part of K_0 at rotated argument)
+TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(kelvin_kei, x)
