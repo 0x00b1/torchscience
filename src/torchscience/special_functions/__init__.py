@@ -29,6 +29,7 @@ from ._complete_legendre_elliptic_integral_k import (
 from ._complete_legendre_elliptic_integral_pi import (
     complete_legendre_elliptic_integral_pi,
 )
+from ._confluent_hypergeometric_m import confluent_hypergeometric_m
 from ._cosine_integral_ci import cosine_integral_ci
 from ._digamma import digamma
 from ._exponential_integral_e import exponential_integral_e
@@ -134,6 +135,7 @@ __all__ = [
     "complete_legendre_elliptic_integral_e",
     "complete_legendre_elliptic_integral_k",
     "complete_legendre_elliptic_integral_pi",
+    "confluent_hypergeometric_m",
     "cosine_integral_ci",
     "incomplete_legendre_elliptic_integral_e",
     "incomplete_legendre_elliptic_integral_f",
