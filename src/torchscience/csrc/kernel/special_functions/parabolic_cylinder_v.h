@@ -15,16 +15,44 @@ namespace torchscience::kernel::special_functions {
 namespace detail {
 
 // Taylor series for V(a, z) around z=0
-// DLMF 12.4.2: V(a,z) = (1/pi) * Gamma(1/2+a) * [sin(pi*a)*U(a,z) + U(a,-z)]
-// Alternative: V(a,z) = V1(a) * y1(a,z) + V2(a) * y2(a,z)
+// DLMF 12.2.18: V(a,z) = Gamma(1/2+a)/pi * [sin(pi*a)*U(a,z) + U(a,-z)]
+// Note: This formula has removable singularities at a = -n-1/2 for n >= 0
+// where Gamma(1/2+a) has poles. We handle these by perturbation.
 template <typename T>
 T parabolic_cylinder_v_taylor(T a, T z) {
     const T pi = static_cast<T>(M_PI);
-    const T eps = pcf_eps<T>();
 
-    // Use DLMF 12.2.18: V(a,z) expressed in terms of U
-    // V(a,z) = Gamma(1/2+a)/pi * [sin(pi*a)*U(a,z) + U(a,-z)]
-    T gamma_half_plus_a = gamma(T(0.5) + a);
+    T half_plus_a = T(0.5) + a;
+
+    // Check if we're near a pole of Γ(1/2+a): occurs when 1/2+a is a non-positive integer
+    T nearest_int = std::round(half_plus_a);
+    bool near_pole = (half_plus_a <= T(0.5)) &&
+                     (std::abs(half_plus_a - nearest_int) < T(1e-10));
+
+    if (near_pole) {
+        // Near a pole: use finite difference to avoid the singularity
+        // The formula has a removable singularity, so we average nearby values
+        T delta = T(1e-6);
+
+        // Compute at a + delta
+        T gamma_p = gamma(T(0.5) + a + delta);
+        T sin_p = std::sin(pi * (a + delta));
+        T u_p_z = parabolic_cylinder_u_taylor(a + delta, z);
+        T u_p_neg_z = parabolic_cylinder_u_taylor(a + delta, -z);
+        T v_plus = gamma_p / pi * (sin_p * u_p_z + u_p_neg_z);
+
+        // Compute at a - delta
+        T gamma_m = gamma(T(0.5) + a - delta);
+        T sin_m = std::sin(pi * (a - delta));
+        T u_m_z = parabolic_cylinder_u_taylor(a - delta, z);
+        T u_m_neg_z = parabolic_cylinder_u_taylor(a - delta, -z);
+        T v_minus = gamma_m / pi * (sin_m * u_m_z + u_m_neg_z);
+
+        return (v_plus + v_minus) / T(2);
+    }
+
+    // Standard formula
+    T gamma_half_plus_a = gamma(half_plus_a);
     T sin_pi_a = std::sin(pi * a);
 
     T u_a_z = parabolic_cylinder_u_taylor(a, z);
@@ -66,13 +94,43 @@ T parabolic_cylinder_v_asymptotic(T a, T z) {
 }
 
 // Complex Taylor series for V(a, z)
+// Same pole handling as real version for a near -n-1/2
 template <typename T>
 c10::complex<T> parabolic_cylinder_v_taylor(c10::complex<T> a, c10::complex<T> z) {
     const T pi = static_cast<T>(M_PI);
     const c10::complex<T> pi_c(pi, T(0));
     const c10::complex<T> half(T(0.5), T(0));
 
-    c10::complex<T> gamma_half_plus_a = gamma(half + a);
+    c10::complex<T> half_plus_a = half + a;
+
+    // Check if we're near a pole (real a near -n-1/2)
+    bool near_pole = false;
+    if (std::abs(half_plus_a.imag()) < T(1e-10)) {
+        T real_part = half_plus_a.real();
+        T nearest_int = std::round(real_part);
+        near_pole = (real_part <= T(0.5)) &&
+                    (std::abs(real_part - nearest_int) < T(1e-10));
+    }
+
+    if (near_pole) {
+        c10::complex<T> delta(T(1e-6), T(0));
+
+        c10::complex<T> gamma_p = gamma(half + a + delta);
+        c10::complex<T> sin_p = std::sin(pi_c * (a + delta));
+        c10::complex<T> u_p_z = parabolic_cylinder_u_taylor(a + delta, z);
+        c10::complex<T> u_p_neg_z = parabolic_cylinder_u_taylor(a + delta, -z);
+        c10::complex<T> v_plus = gamma_p / pi_c * (sin_p * u_p_z + u_p_neg_z);
+
+        c10::complex<T> gamma_m = gamma(half + a - delta);
+        c10::complex<T> sin_m = std::sin(pi_c * (a - delta));
+        c10::complex<T> u_m_z = parabolic_cylinder_u_taylor(a - delta, z);
+        c10::complex<T> u_m_neg_z = parabolic_cylinder_u_taylor(a - delta, -z);
+        c10::complex<T> v_minus = gamma_m / pi_c * (sin_m * u_m_z + u_m_neg_z);
+
+        return (v_plus + v_minus) / c10::complex<T>(T(2), T(0));
+    }
+
+    c10::complex<T> gamma_half_plus_a = gamma(half_plus_a);
     c10::complex<T> sin_pi_a = std::sin(pi_c * a);
 
     c10::complex<T> u_a_z = parabolic_cylinder_u_taylor(a, z);
