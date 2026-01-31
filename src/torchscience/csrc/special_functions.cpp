@@ -78,6 +78,11 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("hypergeometric_2_f_1_backward(Tensor grad_output, Tensor a, Tensor b, Tensor c, Tensor z) -> (Tensor, Tensor, Tensor, Tensor)");
   m.def("hypergeometric_2_f_1_backward_backward(Tensor gg_a, Tensor gg_b, Tensor gg_c, Tensor gg_z, Tensor grad_output, Tensor a, Tensor b, Tensor c, Tensor z) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
 
+  // Confluent hypergeometric function M (Kummer's function of the first kind)
+  m.def("confluent_hypergeometric_m(Tensor a, Tensor b, Tensor z) -> Tensor");
+  m.def("confluent_hypergeometric_m_backward(Tensor grad_output, Tensor a, Tensor b, Tensor z) -> (Tensor, Tensor, Tensor)");
+  m.def("confluent_hypergeometric_m_backward_backward(Tensor gg_a, Tensor gg_b, Tensor gg_z, Tensor grad_output, Tensor a, Tensor b, Tensor z) -> (Tensor, Tensor, Tensor, Tensor)");
+
   // Chebyshev polynomial (special function version)
   m.def("chebyshev_polynomial_t(Tensor x, Tensor n) -> Tensor");
   m.def("chebyshev_polynomial_t_backward(Tensor grad_output, Tensor x, Tensor n) -> (Tensor, Tensor)");
