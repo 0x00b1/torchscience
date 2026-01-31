@@ -50,6 +50,12 @@ TORCHSCIENCE_CPU_POINTWISE_QUATERNARY_OPERATOR_WITH_COMPLEX(hypergeometric_2_f_1
 
 TORCHSCIENCE_CPU_POINTWISE_TERNARY_OPERATOR_WITH_COMPLEX(confluent_hypergeometric_m, a, b, z)
 
+#include "../kernel/special_functions/confluent_hypergeometric_u.h"
+#include "../kernel/special_functions/confluent_hypergeometric_u_backward.h"
+#include "../kernel/special_functions/confluent_hypergeometric_u_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_TERNARY_OPERATOR_WITH_COMPLEX(confluent_hypergeometric_u, a, b, z)
+
 #include "../kernel/special_functions/polygamma.h"
 #include "../kernel/special_functions/polygamma_backward.h"
 #include "../kernel/special_functions/polygamma_backward_backward.h"
