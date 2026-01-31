@@ -431,4 +431,13 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("polylogarithm_li(Tensor s, Tensor z) -> Tensor");
   m.def("polylogarithm_li_backward(Tensor grad_output, Tensor s, Tensor z) -> (Tensor, Tensor)");
   m.def("polylogarithm_li_backward_backward(Tensor gg_s, Tensor gg_z, Tensor grad_output, Tensor s, Tensor z) -> (Tensor, Tensor, Tensor)");
+
+  // Parabolic cylinder functions (DLMF Chapter 12)
+  m.def("parabolic_cylinder_u(Tensor a, Tensor z) -> Tensor");
+  m.def("parabolic_cylinder_u_backward(Tensor grad_output, Tensor a, Tensor z) -> (Tensor, Tensor)");
+  m.def("parabolic_cylinder_u_backward_backward(Tensor gg_a, Tensor gg_z, Tensor grad_output, Tensor a, Tensor z) -> (Tensor, Tensor, Tensor)");
+
+  m.def("parabolic_cylinder_v(Tensor a, Tensor z) -> Tensor");
+  m.def("parabolic_cylinder_v_backward(Tensor grad_output, Tensor a, Tensor z) -> (Tensor, Tensor)");
+  m.def("parabolic_cylinder_v_backward_backward(Tensor gg_a, Tensor gg_z, Tensor grad_output, Tensor a, Tensor z) -> (Tensor, Tensor, Tensor)");
 }
