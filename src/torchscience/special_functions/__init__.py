@@ -112,6 +112,8 @@ from ._theta_2 import theta_2
 from ._theta_3 import theta_3
 from ._theta_4 import theta_4
 from ._trigamma import trigamma
+from ._whittaker_m import whittaker_m
+from ._whittaker_w import whittaker_w
 from ._zeta import zeta
 
 __all__ = [
@@ -213,5 +215,7 @@ __all__ = [
     "theta_3",
     "theta_4",
     "trigamma",
+    "whittaker_m",
+    "whittaker_w",
     "zeta",
 ]
