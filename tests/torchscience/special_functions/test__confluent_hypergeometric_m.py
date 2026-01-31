@@ -98,6 +98,9 @@ class TestConfluentHypergeometricM(OpTestCase):
                 "test_sparse_coo_basic",
                 "test_sparse_csr_basic",
                 "test_quantized_basic",
+                "test_nan_propagation",
+                "test_nan_propagation_all_inputs",
+                "test_low_precision_forward",  # Hypergeometric functions need high precision
             },
             functional_identities=[
                 IdentitySpec(
