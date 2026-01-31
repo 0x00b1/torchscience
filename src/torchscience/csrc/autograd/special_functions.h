@@ -132,3 +132,7 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(polylogarithm_li, PolylogarithmL
 
 TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(parabolic_cylinder_u, ParabolicCylinderU, a, z)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(parabolic_cylinder_v, ParabolicCylinderV, a, z)
+
+// Whittaker functions
+TORCHSCIENCE_AUTOGRAD_POINTWISE_TERNARY_OPERATOR(whittaker_m, WhittakerM, kappa, mu, z)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_TERNARY_OPERATOR(whittaker_w, WhittakerW, kappa, mu, z)
