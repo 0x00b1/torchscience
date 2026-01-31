@@ -127,3 +127,6 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(zeta, Zeta, s)
 
 // Polylogarithm function Li_s(z)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(polylogarithm_li, PolylogarithmLi, s, z)
+
+// Faddeeva function w(z) = exp(-z^2) * erfc(-iz)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(faddeeva_w, FaddeevaW, z)

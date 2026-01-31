@@ -421,4 +421,9 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("polylogarithm_li(Tensor s, Tensor z) -> Tensor");
   m.def("polylogarithm_li_backward(Tensor grad_output, Tensor s, Tensor z) -> (Tensor, Tensor)");
   m.def("polylogarithm_li_backward_backward(Tensor gg_s, Tensor gg_z, Tensor grad_output, Tensor s, Tensor z) -> (Tensor, Tensor, Tensor)");
+
+  // Faddeeva function w(z) = exp(-z^2) * erfc(-iz)
+  m.def("faddeeva_w(Tensor z) -> Tensor");
+  m.def("faddeeva_w_backward(Tensor grad_output, Tensor z) -> Tensor");
+  m.def("faddeeva_w_backward_backward(Tensor gg_z, Tensor grad_output, Tensor z) -> (Tensor, Tensor)");
 }

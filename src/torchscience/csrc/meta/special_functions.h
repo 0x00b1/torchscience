@@ -127,3 +127,6 @@ TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(zeta, s)
 
 // Polylogarithm function Li_s(z)
 TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(polylogarithm_li, s, z)
+
+// Faddeeva function w(z) = exp(-z^2) * erfc(-iz)
+TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(faddeeva_w, z)

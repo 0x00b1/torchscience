@@ -818,3 +818,134 @@ TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(zeta, s)
 #include "../kernel/special_functions/polylogarithm_li_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(polylogarithm_li, s, z)
+
+// Faddeeva function w(z) = exp(-z^2) * erfc(-iz)
+// Custom implementation since real input produces complex output
+#include "../kernel/special_functions/faddeeva_w.h"
+#include "../kernel/special_functions/faddeeva_w_backward.h"
+#include "../kernel/special_functions/faddeeva_w_backward_backward.h"
+
+namespace torchscience::cpu::special_functions {
+
+inline at::Tensor faddeeva_w(const at::Tensor &z_input) {
+    at::Tensor output;
+
+    // For Faddeeva function, output is always complex
+    // Promote real inputs to complex
+    at::Tensor z_complex;
+    if (!z_input.is_complex()) {
+        if (z_input.scalar_type() == at::kFloat ||
+            z_input.scalar_type() == at::kHalf ||
+            z_input.scalar_type() == at::kBFloat16) {
+            z_complex = z_input.to(at::kFloat).to(at::kComplexFloat);
+        } else {
+            z_complex = z_input.to(at::kDouble).to(at::kComplexDouble);
+        }
+    } else {
+        z_complex = z_input;
+    }
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(output)
+        .add_const_input(z_complex)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_COMPLEX_TYPES(
+        iterator.common_dtype(),
+        "faddeeva_w",
+        [&] {
+            at::native::cpu_kernel(
+                iterator,
+                [] (scalar_t z) -> scalar_t {
+                    return kernel::special_functions::faddeeva_w(z);
+                }
+            );
+        }
+    );
+
+    return iterator.output();
+}
+
+inline at::Tensor faddeeva_w_backward(
+    const at::Tensor &gradient_input,
+    const at::Tensor &z_input
+) {
+    at::Tensor gradient_output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(gradient_output)
+        .add_const_input(gradient_input)
+        .add_const_input(z_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_COMPLEX_TYPES(
+        iterator.common_dtype(),
+        "faddeeva_w_backward",
+        [&] {
+            at::native::cpu_kernel(
+                iterator,
+                [] (scalar_t gradient, scalar_t z) -> scalar_t {
+                    return kernel::special_functions::faddeeva_w_backward(gradient, z);
+                }
+            );
+        }
+    );
+
+    return iterator.output();
+}
+
+inline std::tuple<at::Tensor, at::Tensor> faddeeva_w_backward_backward(
+    const at::Tensor &z_gradient_gradient_input,
+    const at::Tensor &gradient_input,
+    const at::Tensor &z_input
+) {
+    if (!z_gradient_gradient_input.defined()) {
+        return {at::Tensor(), at::Tensor()};
+    }
+
+    at::Tensor gradient_gradient_output;
+    at::Tensor z_gradient_output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(gradient_gradient_output)
+        .add_output(z_gradient_output)
+        .add_const_input(z_gradient_gradient_input)
+        .add_const_input(gradient_input)
+        .add_const_input(z_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_COMPLEX_TYPES(
+        iterator.common_dtype(),
+        "faddeeva_w_backward_backward",
+        [&] {
+            at::native::cpu_kernel_multiple_outputs(
+                iterator,
+                [] (
+                    scalar_t z_gradient_gradient,
+                    scalar_t gradient,
+                    scalar_t z
+                ) -> std::tuple<scalar_t, scalar_t> {
+                    return kernel::special_functions::faddeeva_w_backward_backward(
+                        z_gradient_gradient, gradient, z
+                    );
+                }
+            );
+        }
+    );
+
+    return {iterator.output(0), iterator.output(1)};
+}
+
+} // namespace torchscience::cpu::special_functions
+
+TORCH_LIBRARY_IMPL(torchscience, CPU, module) {
+    module.impl("faddeeva_w", torchscience::cpu::special_functions::faddeeva_w);
+    module.impl("faddeeva_w_backward", torchscience::cpu::special_functions::faddeeva_w_backward);
+    module.impl("faddeeva_w_backward_backward", torchscience::cpu::special_functions::faddeeva_w_backward_backward);
+}
