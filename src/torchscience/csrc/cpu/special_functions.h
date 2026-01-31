@@ -830,3 +830,15 @@ TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(zeta, s)
 #include "../kernel/special_functions/polylogarithm_li_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(polylogarithm_li, s, z)
+
+#include "../kernel/special_functions/parabolic_cylinder_u.h"
+#include "../kernel/special_functions/parabolic_cylinder_u_backward.h"
+#include "../kernel/special_functions/parabolic_cylinder_u_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(parabolic_cylinder_u, a, z)
+
+#include "../kernel/special_functions/parabolic_cylinder_v.h"
+#include "../kernel/special_functions/parabolic_cylinder_v_backward.h"
+#include "../kernel/special_functions/parabolic_cylinder_v_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(parabolic_cylinder_v, a, z)
