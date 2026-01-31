@@ -22,15 +22,20 @@ Example
 
 from ._beta import (
     beta_cumulative_distribution,
+    beta_log_probability_density,
     beta_probability_density,
     beta_quantile,
+    beta_survival,
 )
 from ._binomial import (
     binomial_cumulative_distribution,
+    binomial_log_probability_mass,
     binomial_probability_mass,
+    binomial_survival,
 )
 from ._chi2 import (
     chi2_cumulative_distribution,
+    chi2_log_probability_density,
     chi2_probability_density,
     chi2_quantile,
     chi2_survival,
@@ -38,14 +43,17 @@ from ._chi2 import (
 from ._exceptions import DomainError, ProbabilityError
 from ._f import (
     f_cumulative_distribution,
+    f_log_probability_density,
     f_probability_density,
     f_quantile,
     f_survival,
 )
 from ._gamma import (
     gamma_cumulative_distribution,
+    gamma_log_probability_density,
     gamma_probability_density,
     gamma_quantile,
+    gamma_survival,
 )
 from ._normal import (
     normal_cumulative_distribution,
@@ -56,7 +64,9 @@ from ._normal import (
 )
 from ._poisson import (
     poisson_cumulative_distribution,
+    poisson_log_probability_mass,
     poisson_probability_mass,
+    poisson_survival,
 )
 
 __all__ = [
@@ -64,25 +74,33 @@ __all__ = [
     "ProbabilityError",
     # Beta distribution
     "beta_cumulative_distribution",
+    "beta_log_probability_density",
     "beta_probability_density",
     "beta_quantile",
+    "beta_survival",
     # Binomial distribution
     "binomial_cumulative_distribution",
+    "binomial_log_probability_mass",
     "binomial_probability_mass",
+    "binomial_survival",
     # Chi-squared distribution
     "chi2_cumulative_distribution",
+    "chi2_log_probability_density",
     "chi2_probability_density",
     "chi2_quantile",
     "chi2_survival",
     # F distribution
     "f_cumulative_distribution",
+    "f_log_probability_density",
     "f_probability_density",
     "f_quantile",
     "f_survival",
     # Gamma distribution
     "gamma_cumulative_distribution",
+    "gamma_log_probability_density",
     "gamma_probability_density",
     "gamma_quantile",
+    "gamma_survival",
     # Normal distribution
     "normal_cumulative_distribution",
     "normal_log_probability_density",
@@ -91,5 +109,7 @@ __all__ = [
     "normal_survival",
     # Poisson distribution
     "poisson_cumulative_distribution",
+    "poisson_log_probability_mass",
     "poisson_probability_mass",
+    "poisson_survival",
 ]

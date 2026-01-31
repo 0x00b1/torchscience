@@ -74,6 +74,23 @@ std::tuple<at::Tensor, at::Tensor> chi2_survival_backward(
       at::empty_like(df));
 }
 
+at::Tensor chi2_log_probability_density(
+    const at::Tensor& x,
+    const at::Tensor& df) {
+  auto output_shape = at::infer_size(x.sizes(), df.sizes());
+  auto output_dtype = at::result_type(x, df);
+  return at::empty(output_shape, x.options().dtype(output_dtype));
+}
+
+std::tuple<at::Tensor, at::Tensor> chi2_log_probability_density_backward(
+    const at::Tensor& grad,
+    const at::Tensor& x,
+    const at::Tensor& df) {
+  return std::make_tuple(
+      at::empty_like(x),
+      at::empty_like(df));
+}
+
 TORCH_LIBRARY_IMPL(torchscience, Meta, m) {
   m.impl("chi2_cumulative_distribution", &chi2_cumulative_distribution);
   m.impl("chi2_cumulative_distribution_backward", &chi2_cumulative_distribution_backward);
@@ -83,6 +100,8 @@ TORCH_LIBRARY_IMPL(torchscience, Meta, m) {
   m.impl("chi2_quantile_backward", &chi2_quantile_backward);
   m.impl("chi2_survival", &chi2_survival);
   m.impl("chi2_survival_backward", &chi2_survival_backward);
+  m.impl("chi2_log_probability_density", &chi2_log_probability_density);
+  m.impl("chi2_log_probability_density_backward", &chi2_log_probability_density_backward);
 }
 
 }  // namespace torchscience::meta::probability

@@ -163,10 +163,118 @@ inline at::Tensor beta_quantile(
   return BetaPpfFunction::apply(p, a, b);
 }
 
+class BetaLogPdfFunction : public torch::autograd::Function<BetaLogPdfFunction> {
+public:
+  static at::Tensor forward(
+      torch::autograd::AutogradContext* ctx,
+      const at::Tensor& x,
+      const at::Tensor& a,
+      const at::Tensor& b
+  ) {
+    ctx->save_for_backward({x, a, b});
+
+    at::AutoDispatchBelowAutograd guard;
+
+    return c10::Dispatcher::singleton()
+        .findSchemaOrThrow("torchscience::beta_log_probability_density", "")
+        .typed<at::Tensor(const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
+        .call(x, a, b);
+  }
+
+  static std::vector<at::Tensor> backward(
+      torch::autograd::AutogradContext* ctx,
+      const std::vector<at::Tensor>& grad_outputs
+  ) {
+    const torch::autograd::variable_list saved = ctx->get_saved_variables();
+    at::Tensor x = saved[0];
+    at::Tensor a = saved[1];
+    at::Tensor b = saved[2];
+
+    at::Tensor grad_output = grad_outputs[0];
+
+    if (!grad_output.defined()) {
+      return {at::Tensor(), at::Tensor(), at::Tensor()};
+    }
+
+    at::AutoDispatchBelowAutograd guard;
+
+    auto result = c10::Dispatcher::singleton()
+        .findSchemaOrThrow("torchscience::beta_log_probability_density_backward", "")
+        .typed<std::tuple<at::Tensor, at::Tensor, at::Tensor>(
+            const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
+        .call(grad_output, x, a, b);
+
+    return {std::get<0>(result), std::get<1>(result), std::get<2>(result)};
+  }
+};
+
+inline at::Tensor beta_log_probability_density(
+    const at::Tensor& x,
+    const at::Tensor& a,
+    const at::Tensor& b
+) {
+  return BetaLogPdfFunction::apply(x, a, b);
+}
+
+class BetaSurvivalFunction : public torch::autograd::Function<BetaSurvivalFunction> {
+public:
+  static at::Tensor forward(
+      torch::autograd::AutogradContext* ctx,
+      const at::Tensor& x,
+      const at::Tensor& a,
+      const at::Tensor& b
+  ) {
+    ctx->save_for_backward({x, a, b});
+
+    at::AutoDispatchBelowAutograd guard;
+
+    return c10::Dispatcher::singleton()
+        .findSchemaOrThrow("torchscience::beta_survival", "")
+        .typed<at::Tensor(const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
+        .call(x, a, b);
+  }
+
+  static std::vector<at::Tensor> backward(
+      torch::autograd::AutogradContext* ctx,
+      const std::vector<at::Tensor>& grad_outputs
+  ) {
+    const torch::autograd::variable_list saved = ctx->get_saved_variables();
+    at::Tensor x = saved[0];
+    at::Tensor a = saved[1];
+    at::Tensor b = saved[2];
+
+    at::Tensor grad_output = grad_outputs[0];
+
+    if (!grad_output.defined()) {
+      return {at::Tensor(), at::Tensor(), at::Tensor()};
+    }
+
+    at::AutoDispatchBelowAutograd guard;
+
+    auto result = c10::Dispatcher::singleton()
+        .findSchemaOrThrow("torchscience::beta_survival_backward", "")
+        .typed<std::tuple<at::Tensor, at::Tensor, at::Tensor>(
+            const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
+        .call(grad_output, x, a, b);
+
+    return {std::get<0>(result), std::get<1>(result), std::get<2>(result)};
+  }
+};
+
+inline at::Tensor beta_survival(
+    const at::Tensor& x,
+    const at::Tensor& a,
+    const at::Tensor& b
+) {
+  return BetaSurvivalFunction::apply(x, a, b);
+}
+
 }  // namespace torchscience::autograd::probability
 
 TORCH_LIBRARY_IMPL(torchscience, Autograd, m) {
   m.impl("beta_cumulative_distribution", &torchscience::autograd::probability::beta_cumulative_distribution);
   m.impl("beta_probability_density", &torchscience::autograd::probability::beta_probability_density);
   m.impl("beta_quantile", &torchscience::autograd::probability::beta_quantile);
+  m.impl("beta_log_probability_density", &torchscience::autograd::probability::beta_log_probability_density);
+  m.impl("beta_survival", &torchscience::autograd::probability::beta_survival);
 }
