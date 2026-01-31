@@ -130,3 +130,9 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(polylogarithm_li, PolylogarithmL
 
 // Faddeeva function w(z) = exp(-z^2) * erfc(-iz)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(faddeeva_w, FaddeevaW, z)
+
+// Inverse error function
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(erfinv, Erfinv, x)
+
+// Inverse complementary error function
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(erfcinv, Erfcinv, x)

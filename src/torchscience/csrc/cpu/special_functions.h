@@ -949,3 +949,17 @@ TORCH_LIBRARY_IMPL(torchscience, CPU, module) {
     module.impl("faddeeva_w_backward", torchscience::cpu::special_functions::faddeeva_w_backward);
     module.impl("faddeeva_w_backward_backward", torchscience::cpu::special_functions::faddeeva_w_backward_backward);
 }
+
+// Inverse error function
+#include "../kernel/special_functions/erfinv.h"
+#include "../kernel/special_functions/erfinv_backward.h"
+#include "../kernel/special_functions/erfinv_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR(erfinv, x)
+
+// Inverse complementary error function
+#include "../kernel/special_functions/erfcinv.h"
+#include "../kernel/special_functions/erfcinv_backward.h"
+#include "../kernel/special_functions/erfcinv_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR(erfcinv, x)

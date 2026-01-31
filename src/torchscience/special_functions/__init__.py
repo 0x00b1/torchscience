@@ -31,6 +31,8 @@ from ._complete_legendre_elliptic_integral_pi import (
 )
 from ._cosine_integral_ci import cosine_integral_ci
 from ._digamma import digamma
+from ._erfcinv import erfcinv
+from ._erfinv import erfinv
 from ._exponential_integral_e import exponential_integral_e
 from ._exponential_integral_e_1 import exponential_integral_e_1
 from ._exponential_integral_ei import exponential_integral_ei
@@ -164,6 +166,8 @@ __all__ = [
     "inverse_jacobi_elliptic_sd",
     "inverse_jacobi_elliptic_sn",
     "digamma",
+    "erfcinv",
+    "erfinv",
     "exponential_integral_e",
     "exponential_integral_e_1",
     "exponential_integral_ei",

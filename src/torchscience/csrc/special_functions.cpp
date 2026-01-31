@@ -426,4 +426,14 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("faddeeva_w(Tensor z) -> Tensor");
   m.def("faddeeva_w_backward(Tensor grad_output, Tensor z) -> Tensor");
   m.def("faddeeva_w_backward_backward(Tensor gg_z, Tensor grad_output, Tensor z) -> (Tensor, Tensor)");
+
+  // Inverse error function
+  m.def("erfinv(Tensor x) -> Tensor");
+  m.def("erfinv_backward(Tensor grad_output, Tensor x) -> Tensor");
+  m.def("erfinv_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
+
+  // Inverse complementary error function
+  m.def("erfcinv(Tensor x) -> Tensor");
+  m.def("erfcinv_backward(Tensor grad_output, Tensor x) -> Tensor");
+  m.def("erfcinv_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
 }
