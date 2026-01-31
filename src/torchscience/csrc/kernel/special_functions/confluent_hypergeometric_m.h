@@ -11,33 +11,34 @@ namespace torchscience::kernel::special_functions {
 
 namespace detail {
 
+// Type traits for confluent hypergeometric (use hyp1f1_ prefix to avoid conflicts)
 template <typename T>
-struct is_complex_type : std::false_type {};
+struct hyp1f1_is_complex_type : std::false_type {};
 
 template <typename T>
-struct is_complex_type<std::complex<T>> : std::true_type {};
+struct hyp1f1_is_complex_type<std::complex<T>> : std::true_type {};
 
 template <typename T>
-struct is_complex_type<c10::complex<T>> : std::true_type {};
+struct hyp1f1_is_complex_type<c10::complex<T>> : std::true_type {};
 
 template <typename T>
-inline constexpr bool is_complex_v = is_complex_type<T>::value;
+inline constexpr bool hyp1f1_is_complex_v = hyp1f1_is_complex_type<T>::value;
 
 template <typename T>
-struct real_type { using type = T; };
+struct hyp1f1_real_type { using type = T; };
 
 template <typename T>
-struct real_type<std::complex<T>> { using type = T; };
+struct hyp1f1_real_type<std::complex<T>> { using type = T; };
 
 template <typename T>
-struct real_type<c10::complex<T>> { using type = T; };
+struct hyp1f1_real_type<c10::complex<T>> { using type = T; };
 
 template <typename T>
-using real_type_t = typename real_type<T>::type;
+using hyp1f1_real_type_t = typename hyp1f1_real_type<T>::type;
 
 template <typename T>
 constexpr auto hyp1f1_epsilon() {
-  using real_t = real_type_t<T>;
+  using real_t = hyp1f1_real_type_t<T>;
   if constexpr (std::is_same_v<real_t, float>) {
     return float(1e-7);
   } else if constexpr (std::is_same_v<real_t, double>) {
@@ -49,8 +50,8 @@ constexpr auto hyp1f1_epsilon() {
 
 template <typename T>
 bool hyp1f1_is_nonpositive_integer(T x) {
-  if constexpr (is_complex_v<T>) {
-    using real_t = real_type_t<T>;
+  if constexpr (hyp1f1_is_complex_v<T>) {
+    using real_t = hyp1f1_real_type_t<T>;
     auto re = static_cast<real_t>(x.real());
     auto im = static_cast<real_t>(x.imag());
     return std::abs(im) < hyp1f1_epsilon<T>() &&
@@ -64,8 +65,8 @@ bool hyp1f1_is_nonpositive_integer(T x) {
 
 template <typename T>
 int hyp1f1_get_nonpositive_int(T x) {
-  if constexpr (is_complex_v<T>) {
-    using real_t = real_type_t<T>;
+  if constexpr (hyp1f1_is_complex_v<T>) {
+    using real_t = hyp1f1_real_type_t<T>;
     return static_cast<int>(std::round(static_cast<real_t>(x.real())));
   } else {
     return static_cast<int>(std::round(static_cast<double>(x)));
@@ -103,7 +104,7 @@ T confluent_hypergeometric_m(T a, T b, T z) {
   using detail::hyp1f1_is_nonpositive_integer;
   using detail::hyp1f1_get_nonpositive_int;
   using detail::hyp1f1_series;
-  using detail::is_complex_v;
+  using detail::hyp1f1_is_complex_v;
 
   // M(a, b, 0) = 1
   if (std::abs(z) < hyp1f1_epsilon<T>()) {
@@ -137,7 +138,7 @@ T confluent_hypergeometric_m(T a, T b, T z) {
   }
 
   double z_abs;
-  if constexpr (is_complex_v<T>) {
+  if constexpr (hyp1f1_is_complex_v<T>) {
     z_abs = std::abs(z);
   } else {
     z_abs = std::abs(static_cast<double>(z));
@@ -151,7 +152,7 @@ T confluent_hypergeometric_m(T a, T b, T z) {
   // For large |z| with Re(z) < 0, use Kummer transformation:
   // M(a, b, z) = exp(z) * M(b-a, b, -z)
   double z_real;
-  if constexpr (is_complex_v<T>) {
+  if constexpr (hyp1f1_is_complex_v<T>) {
     z_real = static_cast<double>(z.real());
   } else {
     z_real = static_cast<double>(z);

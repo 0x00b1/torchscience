@@ -58,13 +58,14 @@ std::tuple<T, T, T> confluent_hypergeometric_m_backward(T grad, T a, T b, T z) {
   using detail::hyp1f1_epsilon;
   using detail::hyp1f1_is_nonpositive_integer;
   using detail::hyp1f1_series_with_grads;
-  using detail::is_complex_v;
+  using detail::hyp1f1_is_complex_v;
+  using detail::hyp1f1_real_type_t;
 
   // d/dz M(a,b,z) = (a/b) * M(a+1, b+1, z)
   T dfdz = (a / b) * confluent_hypergeometric_m(a + T(1), b + T(1), z);
 
   double z_abs;
-  if constexpr (is_complex_v<T>) {
+  if constexpr (hyp1f1_is_complex_v<T>) {
     z_abs = std::abs(z);
   } else {
     z_abs = std::abs(static_cast<double>(z));
@@ -82,7 +83,7 @@ std::tuple<T, T, T> confluent_hypergeometric_m_backward(T grad, T a, T b, T z) {
     dfdb = result.grad_b;
   } else {
     // Fallback to finite differences
-    using real_t = detail::real_type_t<T>;
+    using real_t = hyp1f1_real_type_t<T>;
     real_t eps_real = std::sqrt(hyp1f1_epsilon<T>());
     T eps = T(eps_real);
 
@@ -96,7 +97,7 @@ std::tuple<T, T, T> confluent_hypergeometric_m_backward(T grad, T a, T b, T z) {
   }
 
   // For complex types, PyTorch expects grad * conj(derivative)
-  if constexpr (is_complex_v<T>) {
+  if constexpr (hyp1f1_is_complex_v<T>) {
     return {
       grad * std::conj(dfda),
       grad * std::conj(dfdb),

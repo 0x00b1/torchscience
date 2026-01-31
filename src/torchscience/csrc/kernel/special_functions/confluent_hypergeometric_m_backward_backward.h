@@ -19,8 +19,8 @@ std::tuple<T, T, T, T> confluent_hypergeometric_m_backward_backward(
   T z
 ) {
   using detail::hyp1f1_epsilon;
-  using detail::is_complex_v;
-  using real_t = detail::real_type_t<T>;
+  using detail::hyp1f1_is_complex_v;
+  using real_t = detail::hyp1f1_real_type_t<T>;
 
   // d²/dz² M(a,b,z) = (a/b) * ((a+1)/(b+1)) * M(a+2, b+2, z)
   T dz_coef = a / b;
@@ -46,7 +46,7 @@ std::tuple<T, T, T, T> confluent_hypergeometric_m_backward_backward(
 
   // gg_out = sum of gg_i * d(grad_i)/d(grad)
   T gg_out;
-  if constexpr (is_complex_v<T>) {
+  if constexpr (hyp1f1_is_complex_v<T>) {
     gg_out = gg_a * std::conj(df_da) + gg_b * std::conj(df_db) + gg_z * std::conj(df_dz);
   } else {
     gg_out = gg_a * df_da + gg_b * df_db + gg_z * df_dz;
