@@ -88,6 +88,16 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("confluent_hypergeometric_u_backward(Tensor grad, Tensor a, Tensor b, Tensor z) -> (Tensor, Tensor, Tensor)");
   m.def("confluent_hypergeometric_u_backward_backward(Tensor gg_a, Tensor gg_b, Tensor gg_z, Tensor grad, Tensor a, Tensor b, Tensor z) -> (Tensor, Tensor, Tensor, Tensor)");
 
+  // Whittaker M function
+  m.def("whittaker_m(Tensor kappa, Tensor mu, Tensor z) -> Tensor");
+  m.def("whittaker_m_backward(Tensor grad, Tensor kappa, Tensor mu, Tensor z) -> (Tensor, Tensor, Tensor)");
+  m.def("whittaker_m_backward_backward(Tensor gg_kappa, Tensor gg_mu, Tensor gg_z, Tensor grad, Tensor kappa, Tensor mu, Tensor z) -> (Tensor, Tensor, Tensor, Tensor)");
+
+  // Whittaker W function
+  m.def("whittaker_w(Tensor kappa, Tensor mu, Tensor z) -> Tensor");
+  m.def("whittaker_w_backward(Tensor grad, Tensor kappa, Tensor mu, Tensor z) -> (Tensor, Tensor, Tensor)");
+  m.def("whittaker_w_backward_backward(Tensor gg_kappa, Tensor gg_mu, Tensor gg_z, Tensor grad, Tensor kappa, Tensor mu, Tensor z) -> (Tensor, Tensor, Tensor, Tensor)");
+
   // Chebyshev polynomial (special function version)
   m.def("chebyshev_polynomial_t(Tensor x, Tensor n) -> Tensor");
   m.def("chebyshev_polynomial_t_backward(Tensor grad_output, Tensor x, Tensor n) -> (Tensor, Tensor)");
