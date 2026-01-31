@@ -81,6 +81,8 @@ from ._modified_bessel_i_1 import modified_bessel_i_1
 from ._modified_bessel_k import modified_bessel_k
 from ._modified_bessel_k_0 import modified_bessel_k_0
 from ._modified_bessel_k_1 import modified_bessel_k_1
+from ._parabolic_cylinder_u import parabolic_cylinder_u
+from ._parabolic_cylinder_v import parabolic_cylinder_v
 from ._polygamma import polygamma
 from ._polylogarithm_li import polylogarithm_li
 from ._regularized_gamma_p import regularized_gamma_p
@@ -182,6 +184,8 @@ __all__ = [
     "modified_bessel_k",
     "modified_bessel_k_0",
     "modified_bessel_k_1",
+    "parabolic_cylinder_u",
+    "parabolic_cylinder_v",
     "polygamma",
     "polylogarithm_li",
     "regularized_gamma_p",
