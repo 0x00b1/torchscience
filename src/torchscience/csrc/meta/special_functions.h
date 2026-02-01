@@ -164,6 +164,80 @@ TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(dawson, z)
 // Voigt profile
 TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(voigt_profile, x, sigma, gamma)
 
+// Generalized hypergeometric pFq - custom meta implementation
+// Output shape is batch dimensions only (removes parameter dimension from a and b)
+namespace torchscience::meta::special_functions {
+
+inline at::Tensor hypergeometric_p_f_q(
+    const at::Tensor &a_input,
+    const at::Tensor &b_input,
+    const at::Tensor &z_input
+) {
+    // Get batch shapes (all dimensions except last for a and b)
+    std::vector<int64_t> output_shape;
+
+    // z_input shape is the base output shape
+    for (int64_t i = 0; i < z_input.dim(); ++i) {
+        output_shape.push_back(z_input.size(i));
+    }
+
+    // If a or b have more batch dimensions, incorporate them
+    if (a_input.dim() > 1) {
+        for (int64_t i = 0; i < a_input.dim() - 1; ++i) {
+            if (i < static_cast<int64_t>(output_shape.size())) {
+                output_shape[i] = std::max(output_shape[i], a_input.size(i));
+            } else {
+                output_shape.insert(output_shape.begin() + i, a_input.size(i));
+            }
+        }
+    }
+
+    if (b_input.dim() > 1) {
+        for (int64_t i = 0; i < b_input.dim() - 1; ++i) {
+            if (i < static_cast<int64_t>(output_shape.size())) {
+                output_shape[i] = std::max(output_shape[i], b_input.size(i));
+            } else {
+                output_shape.insert(output_shape.begin() + i, b_input.size(i));
+            }
+        }
+    }
+
+    // Output is scalar if no batch dimensions
+    // (empty output_shape means scalar output)
+    auto ab_dtype = at::result_type(a_input, b_input);
+    auto common_dtype = at::promote_types(ab_dtype, z_input.scalar_type());
+    return at::empty(output_shape, a_input.options().dtype(common_dtype));
+}
+
+inline std::tuple<at::Tensor, at::Tensor, at::Tensor> hypergeometric_p_f_q_backward(
+    const at::Tensor &grad,
+    const at::Tensor &a_input,
+    const at::Tensor &b_input,
+    const at::Tensor &z_input
+) {
+    return {at::empty_like(a_input), at::empty_like(b_input), at::empty_like(z_input)};
+}
+
+inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> hypergeometric_p_f_q_backward_backward(
+    const at::Tensor &gg_a,
+    const at::Tensor &gg_b,
+    const at::Tensor &gg_z,
+    const at::Tensor &grad,
+    const at::Tensor &a_input,
+    const at::Tensor &b_input,
+    const at::Tensor &z_input
+) {
+    return {at::empty_like(grad), at::empty_like(a_input), at::empty_like(b_input), at::empty_like(z_input)};
+}
+
+} // namespace torchscience::meta::special_functions
+
+TORCH_LIBRARY_IMPL(torchscience, Meta, module) {
+    module.impl("hypergeometric_p_f_q", torchscience::meta::special_functions::hypergeometric_p_f_q);
+    module.impl("hypergeometric_p_f_q_backward", torchscience::meta::special_functions::hypergeometric_p_f_q_backward);
+    module.impl("hypergeometric_p_f_q_backward_backward", torchscience::meta::special_functions::hypergeometric_p_f_q_backward_backward);
+}
+
 // Legendre polynomial P_n(z)
 TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(legendre_polynomial_p, n, z)
 
