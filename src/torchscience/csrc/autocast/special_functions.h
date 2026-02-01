@@ -225,3 +225,9 @@ TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(struve_l_0, z)
 
 // Modified Struve function L_1
 TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(struve_l_1, z)
+
+// General order Struve function H_n(z)
+TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(struve_h, n, z)
+
+// General order modified Struve function L_n(z)
+TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(struve_l, n, z)

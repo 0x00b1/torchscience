@@ -561,4 +561,14 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("struve_l_1(Tensor z) -> Tensor");
   m.def("struve_l_1_backward(Tensor grad_output, Tensor z) -> Tensor");
   m.def("struve_l_1_backward_backward(Tensor gg_z, Tensor grad_output, Tensor z) -> (Tensor, Tensor)");
+
+  // General order Struve function H_n(z)
+  m.def("struve_h(Tensor n, Tensor z) -> Tensor");
+  m.def("struve_h_backward(Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor)");
+  m.def("struve_h_backward_backward(Tensor gg_n, Tensor gg_z, Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor, Tensor)");
+
+  // General order modified Struve function L_n(z)
+  m.def("struve_l(Tensor n, Tensor z) -> Tensor");
+  m.def("struve_l_backward(Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor)");
+  m.def("struve_l_backward_backward(Tensor gg_n, Tensor gg_z, Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor, Tensor)");
 }

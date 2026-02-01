@@ -250,3 +250,9 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(struve_l_0, StruveL0, z)
 
 // Modified Struve function L_1
 TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(struve_l_1, StruveL1, z)
+
+// General order Struve function H_n(z)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(struve_h, StruveH, n, z)
+
+// General order modified Struve function L_n(z)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(struve_l, StruveL, n, z)

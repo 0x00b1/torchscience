@@ -1723,3 +1723,17 @@ TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(struve_l_0, z)
 #include "../kernel/special_functions/struve_l_1_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(struve_l_1, z)
+
+// General order Struve function H_n(z)
+#include "../kernel/special_functions/struve_h.h"
+#include "../kernel/special_functions/struve_h_backward.h"
+#include "../kernel/special_functions/struve_h_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(struve_h, n, z)
+
+// General order modified Struve function L_n(z)
+#include "../kernel/special_functions/struve_l.h"
+#include "../kernel/special_functions/struve_l_backward.h"
+#include "../kernel/special_functions/struve_l_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(struve_l, n, z)
