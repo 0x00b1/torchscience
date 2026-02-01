@@ -1358,3 +1358,248 @@ TORCH_LIBRARY_IMPL(torchscience, CPU, module) {
     module.impl("voigt_profile_backward", torchscience::cpu::special_functions::voigt_profile_backward);
     module.impl("voigt_profile_backward_backward", torchscience::cpu::special_functions::voigt_profile_backward_backward);
 }
+
+// Generalized hypergeometric function pFq
+// a has shape [..., p], b has shape [..., q], z has shape [...], output has shape [...]
+#include "../kernel/special_functions/hypergeometric_p_f_q.h"
+#include "../kernel/special_functions/hypergeometric_p_f_q_backward.h"
+#include "../kernel/special_functions/hypergeometric_p_f_q_backward_backward.h"
+
+namespace torchscience::cpu::special_functions {
+
+inline at::Tensor hypergeometric_p_f_q(
+    const at::Tensor &a_input,
+    const at::Tensor &b_input,
+    const at::Tensor &z_input
+) {
+    // Get dimensions
+    TORCH_CHECK(a_input.dim() >= 1, "a must have at least 1 dimension");
+    TORCH_CHECK(b_input.dim() >= 1, "b must have at least 1 dimension");
+
+    int64_t p = a_input.size(-1);
+    int64_t q = b_input.size(-1);
+
+    // Get batch shapes (all dimensions except last)
+    auto a_batch = a_input.sizes().slice(0, a_input.dim() - 1);
+    auto b_batch = b_input.sizes().slice(0, b_input.dim() - 1);
+    auto z_batch = z_input.sizes();
+
+    // Ensure inputs have same dtype
+    auto common_dtype = at::result_type(at::result_type(a_input, b_input), z_input);
+    auto a = a_input.to(common_dtype).contiguous();
+    auto b = b_input.to(common_dtype).contiguous();
+    auto z = z_input.to(common_dtype).contiguous();
+
+    // Broadcast batch dimensions
+    std::vector<int64_t> output_shape;
+    int64_t max_batch_dim = std::max({a_input.dim() - 1, b_input.dim() - 1, z_input.dim()});
+
+    // Compute broadcasted shape
+    for (int64_t i = 0; i < max_batch_dim; ++i) {
+        int64_t a_size = (i < static_cast<int64_t>(a_batch.size())) ? a_batch[a_batch.size() - 1 - i] : 1;
+        int64_t b_size = (i < static_cast<int64_t>(b_batch.size())) ? b_batch[b_batch.size() - 1 - i] : 1;
+        int64_t z_size = (i < z_input.dim()) ? z_batch[z_input.dim() - 1 - i] : 1;
+
+        int64_t max_size = std::max({a_size, b_size, z_size});
+        output_shape.insert(output_shape.begin(), max_size);
+    }
+
+    if (output_shape.empty()) {
+        output_shape.push_back(1);
+    }
+
+    // Create output tensor
+    auto output = at::empty(output_shape, a.options());
+
+    // Flatten for iteration
+    int64_t batch_size = 1;
+    for (auto s : output_shape) {
+        batch_size *= s;
+    }
+
+    // Reshape tensors for iteration
+    std::vector<int64_t> a_expanded_shape = output_shape;
+    a_expanded_shape.push_back(p);
+    std::vector<int64_t> b_expanded_shape = output_shape;
+    b_expanded_shape.push_back(q);
+
+    auto a_expanded = a.expand(a_expanded_shape).contiguous().view({batch_size, p});
+    auto b_expanded = b.expand(b_expanded_shape).contiguous().view({batch_size, q});
+    auto z_expanded = z.expand(output_shape).contiguous().view({batch_size});
+    auto output_flat = output.view({batch_size});
+
+    // Dispatch based on dtype
+    AT_DISPATCH_FLOATING_TYPES_AND2(at::kComplexFloat, at::kComplexDouble,
+        common_dtype,
+        "hypergeometric_p_f_q",
+        [&] {
+            auto a_ptr = a_expanded.data_ptr<scalar_t>();
+            auto b_ptr = b_expanded.data_ptr<scalar_t>();
+            auto z_ptr = z_expanded.data_ptr<scalar_t>();
+            auto out_ptr = output_flat.data_ptr<scalar_t>();
+
+            for (int64_t i = 0; i < batch_size; ++i) {
+                out_ptr[i] = kernel::special_functions::hypergeometric_p_f_q(
+                    a_ptr + i * p, static_cast<int>(p),
+                    b_ptr + i * q, static_cast<int>(q),
+                    z_ptr[i]
+                );
+            }
+        }
+    );
+
+    return output;
+}
+
+inline std::tuple<at::Tensor, at::Tensor, at::Tensor> hypergeometric_p_f_q_backward(
+    const at::Tensor &grad_input,
+    const at::Tensor &a_input,
+    const at::Tensor &b_input,
+    const at::Tensor &z_input
+) {
+    TORCH_CHECK(a_input.dim() >= 1, "a must have at least 1 dimension");
+    TORCH_CHECK(b_input.dim() >= 1, "b must have at least 1 dimension");
+
+    int64_t p = a_input.size(-1);
+    int64_t q = b_input.size(-1);
+
+    // Ensure inputs have same dtype
+    auto common_dtype = at::result_type(at::result_type(a_input, b_input), z_input);
+    auto grad = grad_input.to(common_dtype).contiguous();
+    auto a = a_input.to(common_dtype).contiguous();
+    auto b = b_input.to(common_dtype).contiguous();
+    auto z = z_input.to(common_dtype).contiguous();
+
+    // Get output shapes (same as inputs)
+    auto grad_a = at::empty_like(a);
+    auto grad_b = at::empty_like(b);
+    auto grad_z = at::empty_like(z);
+
+    // Flatten for iteration
+    int64_t batch_size = grad.numel();
+
+    auto grad_flat = grad.view({batch_size});
+    auto a_flat = a.view({-1, p});
+    auto b_flat = b.view({-1, q});
+    auto z_flat = z.view({batch_size});
+    auto grad_a_flat = grad_a.view({-1, p});
+    auto grad_b_flat = grad_b.view({-1, q});
+    auto grad_z_flat = grad_z.view({batch_size});
+
+    AT_DISPATCH_FLOATING_TYPES_AND2(at::kComplexFloat, at::kComplexDouble,
+        common_dtype,
+        "hypergeometric_p_f_q_backward",
+        [&] {
+            auto grad_ptr = grad_flat.data_ptr<scalar_t>();
+            auto a_ptr = a_flat.data_ptr<scalar_t>();
+            auto b_ptr = b_flat.data_ptr<scalar_t>();
+            auto z_ptr = z_flat.data_ptr<scalar_t>();
+            auto grad_a_ptr = grad_a_flat.data_ptr<scalar_t>();
+            auto grad_b_ptr = grad_b_flat.data_ptr<scalar_t>();
+            auto grad_z_ptr = grad_z_flat.data_ptr<scalar_t>();
+
+            for (int64_t i = 0; i < batch_size; ++i) {
+                kernel::special_functions::hypergeometric_p_f_q_backward(
+                    grad_ptr[i],
+                    a_ptr + i * p, static_cast<int>(p),
+                    b_ptr + i * q, static_cast<int>(q),
+                    z_ptr[i],
+                    grad_a_ptr + i * p,
+                    grad_b_ptr + i * q,
+                    grad_z_ptr[i]
+                );
+            }
+        }
+    );
+
+    return {grad_a, grad_b, grad_z};
+}
+
+inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> hypergeometric_p_f_q_backward_backward(
+    const at::Tensor &gg_a_input,
+    const at::Tensor &gg_b_input,
+    const at::Tensor &gg_z_input,
+    const at::Tensor &grad_input,
+    const at::Tensor &a_input,
+    const at::Tensor &b_input,
+    const at::Tensor &z_input
+) {
+    if (!gg_a_input.defined() && !gg_b_input.defined() && !gg_z_input.defined()) {
+        return {at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor()};
+    }
+
+    int64_t p = a_input.size(-1);
+    int64_t q = b_input.size(-1);
+
+    auto common_dtype = at::result_type(at::result_type(a_input, b_input), z_input);
+    auto gg_a = gg_a_input.defined() ? gg_a_input.to(common_dtype).contiguous() : at::zeros_like(a_input);
+    auto gg_b = gg_b_input.defined() ? gg_b_input.to(common_dtype).contiguous() : at::zeros_like(b_input);
+    auto gg_z = gg_z_input.defined() ? gg_z_input.to(common_dtype).contiguous() : at::zeros_like(z_input);
+    auto grad = grad_input.to(common_dtype).contiguous();
+    auto a = a_input.to(common_dtype).contiguous();
+    auto b = b_input.to(common_dtype).contiguous();
+    auto z = z_input.to(common_dtype).contiguous();
+
+    auto grad_grad = at::empty_like(grad);
+    auto out_grad_a = at::empty_like(a);
+    auto out_grad_b = at::empty_like(b);
+    auto out_grad_z = at::empty_like(z);
+
+    int64_t batch_size = grad.numel();
+
+    auto gg_a_flat = gg_a.view({-1, p});
+    auto gg_b_flat = gg_b.view({-1, q});
+    auto gg_z_flat = gg_z.view({batch_size});
+    auto grad_flat = grad.view({batch_size});
+    auto a_flat = a.view({-1, p});
+    auto b_flat = b.view({-1, q});
+    auto z_flat = z.view({batch_size});
+    auto grad_grad_flat = grad_grad.view({batch_size});
+    auto out_grad_a_flat = out_grad_a.view({-1, p});
+    auto out_grad_b_flat = out_grad_b.view({-1, q});
+    auto out_grad_z_flat = out_grad_z.view({batch_size});
+
+    AT_DISPATCH_FLOATING_TYPES_AND2(at::kComplexFloat, at::kComplexDouble,
+        common_dtype,
+        "hypergeometric_p_f_q_backward_backward",
+        [&] {
+            auto gg_a_ptr = gg_a_flat.data_ptr<scalar_t>();
+            auto gg_b_ptr = gg_b_flat.data_ptr<scalar_t>();
+            auto gg_z_ptr = gg_z_flat.data_ptr<scalar_t>();
+            auto grad_ptr = grad_flat.data_ptr<scalar_t>();
+            auto a_ptr = a_flat.data_ptr<scalar_t>();
+            auto b_ptr = b_flat.data_ptr<scalar_t>();
+            auto z_ptr = z_flat.data_ptr<scalar_t>();
+            auto grad_grad_ptr = grad_grad_flat.data_ptr<scalar_t>();
+            auto out_grad_a_ptr = out_grad_a_flat.data_ptr<scalar_t>();
+            auto out_grad_b_ptr = out_grad_b_flat.data_ptr<scalar_t>();
+            auto out_grad_z_ptr = out_grad_z_flat.data_ptr<scalar_t>();
+
+            for (int64_t i = 0; i < batch_size; ++i) {
+                kernel::special_functions::hypergeometric_p_f_q_backward_backward(
+                    gg_a_ptr + i * p, static_cast<int>(p),
+                    gg_b_ptr + i * q, static_cast<int>(q),
+                    gg_z_ptr[i],
+                    grad_ptr[i],
+                    a_ptr + i * p,
+                    b_ptr + i * q,
+                    z_ptr[i],
+                    grad_grad_ptr[i],
+                    out_grad_a_ptr + i * p,
+                    out_grad_b_ptr + i * q,
+                    out_grad_z_ptr[i]
+                );
+            }
+        }
+    );
+
+    return {grad_grad, out_grad_a, out_grad_b, out_grad_z};
+}
+
+} // namespace torchscience::cpu::special_functions
+
+TORCH_LIBRARY_IMPL(torchscience, CPU, module) {
+    module.impl("hypergeometric_p_f_q", torchscience::cpu::special_functions::hypergeometric_p_f_q);
+    module.impl("hypergeometric_p_f_q_backward", torchscience::cpu::special_functions::hypergeometric_p_f_q_backward);
+    module.impl("hypergeometric_p_f_q_backward_backward", torchscience::cpu::special_functions::hypergeometric_p_f_q_backward_backward);
+}
