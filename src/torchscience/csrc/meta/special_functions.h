@@ -142,3 +142,9 @@ TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(fresnel_s, z)
 
 // Fresnel cosine integral
 TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(fresnel_c, z)
+
+// Dawson's integral
+TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(dawson, z)
+
+// Voigt profile
+TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(voigt_profile, x, sigma, gamma)

@@ -446,4 +446,14 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("fresnel_c(Tensor z) -> Tensor");
   m.def("fresnel_c_backward(Tensor grad_output, Tensor z) -> Tensor");
   m.def("fresnel_c_backward_backward(Tensor gg_z, Tensor grad_output, Tensor z) -> (Tensor, Tensor)");
+
+  // Dawson's integral
+  m.def("dawson(Tensor z) -> Tensor");
+  m.def("dawson_backward(Tensor grad_output, Tensor z) -> Tensor");
+  m.def("dawson_backward_backward(Tensor gg_z, Tensor grad_output, Tensor z) -> (Tensor, Tensor)");
+
+  // Voigt profile
+  m.def("voigt_profile(Tensor x, Tensor sigma, Tensor gamma) -> Tensor");
+  m.def("voigt_profile_backward(Tensor grad_output, Tensor x, Tensor sigma, Tensor gamma) -> (Tensor, Tensor, Tensor)");
+  m.def("voigt_profile_backward_backward(Tensor gg_x, Tensor gg_sigma, Tensor gg_gamma, Tensor grad_output, Tensor x, Tensor sigma, Tensor gamma) -> (Tensor, Tensor, Tensor, Tensor)");
 }

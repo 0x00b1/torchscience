@@ -30,6 +30,7 @@ from ._complete_legendre_elliptic_integral_pi import (
     complete_legendre_elliptic_integral_pi,
 )
 from ._cosine_integral_ci import cosine_integral_ci
+from ._dawson import dawson
 from ._digamma import digamma
 from ._erfcinv import erfcinv
 from ._erfinv import erfinv
@@ -113,6 +114,7 @@ from ._theta_2 import theta_2
 from ._theta_3 import theta_3
 from ._theta_4 import theta_4
 from ._trigamma import trigamma
+from ._voigt_profile import voigt_profile
 from ._zeta import zeta
 
 __all__ = [
@@ -140,6 +142,7 @@ __all__ = [
     "complete_legendre_elliptic_integral_k",
     "complete_legendre_elliptic_integral_pi",
     "cosine_integral_ci",
+    "dawson",
     "incomplete_legendre_elliptic_integral_e",
     "incomplete_legendre_elliptic_integral_f",
     "incomplete_legendre_elliptic_integral_pi",
@@ -215,5 +218,6 @@ __all__ = [
     "theta_3",
     "theta_4",
     "trigamma",
+    "voigt_profile",
     "zeta",
 ]

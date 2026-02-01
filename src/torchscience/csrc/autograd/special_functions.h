@@ -142,3 +142,9 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(fresnel_s, FresnelS, z)
 
 // Fresnel cosine integral
 TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(fresnel_c, FresnelC, z)
+
+// Dawson's integral
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(dawson, Dawson, z)
+
+// Voigt profile
+TORCHSCIENCE_AUTOGRAD_POINTWISE_TERNARY_OPERATOR(voigt_profile, VoigtProfile, x, sigma, gamma)

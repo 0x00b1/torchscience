@@ -977,3 +977,336 @@ TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(fresnel_s, z)
 #include "../kernel/special_functions/fresnel_c_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(fresnel_c, z)
+
+// Dawson's integral
+// Custom implementation because dawson uses faddeeva_w internally
+// which requires complex operations not supported by Half/BFloat16
+#include "../kernel/special_functions/dawson.h"
+#include "../kernel/special_functions/dawson_backward.h"
+#include "../kernel/special_functions/dawson_backward_backward.h"
+
+namespace torchscience::cpu::special_functions {
+
+inline at::Tensor dawson(const at::Tensor &z_input) {
+    at::Tensor output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(output)
+        .add_const_input(z_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    if (iterator.common_dtype() == at::kComplexFloat ||
+        iterator.common_dtype() == at::kComplexDouble) {
+        AT_DISPATCH_COMPLEX_TYPES(
+            iterator.common_dtype(),
+            "dawson",
+            [&] {
+                at::native::cpu_kernel(
+                    iterator,
+                    [] (scalar_t z) -> scalar_t {
+                        return kernel::special_functions::dawson(z);
+                    }
+                );
+            }
+        );
+    } else {
+        AT_DISPATCH_FLOATING_TYPES(
+            iterator.common_dtype(),
+            "dawson",
+            [&] {
+                at::native::cpu_kernel(
+                    iterator,
+                    [] (scalar_t z) -> scalar_t {
+                        return kernel::special_functions::dawson(z);
+                    }
+                );
+            }
+        );
+    }
+
+    return iterator.output();
+}
+
+inline at::Tensor dawson_backward(
+    const at::Tensor &gradient_input,
+    const at::Tensor &z_input
+) {
+    at::Tensor gradient_output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(gradient_output)
+        .add_const_input(gradient_input)
+        .add_const_input(z_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    if (iterator.common_dtype() == at::kComplexFloat ||
+        iterator.common_dtype() == at::kComplexDouble) {
+        AT_DISPATCH_COMPLEX_TYPES(
+            iterator.common_dtype(),
+            "dawson_backward",
+            [&] {
+                at::native::cpu_kernel(
+                    iterator,
+                    [] (scalar_t gradient, scalar_t z) -> scalar_t {
+                        return kernel::special_functions::dawson_backward(gradient, z);
+                    }
+                );
+            }
+        );
+    } else {
+        AT_DISPATCH_FLOATING_TYPES(
+            iterator.common_dtype(),
+            "dawson_backward",
+            [&] {
+                at::native::cpu_kernel(
+                    iterator,
+                    [] (scalar_t gradient, scalar_t z) -> scalar_t {
+                        return kernel::special_functions::dawson_backward(gradient, z);
+                    }
+                );
+            }
+        );
+    }
+
+    return iterator.output();
+}
+
+inline std::tuple<at::Tensor, at::Tensor> dawson_backward_backward(
+    const at::Tensor &z_gradient_gradient_input,
+    const at::Tensor &gradient_input,
+    const at::Tensor &z_input
+) {
+    if (!z_gradient_gradient_input.defined()) {
+        return {at::Tensor(), at::Tensor()};
+    }
+
+    at::Tensor gradient_gradient_output;
+    at::Tensor z_gradient_output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(gradient_gradient_output)
+        .add_output(z_gradient_output)
+        .add_const_input(z_gradient_gradient_input)
+        .add_const_input(gradient_input)
+        .add_const_input(z_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    if (iterator.common_dtype() == at::kComplexFloat ||
+        iterator.common_dtype() == at::kComplexDouble) {
+        AT_DISPATCH_COMPLEX_TYPES(
+            iterator.common_dtype(),
+            "dawson_backward_backward",
+            [&] {
+                at::native::cpu_kernel_multiple_outputs(
+                    iterator,
+                    [] (
+                        scalar_t z_gradient_gradient,
+                        scalar_t gradient,
+                        scalar_t z
+                    ) -> std::tuple<scalar_t, scalar_t> {
+                        return kernel::special_functions::dawson_backward_backward(
+                            z_gradient_gradient, gradient, z
+                        );
+                    }
+                );
+            }
+        );
+    } else {
+        AT_DISPATCH_FLOATING_TYPES(
+            iterator.common_dtype(),
+            "dawson_backward_backward",
+            [&] {
+                at::native::cpu_kernel_multiple_outputs(
+                    iterator,
+                    [] (
+                        scalar_t z_gradient_gradient,
+                        scalar_t gradient,
+                        scalar_t z
+                    ) -> std::tuple<scalar_t, scalar_t> {
+                        return kernel::special_functions::dawson_backward_backward(
+                            z_gradient_gradient, gradient, z
+                        );
+                    }
+                );
+            }
+        );
+    }
+
+    return {iterator.output(0), iterator.output(1)};
+}
+
+} // namespace torchscience::cpu::special_functions
+
+TORCH_LIBRARY_IMPL(torchscience, CPU, module) {
+    module.impl("dawson", torchscience::cpu::special_functions::dawson);
+    module.impl("dawson_backward", torchscience::cpu::special_functions::dawson_backward);
+    module.impl("dawson_backward_backward", torchscience::cpu::special_functions::dawson_backward_backward);
+}
+
+// Voigt profile
+// Custom implementation because voigt_profile uses faddeeva_w internally
+// which requires complex operations not supported by Half/BFloat16
+#include "../kernel/special_functions/voigt_profile.h"
+#include "../kernel/special_functions/voigt_profile_backward.h"
+#include "../kernel/special_functions/voigt_profile_backward_backward.h"
+
+namespace torchscience::cpu::special_functions {
+
+inline at::Tensor voigt_profile(
+    const at::Tensor &x_input,
+    const at::Tensor &sigma_input,
+    const at::Tensor &gamma_input
+) {
+    at::Tensor output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(output)
+        .add_const_input(x_input)
+        .add_const_input(sigma_input)
+        .add_const_input(gamma_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_FLOATING_TYPES(
+        iterator.common_dtype(),
+        "voigt_profile",
+        [&] {
+            at::native::cpu_kernel(
+                iterator,
+                [] (scalar_t x, scalar_t sigma, scalar_t gamma) -> scalar_t {
+                    return kernel::special_functions::voigt_profile(x, sigma, gamma);
+                }
+            );
+        }
+    );
+
+    return iterator.output();
+}
+
+inline std::tuple<at::Tensor, at::Tensor, at::Tensor> voigt_profile_backward(
+    const at::Tensor &gradient_input,
+    const at::Tensor &x_input,
+    const at::Tensor &sigma_input,
+    const at::Tensor &gamma_input
+) {
+    at::Tensor x_gradient_output;
+    at::Tensor sigma_gradient_output;
+    at::Tensor gamma_gradient_output;
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(x_gradient_output)
+        .add_output(sigma_gradient_output)
+        .add_output(gamma_gradient_output)
+        .add_const_input(gradient_input)
+        .add_const_input(x_input)
+        .add_const_input(sigma_input)
+        .add_const_input(gamma_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_FLOATING_TYPES(
+        iterator.common_dtype(),
+        "voigt_profile_backward",
+        [&] {
+            at::native::cpu_kernel_multiple_outputs(
+                iterator,
+                [] (scalar_t gradient, scalar_t x, scalar_t sigma, scalar_t gamma)
+                    -> std::tuple<scalar_t, scalar_t, scalar_t> {
+                    return kernel::special_functions::voigt_profile_backward(
+                        gradient, x, sigma, gamma
+                    );
+                }
+            );
+        }
+    );
+
+    return {iterator.output(0), iterator.output(1), iterator.output(2)};
+}
+
+inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> voigt_profile_backward_backward(
+    const at::Tensor &x_gradient_gradient_input,
+    const at::Tensor &sigma_gradient_gradient_input,
+    const at::Tensor &gamma_gradient_gradient_input,
+    const at::Tensor &gradient_input,
+    const at::Tensor &x_input,
+    const at::Tensor &sigma_input,
+    const at::Tensor &gamma_input
+) {
+    if (!x_gradient_gradient_input.defined() &&
+        !sigma_gradient_gradient_input.defined() &&
+        !gamma_gradient_gradient_input.defined()) {
+        return {at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor()};
+    }
+
+    at::Tensor gradient_gradient_output;
+    at::Tensor x_gradient_output;
+    at::Tensor sigma_gradient_output;
+    at::Tensor gamma_gradient_output;
+
+    auto x_gg = x_gradient_gradient_input.defined()
+        ? x_gradient_gradient_input
+        : at::zeros_like(x_input);
+    auto sigma_gg = sigma_gradient_gradient_input.defined()
+        ? sigma_gradient_gradient_input
+        : at::zeros_like(sigma_input);
+    auto gamma_gg = gamma_gradient_gradient_input.defined()
+        ? gamma_gradient_gradient_input
+        : at::zeros_like(gamma_input);
+
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(gradient_gradient_output)
+        .add_output(x_gradient_output)
+        .add_output(sigma_gradient_output)
+        .add_output(gamma_gradient_output)
+        .add_const_input(x_gg)
+        .add_const_input(sigma_gg)
+        .add_const_input(gamma_gg)
+        .add_const_input(gradient_input)
+        .add_const_input(x_input)
+        .add_const_input(sigma_input)
+        .add_const_input(gamma_input)
+        .promote_inputs_to_common_dtype(true)
+        .cast_common_dtype_to_outputs(true)
+        .build();
+
+    AT_DISPATCH_FLOATING_TYPES(
+        iterator.common_dtype(),
+        "voigt_profile_backward_backward",
+        [&] {
+            at::native::cpu_kernel_multiple_outputs(
+                iterator,
+                [] (
+                    scalar_t gg_x,
+                    scalar_t gg_sigma,
+                    scalar_t gg_gamma,
+                    scalar_t gradient,
+                    scalar_t x,
+                    scalar_t sigma,
+                    scalar_t gamma
+                ) -> std::tuple<scalar_t, scalar_t, scalar_t, scalar_t> {
+                    return kernel::special_functions::voigt_profile_backward_backward(
+                        gg_x, gg_sigma, gg_gamma, gradient, x, sigma, gamma
+                    );
+                }
+            );
+        }
+    );
+
+    return {iterator.output(0), iterator.output(1), iterator.output(2), iterator.output(3)};
+}
+
+} // namespace torchscience::cpu::special_functions
+
+TORCH_LIBRARY_IMPL(torchscience, CPU, module) {
+    module.impl("voigt_profile", torchscience::cpu::special_functions::voigt_profile);
+    module.impl("voigt_profile_backward", torchscience::cpu::special_functions::voigt_profile_backward);
+    module.impl("voigt_profile_backward_backward", torchscience::cpu::special_functions::voigt_profile_backward_backward);
+}
