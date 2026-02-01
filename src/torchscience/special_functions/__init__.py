@@ -44,6 +44,7 @@ from ._faddeeva_w import faddeeva_w
 from ._fresnel_c import fresnel_c
 from ._fresnel_s import fresnel_s
 from ._gamma import gamma
+from ._hermite_polynomial_h import hermite_polynomial_h
 from ._hypergeometric_0_f_1 import hypergeometric_0_f_1
 from ._hypergeometric_1_f_2 import hypergeometric_1_f_2
 from ._hypergeometric_2_f_1 import hypergeometric_2_f_1
@@ -165,6 +166,7 @@ __all__ = [
     "fresnel_c",
     "fresnel_s",
     "gamma",
+    "hermite_polynomial_h",
     "hypergeometric_0_f_1",
     "hypergeometric_2_f_1",
     "incomplete_beta",

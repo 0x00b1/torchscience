@@ -1365,3 +1365,10 @@ TORCH_LIBRARY_IMPL(torchscience, CPU, module) {
 #include "../kernel/special_functions/legendre_polynomial_p_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(legendre_polynomial_p, n, z)
+
+// Hermite polynomial (physicists') H_n(z)
+#include "../kernel/special_functions/hermite_polynomial_h.h"
+#include "../kernel/special_functions/hermite_polynomial_h_backward.h"
+#include "../kernel/special_functions/hermite_polynomial_h_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(hermite_polynomial_h, n, z)
