@@ -19,6 +19,7 @@ from ._carlson_elliptic_integral_r_g import carlson_elliptic_integral_r_g
 from ._carlson_elliptic_integral_r_j import carlson_elliptic_integral_r_j
 from ._carlson_elliptic_integral_r_k import carlson_elliptic_integral_r_k
 from ._carlson_elliptic_integral_r_m import carlson_elliptic_integral_r_m
+from ._charlier_polynomial_c import charlier_polynomial_c
 from ._chebyshev_polynomial_t import chebyshev_polynomial_t
 from ._chebyshev_polynomial_u import chebyshev_polynomial_u
 from ._complete_legendre_elliptic_integral_e import (
@@ -70,6 +71,7 @@ from ._inverse_jacobi_elliptic_dn import inverse_jacobi_elliptic_dn
 from ._inverse_jacobi_elliptic_sc import inverse_jacobi_elliptic_sc
 from ._inverse_jacobi_elliptic_sd import inverse_jacobi_elliptic_sd
 from ._inverse_jacobi_elliptic_sn import inverse_jacobi_elliptic_sn
+from ._inverse_regularized_gamma_p import inverse_regularized_gamma_p
 from ._jacobi_amplitude_am import jacobi_amplitude_am
 from ._jacobi_elliptic_cd import jacobi_elliptic_cd
 from ._jacobi_elliptic_cn import jacobi_elliptic_cn
@@ -159,6 +161,7 @@ __all__ = [
     "bessel_y_0",
     "bessel_y_1",
     "beta",
+    "charlier_polynomial_c",
     "carlson_elliptic_integral_r_c",
     "carlson_elliptic_integral_r_d",
     "carlson_elliptic_integral_r_e",
@@ -227,6 +230,7 @@ __all__ = [
     "inverse_jacobi_elliptic_sc",
     "inverse_jacobi_elliptic_sd",
     "inverse_jacobi_elliptic_sn",
+    "inverse_regularized_gamma_p",
     "digamma",
     "exponential_integral_e",
     "exponential_integral_e_1",

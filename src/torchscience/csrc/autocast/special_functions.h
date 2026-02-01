@@ -243,6 +243,9 @@ TORCHSCIENCE_AUTOCAST_POINTWISE_QUATERNARY_OPERATOR(meixner_polynomial_m, n, x, 
 // Hahn polynomial Q_n(x; alpha, beta, N)
 TORCHSCIENCE_AUTOCAST_POINTWISE_QUINARY_OPERATOR(hahn_polynomial_q, n, x, alpha, beta, N)
 
+// Charlier polynomial C_n(x; a)
+TORCHSCIENCE_AUTOCAST_POINTWISE_TERNARY_OPERATOR(charlier_polynomial_c, n, x, a)
+
 // Pochhammer symbol (rising factorial)
 TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(pochhammer, z, m)
 
@@ -263,3 +266,6 @@ inline at::Tensor log_multivariate_gamma(const at::Tensor &a, int64_t d) {
 TORCH_LIBRARY_IMPL(torchscience, AutocastCPU, module) {
     module.impl("log_multivariate_gamma", torchscience::autocast::special_functions::log_multivariate_gamma);
 }
+
+// Inverse regularized gamma P function
+TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(inverse_regularized_gamma_p, a, y)

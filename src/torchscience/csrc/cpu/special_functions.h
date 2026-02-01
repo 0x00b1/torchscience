@@ -2523,6 +2523,13 @@ TORCHSCIENCE_CPU_POINTWISE_QUATERNARY_OPERATOR_WITH_COMPLEX(meixner_polynomial_m
 
 TORCHSCIENCE_CPU_POINTWISE_QUINARY_OPERATOR(hahn_polynomial_q, n, x, alpha, beta, N)
 
+// Charlier polynomial C_n(x; a)
+#include "../kernel/special_functions/charlier_polynomial_c.h"
+#include "../kernel/special_functions/charlier_polynomial_c_backward.h"
+#include "../kernel/special_functions/charlier_polynomial_c_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_TERNARY_OPERATOR_WITH_COMPLEX(charlier_polynomial_c, n, x, a)
+
 // Pochhammer symbol (rising factorial)
 #include "../kernel/special_functions/pochhammer.h"
 #include "../kernel/special_functions/pochhammer_backward.h"
@@ -2630,3 +2637,10 @@ TORCH_LIBRARY_IMPL(torchscience, CPU, module) {
     module.impl("log_multivariate_gamma_backward", torchscience::cpu::special_functions::log_multivariate_gamma_backward);
     module.impl("log_multivariate_gamma_backward_backward", torchscience::cpu::special_functions::log_multivariate_gamma_backward_backward);
 }
+
+// Inverse regularized gamma P function
+#include "../kernel/special_functions/inverse_regularized_gamma_p.h"
+#include "../kernel/special_functions/inverse_regularized_gamma_p_backward.h"
+#include "../kernel/special_functions/inverse_regularized_gamma_p_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR(inverse_regularized_gamma_p, a, y)

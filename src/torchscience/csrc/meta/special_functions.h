@@ -289,6 +289,9 @@ TORCHSCIENCE_META_POINTWISE_QUATERNARY_OPERATOR(meixner_polynomial_m, n, x, beta
 // Hahn polynomial Q_n(x; alpha, beta, N)
 TORCHSCIENCE_META_POINTWISE_QUINARY_OPERATOR(hahn_polynomial_q, n, x, alpha, beta, N)
 
+// Charlier polynomial C_n(x; a)
+TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(charlier_polynomial_c, n, x, a)
+
 // Pochhammer symbol (rising factorial)
 TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(pochhammer, z, m)
 
@@ -323,3 +326,6 @@ TORCH_LIBRARY_IMPL(torchscience, Meta, module) {
     module.impl("log_multivariate_gamma_backward", torchscience::meta::special_functions::log_multivariate_gamma_backward);
     module.impl("log_multivariate_gamma_backward_backward", torchscience::meta::special_functions::log_multivariate_gamma_backward_backward);
 }
+
+// Inverse regularized gamma P function
+TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(inverse_regularized_gamma_p, a, y)

@@ -597,6 +597,11 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("hahn_polynomial_q_backward(Tensor grad, Tensor n, Tensor x, Tensor alpha, Tensor beta, Tensor N) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
   m.def("hahn_polynomial_q_backward_backward(Tensor gg_n, Tensor gg_x, Tensor gg_alpha, Tensor gg_beta, Tensor gg_N, Tensor grad, Tensor n, Tensor x, Tensor alpha, Tensor beta, Tensor N) -> (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor)");
 
+  // Charlier polynomial C_n(x; a)
+  m.def("charlier_polynomial_c(Tensor n, Tensor x, Tensor a) -> Tensor");
+  m.def("charlier_polynomial_c_backward(Tensor grad, Tensor n, Tensor x, Tensor a) -> (Tensor, Tensor, Tensor)");
+  m.def("charlier_polynomial_c_backward_backward(Tensor gg_n, Tensor gg_x, Tensor gg_a, Tensor grad, Tensor n, Tensor x, Tensor a) -> (Tensor, Tensor, Tensor, Tensor)");
+
   // Pochhammer symbol (rising factorial)
   m.def("pochhammer(Tensor z, Tensor m) -> Tensor");
   m.def("pochhammer_backward(Tensor grad_output, Tensor z, Tensor m) -> (Tensor, Tensor)");
@@ -606,4 +611,9 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("log_multivariate_gamma(Tensor a, int d) -> Tensor");
   m.def("log_multivariate_gamma_backward(Tensor grad_output, Tensor a, int d) -> Tensor");
   m.def("log_multivariate_gamma_backward_backward(Tensor gg_a, Tensor grad_output, Tensor a, int d) -> (Tensor, Tensor)");
+
+  // Inverse regularized gamma P function
+  m.def("inverse_regularized_gamma_p(Tensor a, Tensor y) -> Tensor");
+  m.def("inverse_regularized_gamma_p_backward(Tensor grad_output, Tensor a, Tensor y) -> (Tensor, Tensor)");
+  m.def("inverse_regularized_gamma_p_backward_backward(Tensor gg_a, Tensor gg_y, Tensor grad_output, Tensor a, Tensor y) -> (Tensor, Tensor, Tensor)");
 }
