@@ -45,6 +45,7 @@ from ._faddeeva_w import faddeeva_w
 from ._fresnel_c import fresnel_c
 from ._fresnel_s import fresnel_s
 from ._gamma import gamma
+from ._gamma_sign import gamma_sign
 from ._gegenbauer_polynomial_c import gegenbauer_polynomial_c
 from ._hahn_polynomial_q import hahn_polynomial_q
 from ._hermite_polynomial_h import hermite_polynomial_h
@@ -136,6 +137,7 @@ from ._trigamma import trigamma
 from ._voigt_profile import voigt_profile
 from ._weierstrass_p import weierstrass_p
 from ._weierstrass_sigma import weierstrass_sigma
+from ._weierstrass_zeta import weierstrass_zeta
 from ._whittaker_m import whittaker_m
 from ._whittaker_w import whittaker_w
 from ._zernike_polynomial_r import zernike_polynomial_r
@@ -182,6 +184,7 @@ __all__ = [
     "fresnel_c",
     "fresnel_s",
     "gamma",
+    "gamma_sign",
     "gegenbauer_polynomial_c",
     "hahn_polynomial_q",
     "hermite_polynomial_h",
@@ -274,6 +277,7 @@ __all__ = [
     "voigt_profile",
     "weierstrass_p",
     "weierstrass_sigma",
+    "weierstrass_zeta",
     "whittaker_m",
     "whittaker_w",
     "zernike_polynomial_r",

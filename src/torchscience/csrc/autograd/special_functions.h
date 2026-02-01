@@ -16,6 +16,7 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(polygamma, Polygamma, n, z)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(log_beta, LogBeta, a, b)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(log_gamma, LogGamma, z)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(reciprocal_gamma, ReciprocalGamma, z)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(gamma_sign, GammaSign, x)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(regularized_gamma_p, RegularizedGammaP, a, x)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(regularized_gamma_q, RegularizedGammaQ, a, x)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(modified_bessel_i_0, ModifiedBesselI0, z)
@@ -79,6 +80,9 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_TERNARY_OPERATOR(weierstrass_p, WeierstrassP, z,
 
 // Weierstrass sigma function
 TORCHSCIENCE_AUTOGRAD_POINTWISE_TERNARY_OPERATOR(weierstrass_sigma, WeierstrassSigma, z, g2, g3)
+
+// Weierstrass zeta function
+TORCHSCIENCE_AUTOGRAD_POINTWISE_TERNARY_OPERATOR(weierstrass_zeta, WeierstrassZeta, z, g2, g3)
 
 TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(spherical_bessel_j_0, SphericalBesselJ0, z)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(spherical_bessel_j_1, SphericalBesselJ1, z)

@@ -110,6 +110,12 @@ TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(log_gamma, z)
 
 TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(reciprocal_gamma, z)
 
+#include "../kernel/special_functions/gamma_sign.h"
+#include "../kernel/special_functions/gamma_sign_backward.h"
+#include "../kernel/special_functions/gamma_sign_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR(gamma_sign, x)
+
 #include "../kernel/special_functions/regularized_gamma_p.h"
 #include "../kernel/special_functions/regularized_gamma_p_backward.h"
 #include "../kernel/special_functions/regularized_gamma_p_backward_backward.h"

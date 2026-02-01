@@ -56,6 +56,11 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("reciprocal_gamma_backward(Tensor grad_output, Tensor z) -> Tensor");
   m.def("reciprocal_gamma_backward_backward(Tensor gg_z, Tensor grad_output, Tensor z) -> (Tensor, Tensor)");
 
+  // Gamma sign function
+  m.def("gamma_sign(Tensor x) -> Tensor");
+  m.def("gamma_sign_backward(Tensor grad_output, Tensor x) -> Tensor");
+  m.def("gamma_sign_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
+
   // Beta function
   m.def("beta(Tensor a, Tensor b) -> Tensor");
   m.def("beta_backward(Tensor grad_output, Tensor a, Tensor b) -> (Tensor, Tensor)");
@@ -395,6 +400,11 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("weierstrass_sigma(Tensor z, Tensor g2, Tensor g3) -> Tensor");
   m.def("weierstrass_sigma_backward(Tensor grad_output, Tensor z, Tensor g2, Tensor g3) -> (Tensor, Tensor, Tensor)");
   m.def("weierstrass_sigma_backward_backward(Tensor gg_z, Tensor gg_g2, Tensor gg_g3, Tensor grad_output, Tensor z, Tensor g2, Tensor g3) -> (Tensor, Tensor, Tensor, Tensor)");
+
+  // Weierstrass zeta function
+  m.def("weierstrass_zeta(Tensor z, Tensor g2, Tensor g3) -> Tensor");
+  m.def("weierstrass_zeta_backward(Tensor grad_output, Tensor z, Tensor g2, Tensor g3) -> (Tensor, Tensor, Tensor)");
+  m.def("weierstrass_zeta_backward_backward(Tensor gg_z, Tensor gg_g2, Tensor gg_g3, Tensor grad_output, Tensor z, Tensor g2, Tensor g3) -> (Tensor, Tensor, Tensor, Tensor)");
 
   // Exponential integrals
   m.def("exponential_integral_ei(Tensor x) -> Tensor");
