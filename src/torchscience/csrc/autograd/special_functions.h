@@ -385,3 +385,12 @@ TORCH_LIBRARY_IMPL(torchscience, Autograd, module) {
 
 // Inverse regularized gamma P function
 TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(inverse_regularized_gamma_p, InverseRegularizedGammaP, a, y)
+
+// Inverse regularized gamma Q function
+TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(inverse_regularized_gamma_q, InverseRegularizedGammaQ, a, y)
+
+// Inverse regularized incomplete beta function
+TORCHSCIENCE_AUTOGRAD_POINTWISE_TERNARY_OPERATOR(inverse_regularized_incomplete_beta, InverseRegularizedIncompleteBeta, a, b, y)
+
+// Inverse complementary regularized incomplete beta function
+TORCHSCIENCE_AUTOGRAD_POINTWISE_TERNARY_OPERATOR(inverse_complementary_regularized_incomplete_beta, InverseComplementaryRegularizedIncompleteBeta, a, b, y)

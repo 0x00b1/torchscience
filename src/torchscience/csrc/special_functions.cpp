@@ -616,4 +616,19 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("inverse_regularized_gamma_p(Tensor a, Tensor y) -> Tensor");
   m.def("inverse_regularized_gamma_p_backward(Tensor grad_output, Tensor a, Tensor y) -> (Tensor, Tensor)");
   m.def("inverse_regularized_gamma_p_backward_backward(Tensor gg_a, Tensor gg_y, Tensor grad_output, Tensor a, Tensor y) -> (Tensor, Tensor, Tensor)");
+
+  // Inverse regularized gamma Q function
+  m.def("inverse_regularized_gamma_q(Tensor a, Tensor y) -> Tensor");
+  m.def("inverse_regularized_gamma_q_backward(Tensor grad_output, Tensor a, Tensor y) -> (Tensor, Tensor)");
+  m.def("inverse_regularized_gamma_q_backward_backward(Tensor gg_a, Tensor gg_y, Tensor grad_output, Tensor a, Tensor y) -> (Tensor, Tensor, Tensor)");
+
+  // Inverse regularized incomplete beta function
+  m.def("inverse_regularized_incomplete_beta(Tensor a, Tensor b, Tensor y) -> Tensor");
+  m.def("inverse_regularized_incomplete_beta_backward(Tensor grad_output, Tensor a, Tensor b, Tensor y) -> (Tensor, Tensor, Tensor)");
+  m.def("inverse_regularized_incomplete_beta_backward_backward(Tensor gg_a, Tensor gg_b, Tensor gg_y, Tensor grad_output, Tensor a, Tensor b, Tensor y) -> (Tensor, Tensor, Tensor, Tensor)");
+
+  // Inverse complementary regularized incomplete beta function
+  m.def("inverse_complementary_regularized_incomplete_beta(Tensor a, Tensor b, Tensor y) -> Tensor");
+  m.def("inverse_complementary_regularized_incomplete_beta_backward(Tensor grad_output, Tensor a, Tensor b, Tensor y) -> (Tensor, Tensor, Tensor)");
+  m.def("inverse_complementary_regularized_incomplete_beta_backward_backward(Tensor gg_a, Tensor gg_b, Tensor gg_y, Tensor grad_output, Tensor a, Tensor b, Tensor y) -> (Tensor, Tensor, Tensor, Tensor)");
 }

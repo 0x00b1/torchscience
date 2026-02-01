@@ -329,3 +329,12 @@ TORCH_LIBRARY_IMPL(torchscience, Meta, module) {
 
 // Inverse regularized gamma P function
 TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(inverse_regularized_gamma_p, a, y)
+
+// Inverse regularized gamma Q function
+TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(inverse_regularized_gamma_q, a, y)
+
+// Inverse regularized incomplete beta function
+TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(inverse_regularized_incomplete_beta, a, b, y)
+
+// Inverse complementary regularized incomplete beta function
+TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(inverse_complementary_regularized_incomplete_beta, a, b, y)

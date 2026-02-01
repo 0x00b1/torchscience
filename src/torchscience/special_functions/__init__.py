@@ -65,6 +65,9 @@ from ._incomplete_legendre_elliptic_integral_f import (
 from ._incomplete_legendre_elliptic_integral_pi import (
     incomplete_legendre_elliptic_integral_pi,
 )
+from ._inverse_complementary_regularized_incomplete_beta import (
+    inverse_complementary_regularized_incomplete_beta,
+)
 from ._inverse_jacobi_elliptic_cd import inverse_jacobi_elliptic_cd
 from ._inverse_jacobi_elliptic_cn import inverse_jacobi_elliptic_cn
 from ._inverse_jacobi_elliptic_dn import inverse_jacobi_elliptic_dn
@@ -72,6 +75,10 @@ from ._inverse_jacobi_elliptic_sc import inverse_jacobi_elliptic_sc
 from ._inverse_jacobi_elliptic_sd import inverse_jacobi_elliptic_sd
 from ._inverse_jacobi_elliptic_sn import inverse_jacobi_elliptic_sn
 from ._inverse_regularized_gamma_p import inverse_regularized_gamma_p
+from ._inverse_regularized_gamma_q import inverse_regularized_gamma_q
+from ._inverse_regularized_incomplete_beta import (
+    inverse_regularized_incomplete_beta,
+)
 from ._jacobi_amplitude_am import jacobi_amplitude_am
 from ._jacobi_elliptic_cd import jacobi_elliptic_cd
 from ._jacobi_elliptic_cn import jacobi_elliptic_cn
@@ -230,7 +237,10 @@ __all__ = [
     "inverse_jacobi_elliptic_sc",
     "inverse_jacobi_elliptic_sd",
     "inverse_jacobi_elliptic_sn",
+    "inverse_complementary_regularized_incomplete_beta",
     "inverse_regularized_gamma_p",
+    "inverse_regularized_gamma_q",
+    "inverse_regularized_incomplete_beta",
     "digamma",
     "exponential_integral_e",
     "exponential_integral_e_1",

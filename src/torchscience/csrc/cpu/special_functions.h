@@ -2644,3 +2644,24 @@ TORCH_LIBRARY_IMPL(torchscience, CPU, module) {
 #include "../kernel/special_functions/inverse_regularized_gamma_p_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR(inverse_regularized_gamma_p, a, y)
+
+// Inverse regularized gamma Q function
+#include "../kernel/special_functions/inverse_regularized_gamma_q.h"
+#include "../kernel/special_functions/inverse_regularized_gamma_q_backward.h"
+#include "../kernel/special_functions/inverse_regularized_gamma_q_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR(inverse_regularized_gamma_q, a, y)
+
+// Inverse regularized incomplete beta function
+#include "../kernel/special_functions/inverse_regularized_incomplete_beta.h"
+#include "../kernel/special_functions/inverse_regularized_incomplete_beta_backward.h"
+#include "../kernel/special_functions/inverse_regularized_incomplete_beta_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_TERNARY_OPERATOR(inverse_regularized_incomplete_beta, a, b, y)
+
+// Inverse complementary regularized incomplete beta function
+#include "../kernel/special_functions/inverse_complementary_regularized_incomplete_beta.h"
+#include "../kernel/special_functions/inverse_complementary_regularized_incomplete_beta_backward.h"
+#include "../kernel/special_functions/inverse_complementary_regularized_incomplete_beta_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_TERNARY_OPERATOR(inverse_complementary_regularized_incomplete_beta, a, b, y)
