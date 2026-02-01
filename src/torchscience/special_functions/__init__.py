@@ -133,6 +133,7 @@ from ._voigt_profile import voigt_profile
 from ._whittaker_m import whittaker_m
 from ._whittaker_w import whittaker_w
 from ._zernike_polynomial_r import zernike_polynomial_r
+from ._zernike_polynomial_z import zernike_polynomial_z
 from ._zeta import zeta
 
 __all__ = [
@@ -264,5 +265,6 @@ __all__ = [
     "whittaker_m",
     "whittaker_w",
     "zernike_polynomial_r",
+    "zernike_polynomial_z",
     "zeta",
 ]

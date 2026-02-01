@@ -546,4 +546,9 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("zernike_polynomial_r(Tensor n, Tensor m, Tensor rho) -> Tensor");
   m.def("zernike_polynomial_r_backward(Tensor grad_output, Tensor n, Tensor m, Tensor rho) -> (Tensor, Tensor, Tensor)");
   m.def("zernike_polynomial_r_backward_backward(Tensor gg_n, Tensor gg_m, Tensor gg_rho, Tensor grad_output, Tensor n, Tensor m, Tensor rho) -> (Tensor, Tensor, Tensor, Tensor)");
+
+  // Full Zernike polynomial Z_n^m(rho, theta)
+  m.def("zernike_polynomial_z(Tensor n, Tensor m, Tensor rho, Tensor theta) -> Tensor");
+  m.def("zernike_polynomial_z_backward(Tensor grad_output, Tensor n, Tensor m, Tensor rho, Tensor theta) -> (Tensor, Tensor, Tensor, Tensor)");
+  m.def("zernike_polynomial_z_backward_backward(Tensor gg_n, Tensor gg_m, Tensor gg_rho, Tensor gg_theta, Tensor grad_output, Tensor n, Tensor m, Tensor rho, Tensor theta) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
 }

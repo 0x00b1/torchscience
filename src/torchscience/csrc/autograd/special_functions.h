@@ -241,3 +241,6 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_QUATERNARY_OPERATOR(jacobi_polynomial_p, JacobiP
 
 // Radial Zernike polynomial R_n^m(rho)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_TERNARY_OPERATOR(zernike_polynomial_r, ZernikePolynomialR, n, m, rho)
+
+// Full Zernike polynomial Z_n^m(rho, theta)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_QUATERNARY_OPERATOR(zernike_polynomial_z, ZernikePolynomialZ, n, m, rho, theta)

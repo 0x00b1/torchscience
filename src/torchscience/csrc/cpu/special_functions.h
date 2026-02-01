@@ -1702,3 +1702,10 @@ TORCHSCIENCE_CPU_POINTWISE_QUATERNARY_OPERATOR_WITH_COMPLEX(jacobi_polynomial_p,
 #include "../kernel/special_functions/zernike_polynomial_r_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_TERNARY_OPERATOR_WITH_COMPLEX(zernike_polynomial_r, n, m, rho)
+
+// Full Zernike polynomial Z_n^m(rho, theta)
+#include "../kernel/special_functions/zernike_polynomial_z.h"
+#include "../kernel/special_functions/zernike_polynomial_z_backward.h"
+#include "../kernel/special_functions/zernike_polynomial_z_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_QUATERNARY_OPERATOR_WITH_COMPLEX(zernike_polynomial_z, n, m, rho, theta)
