@@ -196,6 +196,9 @@ TORCH_LIBRARY_IMPL(torchscience, AutocastCPU, module) {
 // Legendre polynomial P_n(z)
 TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(legendre_polynomial_p, n, z)
 
+// Legendre function of the second kind Q_n(x)
+TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(legendre_polynomial_q, x, n)
+
 // Hermite polynomial (physicists') H_n(z)
 TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(hermite_polynomial_h, n, z)
 

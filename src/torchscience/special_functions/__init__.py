@@ -89,6 +89,7 @@ from ._kelvin_ker import kelvin_ker
 from ._laguerre_polynomial_l import laguerre_polynomial_l
 from ._lambert_w import lambert_w
 from ._legendre_polynomial_p import legendre_polynomial_p
+from ._legendre_polynomial_q import legendre_polynomial_q
 from ._log_beta import log_beta
 from ._log_gamma import log_gamma
 from ._modified_bessel_i import modified_bessel_i
@@ -203,6 +204,7 @@ __all__ = [
     "laguerre_polynomial_l",
     "lambert_w",
     "legendre_polynomial_p",
+    "legendre_polynomial_q",
     "inverse_jacobi_elliptic_cd",
     "inverse_jacobi_elliptic_cn",
     "inverse_jacobi_elliptic_dn",

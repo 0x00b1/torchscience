@@ -1654,6 +1654,13 @@ TORCH_LIBRARY_IMPL(torchscience, CPU, module) {
 
 TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(legendre_polynomial_p, n, z)
 
+// Legendre function of the second kind Q_n(x)
+#include "../kernel/special_functions/legendre_polynomial_q.h"
+#include "../kernel/special_functions/legendre_polynomial_q_backward.h"
+#include "../kernel/special_functions/legendre_polynomial_q_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR(legendre_polynomial_q, x, n)
+
 // Hermite polynomial (physicists') H_n(z)
 #include "../kernel/special_functions/hermite_polynomial_h.h"
 #include "../kernel/special_functions/hermite_polynomial_h_backward.h"

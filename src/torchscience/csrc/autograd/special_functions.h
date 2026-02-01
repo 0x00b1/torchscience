@@ -221,6 +221,9 @@ TORCH_LIBRARY_IMPL(torchscience, Autograd, module) {
 // Legendre polynomial P_n(z)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(legendre_polynomial_p, LegendrePolynomialP, n, z)
 
+// Legendre function of the second kind Q_n(x)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(legendre_polynomial_q, LegendrePolynomialQ, x, n)
+
 // Hermite polynomial (physicists') H_n(z)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(hermite_polynomial_h, HermitePolynomialH, n, z)
 

@@ -512,6 +512,11 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("legendre_polynomial_p_backward(Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor)");
   m.def("legendre_polynomial_p_backward_backward(Tensor gg_n, Tensor gg_z, Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor, Tensor)");
 
+  // Legendre function of the second kind Q_n(x)
+  m.def("legendre_polynomial_q(Tensor x, Tensor n) -> Tensor");
+  m.def("legendre_polynomial_q_backward(Tensor grad_output, Tensor x, Tensor n) -> (Tensor, Tensor)");
+  m.def("legendre_polynomial_q_backward_backward(Tensor gg_x, Tensor gg_n, Tensor grad_output, Tensor x, Tensor n) -> (Tensor, Tensor, Tensor)");
+
   // Hermite polynomial (physicists') H_n(z)
   m.def("hermite_polynomial_h(Tensor n, Tensor z) -> Tensor");
   m.def("hermite_polynomial_h_backward(Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor)");
