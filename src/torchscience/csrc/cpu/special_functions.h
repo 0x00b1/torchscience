@@ -1709,3 +1709,17 @@ TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(struve_h_0, z)
 #include "../kernel/special_functions/struve_h_1_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(struve_h_1, z)
+
+// Modified Struve function L_0
+#include "../kernel/special_functions/struve_l_0.h"
+#include "../kernel/special_functions/struve_l_0_backward.h"
+#include "../kernel/special_functions/struve_l_0_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(struve_l_0, z)
+
+// Modified Struve function L_1
+#include "../kernel/special_functions/struve_l_1.h"
+#include "../kernel/special_functions/struve_l_1_backward.h"
+#include "../kernel/special_functions/struve_l_1_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(struve_l_1, z)

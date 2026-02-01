@@ -126,6 +126,8 @@ from ._spherical_harmonic_y import (
 )
 from ._struve_h_0 import struve_h_0
 from ._struve_h_1 import struve_h_1
+from ._struve_l_0 import struve_l_0
+from ._struve_l_1 import struve_l_1
 from ._theta_1 import theta_1
 from ._theta_2 import theta_2
 from ._theta_3 import theta_3
@@ -258,6 +260,8 @@ __all__ = [
     "spherical_harmonic_y_cartesian",
     "struve_h_0",
     "struve_h_1",
+    "struve_l_0",
+    "struve_l_1",
     "theta_1",
     "theta_2",
     "theta_3",

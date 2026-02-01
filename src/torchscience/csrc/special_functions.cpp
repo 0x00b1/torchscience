@@ -551,4 +551,14 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("struve_h_1(Tensor z) -> Tensor");
   m.def("struve_h_1_backward(Tensor grad_output, Tensor z) -> Tensor");
   m.def("struve_h_1_backward_backward(Tensor gg_z, Tensor grad_output, Tensor z) -> (Tensor, Tensor)");
+
+  // Modified Struve function L_0
+  m.def("struve_l_0(Tensor z) -> Tensor");
+  m.def("struve_l_0_backward(Tensor grad_output, Tensor z) -> Tensor");
+  m.def("struve_l_0_backward_backward(Tensor gg_z, Tensor grad_output, Tensor z) -> (Tensor, Tensor)");
+
+  // Modified Struve function L_1
+  m.def("struve_l_1(Tensor z) -> Tensor");
+  m.def("struve_l_1_backward(Tensor grad_output, Tensor z) -> Tensor");
+  m.def("struve_l_1_backward_backward(Tensor gg_z, Tensor grad_output, Tensor z) -> (Tensor, Tensor)");
 }

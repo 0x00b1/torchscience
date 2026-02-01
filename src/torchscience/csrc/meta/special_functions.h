@@ -265,3 +265,9 @@ TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(struve_h_0, z)
 
 // Struve function H_1
 TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(struve_h_1, z)
+
+// Modified Struve function L_0
+TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(struve_l_0, z)
+
+// Modified Struve function L_1
+TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(struve_l_1, z)
