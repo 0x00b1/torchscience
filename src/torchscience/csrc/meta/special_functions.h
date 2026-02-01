@@ -291,3 +291,35 @@ TORCHSCIENCE_META_POINTWISE_QUINARY_OPERATOR(hahn_polynomial_q, n, x, alpha, bet
 
 // Pochhammer symbol (rising factorial)
 TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(pochhammer, z, m)
+
+// Log multivariate gamma - custom because d is int parameter
+namespace torchscience::meta::special_functions {
+
+inline at::Tensor log_multivariate_gamma(const at::Tensor &a, int64_t d) {
+    return at::empty_like(a);
+}
+
+inline at::Tensor log_multivariate_gamma_backward(
+    const at::Tensor &grad_output,
+    const at::Tensor &a,
+    int64_t d
+) {
+    return at::empty_like(a);
+}
+
+inline std::tuple<at::Tensor, at::Tensor> log_multivariate_gamma_backward_backward(
+    const at::Tensor &gg_a,
+    const at::Tensor &grad_output,
+    const at::Tensor &a,
+    int64_t d
+) {
+    return std::make_tuple(at::empty_like(grad_output), at::empty_like(a));
+}
+
+} // namespace torchscience::meta::special_functions
+
+TORCH_LIBRARY_IMPL(torchscience, Meta, module) {
+    module.impl("log_multivariate_gamma", torchscience::meta::special_functions::log_multivariate_gamma);
+    module.impl("log_multivariate_gamma_backward", torchscience::meta::special_functions::log_multivariate_gamma_backward);
+    module.impl("log_multivariate_gamma_backward_backward", torchscience::meta::special_functions::log_multivariate_gamma_backward_backward);
+}

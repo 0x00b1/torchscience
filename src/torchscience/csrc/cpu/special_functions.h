@@ -2529,3 +2529,104 @@ TORCHSCIENCE_CPU_POINTWISE_QUINARY_OPERATOR(hahn_polynomial_q, n, x, alpha, beta
 #include "../kernel/special_functions/pochhammer_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(pochhammer, z, m)
+
+// Log multivariate gamma function
+// Custom implementation because d is an integer parameter, not a tensor
+#include "../kernel/special_functions/log_multivariate_gamma.h"
+#include "../kernel/special_functions/log_multivariate_gamma_backward.h"
+#include "../kernel/special_functions/log_multivariate_gamma_backward_backward.h"
+
+namespace torchscience::cpu::special_functions {
+
+inline at::Tensor log_multivariate_gamma(const at::Tensor &a_input, int64_t d) {
+    at::Tensor output;
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(output)
+        .add_input(a_input)
+        .build();
+
+    AT_DISPATCH_FLOATING_TYPES(
+        iterator.common_dtype(),
+        "log_multivariate_gamma",
+        [&] {
+            at::native::cpu_kernel(
+                iterator,
+                [d] (scalar_t a) -> scalar_t {
+                    return kernel::special_functions::log_multivariate_gamma(a, d);
+                }
+            );
+        }
+    );
+
+    return iterator.output();
+}
+
+inline at::Tensor log_multivariate_gamma_backward(
+    const at::Tensor &gradient_input,
+    const at::Tensor &a_input,
+    int64_t d
+) {
+    at::Tensor grad_a;
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(grad_a)
+        .add_input(gradient_input)
+        .add_input(a_input)
+        .build();
+
+    AT_DISPATCH_FLOATING_TYPES(
+        iterator.common_dtype(),
+        "log_multivariate_gamma_backward",
+        [&] {
+            at::native::cpu_kernel(
+                iterator,
+                [d] (scalar_t gradient, scalar_t a) -> scalar_t {
+                    return kernel::special_functions::log_multivariate_gamma_backward(gradient, a, d);
+                }
+            );
+        }
+    );
+
+    return iterator.output();
+}
+
+inline std::tuple<at::Tensor, at::Tensor> log_multivariate_gamma_backward_backward(
+    const at::Tensor &gg_a_input,
+    const at::Tensor &gradient_input,
+    const at::Tensor &a_input,
+    int64_t d
+) {
+    at::Tensor grad_grad_output, grad_a;
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(grad_grad_output)
+        .add_output(grad_a)
+        .add_input(gg_a_input)
+        .add_input(gradient_input)
+        .add_input(a_input)
+        .build();
+
+    AT_DISPATCH_FLOATING_TYPES(
+        iterator.common_dtype(),
+        "log_multivariate_gamma_backward_backward",
+        [&] {
+            at::native::cpu_kernel_multiple_outputs(
+                iterator,
+                [d] (scalar_t gg_a, scalar_t gradient, scalar_t a)
+                    -> std::tuple<scalar_t, scalar_t> {
+                    return kernel::special_functions::log_multivariate_gamma_backward_backward(
+                        gg_a, gradient, a, d
+                    );
+                }
+            );
+        }
+    );
+
+    return std::make_tuple(iterator.output(0), iterator.output(1));
+}
+
+} // namespace torchscience::cpu::special_functions
+
+TORCH_LIBRARY_IMPL(torchscience, CPU, module) {
+    module.impl("log_multivariate_gamma", torchscience::cpu::special_functions::log_multivariate_gamma);
+    module.impl("log_multivariate_gamma_backward", torchscience::cpu::special_functions::log_multivariate_gamma_backward);
+    module.impl("log_multivariate_gamma_backward_backward", torchscience::cpu::special_functions::log_multivariate_gamma_backward_backward);
+}

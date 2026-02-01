@@ -601,4 +601,9 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("pochhammer(Tensor z, Tensor m) -> Tensor");
   m.def("pochhammer_backward(Tensor grad_output, Tensor z, Tensor m) -> (Tensor, Tensor)");
   m.def("pochhammer_backward_backward(Tensor gg_z, Tensor gg_m, Tensor grad_output, Tensor z, Tensor m) -> (Tensor, Tensor, Tensor)");
+
+  // Log multivariate gamma function
+  m.def("log_multivariate_gamma(Tensor a, int d) -> Tensor");
+  m.def("log_multivariate_gamma_backward(Tensor grad_output, Tensor a, int d) -> Tensor");
+  m.def("log_multivariate_gamma_backward_backward(Tensor gg_a, Tensor grad_output, Tensor a, int d) -> (Tensor, Tensor)");
 }

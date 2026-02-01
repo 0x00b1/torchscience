@@ -270,3 +270,112 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_QUINARY_OPERATOR(hahn_polynomial_q, HahnPolynomi
 
 // Pochhammer symbol (rising factorial)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(pochhammer, Pochhammer, z, m)
+
+// Log multivariate gamma autograd - custom because d is int
+namespace torchscience::autograd::special_functions {
+
+// Backward function class - enables second-order gradients
+class LogMultivariateGammaBackward : public torch::autograd::Function<LogMultivariateGammaBackward> {
+public:
+    static std::vector<at::Tensor> forward(
+        torch::autograd::AutogradContext *ctx,
+        const at::Tensor &grad_output,
+        const at::Tensor &a,
+        int64_t d,
+        bool a_requires_grad
+    ) {
+        ctx->save_for_backward({grad_output, a});
+        ctx->saved_data["d"] = d;
+        ctx->saved_data["a_requires_grad"] = a_requires_grad;
+
+        at::AutoDispatchBelowAutograd guard;
+
+        auto grad_a = c10::Dispatcher::singleton()
+            .findSchemaOrThrow("torchscience::log_multivariate_gamma_backward", "")
+            .typed<at::Tensor(const at::Tensor&, const at::Tensor&, int64_t)>()
+            .call(grad_output, a, d);
+
+        return {grad_a};
+    }
+
+    static std::vector<at::Tensor> backward(
+        torch::autograd::AutogradContext *ctx,
+        const std::vector<at::Tensor> &grad_outputs
+    ) {
+        auto saved = ctx->get_saved_variables();
+        auto grad_output = saved[0];
+        auto a = saved[1];
+        auto d = ctx->saved_data["d"].toInt();
+        bool a_requires_grad = ctx->saved_data["a_requires_grad"].toBool();
+
+        if (!grad_outputs[0].defined() || !a_requires_grad) {
+            return {at::Tensor(), at::Tensor(), at::Tensor(), at::Tensor()};
+        }
+
+        at::AutoDispatchBelowAutograd guard;
+
+        auto [grad_grad_output, grad_a] = c10::Dispatcher::singleton()
+            .findSchemaOrThrow("torchscience::log_multivariate_gamma_backward_backward", "")
+            .typed<std::tuple<at::Tensor, at::Tensor>(const at::Tensor&, const at::Tensor&, const at::Tensor&, int64_t)>()
+            .call(grad_outputs[0], grad_output, a, d);
+
+        return {grad_grad_output, grad_a, at::Tensor(), at::Tensor()};
+    }
+};
+
+// Main forward function class
+class LogMultivariateGamma : public torch::autograd::Function<LogMultivariateGamma> {
+public:
+    static at::Tensor forward(
+        torch::autograd::AutogradContext *ctx,
+        const at::Tensor &a,
+        int64_t d
+    ) {
+        ctx->save_for_backward({a});
+        ctx->saved_data["d"] = d;
+        ctx->saved_data["a_requires_grad"] = a.requires_grad() && (at::isFloatingType(a.scalar_type()) || at::isComplexType(a.scalar_type()));
+
+        at::AutoDispatchBelowAutograd guard;
+
+        return c10::Dispatcher::singleton()
+            .findSchemaOrThrow("torchscience::log_multivariate_gamma", "")
+            .typed<at::Tensor(const at::Tensor&, int64_t)>()
+            .call(a, d);
+    }
+
+    static torch::autograd::variable_list backward(
+        torch::autograd::AutogradContext *ctx,
+        const torch::autograd::variable_list &grad_outputs
+    ) {
+        auto saved = ctx->get_saved_variables();
+        auto a = saved[0];
+        auto d = ctx->saved_data["d"].toInt();
+        bool a_requires_grad = ctx->saved_data["a_requires_grad"].toBool();
+
+        auto gradients = LogMultivariateGammaBackward::apply(
+            grad_outputs[0],
+            a,
+            d,
+            a_requires_grad
+        );
+
+        at::Tensor grad_a;
+        if (a_requires_grad) {
+            grad_a = gradients[0];
+        } else {
+            grad_a = at::Tensor();
+        }
+
+        return {grad_a, at::Tensor()};  // No gradient for d
+    }
+};
+
+inline at::Tensor log_multivariate_gamma(const at::Tensor &a, int64_t d) {
+    return LogMultivariateGamma::apply(a, d);
+}
+
+} // namespace torchscience::autograd::special_functions
+
+TORCH_LIBRARY_IMPL(torchscience, Autograd, module) {
+    module.impl("log_multivariate_gamma", torchscience::autograd::special_functions::log_multivariate_gamma);
+}

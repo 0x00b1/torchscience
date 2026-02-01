@@ -245,3 +245,21 @@ TORCHSCIENCE_AUTOCAST_POINTWISE_QUINARY_OPERATOR(hahn_polynomial_q, n, x, alpha,
 
 // Pochhammer symbol (rising factorial)
 TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(pochhammer, z, m)
+
+// Log multivariate gamma autocast
+namespace torchscience::autocast::special_functions {
+
+inline at::Tensor log_multivariate_gamma(const at::Tensor &a, int64_t d) {
+    c10::impl::ExcludeDispatchKeyGuard no_autocast(c10::DispatchKey::AutocastCPU);
+
+    return c10::Dispatcher::singleton()
+        .findSchemaOrThrow("torchscience::log_multivariate_gamma", "")
+        .typed<at::Tensor(const at::Tensor&, int64_t)>()
+        .call(at::autocast::cached_cast(at::kFloat, a, c10::DeviceType::CPU), d);
+}
+
+} // namespace torchscience::autocast::special_functions
+
+TORCH_LIBRARY_IMPL(torchscience, AutocastCPU, module) {
+    module.impl("log_multivariate_gamma", torchscience::autocast::special_functions::log_multivariate_gamma);
+}
