@@ -136,3 +136,6 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(parabolic_cylinder_v, ParabolicC
 // Whittaker functions
 TORCHSCIENCE_AUTOGRAD_POINTWISE_TERNARY_OPERATOR(whittaker_m, WhittakerM, kappa, mu, z)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_TERNARY_OPERATOR(whittaker_w, WhittakerW, kappa, mu, z)
+
+// Hypergeometric 0F1 (confluent hypergeometric limit function)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(hypergeometric_0_f_1, Hypergeometric0F1, b, z)

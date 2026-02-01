@@ -136,3 +136,6 @@ TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(parabolic_cylinder_v, a, z)
 // Whittaker functions
 TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(whittaker_m, kappa, mu, z)
 TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(whittaker_w, kappa, mu, z)
+
+// Hypergeometric 0F1 (confluent hypergeometric limit function)
+TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(hypergeometric_0_f_1, b, z)
