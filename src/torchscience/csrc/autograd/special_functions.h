@@ -163,3 +163,6 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(dawson, Dawson, z)
 
 // Voigt profile
 TORCHSCIENCE_AUTOGRAD_POINTWISE_TERNARY_OPERATOR(voigt_profile, VoigtProfile, x, sigma, gamma)
+
+// Legendre polynomial P_n(z)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(legendre_polynomial_p, LegendrePolynomialP, n, z)

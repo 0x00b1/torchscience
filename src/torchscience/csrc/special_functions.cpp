@@ -495,4 +495,9 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("voigt_profile(Tensor x, Tensor sigma, Tensor gamma) -> Tensor");
   m.def("voigt_profile_backward(Tensor grad_output, Tensor x, Tensor sigma, Tensor gamma) -> (Tensor, Tensor, Tensor)");
   m.def("voigt_profile_backward_backward(Tensor gg_x, Tensor gg_sigma, Tensor gg_gamma, Tensor grad_output, Tensor x, Tensor sigma, Tensor gamma) -> (Tensor, Tensor, Tensor, Tensor)");
+
+  // Legendre polynomial P_n(z)
+  m.def("legendre_polynomial_p(Tensor n, Tensor z) -> Tensor");
+  m.def("legendre_polynomial_p_backward(Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor)");
+  m.def("legendre_polynomial_p_backward_backward(Tensor gg_n, Tensor gg_z, Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor, Tensor)");
 }

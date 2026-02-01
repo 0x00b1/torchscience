@@ -1358,3 +1358,10 @@ TORCH_LIBRARY_IMPL(torchscience, CPU, module) {
     module.impl("voigt_profile_backward", torchscience::cpu::special_functions::voigt_profile_backward);
     module.impl("voigt_profile_backward_backward", torchscience::cpu::special_functions::voigt_profile_backward_backward);
 }
+
+// Legendre polynomial P_n(z)
+#include "../kernel/special_functions/legendre_polynomial_p.h"
+#include "../kernel/special_functions/legendre_polynomial_p_backward.h"
+#include "../kernel/special_functions/legendre_polynomial_p_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(legendre_polynomial_p, n, z)

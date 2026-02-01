@@ -163,3 +163,6 @@ TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(dawson, z)
 
 // Voigt profile
 TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(voigt_profile, x, sigma, gamma)
+
+// Legendre polynomial P_n(z)
+TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(legendre_polynomial_p, n, z)
