@@ -170,3 +170,56 @@ TORCH_LIBRARY_IMPL(torchscience, Autocast, module) {                           \
     torchscience::autocast::special_functions::name                            \
   );                                                                           \
 }
+
+#define TORCHSCIENCE_AUTOCAST_POINTWISE_QUINARY_OPERATOR(name, arg1, arg2, arg3, arg4, arg5) \
+namespace torchscience::autocast::special_functions {                          \
+                                                                               \
+inline at::Tensor name(                                                        \
+  const at::Tensor &(arg1),                                                    \
+  const at::Tensor &(arg2),                                                    \
+  const at::Tensor &(arg3),                                                    \
+  const at::Tensor &(arg4),                                                    \
+  const at::Tensor &(arg5)                                                     \
+) {                                                                            \
+  c10::impl::ExcludeDispatchKeyGuard no_autocast(                              \
+    c10::DispatchKey::Autocast                                                 \
+  );                                                                           \
+                                                                               \
+  auto device_type = arg1.device().type();                                      \
+  auto target_type = at::autocast::promote_type(                               \
+    at::kFloat,                                                                \
+    device_type,                                                               \
+    arg1,                                                                      \
+    arg2,                                                                      \
+    arg3,                                                                      \
+    arg4,                                                                      \
+    arg5                                                                       \
+  );                                                                           \
+                                                                               \
+  return c10::Dispatcher::singleton()                                          \
+    .findSchemaOrThrow(                                                        \
+      "torchscience::" #name,                                                  \
+      ""                                                                       \
+    ).typed<at::Tensor(                                                        \
+      const at::Tensor &,                                                      \
+      const at::Tensor &,                                                      \
+      const at::Tensor &,                                                      \
+      const at::Tensor &,                                                      \
+      const at::Tensor &                                                       \
+    )>().call(                                                                 \
+      at::autocast::cached_cast(target_type, arg1),                            \
+      at::autocast::cached_cast(target_type, arg2),                            \
+      at::autocast::cached_cast(target_type, arg3),                            \
+      at::autocast::cached_cast(target_type, arg4),                            \
+      at::autocast::cached_cast(target_type, arg5)                             \
+    );                                                                         \
+}                                                                              \
+                                                                               \
+} /* namespace torchscience::autocast::special_functions */                    \
+                                                                               \
+TORCH_LIBRARY_IMPL(torchscience, Autocast, module) {                           \
+  module.impl(                                                                 \
+    #name,                                                                     \
+    torchscience::autocast::special_functions::name                            \
+  );                                                                           \
+}
