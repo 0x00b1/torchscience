@@ -20,6 +20,7 @@ from ._carlson_elliptic_integral_r_j import carlson_elliptic_integral_r_j
 from ._carlson_elliptic_integral_r_k import carlson_elliptic_integral_r_k
 from ._carlson_elliptic_integral_r_m import carlson_elliptic_integral_r_m
 from ._chebyshev_polynomial_t import chebyshev_polynomial_t
+from ._chebyshev_polynomial_u import chebyshev_polynomial_u
 from ._complete_legendre_elliptic_integral_e import (
     complete_legendre_elliptic_integral_e,
 )
@@ -153,6 +154,7 @@ __all__ = [
     "carlson_elliptic_integral_r_k",
     "carlson_elliptic_integral_r_m",
     "chebyshev_polynomial_t",
+    "chebyshev_polynomial_u",
     "complete_legendre_elliptic_integral_e",
     "complete_legendre_elliptic_integral_k",
     "complete_legendre_elliptic_integral_pi",

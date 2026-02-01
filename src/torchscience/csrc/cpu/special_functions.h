@@ -32,6 +32,12 @@ TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(beta, a, b)
 
 TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR(chebyshev_polynomial_t, x, n)
 
+#include "../kernel/special_functions/chebyshev_polynomial_u.h"
+#include "../kernel/special_functions/chebyshev_polynomial_u_backward.h"
+#include "../kernel/special_functions/chebyshev_polynomial_u_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR(chebyshev_polynomial_u, x, n)
+
 #include "../kernel/special_functions/incomplete_beta.h"
 #include "../kernel/special_functions/incomplete_beta_backward.h"
 #include "../kernel/special_functions/incomplete_beta_backward_backward.h"

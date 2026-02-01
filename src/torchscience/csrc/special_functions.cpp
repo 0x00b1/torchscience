@@ -114,10 +114,15 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("hypergeometric_p_f_q_backward(Tensor grad, Tensor a, Tensor b, Tensor z) -> (Tensor, Tensor, Tensor)");
   m.def("hypergeometric_p_f_q_backward_backward(Tensor gg_a, Tensor gg_b, Tensor gg_z, Tensor grad, Tensor a, Tensor b, Tensor z) -> (Tensor, Tensor, Tensor, Tensor)");
 
-  // Chebyshev polynomial (special function version)
+  // Chebyshev polynomial of the first kind T_n(x)
   m.def("chebyshev_polynomial_t(Tensor x, Tensor n) -> Tensor");
   m.def("chebyshev_polynomial_t_backward(Tensor grad_output, Tensor x, Tensor n) -> (Tensor, Tensor)");
   m.def("chebyshev_polynomial_t_backward_backward(Tensor gg_x, Tensor gg_n, Tensor grad_output, Tensor x, Tensor n) -> (Tensor, Tensor, Tensor)");
+
+  // Chebyshev polynomial of the second kind U_n(x)
+  m.def("chebyshev_polynomial_u(Tensor x, Tensor n) -> Tensor");
+  m.def("chebyshev_polynomial_u_backward(Tensor grad_output, Tensor x, Tensor n) -> (Tensor, Tensor)");
+  m.def("chebyshev_polynomial_u_backward_backward(Tensor gg_x, Tensor gg_n, Tensor grad_output, Tensor x, Tensor n) -> (Tensor, Tensor, Tensor)");
 
   // Modified Bessel functions of the first kind
   m.def("modified_bessel_i_0(Tensor z) -> Tensor");
