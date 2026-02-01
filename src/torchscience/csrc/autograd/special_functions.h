@@ -84,6 +84,9 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_TERNARY_OPERATOR(weierstrass_sigma, WeierstrassS
 // Weierstrass zeta function
 TORCHSCIENCE_AUTOGRAD_POINTWISE_TERNARY_OPERATOR(weierstrass_zeta, WeierstrassZeta, z, g2, g3)
 
+// Weierstrass eta quasi-period
+TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(weierstrass_eta, WeierstrassEta, g2, g3)
+
 TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(spherical_bessel_j_0, SphericalBesselJ0, z)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(spherical_bessel_j_1, SphericalBesselJ1, z)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(spherical_bessel_j, SphericalBesselJ, n, z)

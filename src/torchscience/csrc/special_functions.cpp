@@ -406,6 +406,11 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("weierstrass_zeta_backward(Tensor grad_output, Tensor z, Tensor g2, Tensor g3) -> (Tensor, Tensor, Tensor)");
   m.def("weierstrass_zeta_backward_backward(Tensor gg_z, Tensor gg_g2, Tensor gg_g3, Tensor grad_output, Tensor z, Tensor g2, Tensor g3) -> (Tensor, Tensor, Tensor, Tensor)");
 
+  // Weierstrass eta quasi-period
+  m.def("weierstrass_eta(Tensor g2, Tensor g3) -> Tensor");
+  m.def("weierstrass_eta_backward(Tensor grad_output, Tensor g2, Tensor g3) -> (Tensor, Tensor)");
+  m.def("weierstrass_eta_backward_backward(Tensor gg_g2, Tensor gg_g3, Tensor grad_output, Tensor g2, Tensor g3) -> (Tensor, Tensor, Tensor)");
+
   // Exponential integrals
   m.def("exponential_integral_ei(Tensor x) -> Tensor");
   m.def("exponential_integral_ei_backward(Tensor grad_output, Tensor x) -> Tensor");

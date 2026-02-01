@@ -1021,6 +1021,201 @@ TORCH_LIBRARY_IMPL(torchscience, CPU, module) {
     module.impl("weierstrass_zeta_backward_backward", torchscience::cpu::special_functions::weierstrass_zeta_backward_backward);
 }
 
+// ============================================================================
+// Custom implementation because weierstrass_eta uses complex operations
+// ============================================================================
+#include "../kernel/special_functions/weierstrass_eta.h"
+#include "../kernel/special_functions/weierstrass_eta_backward.h"
+#include "../kernel/special_functions/weierstrass_eta_backward_backward.h"
+
+namespace torchscience::cpu::special_functions {
+
+inline at::Tensor weierstrass_eta(
+    at::Tensor g2,
+    at::Tensor g3
+) {
+    auto output_dtype = at::promote_types(g2.scalar_type(), g3.scalar_type());
+    auto common = at::TensorIterator::binary_op(at::Tensor(), g2, g3);
+    auto output = at::empty(common.shape(), common.options().dtype(output_dtype));
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(output)
+        .add_input(g2)
+        .add_input(g3)
+        .build();
+
+    if (at::isComplexType(output_dtype)) {
+        AT_DISPATCH_COMPLEX_TYPES(
+            output_dtype,
+            "weierstrass_eta",
+            [&]() {
+                iterator.for_each([&](char** data, const int64_t* strides, int64_t n) {
+                    for (int64_t i = 0; i < n; i++) {
+                        auto result = kernel::special_functions::weierstrass_eta(
+                            *reinterpret_cast<scalar_t*>(data[1] + i * strides[1]),
+                            *reinterpret_cast<scalar_t*>(data[2] + i * strides[2]));
+                        *reinterpret_cast<scalar_t*>(data[0] + i * strides[0]) = result;
+                    }
+                });
+            });
+    } else {
+        AT_DISPATCH_FLOATING_TYPES(
+            output_dtype,
+            "weierstrass_eta",
+            [&]() {
+                iterator.for_each([&](char** data, const int64_t* strides, int64_t n) {
+                    for (int64_t i = 0; i < n; i++) {
+                        auto result = kernel::special_functions::weierstrass_eta(
+                            *reinterpret_cast<scalar_t*>(data[1] + i * strides[1]),
+                            *reinterpret_cast<scalar_t*>(data[2] + i * strides[2]));
+                        *reinterpret_cast<scalar_t*>(data[0] + i * strides[0]) = result;
+                    }
+                });
+            });
+    }
+    return output;
+}
+
+inline std::tuple<at::Tensor, at::Tensor> weierstrass_eta_backward(
+    at::Tensor grad_output,
+    at::Tensor g2,
+    at::Tensor g3
+) {
+    auto output_dtype = at::promote_types(
+        at::promote_types(grad_output.scalar_type(), g2.scalar_type()),
+        g3.scalar_type());
+    auto common = at::TensorIterator::binary_op(at::Tensor(), g2, g3);
+    auto output_g2 = at::empty(common.shape(), common.options().dtype(output_dtype));
+    auto output_g3 = at::empty(common.shape(), common.options().dtype(output_dtype));
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(output_g2)
+        .add_output(output_g3)
+        .add_input(grad_output)
+        .add_input(g2)
+        .add_input(g3)
+        .build();
+
+    if (at::isComplexType(output_dtype)) {
+        AT_DISPATCH_COMPLEX_TYPES(
+            output_dtype,
+            "weierstrass_eta_backward",
+            [&]() {
+                iterator.for_each([&](char** data, const int64_t* strides, int64_t n) {
+                    for (int64_t i = 0; i < n; i++) {
+                        auto [grad_g2, grad_g3] = kernel::special_functions::weierstrass_eta_backward(
+                            *reinterpret_cast<scalar_t*>(data[2] + i * strides[2]),
+                            *reinterpret_cast<scalar_t*>(data[3] + i * strides[3]),
+                            *reinterpret_cast<scalar_t*>(data[4] + i * strides[4]));
+                        *reinterpret_cast<scalar_t*>(data[0] + i * strides[0]) = grad_g2;
+                        *reinterpret_cast<scalar_t*>(data[1] + i * strides[1]) = grad_g3;
+                    }
+                });
+            });
+    } else {
+        AT_DISPATCH_FLOATING_TYPES(
+            output_dtype,
+            "weierstrass_eta_backward",
+            [&]() {
+                iterator.for_each([&](char** data, const int64_t* strides, int64_t n) {
+                    for (int64_t i = 0; i < n; i++) {
+                        auto [grad_g2, grad_g3] = kernel::special_functions::weierstrass_eta_backward(
+                            *reinterpret_cast<scalar_t*>(data[2] + i * strides[2]),
+                            *reinterpret_cast<scalar_t*>(data[3] + i * strides[3]),
+                            *reinterpret_cast<scalar_t*>(data[4] + i * strides[4]));
+                        *reinterpret_cast<scalar_t*>(data[0] + i * strides[0]) = grad_g2;
+                        *reinterpret_cast<scalar_t*>(data[1] + i * strides[1]) = grad_g3;
+                    }
+                });
+            });
+    }
+    return std::make_tuple(
+        iterator.output(0),
+        iterator.output(1)
+    );
+}
+
+inline std::tuple<at::Tensor, at::Tensor, at::Tensor> weierstrass_eta_backward_backward(
+    at::Tensor gg_g2,
+    at::Tensor gg_g3,
+    at::Tensor grad_output,
+    at::Tensor g2,
+    at::Tensor g3
+) {
+    auto output_dtype = at::promote_types(
+        at::promote_types(
+            at::promote_types(gg_g2.scalar_type(), gg_g3.scalar_type()),
+            at::promote_types(grad_output.scalar_type(), g2.scalar_type())),
+        g3.scalar_type());
+    auto common = at::TensorIterator::binary_op(at::Tensor(), g2, g3);
+    auto output_grad = at::empty(common.shape(), common.options().dtype(output_dtype));
+    auto output_g2 = at::empty(common.shape(), common.options().dtype(output_dtype));
+    auto output_g3 = at::empty(common.shape(), common.options().dtype(output_dtype));
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(output_grad)
+        .add_output(output_g2)
+        .add_output(output_g3)
+        .add_input(gg_g2)
+        .add_input(gg_g3)
+        .add_input(grad_output)
+        .add_input(g2)
+        .add_input(g3)
+        .build();
+
+    if (at::isComplexType(output_dtype)) {
+        AT_DISPATCH_COMPLEX_TYPES(
+            output_dtype,
+            "weierstrass_eta_backward_backward",
+            [&]() {
+                iterator.for_each([&](char** data, const int64_t* strides, int64_t n) {
+                    for (int64_t i = 0; i < n; i++) {
+                        auto [grad_grad, grad_g2, grad_g3] =
+                            kernel::special_functions::weierstrass_eta_backward_backward(
+                                *reinterpret_cast<scalar_t*>(data[3] + i * strides[3]),
+                                *reinterpret_cast<scalar_t*>(data[4] + i * strides[4]),
+                                *reinterpret_cast<scalar_t*>(data[5] + i * strides[5]),
+                                *reinterpret_cast<scalar_t*>(data[6] + i * strides[6]),
+                                *reinterpret_cast<scalar_t*>(data[7] + i * strides[7]));
+                        *reinterpret_cast<scalar_t*>(data[0] + i * strides[0]) = grad_grad;
+                        *reinterpret_cast<scalar_t*>(data[1] + i * strides[1]) = grad_g2;
+                        *reinterpret_cast<scalar_t*>(data[2] + i * strides[2]) = grad_g3;
+                    }
+                });
+            });
+    } else {
+        AT_DISPATCH_FLOATING_TYPES(
+            output_dtype,
+            "weierstrass_eta_backward_backward",
+            [&]() {
+                iterator.for_each([&](char** data, const int64_t* strides, int64_t n) {
+                    for (int64_t i = 0; i < n; i++) {
+                        auto [grad_grad, grad_g2, grad_g3] =
+                            kernel::special_functions::weierstrass_eta_backward_backward(
+                                *reinterpret_cast<scalar_t*>(data[3] + i * strides[3]),
+                                *reinterpret_cast<scalar_t*>(data[4] + i * strides[4]),
+                                *reinterpret_cast<scalar_t*>(data[5] + i * strides[5]),
+                                *reinterpret_cast<scalar_t*>(data[6] + i * strides[6]),
+                                *reinterpret_cast<scalar_t*>(data[7] + i * strides[7]));
+                        *reinterpret_cast<scalar_t*>(data[0] + i * strides[0]) = grad_grad;
+                        *reinterpret_cast<scalar_t*>(data[1] + i * strides[1]) = grad_g2;
+                        *reinterpret_cast<scalar_t*>(data[2] + i * strides[2]) = grad_g3;
+                    }
+                });
+            });
+    }
+    return std::make_tuple(
+        iterator.output(0),
+        iterator.output(1),
+        iterator.output(2)
+    );
+}
+
+} // namespace torchscience::cpu::special_functions
+
+TORCH_LIBRARY_IMPL(torchscience, CPU, module) {
+    module.impl("weierstrass_eta", torchscience::cpu::special_functions::weierstrass_eta);
+    module.impl("weierstrass_eta_backward", torchscience::cpu::special_functions::weierstrass_eta_backward);
+    module.impl("weierstrass_eta_backward_backward", torchscience::cpu::special_functions::weierstrass_eta_backward_backward);
+}
+
 #include "../kernel/special_functions/spherical_bessel_j_0.h"
 #include "../kernel/special_functions/spherical_bessel_j_0_backward.h"
 #include "../kernel/special_functions/spherical_bessel_j_0_backward_backward.h"

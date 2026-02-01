@@ -135,6 +135,7 @@ from ._theta_3 import theta_3
 from ._theta_4 import theta_4
 from ._trigamma import trigamma
 from ._voigt_profile import voigt_profile
+from ._weierstrass_eta import weierstrass_eta
 from ._weierstrass_p import weierstrass_p
 from ._weierstrass_sigma import weierstrass_sigma
 from ._weierstrass_zeta import weierstrass_zeta
@@ -275,6 +276,7 @@ __all__ = [
     "theta_4",
     "trigamma",
     "voigt_profile",
+    "weierstrass_eta",
     "weierstrass_p",
     "weierstrass_sigma",
     "weierstrass_zeta",
