@@ -68,6 +68,12 @@ TORCHSCIENCE_CPU_POINTWISE_TERNARY_OPERATOR_WITH_COMPLEX(whittaker_m, kappa, mu,
 
 TORCHSCIENCE_CPU_POINTWISE_TERNARY_OPERATOR_WITH_COMPLEX(whittaker_w, kappa, mu, z)
 
+#include "../kernel/special_functions/hypergeometric_0_f_1.h"
+#include "../kernel/special_functions/hypergeometric_0_f_1_backward.h"
+#include "../kernel/special_functions/hypergeometric_0_f_1_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(hypergeometric_0_f_1, b, z)
+
 #include "../kernel/special_functions/polygamma.h"
 #include "../kernel/special_functions/polygamma_backward.h"
 #include "../kernel/special_functions/polygamma_backward_backward.h"
