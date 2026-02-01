@@ -140,6 +140,9 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_TERNARY_OPERATOR(whittaker_w, WhittakerW, kappa,
 // Hypergeometric 0F1 (confluent hypergeometric limit function)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(hypergeometric_0_f_1, Hypergeometric0F1, b, z)
 
+// Hypergeometric 1F2
+TORCHSCIENCE_AUTOGRAD_POINTWISE_QUATERNARY_OPERATOR(hypergeometric_1_f_2, Hypergeometric1F2, a, b1, b2, z)
+
 // Faddeeva function w(z) = exp(-z^2) * erfc(-iz)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(faddeeva_w, FaddeevaW, z)
 
