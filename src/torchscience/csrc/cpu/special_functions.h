@@ -104,6 +104,12 @@ TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(log_beta, a, b)
 
 TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(log_gamma, z)
 
+#include "../kernel/special_functions/reciprocal_gamma.h"
+#include "../kernel/special_functions/reciprocal_gamma_backward.h"
+#include "../kernel/special_functions/reciprocal_gamma_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(reciprocal_gamma, z)
+
 #include "../kernel/special_functions/regularized_gamma_p.h"
 #include "../kernel/special_functions/regularized_gamma_p_backward.h"
 #include "../kernel/special_functions/regularized_gamma_p_backward_backward.h"
@@ -411,6 +417,12 @@ TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(theta_3, z, q)
 #include "../kernel/special_functions/theta_4_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(theta_4, z, q)
+
+#include "../kernel/special_functions/weierstrass_p.h"
+#include "../kernel/special_functions/weierstrass_p_backward.h"
+#include "../kernel/special_functions/weierstrass_p_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_TERNARY_OPERATOR_WITH_COMPLEX(weierstrass_p, z, g2, g3)
 
 #include "../kernel/special_functions/spherical_bessel_j_0.h"
 #include "../kernel/special_functions/spherical_bessel_j_0_backward.h"

@@ -51,6 +51,11 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("log_gamma_backward(Tensor grad_output, Tensor z) -> Tensor");
   m.def("log_gamma_backward_backward(Tensor gg_z, Tensor grad_output, Tensor z) -> (Tensor, Tensor)");
 
+  // Reciprocal gamma function
+  m.def("reciprocal_gamma(Tensor z) -> Tensor");
+  m.def("reciprocal_gamma_backward(Tensor grad_output, Tensor z) -> Tensor");
+  m.def("reciprocal_gamma_backward_backward(Tensor gg_z, Tensor grad_output, Tensor z) -> (Tensor, Tensor)");
+
   // Beta function
   m.def("beta(Tensor a, Tensor b) -> Tensor");
   m.def("beta_backward(Tensor grad_output, Tensor a, Tensor b) -> (Tensor, Tensor)");
@@ -380,6 +385,11 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("theta_4(Tensor z, Tensor q) -> Tensor");
   m.def("theta_4_backward(Tensor grad_output, Tensor z, Tensor q) -> (Tensor, Tensor)");
   m.def("theta_4_backward_backward(Tensor gg_z, Tensor gg_q, Tensor grad_output, Tensor z, Tensor q) -> (Tensor, Tensor, Tensor)");
+
+  // Weierstrass elliptic function P
+  m.def("weierstrass_p(Tensor z, Tensor g2, Tensor g3) -> Tensor");
+  m.def("weierstrass_p_backward(Tensor grad_output, Tensor z, Tensor g2, Tensor g3) -> (Tensor, Tensor, Tensor)");
+  m.def("weierstrass_p_backward_backward(Tensor gg_z, Tensor gg_g2, Tensor gg_g3, Tensor grad_output, Tensor z, Tensor g2, Tensor g3) -> (Tensor, Tensor, Tensor, Tensor)");
 
   // Exponential integrals
   m.def("exponential_integral_ei(Tensor x) -> Tensor");
