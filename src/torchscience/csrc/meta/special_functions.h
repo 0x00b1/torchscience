@@ -136,3 +136,9 @@ TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(erfinv, x)
 
 // Inverse complementary error function
 TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(erfcinv, x)
+
+// Fresnel sine integral
+TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(fresnel_s, z)
+
+// Fresnel cosine integral
+TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(fresnel_c, z)

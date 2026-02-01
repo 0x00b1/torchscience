@@ -38,6 +38,8 @@ from ._exponential_integral_e_1 import exponential_integral_e_1
 from ._exponential_integral_ei import exponential_integral_ei
 from ._exponential_integral_ein import exponential_integral_ein
 from ._faddeeva_w import faddeeva_w
+from ._fresnel_c import fresnel_c
+from ._fresnel_s import fresnel_s
 from ._gamma import gamma
 from ._hypergeometric_2_f_1 import hypergeometric_2_f_1
 from ._incomplete_beta import incomplete_beta
@@ -173,6 +175,8 @@ __all__ = [
     "exponential_integral_ei",
     "exponential_integral_ein",
     "faddeeva_w",
+    "fresnel_c",
+    "fresnel_s",
     "gamma",
     "hypergeometric_2_f_1",
     "incomplete_beta",

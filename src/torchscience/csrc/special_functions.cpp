@@ -436,4 +436,14 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("erfcinv(Tensor x) -> Tensor");
   m.def("erfcinv_backward(Tensor grad_output, Tensor x) -> Tensor");
   m.def("erfcinv_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
+
+  // Fresnel sine integral
+  m.def("fresnel_s(Tensor z) -> Tensor");
+  m.def("fresnel_s_backward(Tensor grad_output, Tensor z) -> Tensor");
+  m.def("fresnel_s_backward_backward(Tensor gg_z, Tensor grad_output, Tensor z) -> (Tensor, Tensor)");
+
+  // Fresnel cosine integral
+  m.def("fresnel_c(Tensor z) -> Tensor");
+  m.def("fresnel_c_backward(Tensor grad_output, Tensor z) -> Tensor");
+  m.def("fresnel_c_backward_backward(Tensor gg_z, Tensor grad_output, Tensor z) -> (Tensor, Tensor)");
 }

@@ -136,3 +136,9 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(erfinv, Erfinv, x)
 
 // Inverse complementary error function
 TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(erfcinv, Erfcinv, x)
+
+// Fresnel sine integral
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(fresnel_s, FresnelS, z)
+
+// Fresnel cosine integral
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(fresnel_c, FresnelC, z)

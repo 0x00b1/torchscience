@@ -963,3 +963,17 @@ TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR(erfinv, x)
 #include "../kernel/special_functions/erfcinv_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR(erfcinv, x)
+
+// Fresnel sine integral
+#include "../kernel/special_functions/fresnel_s.h"
+#include "../kernel/special_functions/fresnel_s_backward.h"
+#include "../kernel/special_functions/fresnel_s_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(fresnel_s, z)
+
+// Fresnel cosine integral
+#include "../kernel/special_functions/fresnel_c.h"
+#include "../kernel/special_functions/fresnel_c_backward.h"
+#include "../kernel/special_functions/fresnel_c_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(fresnel_c, z)
