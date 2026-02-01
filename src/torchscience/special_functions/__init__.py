@@ -104,6 +104,7 @@ from ._modified_bessel_k_0 import modified_bessel_k_0
 from ._modified_bessel_k_1 import modified_bessel_k_1
 from ._parabolic_cylinder_u import parabolic_cylinder_u
 from ._parabolic_cylinder_v import parabolic_cylinder_v
+from ._pochhammer import pochhammer
 from ._polygamma import polygamma
 from ._polylogarithm_li import polylogarithm_li
 from ._reciprocal_gamma import reciprocal_gamma
@@ -247,6 +248,7 @@ __all__ = [
     "modified_bessel_k_1",
     "parabolic_cylinder_u",
     "parabolic_cylinder_v",
+    "pochhammer",
     "polygamma",
     "polylogarithm_li",
     "reciprocal_gamma",

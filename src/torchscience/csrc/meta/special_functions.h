@@ -288,3 +288,6 @@ TORCHSCIENCE_META_POINTWISE_QUATERNARY_OPERATOR(meixner_polynomial_m, n, x, beta
 
 // Hahn polynomial Q_n(x; alpha, beta, N)
 TORCHSCIENCE_META_POINTWISE_QUINARY_OPERATOR(hahn_polynomial_q, n, x, alpha, beta, N)
+
+// Pochhammer symbol (rising factorial)
+TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(pochhammer, z, m)

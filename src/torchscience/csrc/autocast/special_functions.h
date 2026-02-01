@@ -242,3 +242,6 @@ TORCHSCIENCE_AUTOCAST_POINTWISE_QUATERNARY_OPERATOR(meixner_polynomial_m, n, x, 
 
 // Hahn polynomial Q_n(x; alpha, beta, N)
 TORCHSCIENCE_AUTOCAST_POINTWISE_QUINARY_OPERATOR(hahn_polynomial_q, n, x, alpha, beta, N)
+
+// Pochhammer symbol (rising factorial)
+TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(pochhammer, z, m)

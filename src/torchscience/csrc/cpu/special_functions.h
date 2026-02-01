@@ -2522,3 +2522,10 @@ TORCHSCIENCE_CPU_POINTWISE_QUATERNARY_OPERATOR_WITH_COMPLEX(meixner_polynomial_m
 #include "../kernel/special_functions/hahn_polynomial_q_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_QUINARY_OPERATOR(hahn_polynomial_q, n, x, alpha, beta, N)
+
+// Pochhammer symbol (rising factorial)
+#include "../kernel/special_functions/pochhammer.h"
+#include "../kernel/special_functions/pochhammer_backward.h"
+#include "../kernel/special_functions/pochhammer_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(pochhammer, z, m)

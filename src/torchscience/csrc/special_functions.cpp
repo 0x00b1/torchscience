@@ -596,4 +596,9 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("hahn_polynomial_q(Tensor n, Tensor x, Tensor alpha, Tensor beta, Tensor N) -> Tensor");
   m.def("hahn_polynomial_q_backward(Tensor grad, Tensor n, Tensor x, Tensor alpha, Tensor beta, Tensor N) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
   m.def("hahn_polynomial_q_backward_backward(Tensor gg_n, Tensor gg_x, Tensor gg_alpha, Tensor gg_beta, Tensor gg_N, Tensor grad, Tensor n, Tensor x, Tensor alpha, Tensor beta, Tensor N) -> (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor)");
+
+  // Pochhammer symbol (rising factorial)
+  m.def("pochhammer(Tensor z, Tensor m) -> Tensor");
+  m.def("pochhammer_backward(Tensor grad_output, Tensor z, Tensor m) -> (Tensor, Tensor)");
+  m.def("pochhammer_backward_backward(Tensor gg_z, Tensor gg_m, Tensor grad_output, Tensor z, Tensor m) -> (Tensor, Tensor, Tensor)");
 }
