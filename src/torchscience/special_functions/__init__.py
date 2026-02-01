@@ -47,6 +47,7 @@ from ._gamma import gamma
 from ._hypergeometric_0_f_1 import hypergeometric_0_f_1
 from ._hypergeometric_1_f_2 import hypergeometric_1_f_2
 from ._hypergeometric_2_f_1 import hypergeometric_2_f_1
+from ._hypergeometric_p_f_q import hypergeometric_p_f_q
 from ._incomplete_beta import incomplete_beta
 from ._incomplete_legendre_elliptic_integral_e import (
     incomplete_legendre_elliptic_integral_e,
@@ -203,6 +204,7 @@ __all__ = [
     "hypergeometric_0_f_1",
     "hypergeometric_1_f_2",
     "hypergeometric_2_f_1",
+    "hypergeometric_p_f_q",
     "incomplete_beta",
     "log_beta",
     "log_gamma",
