@@ -77,6 +77,9 @@ TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(theta_4, z, q)
 // Weierstrass elliptic function P
 TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(weierstrass_p, z, g2, g3)
 
+// Weierstrass sigma function
+TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(weierstrass_sigma, z, g2, g3)
+
 TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(spherical_bessel_j_0, z)
 TORCHSCIENCE_META_POINTWISE_UNARY_OPERATOR(spherical_bessel_j_1, z)
 TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(spherical_bessel_j, n, z)

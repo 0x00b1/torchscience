@@ -418,11 +418,210 @@ TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(theta_3, z, q)
 
 TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(theta_4, z, q)
 
+// Weierstrass P function
+// Custom implementation because weierstrass_p uses complex operations
+// not supported by Half/BFloat16
 #include "../kernel/special_functions/weierstrass_p.h"
 #include "../kernel/special_functions/weierstrass_p_backward.h"
 #include "../kernel/special_functions/weierstrass_p_backward_backward.h"
 
-TORCHSCIENCE_CPU_POINTWISE_TERNARY_OPERATOR_WITH_COMPLEX(weierstrass_p, z, g2, g3)
+namespace torchscience::cpu::special_functions {
+
+inline at::Tensor weierstrass_p(
+    const at::Tensor &z_input,
+    const at::Tensor &g2_input,
+    const at::Tensor &g3_input
+) {
+    at::Tensor output;
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(output)
+        .add_input(z_input)
+        .add_input(g2_input)
+        .add_input(g3_input)
+        .build();
+
+    if (at::isComplexType(iterator.common_dtype())) {
+        AT_DISPATCH_COMPLEX_TYPES(
+            iterator.common_dtype(),
+            "weierstrass_p",
+            [&] {
+                at::native::cpu_kernel(
+                    iterator,
+                    [] (scalar_t z, scalar_t g2, scalar_t g3) -> scalar_t {
+                        return kernel::special_functions::weierstrass_p(z, g2, g3);
+                    }
+                );
+            }
+        );
+    } else {
+        AT_DISPATCH_FLOATING_TYPES(
+            iterator.common_dtype(),
+            "weierstrass_p",
+            [&] {
+                at::native::cpu_kernel(
+                    iterator,
+                    [] (scalar_t z, scalar_t g2, scalar_t g3) -> scalar_t {
+                        return kernel::special_functions::weierstrass_p(z, g2, g3);
+                    }
+                );
+            }
+        );
+    }
+
+    return iterator.output();
+}
+
+inline std::tuple<at::Tensor, at::Tensor, at::Tensor> weierstrass_p_backward(
+    const at::Tensor &gradient_input,
+    const at::Tensor &z_input,
+    const at::Tensor &g2_input,
+    const at::Tensor &g3_input
+) {
+    at::Tensor gradient_z, gradient_g2, gradient_g3;
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(gradient_z)
+        .add_output(gradient_g2)
+        .add_output(gradient_g3)
+        .add_input(gradient_input)
+        .add_input(z_input)
+        .add_input(g2_input)
+        .add_input(g3_input)
+        .build();
+
+    if (at::isComplexType(iterator.common_dtype())) {
+        AT_DISPATCH_COMPLEX_TYPES(
+            iterator.common_dtype(),
+            "weierstrass_p_backward",
+            [&] {
+                at::native::cpu_kernel_multiple_outputs(
+                    iterator,
+                    [] (scalar_t gradient, scalar_t z, scalar_t g2, scalar_t g3)
+                        -> std::tuple<scalar_t, scalar_t, scalar_t> {
+                        return kernel::special_functions::weierstrass_p_backward(
+                            gradient, z, g2, g3
+                        );
+                    }
+                );
+            }
+        );
+    } else {
+        AT_DISPATCH_FLOATING_TYPES(
+            iterator.common_dtype(),
+            "weierstrass_p_backward",
+            [&] {
+                at::native::cpu_kernel_multiple_outputs(
+                    iterator,
+                    [] (scalar_t gradient, scalar_t z, scalar_t g2, scalar_t g3)
+                        -> std::tuple<scalar_t, scalar_t, scalar_t> {
+                        return kernel::special_functions::weierstrass_p_backward(
+                            gradient, z, g2, g3
+                        );
+                    }
+                );
+            }
+        );
+    }
+
+    return std::make_tuple(
+        iterator.output(0),
+        iterator.output(1),
+        iterator.output(2)
+    );
+}
+
+inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> weierstrass_p_backward_backward(
+    const at::Tensor &gg_z_input,
+    const at::Tensor &gg_g2_input,
+    const at::Tensor &gg_g3_input,
+    const at::Tensor &gradient_input,
+    const at::Tensor &z_input,
+    const at::Tensor &g2_input,
+    const at::Tensor &g3_input
+) {
+    at::Tensor grad_grad, grad_z, grad_g2, grad_g3;
+    auto iterator = at::TensorIteratorConfig()
+        .add_output(grad_grad)
+        .add_output(grad_z)
+        .add_output(grad_g2)
+        .add_output(grad_g3)
+        .add_input(gg_z_input)
+        .add_input(gg_g2_input)
+        .add_input(gg_g3_input)
+        .add_input(gradient_input)
+        .add_input(z_input)
+        .add_input(g2_input)
+        .add_input(g3_input)
+        .build();
+
+    if (at::isComplexType(iterator.common_dtype())) {
+        AT_DISPATCH_COMPLEX_TYPES(
+            iterator.common_dtype(),
+            "weierstrass_p_backward_backward",
+            [&] {
+                at::native::cpu_kernel_multiple_outputs(
+                    iterator,
+                    [] (
+                        scalar_t gg_z,
+                        scalar_t gg_g2,
+                        scalar_t gg_g3,
+                        scalar_t gradient,
+                        scalar_t z,
+                        scalar_t g2,
+                        scalar_t g3
+                    ) -> std::tuple<scalar_t, scalar_t, scalar_t, scalar_t> {
+                        return kernel::special_functions::weierstrass_p_backward_backward(
+                            gg_z, gg_g2, gg_g3, gradient, z, g2, g3
+                        );
+                    }
+                );
+            }
+        );
+    } else {
+        AT_DISPATCH_FLOATING_TYPES(
+            iterator.common_dtype(),
+            "weierstrass_p_backward_backward",
+            [&] {
+                at::native::cpu_kernel_multiple_outputs(
+                    iterator,
+                    [] (
+                        scalar_t gg_z,
+                        scalar_t gg_g2,
+                        scalar_t gg_g3,
+                        scalar_t gradient,
+                        scalar_t z,
+                        scalar_t g2,
+                        scalar_t g3
+                    ) -> std::tuple<scalar_t, scalar_t, scalar_t, scalar_t> {
+                        return kernel::special_functions::weierstrass_p_backward_backward(
+                            gg_z, gg_g2, gg_g3, gradient, z, g2, g3
+                        );
+                    }
+                );
+            }
+        );
+    }
+
+    return std::make_tuple(
+        iterator.output(0),
+        iterator.output(1),
+        iterator.output(2),
+        iterator.output(3)
+    );
+}
+
+} // namespace torchscience::cpu::special_functions
+
+TORCH_LIBRARY_IMPL(torchscience, CPU, module) {
+    module.impl("weierstrass_p", torchscience::cpu::special_functions::weierstrass_p);
+    module.impl("weierstrass_p_backward", torchscience::cpu::special_functions::weierstrass_p_backward);
+    module.impl("weierstrass_p_backward_backward", torchscience::cpu::special_functions::weierstrass_p_backward_backward);
+}
+
+#include "../kernel/special_functions/weierstrass_sigma.h"
+#include "../kernel/special_functions/weierstrass_sigma_backward.h"
+#include "../kernel/special_functions/weierstrass_sigma_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_TERNARY_OPERATOR_WITH_COMPLEX(weierstrass_sigma, z, g2, g3)
 
 #include "../kernel/special_functions/spherical_bessel_j_0.h"
 #include "../kernel/special_functions/spherical_bessel_j_0_backward.h"

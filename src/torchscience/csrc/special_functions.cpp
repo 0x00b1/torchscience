@@ -391,6 +391,11 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("weierstrass_p_backward(Tensor grad_output, Tensor z, Tensor g2, Tensor g3) -> (Tensor, Tensor, Tensor)");
   m.def("weierstrass_p_backward_backward(Tensor gg_z, Tensor gg_g2, Tensor gg_g3, Tensor grad_output, Tensor z, Tensor g2, Tensor g3) -> (Tensor, Tensor, Tensor, Tensor)");
 
+  // Weierstrass sigma function
+  m.def("weierstrass_sigma(Tensor z, Tensor g2, Tensor g3) -> Tensor");
+  m.def("weierstrass_sigma_backward(Tensor grad_output, Tensor z, Tensor g2, Tensor g3) -> (Tensor, Tensor, Tensor)");
+  m.def("weierstrass_sigma_backward_backward(Tensor gg_z, Tensor gg_g2, Tensor gg_g3, Tensor grad_output, Tensor z, Tensor g2, Tensor g3) -> (Tensor, Tensor, Tensor, Tensor)");
+
   // Exponential integrals
   m.def("exponential_integral_ei(Tensor x) -> Tensor");
   m.def("exponential_integral_ei_backward(Tensor grad_output, Tensor x) -> Tensor");

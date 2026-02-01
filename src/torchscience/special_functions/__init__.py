@@ -135,6 +135,7 @@ from ._theta_4 import theta_4
 from ._trigamma import trigamma
 from ._voigt_profile import voigt_profile
 from ._weierstrass_p import weierstrass_p
+from ._weierstrass_sigma import weierstrass_sigma
 from ._whittaker_m import whittaker_m
 from ._whittaker_w import whittaker_w
 from ._zernike_polynomial_r import zernike_polynomial_r
@@ -272,6 +273,7 @@ __all__ = [
     "trigamma",
     "voigt_profile",
     "weierstrass_p",
+    "weierstrass_sigma",
     "whittaker_m",
     "whittaker_w",
     "zernike_polynomial_r",
