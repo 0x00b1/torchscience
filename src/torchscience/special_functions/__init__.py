@@ -46,6 +46,7 @@ from ._fresnel_c import fresnel_c
 from ._fresnel_s import fresnel_s
 from ._gamma import gamma
 from ._gegenbauer_polynomial_c import gegenbauer_polynomial_c
+from ._hahn_polynomial_q import hahn_polynomial_q
 from ._hermite_polynomial_h import hermite_polynomial_h
 from ._hermite_polynomial_he import hermite_polynomial_he
 from ._hypergeometric_0_f_1 import hypergeometric_0_f_1
@@ -104,6 +105,7 @@ from ._parabolic_cylinder_u import parabolic_cylinder_u
 from ._parabolic_cylinder_v import parabolic_cylinder_v
 from ._polygamma import polygamma
 from ._polylogarithm_li import polylogarithm_li
+from ._reciprocal_gamma import reciprocal_gamma
 from ._regularized_gamma_p import regularized_gamma_p
 from ._regularized_gamma_q import regularized_gamma_q
 from ._sine_integral_si import sine_integral_si
@@ -132,6 +134,7 @@ from ._theta_3 import theta_3
 from ._theta_4 import theta_4
 from ._trigamma import trigamma
 from ._voigt_profile import voigt_profile
+from ._weierstrass_p import weierstrass_p
 from ._whittaker_m import whittaker_m
 from ._whittaker_w import whittaker_w
 from ._zernike_polynomial_r import zernike_polynomial_r
@@ -179,6 +182,7 @@ __all__ = [
     "fresnel_s",
     "gamma",
     "gegenbauer_polynomial_c",
+    "hahn_polynomial_q",
     "hermite_polynomial_h",
     "hermite_polynomial_he",
     "hypergeometric_0_f_1",
@@ -240,6 +244,7 @@ __all__ = [
     "parabolic_cylinder_v",
     "polygamma",
     "polylogarithm_li",
+    "reciprocal_gamma",
     "regularized_gamma_p",
     "regularized_gamma_q",
     "sine_integral_si",
@@ -266,6 +271,7 @@ __all__ = [
     "theta_4",
     "trigamma",
     "voigt_profile",
+    "weierstrass_p",
     "whittaker_m",
     "whittaker_w",
     "zernike_polynomial_r",
