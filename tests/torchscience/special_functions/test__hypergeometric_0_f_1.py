@@ -97,8 +97,8 @@ class TestHypergeometric0F1(OpTestCase):
             ],
             special_values=[
                 SpecialValue(
-                    input_values={"b": 1.0, "z": 0.0},
-                    expected_value=1.0,
+                    inputs=(1.0, 0.0),
+                    expected=1.0,
                     description="0F1(;1;0) = 1",
                 ),
             ],
