@@ -163,3 +163,48 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(dawson, Dawson, z)
 
 // Voigt profile
 TORCHSCIENCE_AUTOGRAD_POINTWISE_TERNARY_OPERATOR(voigt_profile, VoigtProfile, x, sigma, gamma)
+
+// Generalized hypergeometric pFq - custom autograd implementation
+namespace torchscience::autograd::special_functions {
+
+struct HypergeometricPFQFunction : public torch::autograd::Function<HypergeometricPFQFunction> {
+    static at::Tensor forward(
+        torch::autograd::AutogradContext *ctx,
+        const at::Tensor &a,
+        const at::Tensor &b,
+        const at::Tensor &z
+    ) {
+        ctx->save_for_backward({a, b, z});
+        return torch::ops::torchscience::hypergeometric_p_f_q(a, b, z);
+    }
+
+    static std::vector<at::Tensor> backward(
+        torch::autograd::AutogradContext *ctx,
+        std::vector<at::Tensor> grad_outputs
+    ) {
+        auto saved = ctx->get_saved_variables();
+        auto a = saved[0];
+        auto b = saved[1];
+        auto z = saved[2];
+
+        auto [grad_a, grad_b, grad_z] = torch::ops::torchscience::hypergeometric_p_f_q_backward(
+            grad_outputs[0], a, b, z
+        );
+
+        return {grad_a, grad_b, grad_z};
+    }
+};
+
+inline at::Tensor hypergeometric_p_f_q_autograd(
+    const at::Tensor &a,
+    const at::Tensor &b,
+    const at::Tensor &z
+) {
+    return HypergeometricPFQFunction::apply(a, b, z);
+}
+
+} // namespace torchscience::autograd::special_functions
+
+TORCH_LIBRARY_IMPL(torchscience, Autograd, module) {
+    module.impl("hypergeometric_p_f_q", torchscience::autograd::special_functions::hypergeometric_p_f_q_autograd);
+}

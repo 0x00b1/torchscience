@@ -163,3 +163,28 @@ TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(dawson, z)
 
 // Voigt profile
 TORCHSCIENCE_AUTOCAST_POINTWISE_TERNARY_OPERATOR(voigt_profile, x, sigma, gamma)
+
+// Generalized hypergeometric pFq - custom autocast implementation
+namespace torchscience::autocast::special_functions {
+
+inline at::Tensor hypergeometric_p_f_q(
+    const at::Tensor &a,
+    const at::Tensor &b,
+    const at::Tensor &z
+) {
+    c10::impl::ExcludeDispatchKeyGuard no_autocast(c10::DispatchKey::AutocastCPU);
+
+    auto exec_type = at::autocast::get_autocast_dtype(at::kCPU);
+
+    return torch::ops::torchscience::hypergeometric_p_f_q(
+        at::autocast::cached_cast(exec_type, a),
+        at::autocast::cached_cast(exec_type, b),
+        at::autocast::cached_cast(exec_type, z)
+    );
+}
+
+} // namespace torchscience::autocast::special_functions
+
+TORCH_LIBRARY_IMPL(torchscience, AutocastCPU, module) {
+    module.impl("hypergeometric_p_f_q", torchscience::autocast::special_functions::hypergeometric_p_f_q);
+}
