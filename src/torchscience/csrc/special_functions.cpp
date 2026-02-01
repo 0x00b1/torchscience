@@ -556,4 +556,14 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("krawtchouk_polynomial_k(Tensor n, Tensor x, Tensor p, Tensor N) -> Tensor");
   m.def("krawtchouk_polynomial_k_backward(Tensor grad, Tensor n, Tensor x, Tensor p, Tensor N) -> (Tensor, Tensor, Tensor, Tensor)");
   m.def("krawtchouk_polynomial_k_backward_backward(Tensor gg_n, Tensor gg_x, Tensor gg_p, Tensor gg_N, Tensor grad, Tensor n, Tensor x, Tensor p, Tensor N) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
+
+  // Meixner polynomial M_n(x; beta, c)
+  m.def("meixner_polynomial_m(Tensor n, Tensor x, Tensor beta, Tensor c) -> Tensor");
+  m.def("meixner_polynomial_m_backward(Tensor grad, Tensor n, Tensor x, Tensor beta, Tensor c) -> (Tensor, Tensor, Tensor, Tensor)");
+  m.def("meixner_polynomial_m_backward_backward(Tensor gg_n, Tensor gg_x, Tensor gg_beta, Tensor gg_c, Tensor grad, Tensor n, Tensor x, Tensor beta, Tensor c) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
+
+  // Hahn polynomial Q_n(x; alpha, beta, N)
+  m.def("hahn_polynomial_q(Tensor n, Tensor x, Tensor alpha, Tensor beta, Tensor N) -> Tensor");
+  m.def("hahn_polynomial_q_backward(Tensor grad, Tensor n, Tensor x, Tensor alpha, Tensor beta, Tensor N) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
+  m.def("hahn_polynomial_q_backward_backward(Tensor gg_n, Tensor gg_x, Tensor gg_alpha, Tensor gg_beta, Tensor gg_N, Tensor grad, Tensor n, Tensor x, Tensor alpha, Tensor beta, Tensor N) -> (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor)");
 }

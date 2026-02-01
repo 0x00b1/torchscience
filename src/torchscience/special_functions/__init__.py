@@ -93,6 +93,7 @@ from ._legendre_polynomial_p import legendre_polynomial_p
 from ._legendre_polynomial_q import legendre_polynomial_q
 from ._log_beta import log_beta
 from ._log_gamma import log_gamma
+from ._meixner_polynomial_m import meixner_polynomial_m
 from ._modified_bessel_i import modified_bessel_i
 from ._modified_bessel_i_0 import modified_bessel_i_0
 from ._modified_bessel_i_1 import modified_bessel_i_1
@@ -228,6 +229,7 @@ __all__ = [
     "incomplete_beta",
     "log_beta",
     "log_gamma",
+    "meixner_polynomial_m",
     "modified_bessel_i",
     "modified_bessel_i_0",
     "modified_bessel_i_1",

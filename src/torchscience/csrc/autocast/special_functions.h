@@ -222,3 +222,9 @@ TORCHSCIENCE_AUTOCAST_POINTWISE_QUATERNARY_OPERATOR(zernike_polynomial_z, n, m, 
 
 // Krawtchouk polynomial K_n(x; p, N)
 TORCHSCIENCE_AUTOCAST_POINTWISE_QUATERNARY_OPERATOR(krawtchouk_polynomial_k, n, x, p, N)
+
+// Meixner polynomial M_n(x; beta, c)
+TORCHSCIENCE_AUTOCAST_POINTWISE_QUATERNARY_OPERATOR(meixner_polynomial_m, n, x, beta, c)
+
+// Hahn polynomial Q_n(x; alpha, beta, N)
+TORCHSCIENCE_AUTOCAST_POINTWISE_QUINARY_OPERATOR(hahn_polynomial_q, n, x, alpha, beta, N)

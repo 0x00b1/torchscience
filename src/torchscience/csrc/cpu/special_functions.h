@@ -1716,3 +1716,17 @@ TORCHSCIENCE_CPU_POINTWISE_QUATERNARY_OPERATOR_WITH_COMPLEX(zernike_polynomial_z
 #include "../kernel/special_functions/krawtchouk_polynomial_k_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_QUATERNARY_OPERATOR_WITH_COMPLEX(krawtchouk_polynomial_k, n, x, p, N)
+
+// Meixner polynomial M_n(x; beta, c)
+#include "../kernel/special_functions/meixner_polynomial_m.h"
+#include "../kernel/special_functions/meixner_polynomial_m_backward.h"
+#include "../kernel/special_functions/meixner_polynomial_m_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_QUATERNARY_OPERATOR_WITH_COMPLEX(meixner_polynomial_m, n, x, beta, c)
+
+// Hahn polynomial Q_n(x; alpha, beta, N)
+#include "../kernel/special_functions/hahn_polynomial_q.h"
+#include "../kernel/special_functions/hahn_polynomial_q_backward.h"
+#include "../kernel/special_functions/hahn_polynomial_q_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_QUINARY_OPERATOR(hahn_polynomial_q, n, x, alpha, beta, N)

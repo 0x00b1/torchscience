@@ -247,3 +247,9 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_QUATERNARY_OPERATOR(zernike_polynomial_z, Zernik
 
 // Krawtchouk polynomial K_n(x; p, N)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_QUATERNARY_OPERATOR(krawtchouk_polynomial_k, KrawtchoukPolynomialK, n, x, p, N)
+
+// Meixner polynomial M_n(x; beta, c)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_QUATERNARY_OPERATOR(meixner_polynomial_m, MeixnerPolynomialM, n, x, beta, c)
+
+// Hahn polynomial Q_n(x; alpha, beta, N)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_QUINARY_OPERATOR(hahn_polynomial_q, HahnPolynomialQ, n, x, alpha, beta, N)
