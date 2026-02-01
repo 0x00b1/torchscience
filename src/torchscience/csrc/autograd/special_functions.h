@@ -238,3 +238,6 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_TERNARY_OPERATOR(gegenbauer_polynomial_c, Gegenb
 
 // Jacobi polynomial P_n^(alpha,beta)(z)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_QUATERNARY_OPERATOR(jacobi_polynomial_p, JacobiPolynomialP, n, alpha, beta, z)
+
+// Radial Zernike polynomial R_n^m(rho)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_TERNARY_OPERATOR(zernike_polynomial_r, ZernikePolynomialR, n, m, rho)

@@ -541,4 +541,9 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("jacobi_polynomial_p(Tensor n, Tensor alpha, Tensor beta, Tensor z) -> Tensor");
   m.def("jacobi_polynomial_p_backward(Tensor grad_output, Tensor n, Tensor alpha, Tensor beta, Tensor z) -> (Tensor, Tensor, Tensor, Tensor)");
   m.def("jacobi_polynomial_p_backward_backward(Tensor gg_n, Tensor gg_alpha, Tensor gg_beta, Tensor gg_z, Tensor grad_output, Tensor n, Tensor alpha, Tensor beta, Tensor z) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
+
+  // Radial Zernike polynomial R_n^m(rho)
+  m.def("zernike_polynomial_r(Tensor n, Tensor m, Tensor rho) -> Tensor");
+  m.def("zernike_polynomial_r_backward(Tensor grad_output, Tensor n, Tensor m, Tensor rho) -> (Tensor, Tensor, Tensor)");
+  m.def("zernike_polynomial_r_backward_backward(Tensor gg_n, Tensor gg_m, Tensor gg_rho, Tensor grad_output, Tensor n, Tensor m, Tensor rho) -> (Tensor, Tensor, Tensor, Tensor)");
 }

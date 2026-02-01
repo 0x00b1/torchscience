@@ -259,3 +259,6 @@ TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(gegenbauer_polynomial_c, n, lambda,
 
 // Jacobi polynomial P_n^(alpha,beta)(z)
 TORCHSCIENCE_META_POINTWISE_QUATERNARY_OPERATOR(jacobi_polynomial_p, n, alpha, beta, z)
+
+// Radial Zernike polynomial R_n^m(rho)
+TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(zernike_polynomial_r, n, m, rho)
