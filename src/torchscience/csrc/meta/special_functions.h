@@ -172,3 +172,6 @@ TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(hermite_polynomial_h, n, z)
 
 // Hermite polynomial (probabilists') He_n(z)
 TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(hermite_polynomial_he, n, z)
+
+// Generalized Laguerre polynomial L_n^alpha(z)
+TORCHSCIENCE_META_POINTWISE_TERNARY_OPERATOR(laguerre_polynomial_l, n, alpha, z)

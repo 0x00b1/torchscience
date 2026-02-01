@@ -172,3 +172,6 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(hermite_polynomial_h, HermitePol
 
 // Hermite polynomial (probabilists') He_n(z)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(hermite_polynomial_he, HermitePolynomialHe, n, z)
+
+// Generalized Laguerre polynomial L_n^alpha(z)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_TERNARY_OPERATOR(laguerre_polynomial_l, LaguerrePolynomialL, n, alpha, z)

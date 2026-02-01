@@ -1379,3 +1379,10 @@ TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(hermite_polynomial_h, n,
 #include "../kernel/special_functions/hermite_polynomial_he_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(hermite_polynomial_he, n, z)
+
+// Generalized Laguerre polynomial L_n^alpha(z)
+#include "../kernel/special_functions/laguerre_polynomial_l.h"
+#include "../kernel/special_functions/laguerre_polynomial_l_backward.h"
+#include "../kernel/special_functions/laguerre_polynomial_l_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_TERNARY_OPERATOR_WITH_COMPLEX(laguerre_polynomial_l, n, alpha, z)

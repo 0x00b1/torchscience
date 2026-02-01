@@ -510,4 +510,9 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("hermite_polynomial_he(Tensor n, Tensor z) -> Tensor");
   m.def("hermite_polynomial_he_backward(Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor)");
   m.def("hermite_polynomial_he_backward_backward(Tensor gg_n, Tensor gg_z, Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor, Tensor)");
+
+  // Generalized Laguerre polynomial L_n^alpha(z)
+  m.def("laguerre_polynomial_l(Tensor n, Tensor alpha, Tensor z) -> Tensor");
+  m.def("laguerre_polynomial_l_backward(Tensor grad_output, Tensor n, Tensor alpha, Tensor z) -> (Tensor, Tensor, Tensor)");
+  m.def("laguerre_polynomial_l_backward_backward(Tensor gg_n, Tensor gg_alpha, Tensor gg_z, Tensor grad_output, Tensor n, Tensor alpha, Tensor z) -> (Tensor, Tensor, Tensor, Tensor)");
 }
