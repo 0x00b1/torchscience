@@ -515,4 +515,14 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("laguerre_polynomial_l(Tensor n, Tensor alpha, Tensor z) -> Tensor");
   m.def("laguerre_polynomial_l_backward(Tensor grad_output, Tensor n, Tensor alpha, Tensor z) -> (Tensor, Tensor, Tensor)");
   m.def("laguerre_polynomial_l_backward_backward(Tensor gg_n, Tensor gg_alpha, Tensor gg_z, Tensor grad_output, Tensor n, Tensor alpha, Tensor z) -> (Tensor, Tensor, Tensor, Tensor)");
+
+  // Gegenbauer (ultraspherical) polynomial C_n^lambda(z)
+  m.def("gegenbauer_polynomial_c(Tensor n, Tensor lambda, Tensor z) -> Tensor");
+  m.def("gegenbauer_polynomial_c_backward(Tensor grad_output, Tensor n, Tensor lambda, Tensor z) -> (Tensor, Tensor, Tensor)");
+  m.def("gegenbauer_polynomial_c_backward_backward(Tensor gg_n, Tensor gg_lambda, Tensor gg_z, Tensor grad_output, Tensor n, Tensor lambda, Tensor z) -> (Tensor, Tensor, Tensor, Tensor)");
+
+  // Jacobi polynomial P_n^(alpha,beta)(z)
+  m.def("jacobi_polynomial_p(Tensor n, Tensor alpha, Tensor beta, Tensor z) -> Tensor");
+  m.def("jacobi_polynomial_p_backward(Tensor grad_output, Tensor n, Tensor alpha, Tensor beta, Tensor z) -> (Tensor, Tensor, Tensor, Tensor)");
+  m.def("jacobi_polynomial_p_backward_backward(Tensor gg_n, Tensor gg_alpha, Tensor gg_beta, Tensor gg_z, Tensor grad_output, Tensor n, Tensor alpha, Tensor beta, Tensor z) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
 }

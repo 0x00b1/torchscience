@@ -175,3 +175,9 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(hermite_polynomial_he, HermitePo
 
 // Generalized Laguerre polynomial L_n^alpha(z)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_TERNARY_OPERATOR(laguerre_polynomial_l, LaguerrePolynomialL, n, alpha, z)
+
+// Gegenbauer (ultraspherical) polynomial C_n^lambda(z)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_TERNARY_OPERATOR(gegenbauer_polynomial_c, GegenbauerPolynomialC, n, lambda, z)
+
+// Jacobi polynomial P_n^(alpha,beta)(z)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_QUATERNARY_OPERATOR(jacobi_polynomial_p, JacobiPolynomialP, n, alpha, beta, z)

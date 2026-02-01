@@ -1386,3 +1386,17 @@ TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(hermite_polynomial_he, n
 #include "../kernel/special_functions/laguerre_polynomial_l_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_TERNARY_OPERATOR_WITH_COMPLEX(laguerre_polynomial_l, n, alpha, z)
+
+// Gegenbauer (ultraspherical) polynomial C_n^lambda(z)
+#include "../kernel/special_functions/gegenbauer_polynomial_c.h"
+#include "../kernel/special_functions/gegenbauer_polynomial_c_backward.h"
+#include "../kernel/special_functions/gegenbauer_polynomial_c_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_TERNARY_OPERATOR_WITH_COMPLEX(gegenbauer_polynomial_c, n, lambda, z)
+
+// Jacobi polynomial P_n^(alpha,beta)(z)
+#include "../kernel/special_functions/jacobi_polynomial_p.h"
+#include "../kernel/special_functions/jacobi_polynomial_p_backward.h"
+#include "../kernel/special_functions/jacobi_polynomial_p_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_QUATERNARY_OPERATOR_WITH_COMPLEX(jacobi_polynomial_p, n, alpha, beta, z)

@@ -44,6 +44,7 @@ from ._faddeeva_w import faddeeva_w
 from ._fresnel_c import fresnel_c
 from ._fresnel_s import fresnel_s
 from ._gamma import gamma
+from ._gegenbauer_polynomial_c import gegenbauer_polynomial_c
 from ._hermite_polynomial_h import hermite_polynomial_h
 from ._hermite_polynomial_he import hermite_polynomial_he
 from ._hypergeometric_0_f_1 import hypergeometric_0_f_1
@@ -78,6 +79,7 @@ from ._jacobi_elliptic_ns import jacobi_elliptic_ns
 from ._jacobi_elliptic_sc import jacobi_elliptic_sc
 from ._jacobi_elliptic_sd import jacobi_elliptic_sd
 from ._jacobi_elliptic_sn import jacobi_elliptic_sn
+from ._jacobi_polynomial_p import jacobi_polynomial_p
 from ._kelvin_bei import kelvin_bei
 from ._kelvin_ber import kelvin_ber
 from ._kelvin_kei import kelvin_kei
@@ -168,6 +170,7 @@ __all__ = [
     "fresnel_c",
     "fresnel_s",
     "gamma",
+    "gegenbauer_polynomial_c",
     "hermite_polynomial_h",
     "hermite_polynomial_he",
     "hypergeometric_0_f_1",
@@ -189,6 +192,7 @@ __all__ = [
     "jacobi_elliptic_dc",
     "jacobi_elliptic_ds",
     "jacobi_elliptic_cs",
+    "jacobi_polynomial_p",
     "kelvin_bei",
     "kelvin_ber",
     "kelvin_kei",
