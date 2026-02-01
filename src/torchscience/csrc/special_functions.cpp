@@ -541,4 +541,14 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("jacobi_polynomial_p(Tensor n, Tensor alpha, Tensor beta, Tensor z) -> Tensor");
   m.def("jacobi_polynomial_p_backward(Tensor grad_output, Tensor n, Tensor alpha, Tensor beta, Tensor z) -> (Tensor, Tensor, Tensor, Tensor)");
   m.def("jacobi_polynomial_p_backward_backward(Tensor gg_n, Tensor gg_alpha, Tensor gg_beta, Tensor gg_z, Tensor grad_output, Tensor n, Tensor alpha, Tensor beta, Tensor z) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
+
+  // Struve function H_0
+  m.def("struve_h_0(Tensor z) -> Tensor");
+  m.def("struve_h_0_backward(Tensor grad_output, Tensor z) -> Tensor");
+  m.def("struve_h_0_backward_backward(Tensor gg_z, Tensor grad_output, Tensor z) -> (Tensor, Tensor)");
+
+  // Struve function H_1
+  m.def("struve_h_1(Tensor z) -> Tensor");
+  m.def("struve_h_1_backward(Tensor grad_output, Tensor z) -> Tensor");
+  m.def("struve_h_1_backward_backward(Tensor gg_z, Tensor grad_output, Tensor z) -> (Tensor, Tensor)");
 }

@@ -213,3 +213,9 @@ TORCHSCIENCE_AUTOCAST_POINTWISE_TERNARY_OPERATOR(gegenbauer_polynomial_c, n, lam
 
 // Jacobi polynomial P_n^(alpha,beta)(z)
 TORCHSCIENCE_AUTOCAST_POINTWISE_QUATERNARY_OPERATOR(jacobi_polynomial_p, n, alpha, beta, z)
+
+// Struve function H_0
+TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(struve_h_0, z)
+
+// Struve function H_1
+TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(struve_h_1, z)

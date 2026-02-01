@@ -1695,3 +1695,17 @@ TORCHSCIENCE_CPU_POINTWISE_TERNARY_OPERATOR_WITH_COMPLEX(gegenbauer_polynomial_c
 #include "../kernel/special_functions/jacobi_polynomial_p_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_QUATERNARY_OPERATOR_WITH_COMPLEX(jacobi_polynomial_p, n, alpha, beta, z)
+
+// Struve function H_0
+#include "../kernel/special_functions/struve_h_0.h"
+#include "../kernel/special_functions/struve_h_0_backward.h"
+#include "../kernel/special_functions/struve_h_0_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(struve_h_0, z)
+
+// Struve function H_1
+#include "../kernel/special_functions/struve_h_1.h"
+#include "../kernel/special_functions/struve_h_1_backward.h"
+#include "../kernel/special_functions/struve_h_1_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(struve_h_1, z)
