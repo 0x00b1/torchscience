@@ -169,3 +169,6 @@ TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(legendre_polynomial_p, n, z)
 
 // Hermite polynomial (physicists') H_n(z)
 TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(hermite_polynomial_h, n, z)
+
+// Hermite polynomial (probabilists') He_n(z)
+TORCHSCIENCE_META_POINTWISE_BINARY_OPERATOR(hermite_polynomial_he, n, z)

@@ -1372,3 +1372,10 @@ TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(legendre_polynomial_p, n
 #include "../kernel/special_functions/hermite_polynomial_h_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(hermite_polynomial_h, n, z)
+
+// Hermite polynomial (probabilists') He_n(z)
+#include "../kernel/special_functions/hermite_polynomial_he.h"
+#include "../kernel/special_functions/hermite_polynomial_he_backward.h"
+#include "../kernel/special_functions/hermite_polynomial_he_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(hermite_polynomial_he, n, z)

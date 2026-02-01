@@ -169,3 +169,6 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(legendre_polynomial_p, LegendreP
 
 // Hermite polynomial (physicists') H_n(z)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(hermite_polynomial_h, HermitePolynomialH, n, z)
+
+// Hermite polynomial (probabilists') He_n(z)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(hermite_polynomial_he, HermitePolynomialHe, n, z)
