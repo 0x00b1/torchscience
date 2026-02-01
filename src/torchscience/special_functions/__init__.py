@@ -39,6 +39,7 @@ from ._exponential_integral_ei import exponential_integral_ei
 from ._exponential_integral_ein import exponential_integral_ein
 from ._gamma import gamma
 from ._hypergeometric_0_f_1 import hypergeometric_0_f_1
+from ._hypergeometric_1_f_2 import hypergeometric_1_f_2
 from ._hypergeometric_2_f_1 import hypergeometric_2_f_1
 from ._incomplete_beta import incomplete_beta
 from ._incomplete_legendre_elliptic_integral_e import (
@@ -178,6 +179,7 @@ __all__ = [
     "exponential_integral_ein",
     "gamma",
     "hypergeometric_0_f_1",
+    "hypergeometric_1_f_2",
     "hypergeometric_2_f_1",
     "incomplete_beta",
     "log_beta",
