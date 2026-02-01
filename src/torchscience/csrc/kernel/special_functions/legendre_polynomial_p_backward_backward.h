@@ -39,9 +39,14 @@ std::tuple<T, T, T> legendre_polynomial_p_backward_backward(
   T F_second = hypergeometric_2_f_1(a + T(2), b + T(2), c + T(2), w);
   T d2P_dz2 = coeff1 * coeff2 * F_second * dw_dz * dw_dz;
 
+  // Compute dP/dn via finite differences (same as in backward kernel)
+  T eps = T(1e-7);
+  T P_plus = hypergeometric_2_f_1(-(n + eps), (n + eps) + T(1), c, w);
+  T P_minus = hypergeometric_2_f_1(-(n - eps), (n - eps) + T(1), c, w);
+  T dP_dn = (P_plus - P_minus) / (T(2) * eps);
+
   // gradient_gradient_output = gg_z * dP/dz + gg_n * dP/dn
-  // For simplicity, we focus on the z gradient contribution
-  T gradient_gradient_output = gradient_gradient_z * dP_dz;
+  T gradient_gradient_output = gradient_gradient_z * dP_dz + gradient_gradient_n * dP_dn;
 
   // new_gradient_z = gg_z * grad * d^2P/dz^2
   T new_gradient_z = gradient_gradient_z * gradient * d2P_dz2;

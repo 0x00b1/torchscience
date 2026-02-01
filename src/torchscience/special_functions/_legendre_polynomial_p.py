@@ -87,6 +87,14 @@ def legendre_polynomial_p(n: Tensor, z: Tensor) -> Tensor:
       derivatives of 2F1 with respect to parameters).
     - Second-order derivatives (gradgradcheck) are supported for z.
 
+    .. warning::
+
+       Second-order derivatives with respect to n are approximate and return zero.
+       This is because the mixed partial d^2P/dndz and second partial d^2P/dn^2
+       involve complex parameter derivatives of the hypergeometric function that
+       are not currently implemented. Use with caution when computing Hessians
+       involving the degree parameter n.
+
     Backward formulas:
 
     .. math::

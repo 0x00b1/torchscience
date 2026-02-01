@@ -466,3 +466,123 @@ class TestLegendrePolynomialP:
         result = compiled_legendre(n, z)
         expected = torch.tensor([-0.125], dtype=torch.float64)
         torch.testing.assert_close(result, expected, rtol=1e-10, atol=1e-10)
+
+    @pytest.mark.parametrize(
+        "n_dtype,z_dtype,expected_dtype",
+        [
+            (torch.float32, torch.complex64, torch.complex64),
+            (torch.float64, torch.complex128, torch.complex128),
+            (torch.float64, torch.complex64, torch.complex128),  # promoted
+        ],
+    )
+    def test_complex_dtypes(self, n_dtype, z_dtype, expected_dtype):
+        """Test with complex dtypes (complex64 and complex128)."""
+        # Test with complex z values
+        n = torch.tensor([2.0], dtype=n_dtype)
+        z = torch.tensor([0.5 + 0.1j, 0.3 - 0.2j], dtype=z_dtype)
+
+        result = torchscience.special_functions.legendre_polynomial_p(n, z)
+        assert result.dtype == expected_dtype
+
+        # Verify against analytical formula P_2(z) = (3z^2 - 1)/2
+        expected = (3 * z.to(expected_dtype) ** 2 - 1) / 2
+        rtol = 1e-5 if expected_dtype == torch.complex64 else 1e-10
+        torch.testing.assert_close(result, expected, rtol=rtol, atol=rtol)
+
+    def test_complex_n_and_z(self):
+        """Test with both complex n and z."""
+        n = torch.tensor([2.0 + 0.0j], dtype=torch.complex128)
+        z = torch.tensor([0.5 + 0.1j], dtype=torch.complex128)
+
+        result = torchscience.special_functions.legendre_polynomial_p(n, z)
+        assert result.dtype == torch.complex128
+
+        # Verify against analytical formula P_2(z) = (3z^2 - 1)/2
+        expected = (3 * z**2 - 1) / 2
+        torch.testing.assert_close(result, expected, rtol=1e-10, atol=1e-10)
+
+    def test_complex_real_axis(self):
+        """Test complex dtype with purely real values matches real dtype."""
+        n = torch.tensor([2.0], dtype=torch.float64)
+        z_real = torch.tensor([0.3, 0.5, 0.7], dtype=torch.float64)
+        z_complex = z_real.to(torch.complex128)
+
+        result_real = torchscience.special_functions.legendre_polynomial_p(
+            n, z_real
+        )
+        result_complex = torchscience.special_functions.legendre_polynomial_p(
+            n, z_complex
+        )
+
+        # Real part should match, imaginary part should be zero
+        torch.testing.assert_close(
+            result_complex.real, result_real, rtol=1e-10, atol=1e-10
+        )
+        torch.testing.assert_close(
+            result_complex.imag,
+            torch.zeros_like(result_real),
+            rtol=1e-10,
+            atol=1e-10,
+        )
+
+    def test_negative_n_integer(self):
+        """Test with negative integer n values.
+
+        For negative integer n, P_n(z) can be defined via:
+        P_{-n-1}(z) = P_n(z) for integer n >= 0
+        """
+        z = torch.tensor([0.3, 0.5, 0.7], dtype=torch.float64)
+
+        # P_{-1}(z) = P_0(z) = 1
+        n = torch.tensor([-1.0], dtype=torch.float64)
+        result = torchscience.special_functions.legendre_polynomial_p(n, z)
+        expected = torch.ones_like(z)
+        torch.testing.assert_close(result, expected, rtol=1e-8, atol=1e-8)
+
+        # P_{-2}(z) = P_1(z) = z
+        n = torch.tensor([-2.0], dtype=torch.float64)
+        result = torchscience.special_functions.legendre_polynomial_p(n, z)
+        torch.testing.assert_close(result, z, rtol=1e-8, atol=1e-8)
+
+        # P_{-3}(z) = P_2(z) = (3z^2 - 1)/2
+        n = torch.tensor([-3.0], dtype=torch.float64)
+        result = torchscience.special_functions.legendre_polynomial_p(n, z)
+        expected = (3 * z**2 - 1) / 2
+        torch.testing.assert_close(result, expected, rtol=1e-8, atol=1e-8)
+
+    def test_negative_n_non_integer(self):
+        """Test with negative non-integer n values."""
+        z = torch.tensor([0.3, 0.5, 0.7], dtype=torch.float64)
+        n = torch.tensor([-0.5], dtype=torch.float64)
+
+        result = torchscience.special_functions.legendre_polynomial_p(n, z)
+
+        # Compare to scipy
+        expected = torch.tensor(
+            [scipy_legendre_p(-0.5, zi) for zi in z.tolist()],
+            dtype=torch.float64,
+        )
+        torch.testing.assert_close(result, expected, rtol=1e-8, atol=1e-8)
+
+    def test_negative_n_symmetry(self):
+        """Test the symmetry relation P_{-n-1}(z) = P_n(z)."""
+        z = torch.tensor([0.3, 0.5, 0.7], dtype=torch.float64)
+
+        for n_val in [0, 1, 2, 3, 4, 5]:
+            n_pos = torch.tensor([float(n_val)], dtype=torch.float64)
+            n_neg = torch.tensor([float(-n_val - 1)], dtype=torch.float64)
+
+            result_pos = torchscience.special_functions.legendre_polynomial_p(
+                n_pos, z
+            )
+            result_neg = torchscience.special_functions.legendre_polynomial_p(
+                n_neg, z
+            )
+
+            torch.testing.assert_close(
+                result_neg,
+                result_pos,
+                rtol=1e-8,
+                atol=1e-8,
+                msg=f"Symmetry P_{-n_val - 1}(z) = P_{n_val}(z) failed",
+            )
