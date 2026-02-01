@@ -3,48 +3,11 @@
 #include <cmath>
 #include <tuple>
 
-#include "confluent_hypergeometric_u.h"
+#include "whittaker_w.h"
 
 namespace torchscience::kernel::special_functions {
 
 namespace detail {
-
-// Type traits for Whittaker W (use whit_w_ prefix to avoid ODR conflicts)
-template <typename T>
-struct whit_w_is_complex_type : std::false_type {};
-
-template <typename T>
-struct whit_w_is_complex_type<std::complex<T>> : std::true_type {};
-
-template <typename T>
-struct whit_w_is_complex_type<c10::complex<T>> : std::true_type {};
-
-template <typename T>
-inline constexpr bool whit_w_is_complex_v = whit_w_is_complex_type<T>::value;
-
-template <typename T>
-struct whit_w_real_type { using type = T; };
-
-template <typename T>
-struct whit_w_real_type<std::complex<T>> { using type = T; };
-
-template <typename T>
-struct whit_w_real_type<c10::complex<T>> { using type = T; };
-
-template <typename T>
-using whit_w_real_type_t = typename whit_w_real_type<T>::type;
-
-template <typename T>
-constexpr auto whit_w_epsilon() {
-  using real_t = whit_w_real_type_t<T>;
-  if constexpr (std::is_same_v<real_t, float>) {
-    return float(1e-6);
-  } else if constexpr (std::is_same_v<real_t, double>) {
-    return double(1e-14);
-  } else {
-    return float(1e-6);
-  }
-}
 
 // Compute Whittaker W function value
 // W_kappa,mu(z) = exp(-z/2) * z^(mu+1/2) * U(a, b, z)
