@@ -551,4 +551,9 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("zernike_polynomial_z(Tensor n, Tensor m, Tensor rho, Tensor theta) -> Tensor");
   m.def("zernike_polynomial_z_backward(Tensor grad_output, Tensor n, Tensor m, Tensor rho, Tensor theta) -> (Tensor, Tensor, Tensor, Tensor)");
   m.def("zernike_polynomial_z_backward_backward(Tensor gg_n, Tensor gg_m, Tensor gg_rho, Tensor gg_theta, Tensor grad_output, Tensor n, Tensor m, Tensor rho, Tensor theta) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
+
+  // Krawtchouk polynomial K_n(x; p, N)
+  m.def("krawtchouk_polynomial_k(Tensor n, Tensor x, Tensor p, Tensor N) -> Tensor");
+  m.def("krawtchouk_polynomial_k_backward(Tensor grad, Tensor n, Tensor x, Tensor p, Tensor N) -> (Tensor, Tensor, Tensor, Tensor)");
+  m.def("krawtchouk_polynomial_k_backward_backward(Tensor gg_n, Tensor gg_x, Tensor gg_p, Tensor gg_N, Tensor grad, Tensor n, Tensor x, Tensor p, Tensor N) -> (Tensor, Tensor, Tensor, Tensor, Tensor)");
 }

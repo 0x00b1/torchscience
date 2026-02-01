@@ -219,3 +219,6 @@ TORCHSCIENCE_AUTOCAST_POINTWISE_TERNARY_OPERATOR(zernike_polynomial_r, n, m, rho
 
 // Full Zernike polynomial Z_n^m(rho, theta)
 TORCHSCIENCE_AUTOCAST_POINTWISE_QUATERNARY_OPERATOR(zernike_polynomial_z, n, m, rho, theta)
+
+// Krawtchouk polynomial K_n(x; p, N)
+TORCHSCIENCE_AUTOCAST_POINTWISE_QUATERNARY_OPERATOR(krawtchouk_polynomial_k, n, x, p, N)

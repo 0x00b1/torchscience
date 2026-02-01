@@ -1709,3 +1709,10 @@ TORCHSCIENCE_CPU_POINTWISE_TERNARY_OPERATOR_WITH_COMPLEX(zernike_polynomial_r, n
 #include "../kernel/special_functions/zernike_polynomial_z_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_QUATERNARY_OPERATOR_WITH_COMPLEX(zernike_polynomial_z, n, m, rho, theta)
+
+// Krawtchouk polynomial K_n(x; p, N)
+#include "../kernel/special_functions/krawtchouk_polynomial_k.h"
+#include "../kernel/special_functions/krawtchouk_polynomial_k_backward.h"
+#include "../kernel/special_functions/krawtchouk_polynomial_k_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_QUATERNARY_OPERATOR_WITH_COMPLEX(krawtchouk_polynomial_k, n, x, p, N)
