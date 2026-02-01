@@ -139,3 +139,6 @@ TORCHSCIENCE_AUTOCAST_POINTWISE_TERNARY_OPERATOR(whittaker_w, kappa, mu, z)
 
 // Hypergeometric 0F1 (confluent hypergeometric limit function)
 TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(hypergeometric_0_f_1, b, z)
+
+// Hypergeometric 1F2
+TORCHSCIENCE_AUTOCAST_POINTWISE_QUATERNARY_OPERATOR(hypergeometric_1_f_2, a, b1, b2, z)
