@@ -176,11 +176,14 @@ inline at::Tensor hypergeometric_p_f_q(
 
     auto exec_type = at::autocast::get_autocast_dtype(at::kCPU);
 
-    return torch::ops::torchscience::hypergeometric_p_f_q(
-        at::autocast::cached_cast(exec_type, a),
-        at::autocast::cached_cast(exec_type, b),
-        at::autocast::cached_cast(exec_type, z)
-    );
+    return c10::Dispatcher::singleton()
+        .findSchemaOrThrow("torchscience::hypergeometric_p_f_q", "")
+        .typed<at::Tensor(const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
+        .call(
+            at::autocast::cached_cast(exec_type, a),
+            at::autocast::cached_cast(exec_type, b),
+            at::autocast::cached_cast(exec_type, z)
+        );
 }
 
 } // namespace torchscience::autocast::special_functions

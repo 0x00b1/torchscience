@@ -202,11 +202,10 @@ inline at::Tensor hypergeometric_p_f_q(
         }
     }
 
-    if (output_shape.empty()) {
-        output_shape.push_back(1);
-    }
-
-    auto common_dtype = at::result_type(at::result_type(a_input, b_input), z_input);
+    // Output is scalar if no batch dimensions
+    // (empty output_shape means scalar output)
+    auto ab_dtype = at::result_type(a_input, b_input);
+    auto common_dtype = at::promote_types(ab_dtype, z_input.scalar_type());
     return at::empty(output_shape, a_input.options().dtype(common_dtype));
 }
 

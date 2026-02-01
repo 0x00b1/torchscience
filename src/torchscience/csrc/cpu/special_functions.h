@@ -1385,7 +1385,8 @@ inline at::Tensor hypergeometric_p_f_q(
     auto z_batch = z_input.sizes();
 
     // Ensure inputs have same dtype
-    auto common_dtype = at::result_type(at::result_type(a_input, b_input), z_input);
+    auto ab_dtype = at::result_type(a_input, b_input);
+    auto common_dtype = at::promote_types(ab_dtype, z_input.scalar_type());
     auto a = a_input.to(common_dtype).contiguous();
     auto b = b_input.to(common_dtype).contiguous();
     auto z = z_input.to(common_dtype).contiguous();
@@ -1404,28 +1405,58 @@ inline at::Tensor hypergeometric_p_f_q(
         output_shape.insert(output_shape.begin(), max_size);
     }
 
-    if (output_shape.empty()) {
-        output_shape.push_back(1);
+    // Track if output should be scalar
+    bool output_is_scalar = output_shape.empty();
+    std::vector<int64_t> working_shape = output_shape;
+    if (working_shape.empty()) {
+        working_shape.push_back(1);  // For computation, treat as [1]
     }
 
-    // Create output tensor
-    auto output = at::empty(output_shape, a.options());
+    // Create output tensor with working shape
+    auto output = at::empty(working_shape, a.options());
 
     // Flatten for iteration
     int64_t batch_size = 1;
-    for (auto s : output_shape) {
+    for (auto s : working_shape) {
         batch_size *= s;
     }
 
     // Reshape tensors for iteration
-    std::vector<int64_t> a_expanded_shape = output_shape;
+    // First, add leading singleton dimensions to match working_shape rank
+    int64_t working_rank = static_cast<int64_t>(working_shape.size());
+
+    // For a: needs working_rank + 1 dimensions (batch dims + p)
+    std::vector<int64_t> a_view_shape(working_rank + 1, 1);
+    for (int64_t i = 0; i < a.dim() - 1; ++i) {
+        a_view_shape[working_rank - (a.dim() - 1) + i] = a.size(i);
+    }
+    a_view_shape[working_rank] = p;
+    auto a_reshaped = a.view(a_view_shape);
+
+    // For b: needs working_rank + 1 dimensions (batch dims + q)
+    std::vector<int64_t> b_view_shape(working_rank + 1, 1);
+    for (int64_t i = 0; i < b.dim() - 1; ++i) {
+        b_view_shape[working_rank - (b.dim() - 1) + i] = b.size(i);
+    }
+    b_view_shape[working_rank] = q;
+    auto b_reshaped = b.view(b_view_shape);
+
+    // For z: needs working_rank dimensions (batch dims only)
+    std::vector<int64_t> z_view_shape(working_rank, 1);
+    for (int64_t i = 0; i < z.dim(); ++i) {
+        z_view_shape[working_rank - z.dim() + i] = z.size(i);
+    }
+    auto z_reshaped = z.view(z_view_shape);
+
+    // Build target shapes for expansion
+    std::vector<int64_t> a_expanded_shape = working_shape;
     a_expanded_shape.push_back(p);
-    std::vector<int64_t> b_expanded_shape = output_shape;
+    std::vector<int64_t> b_expanded_shape = working_shape;
     b_expanded_shape.push_back(q);
 
-    auto a_expanded = a.expand(a_expanded_shape).contiguous().view({batch_size, p});
-    auto b_expanded = b.expand(b_expanded_shape).contiguous().view({batch_size, q});
-    auto z_expanded = z.expand(output_shape).contiguous().view({batch_size});
+    auto a_expanded = a_reshaped.expand(a_expanded_shape).contiguous().view({batch_size, p});
+    auto b_expanded = b_reshaped.expand(b_expanded_shape).contiguous().view({batch_size, q});
+    auto z_expanded = z_reshaped.expand(working_shape).contiguous().view({batch_size});
     auto output_flat = output.view({batch_size});
 
     // Dispatch based on dtype
@@ -1448,6 +1479,10 @@ inline at::Tensor hypergeometric_p_f_q(
         }
     );
 
+    // Return scalar if output should be scalar
+    if (output_is_scalar) {
+        return output.squeeze();
+    }
     return output;
 }
 
@@ -1464,7 +1499,8 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor> hypergeometric_p_f_q_backw
     int64_t q = b_input.size(-1);
 
     // Ensure inputs have same dtype
-    auto common_dtype = at::result_type(at::result_type(a_input, b_input), z_input);
+    auto ab_dtype = at::result_type(a_input, b_input);
+    auto common_dtype = at::promote_types(ab_dtype, z_input.scalar_type());
     auto grad = grad_input.to(common_dtype).contiguous();
     auto a = a_input.to(common_dtype).contiguous();
     auto b = b_input.to(common_dtype).contiguous();
@@ -1531,7 +1567,8 @@ inline std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> hypergeometric
     int64_t p = a_input.size(-1);
     int64_t q = b_input.size(-1);
 
-    auto common_dtype = at::result_type(at::result_type(a_input, b_input), z_input);
+    auto ab_dtype = at::result_type(a_input, b_input);
+    auto common_dtype = at::promote_types(ab_dtype, z_input.scalar_type());
     auto gg_a = gg_a_input.defined() ? gg_a_input.to(common_dtype).contiguous() : at::zeros_like(a_input);
     auto gg_b = gg_b_input.defined() ? gg_b_input.to(common_dtype).contiguous() : at::zeros_like(b_input);
     auto gg_z = gg_z_input.defined() ? gg_z_input.to(common_dtype).contiguous() : at::zeros_like(z_input);

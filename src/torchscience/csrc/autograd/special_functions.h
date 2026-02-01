@@ -175,7 +175,12 @@ struct HypergeometricPFQFunction : public torch::autograd::Function<Hypergeometr
         const at::Tensor &z
     ) {
         ctx->save_for_backward({a, b, z});
-        return torch::ops::torchscience::hypergeometric_p_f_q(a, b, z);
+        // Exclude Autograd keys to prevent re-dispatching to this function
+        c10::impl::ExcludeDispatchKeyGuard no_autograd(c10::autograd_dispatch_keyset);
+        return c10::Dispatcher::singleton()
+            .findSchemaOrThrow("torchscience::hypergeometric_p_f_q", "")
+            .typed<at::Tensor(const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
+            .call(a, b, z);
     }
 
     static std::vector<at::Tensor> backward(
@@ -187,11 +192,14 @@ struct HypergeometricPFQFunction : public torch::autograd::Function<Hypergeometr
         auto b = saved[1];
         auto z = saved[2];
 
-        auto [grad_a, grad_b, grad_z] = torch::ops::torchscience::hypergeometric_p_f_q_backward(
-            grad_outputs[0], a, b, z
-        );
+        // Exclude Autograd keys for the backward call
+        c10::impl::ExcludeDispatchKeyGuard no_autograd(c10::autograd_dispatch_keyset);
+        auto result = c10::Dispatcher::singleton()
+            .findSchemaOrThrow("torchscience::hypergeometric_p_f_q_backward", "")
+            .typed<std::tuple<at::Tensor, at::Tensor, at::Tensor>(const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&)>()
+            .call(grad_outputs[0], a, b, z);
 
-        return {grad_a, grad_b, grad_z};
+        return {std::get<0>(result), std::get<1>(result), std::get<2>(result)};
     }
 };
 
