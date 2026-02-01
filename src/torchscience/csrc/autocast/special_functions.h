@@ -139,3 +139,24 @@ TORCHSCIENCE_AUTOCAST_POINTWISE_TERNARY_OPERATOR(whittaker_w, kappa, mu, z)
 
 // Hypergeometric 0F1 (confluent hypergeometric limit function)
 TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(hypergeometric_0_f_1, b, z)
+
+// Faddeeva function w(z) = exp(-z^2) * erfc(-iz)
+TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(faddeeva_w, z)
+
+// Inverse error function
+TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(erfinv, x)
+
+// Inverse complementary error function
+TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(erfcinv, x)
+
+// Fresnel sine integral
+TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(fresnel_s, z)
+
+// Fresnel cosine integral
+TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(fresnel_c, z)
+
+// Dawson's integral
+TORCHSCIENCE_AUTOCAST_POINTWISE_UNARY_OPERATOR(dawson, z)
+
+// Voigt profile
+TORCHSCIENCE_AUTOCAST_POINTWISE_TERNARY_OPERATOR(voigt_profile, x, sigma, gamma)

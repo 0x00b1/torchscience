@@ -455,4 +455,39 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("parabolic_cylinder_v(Tensor a, Tensor z) -> Tensor");
   m.def("parabolic_cylinder_v_backward(Tensor grad_output, Tensor a, Tensor z) -> (Tensor, Tensor)");
   m.def("parabolic_cylinder_v_backward_backward(Tensor gg_a, Tensor gg_z, Tensor grad_output, Tensor a, Tensor z) -> (Tensor, Tensor, Tensor)");
+
+  // Faddeeva function w(z) = exp(-z^2) * erfc(-iz)
+  m.def("faddeeva_w(Tensor z) -> Tensor");
+  m.def("faddeeva_w_backward(Tensor grad_output, Tensor z) -> Tensor");
+  m.def("faddeeva_w_backward_backward(Tensor gg_z, Tensor grad_output, Tensor z) -> (Tensor, Tensor)");
+
+  // Inverse error function
+  m.def("erfinv(Tensor x) -> Tensor");
+  m.def("erfinv_backward(Tensor grad_output, Tensor x) -> Tensor");
+  m.def("erfinv_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
+
+  // Inverse complementary error function
+  m.def("erfcinv(Tensor x) -> Tensor");
+  m.def("erfcinv_backward(Tensor grad_output, Tensor x) -> Tensor");
+  m.def("erfcinv_backward_backward(Tensor gg_x, Tensor grad_output, Tensor x) -> (Tensor, Tensor)");
+
+  // Fresnel sine integral
+  m.def("fresnel_s(Tensor z) -> Tensor");
+  m.def("fresnel_s_backward(Tensor grad_output, Tensor z) -> Tensor");
+  m.def("fresnel_s_backward_backward(Tensor gg_z, Tensor grad_output, Tensor z) -> (Tensor, Tensor)");
+
+  // Fresnel cosine integral
+  m.def("fresnel_c(Tensor z) -> Tensor");
+  m.def("fresnel_c_backward(Tensor grad_output, Tensor z) -> Tensor");
+  m.def("fresnel_c_backward_backward(Tensor gg_z, Tensor grad_output, Tensor z) -> (Tensor, Tensor)");
+
+  // Dawson's integral
+  m.def("dawson(Tensor z) -> Tensor");
+  m.def("dawson_backward(Tensor grad_output, Tensor z) -> Tensor");
+  m.def("dawson_backward_backward(Tensor gg_z, Tensor grad_output, Tensor z) -> (Tensor, Tensor)");
+
+  // Voigt profile
+  m.def("voigt_profile(Tensor x, Tensor sigma, Tensor gamma) -> Tensor");
+  m.def("voigt_profile_backward(Tensor grad_output, Tensor x, Tensor sigma, Tensor gamma) -> (Tensor, Tensor, Tensor)");
+  m.def("voigt_profile_backward_backward(Tensor gg_x, Tensor gg_sigma, Tensor gg_gamma, Tensor grad_output, Tensor x, Tensor sigma, Tensor gamma) -> (Tensor, Tensor, Tensor, Tensor)");
 }

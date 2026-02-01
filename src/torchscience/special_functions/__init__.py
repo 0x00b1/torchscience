@@ -32,11 +32,17 @@ from ._complete_legendre_elliptic_integral_pi import (
 from ._confluent_hypergeometric_m import confluent_hypergeometric_m
 from ._confluent_hypergeometric_u import confluent_hypergeometric_u
 from ._cosine_integral_ci import cosine_integral_ci
+from ._dawson import dawson
 from ._digamma import digamma
+from ._erfcinv import erfcinv
+from ._erfinv import erfinv
 from ._exponential_integral_e import exponential_integral_e
 from ._exponential_integral_e_1 import exponential_integral_e_1
 from ._exponential_integral_ei import exponential_integral_ei
 from ._exponential_integral_ein import exponential_integral_ein
+from ._faddeeva_w import faddeeva_w
+from ._fresnel_c import fresnel_c
+from ._fresnel_s import fresnel_s
 from ._gamma import gamma
 from ._hypergeometric_0_f_1 import hypergeometric_0_f_1
 from ._hypergeometric_2_f_1 import hypergeometric_2_f_1
@@ -113,6 +119,7 @@ from ._theta_2 import theta_2
 from ._theta_3 import theta_3
 from ._theta_4 import theta_4
 from ._trigamma import trigamma
+from ._voigt_profile import voigt_profile
 from ._whittaker_m import whittaker_m
 from ._whittaker_w import whittaker_w
 from ._zeta import zeta
@@ -144,6 +151,21 @@ __all__ = [
     "confluent_hypergeometric_m",
     "confluent_hypergeometric_u",
     "cosine_integral_ci",
+    "dawson",
+    "digamma",
+    "erfcinv",
+    "erfinv",
+    "exponential_integral_e",
+    "exponential_integral_e_1",
+    "exponential_integral_ei",
+    "exponential_integral_ein",
+    "faddeeva_w",
+    "fresnel_c",
+    "fresnel_s",
+    "gamma",
+    "hypergeometric_0_f_1",
+    "hypergeometric_2_f_1",
+    "incomplete_beta",
     "incomplete_legendre_elliptic_integral_e",
     "incomplete_legendre_elliptic_integral_f",
     "incomplete_legendre_elliptic_integral_pi",
@@ -217,6 +239,7 @@ __all__ = [
     "theta_3",
     "theta_4",
     "trigamma",
+    "voigt_profile",
     "whittaker_m",
     "whittaker_w",
     "zeta",
