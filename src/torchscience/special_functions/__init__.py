@@ -1,5 +1,6 @@
 from ._airy_ai import airy_ai
 from ._airy_bi import airy_bi
+from ._anger_j import anger_j
 from ._associated_legendre_polynomial_p import (
     associated_legendre_polynomial_p,
     associated_legendre_polynomial_p_all,
@@ -140,12 +141,19 @@ from ._spherical_harmonic_y import (
     spherical_harmonic_y_all,
     spherical_harmonic_y_cartesian,
 )
+from ._struve_h import struve_h
+from ._struve_h_0 import struve_h_0
+from ._struve_h_1 import struve_h_1
+from ._struve_l import struve_l
+from ._struve_l_0 import struve_l_0
+from ._struve_l_1 import struve_l_1
 from ._theta_1 import theta_1
 from ._theta_2 import theta_2
 from ._theta_3 import theta_3
 from ._theta_4 import theta_4
 from ._trigamma import trigamma
 from ._voigt_profile import voigt_profile
+from ._weber_e import weber_e
 from ._weierstrass_eta import weierstrass_eta
 from ._weierstrass_p import weierstrass_p
 from ._weierstrass_sigma import weierstrass_sigma
@@ -159,6 +167,7 @@ from ._zeta import zeta
 __all__ = [
     "airy_ai",
     "airy_bi",
+    "anger_j",
     "associated_legendre_polynomial_p",
     "associated_legendre_polynomial_p_all",
     "bessel_j",
@@ -288,6 +297,12 @@ __all__ = [
     "spherical_harmonic_y",
     "spherical_harmonic_y_all",
     "spherical_harmonic_y_cartesian",
+    "struve_h",
+    "struve_h_0",
+    "struve_h_1",
+    "struve_l",
+    "struve_l_0",
+    "struve_l_1",
     "theta_1",
     "theta_2",
     "theta_3",
@@ -298,6 +313,7 @@ __all__ = [
     "weierstrass_p",
     "weierstrass_sigma",
     "weierstrass_zeta",
+    "weber_e",
     "whittaker_m",
     "whittaker_w",
     "zernike_polynomial_r",

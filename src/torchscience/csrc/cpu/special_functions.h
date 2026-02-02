@@ -2665,3 +2665,59 @@ TORCHSCIENCE_CPU_POINTWISE_TERNARY_OPERATOR(inverse_regularized_incomplete_beta,
 #include "../kernel/special_functions/inverse_complementary_regularized_incomplete_beta_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_TERNARY_OPERATOR(inverse_complementary_regularized_incomplete_beta, a, b, y)
+
+// Struve function H_0
+#include "../kernel/special_functions/struve_h_0.h"
+#include "../kernel/special_functions/struve_h_0_backward.h"
+#include "../kernel/special_functions/struve_h_0_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(struve_h_0, z)
+
+// Struve function H_1
+#include "../kernel/special_functions/struve_h_1.h"
+#include "../kernel/special_functions/struve_h_1_backward.h"
+#include "../kernel/special_functions/struve_h_1_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(struve_h_1, z)
+
+// Modified Struve function L_0
+#include "../kernel/special_functions/struve_l_0.h"
+#include "../kernel/special_functions/struve_l_0_backward.h"
+#include "../kernel/special_functions/struve_l_0_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(struve_l_0, z)
+
+// Modified Struve function L_1
+#include "../kernel/special_functions/struve_l_1.h"
+#include "../kernel/special_functions/struve_l_1_backward.h"
+#include "../kernel/special_functions/struve_l_1_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_UNARY_OPERATOR_WITH_COMPLEX(struve_l_1, z)
+
+// General order Struve function H_n(z)
+#include "../kernel/special_functions/struve_h.h"
+#include "../kernel/special_functions/struve_h_backward.h"
+#include "../kernel/special_functions/struve_h_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(struve_h, n, z)
+
+// General order modified Struve function L_n(z)
+#include "../kernel/special_functions/struve_l.h"
+#include "../kernel/special_functions/struve_l_backward.h"
+#include "../kernel/special_functions/struve_l_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(struve_l, n, z)
+
+// Anger function J_nu(z)
+#include "../kernel/special_functions/anger_j.h"
+#include "../kernel/special_functions/anger_j_backward.h"
+#include "../kernel/special_functions/anger_j_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR(anger_j, n, z)
+
+// Weber function E_nu(z)
+#include "../kernel/special_functions/weber_e.h"
+#include "../kernel/special_functions/weber_e_backward.h"
+#include "../kernel/special_functions/weber_e_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR(weber_e, n, z)

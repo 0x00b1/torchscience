@@ -394,3 +394,26 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_TERNARY_OPERATOR(inverse_regularized_incomplete_
 
 // Inverse complementary regularized incomplete beta function
 TORCHSCIENCE_AUTOGRAD_POINTWISE_TERNARY_OPERATOR(inverse_complementary_regularized_incomplete_beta, InverseComplementaryRegularizedIncompleteBeta, a, b, y)
+// Struve function H_0
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(struve_h_0, StruveH0, z)
+
+// Struve function H_1
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(struve_h_1, StruveH1, z)
+
+// Modified Struve function L_0
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(struve_l_0, StruveL0, z)
+
+// Modified Struve function L_1
+TORCHSCIENCE_AUTOGRAD_POINTWISE_UNARY_OPERATOR(struve_l_1, StruveL1, z)
+
+// General order Struve function H_n(z)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(struve_h, StruveH, n, z)
+
+// General order modified Struve function L_n(z)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(struve_l, StruveL, n, z)
+
+// Anger function J_nu(z)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(anger_j, AngerJ, n, z)
+
+// Weber function E_nu(z)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(weber_e, WeberE, n, z)
