@@ -1737,3 +1737,17 @@ TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(struve_h, n, z)
 #include "../kernel/special_functions/struve_l_backward_backward.h"
 
 TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR_WITH_COMPLEX(struve_l, n, z)
+
+// Anger function J_nu(z)
+#include "../kernel/special_functions/anger_j.h"
+#include "../kernel/special_functions/anger_j_backward.h"
+#include "../kernel/special_functions/anger_j_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR(anger_j, n, z)
+
+// Weber function E_nu(z)
+#include "../kernel/special_functions/weber_e.h"
+#include "../kernel/special_functions/weber_e_backward.h"
+#include "../kernel/special_functions/weber_e_backward_backward.h"
+
+TORCHSCIENCE_CPU_POINTWISE_BINARY_OPERATOR(weber_e, n, z)

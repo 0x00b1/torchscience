@@ -231,3 +231,9 @@ TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(struve_h, n, z)
 
 // General order modified Struve function L_n(z)
 TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(struve_l, n, z)
+
+// Anger function J_nu(z)
+TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(anger_j, n, z)
+
+// Weber function E_nu(z)
+TORCHSCIENCE_AUTOCAST_POINTWISE_BINARY_OPERATOR(weber_e, n, z)

@@ -256,3 +256,9 @@ TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(struve_h, StruveH, n, z)
 
 // General order modified Struve function L_n(z)
 TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(struve_l, StruveL, n, z)
+
+// Anger function J_nu(z)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(anger_j, AngerJ, n, z)
+
+// Weber function E_nu(z)
+TORCHSCIENCE_AUTOGRAD_POINTWISE_BINARY_OPERATOR(weber_e, WeberE, n, z)

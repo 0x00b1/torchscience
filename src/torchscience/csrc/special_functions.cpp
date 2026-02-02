@@ -571,4 +571,14 @@ TORCH_LIBRARY_FRAGMENT(torchscience, m) {
   m.def("struve_l(Tensor n, Tensor z) -> Tensor");
   m.def("struve_l_backward(Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor)");
   m.def("struve_l_backward_backward(Tensor gg_n, Tensor gg_z, Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor, Tensor)");
+
+  // Anger function J_nu(z)
+  m.def("anger_j(Tensor n, Tensor z) -> Tensor");
+  m.def("anger_j_backward(Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor)");
+  m.def("anger_j_backward_backward(Tensor gg_n, Tensor gg_z, Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor, Tensor)");
+
+  // Weber function E_nu(z)
+  m.def("weber_e(Tensor n, Tensor z) -> Tensor");
+  m.def("weber_e_backward(Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor)");
+  m.def("weber_e_backward_backward(Tensor gg_n, Tensor gg_z, Tensor grad_output, Tensor n, Tensor z) -> (Tensor, Tensor, Tensor)");
 }

@@ -1,5 +1,6 @@
 from ._airy_ai import airy_ai
 from ._airy_bi import airy_bi
+from ._anger_j import anger_j
 from ._associated_legendre_polynomial_p import (
     associated_legendre_polynomial_p,
     associated_legendre_polynomial_p_all,
@@ -136,6 +137,7 @@ from ._theta_3 import theta_3
 from ._theta_4 import theta_4
 from ._trigamma import trigamma
 from ._voigt_profile import voigt_profile
+from ._weber_e import weber_e
 from ._whittaker_m import whittaker_m
 from ._whittaker_w import whittaker_w
 from ._zeta import zeta
@@ -143,6 +145,7 @@ from ._zeta import zeta
 __all__ = [
     "airy_ai",
     "airy_bi",
+    "anger_j",
     "associated_legendre_polynomial_p",
     "associated_legendre_polynomial_p_all",
     "bessel_j",
@@ -272,6 +275,7 @@ __all__ = [
     "theta_4",
     "trigamma",
     "voigt_profile",
+    "weber_e",
     "whittaker_m",
     "whittaker_w",
     "zeta",
