@@ -28,10 +28,7 @@ authors = [
     { name = "Allen Goodman", email = "allen.goodman@icloud.com" }
 ]
 dependencies = [
-    "manim>=0.19.1",
     "numpy>=2.3.5",
-    "plotly>=6.5.0",
-    "tensordict>=0.7.2",
     "torch>=2.9.1",
 ]
 description = "PyTorch operators for mathematics, science, and engineering."

@@ -40,29 +40,7 @@ include(cmake/backend_detection.cmake)
 # Base sources
 set(TORCHSCIENCE_SOURCES
   src/torchscience/csrc/torchscience.cpp
-  src/torchscience/csrc/coding.cpp
-  src/torchscience/csrc/combinatorics.cpp
-  src/torchscience/csrc/differentiation.cpp
-  src/torchscience/csrc/distance.cpp
-  src/torchscience/csrc/encryption.cpp
-  src/torchscience/csrc/geometry.cpp
-  src/torchscience/csrc/graph_theory.cpp
-  src/torchscience/csrc/graphics.cpp
-  src/torchscience/csrc/information_theory.cpp
-  src/torchscience/csrc/integral_transform.cpp
-  src/torchscience/csrc/linear_algebra.cpp
-  src/torchscience/csrc/morphology.cpp
-  src/torchscience/csrc/optimization.cpp
-  src/torchscience/csrc/pad.cpp
-  src/torchscience/csrc/polynomial.cpp
-  src/torchscience/csrc/privacy.cpp
-  src/torchscience/csrc/probability.cpp
-  src/torchscience/csrc/signal_processing.cpp
-  src/torchscience/csrc/space_partitioning.cpp
   src/torchscience/csrc/special_functions.cpp
-  src/torchscience/csrc/statistics.cpp
-  src/torchscience/csrc/test.cpp
-  src/torchscience/csrc/transform.cpp
 )
 
 # Create library target
@@ -70,11 +48,9 @@ add_library(_csrc MODULE ${TORCHSCIENCE_SOURCES})
 
 # Include backend configurations
 include(cmake/cpu.cmake)
-include(cmake/embree.cmake)
 
 if(TORCHSCIENCE_ENABLE_CUDA)
   include(cmake/cuda.cmake)
-  include(cmake/optix.cmake)
 endif()
 
 if(TORCHSCIENCE_ENABLE_MPS)
