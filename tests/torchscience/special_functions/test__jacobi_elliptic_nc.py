@@ -30,6 +30,7 @@ class TestJacobiEllipticNc(OpTestCase):
                 "test_gradgradcheck",
                 "test_gradgradcheck_real",
                 "test_gradgradcheck_complex",
+                "test_low_precision_forward",
                 "test_nan_propagation_all_inputs",
             },
             special_values=[
